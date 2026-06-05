@@ -93,8 +93,19 @@ export default function Consignees() {
     e.preventDefault()
     setBusy(true); setError(null); setNotice(null)
     try {
-      await upsert([{ code: code.trim(), name: name.trim() }])
-      setCode(''); setName(''); setNotice('Consignee saved.')
+      const c = code.trim()
+      const n = name.trim()
+      if (c) {
+        // explicit code (e.g. legacy number) — upsert by code
+        await upsert([{ code: c, name: n }])
+        setNotice(`Saved ${c} – ${n}.`)
+      } else {
+        // blank code — let the DB auto-generate (CN-00001, …)
+        const { data, error } = await supabase.from('consignees').insert({ name: n }).select('code').single()
+        if (error) throw new Error(error.message)
+        setNotice(`Added ${(data as { code: string }).code} – ${n}.`)
+      }
+      setCode(''); setName('')
       await load()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed.')
@@ -120,14 +131,15 @@ export default function Consignees() {
           </div>
           <form onSubmit={addOne} style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
             <div style={{ display: 'grid', gap: 6 }}>
-              <label className="ktc-label" htmlFor="code">Add code</label>
-              <input id="code" className="ktc-input" value={code} onChange={(e) => setCode(e.target.value)} required style={{ width: 130 }} />
+              <label className="ktc-label" htmlFor="name">Consignee name</label>
+              <input id="name" className="ktc-input" value={name} onChange={(e) => setName(e.target.value)} required style={{ width: 220 }} />
             </div>
             <div style={{ display: 'grid', gap: 6 }}>
-              <label className="ktc-label" htmlFor="name">Name</label>
-              <input id="name" className="ktc-input" value={name} onChange={(e) => setName(e.target.value)} required style={{ width: 200 }} />
+              <label className="ktc-label" htmlFor="code">Code (optional)</label>
+              <input id="code" className="ktc-input" value={code} onChange={(e) => setCode(e.target.value)}
+                placeholder="auto" style={{ width: 130 }} />
             </div>
-            <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>Add</button>
+            <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>Add consignee</button>
           </form>
         </div>
 
