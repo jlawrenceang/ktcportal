@@ -2,6 +2,7 @@ export interface Consignee {
   id: string
   code: string
   name: string
+  status: AccreditationStatus
 }
 
 export type BrokerStatus = 'pending' | 'approved' | 'rejected'

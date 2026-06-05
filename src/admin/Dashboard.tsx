@@ -13,6 +13,7 @@ async function count(table: string, filter?: { col: string; val: string }) {
 interface Stats {
   pendingAccounts: number
   pendingAccreditations: number
+  pendingConsignees: number
   brokers: number
   consignees: number
   jobOrders: number
@@ -21,6 +22,7 @@ interface Stats {
 const cards: { key: keyof Stats; label: string; to: string }[] = [
   { key: 'pendingAccounts', label: 'Accounts awaiting approval', to: '/admin/approvals' },
   { key: 'pendingAccreditations', label: 'Accreditations pending', to: '/admin/approvals' },
+  { key: 'pendingConsignees', label: 'Consignees pending', to: '/admin/consignees' },
   { key: 'brokers', label: 'Brokers', to: '/admin/brokers' },
   { key: 'consignees', label: 'Consignees', to: '/admin/consignees' },
   { key: 'jobOrders', label: 'Job orders', to: '/admin/job-orders' },
@@ -33,11 +35,12 @@ export default function Dashboard() {
     Promise.all([
       count('brokers', { col: 'status', val: 'pending' }),
       count('accreditations', { col: 'status', val: 'pending' }),
+      count('consignees', { col: 'status', val: 'pending' }),
       count('brokers'),
       count('consignees'),
       count('job_orders'),
-    ]).then(([pendingAccounts, pendingAccreditations, brokers, consignees, jobOrders]) =>
-      setStats({ pendingAccounts, pendingAccreditations, brokers, consignees, jobOrders }),
+    ]).then(([pendingAccounts, pendingAccreditations, pendingConsignees, brokers, consignees, jobOrders]) =>
+      setStats({ pendingAccounts, pendingAccreditations, pendingConsignees, brokers, consignees, jobOrders }),
     )
   }, [])
 
