@@ -10,6 +10,9 @@ export default function Settings() {
   const [staff, setStaff] = useState<Broker[]>([])
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState('')
+  const [suUser, setSuUser] = useState('')
+  const [suPass, setSuPass] = useState('')
+  const [suName, setSuName] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -26,6 +29,18 @@ export default function Settings() {
     setLoading(false)
   }
   useEffect(() => { void load() }, [])
+
+  async function createStaff(e: FormEvent) {
+    e.preventDefault()
+    const u = suUser.trim().toLowerCase()
+    setBusy(true); setError(null); setNotice(null)
+    const { error } = await supabase.rpc('create_staff', { p_username: u, p_password: suPass, p_full_name: suName.trim() })
+    setBusy(false)
+    if (error) { setError(error.message); return }
+    setSuUser(''); setSuPass(''); setSuName('')
+    setNotice(`Staff account created. They sign in with username "${u}" and the password you set.`)
+    await load()
+  }
 
   async function grant(e: FormEvent) {
     e.preventDefault()
@@ -65,21 +80,43 @@ export default function Settings() {
           {isOwner ? '' : ' Only the owner can change access.'}
         </p>
 
-        {isOwner && (
-          <form onSubmit={grant} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-            <div style={{ display: 'grid', gap: 6 }}>
-              <label className="ktc-label" htmlFor="email">Grant admin to email</label>
-              <input id="email" className="ktc-input" type="email" required value={email}
-                onChange={(e) => setEmail(e.target.value)} placeholder="staff@ktc.com" style={{ width: 280 }} />
-            </div>
-            <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>
-              Grant access
-            </button>
-          </form>
+        {isOwner ? (
+          <>
+            <h2 style={{ margin: '0 0 10px', fontSize: 15, fontWeight: 600 }}>Create staff account</h2>
+            <form onSubmit={createStaff} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label className="ktc-label" htmlFor="suName">Full name</label>
+                <input id="suName" className="ktc-input" required value={suName} onChange={(e) => setSuName(e.target.value)} style={{ width: 200 }} />
+              </div>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label className="ktc-label" htmlFor="suUser">Username</label>
+                <input id="suUser" className="ktc-input" required minLength={3} value={suUser} onChange={(e) => setSuUser(e.target.value)} placeholder="jdelacruz" style={{ width: 170 }} />
+              </div>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label className="ktc-label" htmlFor="suPass">Password</label>
+                <input id="suPass" className="ktc-input" type="text" required minLength={6} value={suPass} onChange={(e) => setSuPass(e.target.value)} style={{ width: 160 }} />
+              </div>
+              <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>Create staff</button>
+            </form>
+            <p className="ktc-label" style={{ fontSize: 12, marginTop: 10, opacity: 0.8 }}>
+              No email needed — hand them the username + password. They sign in at the login page with the username.
+            </p>
+
+            <div style={{ height: 1, background: 'hsl(var(--line-soft))', margin: '18px 0' }} />
+
+            <h2 style={{ margin: '0 0 10px', fontSize: 15, fontWeight: 600 }}>Or grant admin to an existing account</h2>
+            <form onSubmit={grant} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label className="ktc-label" htmlFor="email">Email of a signed-up user</label>
+                <input id="email" className="ktc-input" type="email" required value={email}
+                  onChange={(e) => setEmail(e.target.value)} placeholder="someone@email.com" style={{ width: 280 }} />
+              </div>
+              <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>Grant access</button>
+            </form>
+          </>
+        ) : (
+          <p className="ktc-label" style={{ fontSize: 13 }}>Only the owner can add or change staff access.</p>
         )}
-        <p className="ktc-label" style={{ fontSize: 12, marginTop: 10, opacity: 0.8 }}>
-          The person must have signed up once (so their account exists) before you can grant access.
-        </p>
 
         {notice && <div className="ktc-label" style={{ marginTop: 10, fontSize: 13 }}>{notice}</div>}
         {error && <div style={{ marginTop: 10, color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}

@@ -61,9 +61,9 @@ export default function Login() {
           )}
 
           <div style={{ display: 'grid', gap: 6 }}>
-            <label className="ktc-label" htmlFor="email">Email</label>
-            <input id="email" className="ktc-input" type="email" required value={email}
-              onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+            <label className="ktc-label" htmlFor="email">{isSignup ? 'Email' : 'Email or username'}</label>
+            <input id="email" className="ktc-input" type={isSignup ? 'email' : 'text'} required value={email}
+              onChange={(e) => setEmail(e.target.value)} autoComplete="username" />
           </div>
 
           <div style={{ display: 'grid', gap: 6 }}>

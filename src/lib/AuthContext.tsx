@@ -30,7 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe()
   }, [])
 
-  const signIn: AuthValue['signIn'] = async (email, password) => {
+  const signIn: AuthValue['signIn'] = async (identifier, password) => {
+    // staff log in with a username (no @) -> map to the synthetic staff email
+    const email = identifier.includes('@')
+      ? identifier.trim()
+      : `${identifier.trim().toLowerCase()}@ktc-staff.local`
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error: error?.message ?? null }
   }
