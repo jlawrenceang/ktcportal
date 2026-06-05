@@ -4,6 +4,8 @@ export interface Consignee {
   name: string
 }
 
+export type BrokerStatus = 'pending' | 'approved' | 'rejected'
+
 export interface Broker {
   id: string
   user_id: string
@@ -12,7 +14,15 @@ export interface Broker {
   full_name: string | null
   email: string | null
   valid_id_path: string | null
+  status: BrokerStatus
+  decided_at: string | null
   is_admin: boolean
+  is_owner: boolean
+}
+
+/** Owner is a superset of admin — treat both as admin in the UI. */
+export function hasAdminAccess(b: Pick<Broker, 'is_admin' | 'is_owner'> | null | undefined): boolean {
+  return !!b && (b.is_admin || b.is_owner)
 }
 
 export type AccreditationStatus = 'pending' | 'approved' | 'rejected'

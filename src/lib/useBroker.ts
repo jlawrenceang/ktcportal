@@ -11,7 +11,7 @@ export function useBroker() {
     let active = true
     supabase
       .from('brokers')
-      .select('id, user_id, customer_id, company_name, email, is_admin')
+      .select('*')
       .maybeSingle()
       .then(({ data }) => {
         if (active) {
