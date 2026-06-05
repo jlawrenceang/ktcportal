@@ -13,6 +13,9 @@ npm-debug.log*
 # build artifact from scripts/apply-theme.sh (logo inlined into CSS)
 .theme-combined.css
 
+# Vercel
+.vercel
+
 # OS / editor
 .DS_Store
 Thumbs.db
