@@ -18,7 +18,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const dir = path.join(root, 'supabase', 'migrations')
 const files = readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()
 
-const client = new pg.Client({ connectionString: url })
+const needsSsl = /supabase\.(co|com)/.test(url)
+const client = new pg.Client({
+  connectionString: url,
+  ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
+})
 await client.connect()
 try {
   for (const f of files) {

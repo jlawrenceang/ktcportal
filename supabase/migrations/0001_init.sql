@@ -93,32 +93,41 @@ alter table public.job_orders       enable row level security;
 alter table public.job_order_lines  enable row level security;
 
 -- consignees: readable by any signed-in user; writes via service role only
+drop policy if exists "consignees readable" on public.consignees;
 create policy "consignees readable" on public.consignees
   for select to authenticated using (true);
 
 -- brokers: read & update own profile
+drop policy if exists "broker reads own profile" on public.brokers;
 create policy "broker reads own profile" on public.brokers
   for select to authenticated using (user_id = auth.uid());
+drop policy if exists "broker updates own profile" on public.brokers;
 create policy "broker updates own profile" on public.brokers
   for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- accreditations: broker reads & requests own (approval is admin-only)
+drop policy if exists "broker reads own accreditations" on public.accreditations;
 create policy "broker reads own accreditations" on public.accreditations
   for select to authenticated using (broker_id = public.current_broker_id());
+drop policy if exists "broker requests accreditation" on public.accreditations;
 create policy "broker requests accreditation" on public.accreditations
   for insert to authenticated with check (broker_id = public.current_broker_id());
 
 -- job orders: broker reads & creates own
+drop policy if exists "broker reads own job orders" on public.job_orders;
 create policy "broker reads own job orders" on public.job_orders
   for select to authenticated using (broker_id = public.current_broker_id());
+drop policy if exists "broker creates own job orders" on public.job_orders;
 create policy "broker creates own job orders" on public.job_orders
   for insert to authenticated with check (broker_id = public.current_broker_id());
 
 -- job order lines: scoped through the parent job order's ownership
+drop policy if exists "broker reads own jo lines" on public.job_order_lines;
 create policy "broker reads own jo lines" on public.job_order_lines
   for select to authenticated using (
     exists (select 1 from public.job_orders jo
             where jo.id = job_order_id and jo.broker_id = public.current_broker_id()));
+drop policy if exists "broker creates own jo lines" on public.job_order_lines;
 create policy "broker creates own jo lines" on public.job_order_lines
   for insert to authenticated with check (
     exists (select 1 from public.job_orders jo
