@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { useAuth } from '../lib/AuthContext'
+import { useBroker } from '../lib/useBroker'
 
 const cards = [
   { to: '/job-order', title: 'New Job Order', desc: 'Submit X-ray / DEA / OOG stripping requests.' },
@@ -10,6 +11,7 @@ const cards = [
 
 export default function Home() {
   const { session } = useAuth()
+  const { broker } = useBroker()
 
   return (
     <Shell>
@@ -17,6 +19,11 @@ export default function Home() {
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>
           Welcome{session?.user.email ? `, ${session.user.email}` : ''}
         </h1>
+        {broker?.broker_code && (
+          <p className="ktc-label" style={{ marginTop: 6 }}>
+            Your Broker ID: <b style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>{broker.broker_code}</b>
+          </p>
+        )}
         <p className="ktc-label" style={{ marginTop: 8 }}>
           This is the KTC Job Order portal. Create job orders against your accredited consignees,
           and manage your accreditation requests.

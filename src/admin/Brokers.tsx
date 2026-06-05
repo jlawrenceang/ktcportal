@@ -58,6 +58,9 @@ export default function Brokers() {
                 }}>
                   <div style={{ fontSize: 14, lineHeight: 1.5, minWidth: 0 }}>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      {b.broker_code && (
+                        <span style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12, fontWeight: 600, color: 'hsl(var(--ink-2))' }}>{b.broker_code}</span>
+                      )}
                       <b>{b.full_name || b.email || 'Unknown'}</b>
                       <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{b.status}</span>
                     </div>

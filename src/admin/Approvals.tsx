@@ -5,6 +5,7 @@ import { AdminRow } from './AdminRow'
 
 interface PendingBroker {
   id: string
+  broker_code: string | null
   full_name: string | null
   email: string | null
   customer_id: string | null
@@ -30,7 +31,7 @@ export default function Approvals() {
 
   async function load() {
     const [b, a] = await Promise.all([
-      supabase.from('brokers').select('id, full_name, email, customer_id, valid_id_path').eq('status', 'pending').order('created_at'),
+      supabase.from('brokers').select('id, broker_code, full_name, email, customer_id, valid_id_path').eq('status', 'pending').order('created_at'),
       supabase.from('accreditations').select('id, broker:brokers(full_name, email), consignee:consignees(code, name)').eq('status', 'pending').order('requested_at'),
     ])
     if (b.error || a.error) { setError(b.error?.message ?? a.error?.message ?? 'Load failed'); setLoading(false); return }
@@ -73,7 +74,7 @@ export default function Approvals() {
         ) : (
           <div style={{ display: 'grid', gap: 10 }}>
             {brokers.map((b) => (
-              <AdminRow key={b.id} title={b.full_name || b.email || 'Unknown'}
+              <AdminRow key={b.id} title={`${b.broker_code ? b.broker_code + ' · ' : ''}${b.full_name || b.email || 'Unknown'}`}
                 subtitle={`${b.email ?? ''}${b.customer_id ? ` · #${b.customer_id}` : ''}`}
                 onViewId={b.valid_id_path ? () => viewId(b.valid_id_path) : undefined}
                 busy={acting === b.id} onApprove={() => decideBroker(b.id, 'approved')} onReject={() => decideBroker(b.id, 'rejected')} />

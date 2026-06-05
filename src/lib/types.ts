@@ -9,6 +9,7 @@ export type BrokerStatus = 'pending' | 'approved' | 'rejected'
 export interface Broker {
   id: string
   user_id: string
+  broker_code: string | null
   customer_id: string | null
   company_name: string | null
   full_name: string | null
