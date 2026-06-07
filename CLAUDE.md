@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Top-level constitution for Claude Code in this repo. Living memory + detail lives in the project memory (`MEMORY.md` and `project_*.md`).
+Top-level constitution for Claude Code in this repo. Modular detail lives in `docs/agent/` and the live memory lives in `docs/obsidian-vault/`.
 
 ## Mission
 
@@ -8,26 +8,23 @@ Build and maintain the **KTC Container Terminal** broker portal — a port / con
 
 ## Non-negotiables
 
-- **Supabase isolation.** KTC has its OWN Supabase account/project: `mdlnfhyylvapzdubhyic`. The connected `mcp__supabase__*` and `mcp__claude_ai_Supabase__*` tools point at **jta-sys**, NOT KTC — never use them for KTC, and never apply KTC schema to jta-sys (or vice versa). Apply KTC migrations via the direct Postgres connection or the KTC SQL Editor.
-- **Owner failsafe.** `jla.ktcport@gmail.com` is the server-only owner (`is_owner`) — overrides everything, cannot be locked out or revoked. Never weaken this.
-- **Invite-only staff.** Admin/staff are owner-created (`rpc('create_staff')`, username + password, no email). No self-signup as admin.
-- **Backend-enforced controls.** Auth, approvals, and access live in RLS + SECURITY DEFINER RPCs — not just the UI. CAPTCHA (Turnstile) is enforced server-side in Supabase.
+- **Backend-enforced access.** Auth, approvals, and roles live in RLS + SECURITY DEFINER RPCs, not frontend-only. CAPTCHA is enforced server-side in Supabase.
+- **Runtime authority is `src/lib/supabase.ts`.** Production project: `mdlnfhyylvapzdubhyic` (KTC's own Supabase account). The connected `mcp__supabase__*` tools point at **jta-sys**, NOT KTC — never use them here. Detail in `docs/agent/runtime-data-safety.md`.
+- **Owner failsafe.** `jla.ktcport@gmail.com` is the server-only owner — overrides everything, cannot be locked out. Staff are owner-created (invite-only); no self-signup as admin.
 - **Migrations are forward-only.** `git push` deploys the frontend to Vercel; it does NOT deploy DB changes.
-- **Secrets.** The anon key + Turnstile site key are public/safe. The service_role key, DB password, and Turnstile secret must never be committed. `.env.local` is gitignored; env vars live in Vercel + Supabase.
 - **Responsive web only.** No native mobile without an explicit ask.
 
-## Stack
+## Release gate
 
-Vite + React 18 + TypeScript + Tailwind 3 + react-router-dom 6 + @supabase/supabase-js 2 (SPA). Supabase = Auth + Postgres + RLS + Storage. Deployed on Vercel at `portal.ktcterminal.com` (DNS on Vercel; Cloudflare used only for the Turnstile widget). `npm run lint` = `tsc --noEmit`; `npm run build` = `tsc && vite build`.
+Every plan, implementation, review, and merge must pass all six checks in `docs/agent/release-gate.md`. Any failure blocks release.
 
-## Supporting docs (retrieve from project memory)
+## Supporting docs (retrieve by path)
 
-- `MEMORY.md` — system identity, scale, design decisions, milestones, pending work, links.
-- `project_overview.md` — what the app is, stack, repo, Jotform origin.
-- `project_data_model.md` — schema, roles, owner failsafe, access-control decisions.
-- `project_supabase_isolation.md` — the separate-Supabase-account rule.
-- `project_deployment.md` — Vercel, custom domain, env vars, CAPTCHA.
+- `docs/agent/README.md` — index for runtime safety, workflow invariants, coding guardrails, testing, tooling, memory policy, doc governance.
+- `docs/obsidian-vault/` — live memory: current state, roadmap, sessions, cores. Sync per `docs/agent/obsidian-memory-policy.md`.
+- `AGENTS.md` — Codex mirror.
+- `docs/README.md` — docs map.
 
 ## Doc precedence
 
-Runtime code > active DB contracts (migrations/RPCs) > MEMORY.md current-state > planning notes > session history. Runtime wins conflicts; fix or update the stale memory in the same change.
+Runtime code > active DB contracts > current-state docs > planning notes > session history. Runtime wins conflicts; fix or archive the stale doc in the same change.
