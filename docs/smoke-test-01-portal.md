@@ -1,0 +1,198 @@
+# Smoke Test ST01 — Portal Core (Auth · CAPTCHA · Onboarding · Consignees · Job Orders · Admin)
+
+**Smoke Test ID:** ST01
+**Date:** 2026-06-07
+**Status:** DRAFT (ready to execute)
+**Target:** https://portal.ktcterminal.com (prod-testing) — or local `npm run dev`
+**Format:** Canonical (see `docs/smoke-test-template-canonical.md`)
+
+## Purpose
+
+Verify everything built up to checkpoint `checkpoint-2026-06-07`: the two role-gated portals, server-enforced CAPTCHA, broker onboarding gate, consignee accreditation, job-order submission, and owner-only staff creation — frontend + backend + side effects.
+
+## Result codes
+
+PASS / AMBER / FAIL / BLOCKED / N/A (see template).
+
+## Test accounts / data
+
+| Role | Identity | Notes |
+|---|---|---|
+| Owner | `jla.ktcport@gmail.com` | server-only `is_owner`; must land on Admin Portal |
+| Test broker | a throwaway email you control | created during Lane 2 |
+| Test staff | username created during Lane 5 | e.g. `smoketest1` |
+| Test consignee | created during Lane 3 | e.g. name "ST01 Test Consignee" |
+
+> CAPTCHA is live, so manual UI logins require solving the Turnstile widget. The `curl` checks bypass the UI to test server enforcement directly.
+
+---
+
+## Preflight gate (run first)
+
+| Check | Command | Expected | Result |
+|---|---|---|---|
+| P1 TypeScript | `npm run lint` | 0 errors | ✅ PASS (2026-06-07) |
+| P2 Build | `npm run build` | PASS | ✅ PASS (2026-06-07) |
+| P3 Deploy health | `curl -s -o /dev/null -w "%{http_code}\n" https://portal.ktcterminal.com` | `200` | ✅ PASS — `200` |
+| P4 Bundle target | fetch the `/assets/index-*.js` and grep | contains `mdlnfhyylvapzdubhyic.supabase.co`, NOT `twsylxbftvkwporglxnv` | ✅ PASS — KTC ref present, jta-sys absent (bundle `index-Bp95Fypb.js`) |
+| P5 Turnstile inlined | grep bundle for site key | `0x4AAAAAADf_oKtFqQwj9HoP` present | ✅ PASS — present |
+| P6 SPA rewrite | `curl -s -o /dev/null -w "%{http_code}\n" https://portal.ktcterminal.com/admin/consignees` | `200` (not 404) | ✅ PASS — `200` |
+| P7 CAPTCHA enforced | tokenless `POST /auth/v1/token?grant_type=password` with anon apikey | JSON `{"error_code":"captcha_failed", …}` | ✅ PASS — `captcha_failed` |
+
+**Preflight: PASS** (all 7 green as of 2026-06-07). The browser lanes below (1–5) require manual execution. If any preflight fails on a later run, stop and fix.
+
+---
+
+## Lane 1 — Authentication & CAPTCHA
+
+### Route 1A — Login gate, CAPTCHA, role landing
+
+**Objective:** Login requires CAPTCHA; owner lands on Admin Portal; the auth API cannot be used without a token.
+**Start state:** Logged out; on `/login`.
+
+| Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects | Guardrail Test | Result | Evidence |
+|---|---|---|---|---|---|---|---|---|---|
+| 1A-1 | `/login` | Load page | Logged out | — | KTC logo + Sign in form render | Turnstile widget visible | Submit disabled until widget solved | | |
+| 1A-2 | `/login` | Try Sign in **without** solving CAPTCHA | — | client guard | Blocked with "Please complete the CAPTCHA." | No auth call fired | Button stays disabled | | |
+| 1A-3 | `/login` | Solve CAPTCHA, sign in as **owner** | owner exists | `supabase.auth.signInWithPassword` + captcha verify | Session created | Redirect to `/admin` (Admin Portal), Owner badge | Owner NOT dumped into broker portal | | |
+| 1A-4 | `/admin` | Observe shell | owner session | `useBroker` (`.eq('user_id')`) | Admin nav (Dashboard/Approvals/Brokers/Consignees/Job Orders/Settings) | Owner/Admin badge correct | `useBroker` returns owner's own row despite admin-all RLS | | |
+| 1A-5 | API | `curl` tokenless `POST /auth/v1/token` | anon key | Supabase Auth (Attack Protection) | `captcha_failed`, no login | — | Direct-API bypass blocked | | |
+| 1A-6 | header | Sign out | owner session | `supabase.auth.signOut` | Back to `/login` | Session cleared | — | | |
+
+#### Route closure
+- [ ] CAPTCHA required on every sign-in attempt
+- [ ] Owner → `/admin`, never broker home
+- [ ] Tokenless API login rejected (`captcha_failed`)
+
+#### Lane closeout
+- [ ] Auth + CAPTCHA coherent end-to-end
+
+---
+
+## Lane 2 — Broker onboarding
+
+### Route 2A — Register → pending → approve
+
+**Objective:** A new broker registers with a valid ID, is gated as pending, and gains access only after admin approval.
+**Start state:** Logged out.
+
+| Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects | Guardrail Test | Result | Evidence |
+|---|---|---|---|---|---|---|---|---|---|
+| 2A-1 | `/login` (register) | Fill email + password + full name; upload valid ID; solve CAPTCHA; Sign up | logged out | `supabase.auth.signUp` + storage upload to `valid-ids` | auth user + `brokers` row `status='pending'`; `valid_id_path` set | Notice "Account created…"; switches to Sign in | Sign up needs CAPTCHA too | | |
+| 2A-2 | `/login` | Sign in as the new broker | account created | signInWithPassword | Session created | Lands on broker home | — | | |
+| 2A-3 | `/` (Shell) | Observe | broker `pending` | `useBroker` | Pending-approval panel shown | New Job Order / Accreditation gated off | Un-approved broker cannot transact | | |
+| 2A-4 | `/admin/approvals` (as owner) | Open queue; view broker + valid ID | owner session | select brokers; signed URL | Broker visible; valid ID viewable | Signed URL opens the uploaded file | Only admin/owner can view valid IDs | | |
+| 2A-5 | `/admin/approvals` | Approve the broker | owner session | update `brokers` `status='approved'`, `decided_at` | Status flips to approved | Row leaves pending list | — | | |
+| 2A-6 | `/` (broker) | Re-login as broker | approved | — | Broker home with "Your Broker ID: BR-#####" | Nav unlocked (Home/New JO/Accreditation/My JOs) | — | | |
+
+#### Route closure
+- [ ] Pending gate blocks un-approved brokers
+- [ ] Valid ID stored + admin-viewable
+- [ ] Approval unlocks broker features
+
+#### Lane closeout
+- [ ] Onboarding coherent end-to-end
+
+---
+
+## Lane 3 — Consignees & accreditation
+
+### Route 3A — Search, paginate, add (dup guard), accredit, approve
+
+**Objective:** Admin can manage the 2,488-row consignee list and accredit/approve with required docs.
+**Start state:** Owner on `/admin/consignees`.
+
+| Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects | Guardrail Test | Result | Evidence |
+|---|---|---|---|---|---|---|---|---|---|
+| 3A-1 | `/admin/consignees` | Load | owner session | select consignees `.range` | First page (≤200) renders; total reflects ~2,488 | Pagination control present | — | | |
+| 3A-2 | `/admin/consignees` | Page to next batch | >200 rows | `.range(next)` | Next 200 rows load | Page indicator advances | Pagination actually advances (regression guard) | | |
+| 3A-3 | `/admin/consignees` | Search a known name | data loaded | `.or` ilike | Matching rows filter in | Debounced; clears correctly | — | | |
+| 3A-4 | `/admin/consignees` | Add consignee (name only) | — | insert `consignees` | New row created; code auto-generated | Appears in list | — | | |
+| 3A-5 | `/admin/consignees` | Add a **duplicate** code/name | existing value | insert → `23505` | Friendly duplicate error | No row created | Duplicate guard fires | | |
+| 3A-6 | `/admin/consignees` | Edit: add address + TIN + upload 2303 | row exists | update + storage upload | Accreditation fields saved; 2303 path set | "View 2303" works (signed URL) | — | | |
+| 3A-7 | `/admin/consignees` | Try approve **without** 2303 | a row missing 2303 | approval guard | Approval blocked | Clear message | Cannot approve without name+address+TIN+2303 | | |
+| 3A-8 | `/admin/consignees` | Approve a fully-accredited consignee | 2303 present | update `status='approved'` | Status flips to approved | Row reflects approved | — | | |
+
+#### Route closure
+- [ ] Search + pagination work over the full list
+- [ ] Duplicate guard blocks dup code/name
+- [ ] Accreditation requires 2303 before approval
+
+#### Lane closeout
+- [ ] Consignee management coherent end-to-end
+
+---
+
+## Lane 4 — Job orders
+
+### Route 4A — Submit against an approved consignee
+
+**Objective:** An approved broker submits a job order with service lines against an approved consignee; both broker and admin can see it.
+**Start state:** Approved broker session; at least one approved consignee.
+
+| Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects | Guardrail Test | Result | Evidence |
+|---|---|---|---|---|---|---|---|---|---|
+| 4A-1 | `/job-order` | Open New Job Order | approved broker | — | Form renders | Consignee selector lists **approved** consignees | Un-approved consignees NOT selectable | | |
+| 4A-2 | `/job-order` | Pick consignee + add service line(s) | approved consignee | `SERVICE_REQUESTS` enum | Lines added (X-ray / DEA / OOG stripping) | Line UI updates | Only valid service types | | |
+| 4A-3 | `/job-order` | Submit | lines present | insert `job_orders` + `job_order_lines` | Header + lines persisted | Confirmation / redirect | — | | |
+| 4A-4 | `/job-orders` | Open My Job Orders | submitted | select own job orders | The new order appears | Lines + consignee shown (via `one<T>()`) | Broker sees only own orders (RLS) | | |
+| 4A-5 | `/admin/job-orders` (owner) | Open admin list | order exists | select all | The order is visible to admin | Broker + consignee resolved | Admin sees all orders | | |
+
+#### Route closure
+- [ ] Job order targets only approved consignees
+- [ ] Header + lines persist; visible to broker (own) and admin (all)
+
+#### Lane closeout
+- [ ] Job-order submission coherent end-to-end
+
+---
+
+## Lane 5 — Admin: owner-only staff creation
+
+### Route 5A — Create staff, login, revoke guard
+
+**Objective:** Only the owner can create staff (username + password, no email); staff can log in; the owner cannot be revoked.
+**Start state:** Owner on `/admin/settings`.
+
+| Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects | Guardrail Test | Result | Evidence |
+|---|---|---|---|---|---|---|---|---|---|
+| 5A-1 | `/admin/settings` | Observe (as owner) | owner session | — | "Create staff account" form visible | Staff list shows owner (Owner badge) | Non-owner admin sees "only the owner can change access" | | |
+| 5A-2 | `/admin/settings` | Create staff: full name + username + password | owner session | `rpc('create_staff')` | auth user + `auth.identities` created; broker promoted admin/approved (atomic) | Notice with username; list refreshes | Token columns `''` (login works) | | |
+| 5A-3 | `/login` | Sign in with the **username** (no @) | staff created | signIn maps to `<username>@ktc-staff.local` | Session created | Lands on `/admin` | CAPTCHA still required | | |
+| 5A-4 | `/admin/settings` (as staff) | Observe | staff session | — | Cannot create staff (owner-only) | Read-only message | RPC rejects non-owner caller | | |
+| 5A-5 | `/admin/settings` (as owner) | Look at owner row | owner session | — | No "Revoke admin" on owner | — | Owner cannot be revoked | | |
+| 5A-6 | `/admin/settings` | Revoke the test staff | owner session | update `is_admin=false` | Staff demoted | Row updates | — | | |
+
+#### Route closure
+- [ ] Staff creation is owner-only and atomic
+- [ ] Username login works + lands on admin
+- [ ] Owner is non-revocable
+
+#### Lane closeout
+- [ ] Staff/access management coherent end-to-end
+
+---
+
+## Defects tracker
+
+| ID | Lane / Route / Action | Severity | Issue Summary | Expected | Actual | Status | Evidence |
+|---|---|---|---|---|---|---|---|
+| | | | | | | OPEN | |
+
+## Final summary
+
+| Lane | Status | Key Findings | Go / Hold |
+|---|---|---|---|
+| Preflight | | | |
+| 1 — Auth & CAPTCHA | | | |
+| 2 — Broker onboarding | | | |
+| 3 — Consignees & accreditation | | | |
+| 4 — Job orders | | | |
+| 5 — Admin staff | | | |
+
+**Overall go / no-go:** ____
+
+## Cleanup after run
+
+- Delete the test broker, test consignee, and test job order if they were against real data.
+- Revoke/remove the test staff account.

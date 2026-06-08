@@ -4,6 +4,9 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-08
+- Added the canonical smoke-test template (`docs/smoke-test-template-canonical.md`) and ST01 portal smoke test (`docs/smoke-test-01-portal.md`) covering auth/CAPTCHA, broker onboarding, consignees/accreditation, job orders, and owner-only staff. Preflight P1–P7 verified PASS; lanes 1–5 are manual.
+
 ### 2026-06-07
 - Added the layered documentation system mirroring jta-sys: `CLAUDE.md` constitution, `AGENTS.md` Codex mirror, `docs/agent/*` modular instruction reference, `docs/adr/` ADR system (template + index + foundational ADRs 0001–0006), `/adr` command, and the `docs/obsidian-vault/` live-memory vault (01-System / 02-Cores / 04-Workflows / 05-Concepts / 06-Sessions / 07-Memory / 09-Future).
 - Added Cloudflare Turnstile CAPTCHA to login + registration (`src/components/Turnstile.tsx`), enforced server-side in Supabase Auth. Gated behind `VITE_TURNSTILE_SITE_KEY`.

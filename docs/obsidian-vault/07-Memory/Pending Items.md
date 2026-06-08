@@ -11,7 +11,7 @@ Detailed backlog. For sequencing, see [[Roadmap]].
 
 ## Prod-testing readiness (NOW)
 
-- [ ] Manual browser UAT on `portal.ktcterminal.com` — Turnstile widget renders; owner login → `/admin`; broker register (valid-ID upload) → admin approve → submit job order.
+- [ ] Execute **ST01 browser lanes** (`docs/smoke-test-01-portal.md`, lanes 1–5) on `portal.ktcterminal.com`. Preflight P1–P7 already PASS (2026-06-07); lanes 1–5 need a manual walk.
 - [ ] Supabase Auth → URL Configuration: Site URL `https://portal.ktcterminal.com`; add Redirect URL `https://portal.ktcterminal.com/**`.
 
 ## Admin / processing (NEXT)
