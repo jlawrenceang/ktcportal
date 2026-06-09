@@ -58,7 +58,7 @@ export interface JobOrderLine {
 
 export interface JobOrder {
   id: string
-  jo_number: string
+  jo_number: string | null
   broker_id: string
   consignee_id: string | null
   entry_number: string | null

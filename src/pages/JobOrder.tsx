@@ -126,7 +126,7 @@ export default function JobOrder() {
       setError(lineErr.message)
       return
     }
-    setCreatedJo((jo as { jo_number: string }).jo_number)
+    setCreatedJo((jo as { jo_number: string | null }).jo_number)
     setCreatedHeld(!approved)
     clearConsignee()
     setEntryNumber('')
@@ -141,7 +141,7 @@ export default function JobOrder() {
           For X-ray / DEA / OOG stripping service orders.
         </p>
 
-        {createdJo && (
+        {(createdJo || createdHeld) && (
           <div
             style={{
               marginBottom: 18,
@@ -152,10 +152,10 @@ export default function JobOrder() {
               fontSize: 14,
             }}
           >
-            ✅ Job Order <b>{createdJo}</b> {createdHeld ? 'filed.' : 'submitted.'}
+            {createdHeld ? '✅ Job order filed (held).' : <>✅ Job Order <b>{createdJo}</b> submitted.</>}
             {createdHeld && (
               <div style={{ marginTop: 4, fontSize: 13 }}>
-                It’s <b>held — it can’t be processed until you pass final verification.</b>{' '}
+                It’s <b>held — it can’t be processed until you pass final verification</b>, and it gets its official JO number when released.{' '}
                 {hasId
                   ? 'Your valid ID is on file; a KTC admin will verify your account, then it’s sent automatically.'
                   : 'Upload your valid ID for final verification (banner above) so KTC can process your job orders.'}

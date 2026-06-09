@@ -57,7 +57,7 @@ export default function MyJobOrders() {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <b style={{ fontSize: 15 }}>{o.jo_number}</b>
+                  <b style={{ fontSize: 15 }}>{o.jo_number ?? 'Draft (no number yet)'}</b>
                   <span className="ktc-label" style={{ fontSize: 12 }}>
                     {new Date(o.created_at).toLocaleDateString()} · {STATUS_LABEL[o.status] ?? o.status}
                   </span>

@@ -30,6 +30,8 @@ Chosen option: **a refinement of Option A — file-then-hold-then-release.** A c
 
 The security boundary is enforced in RLS (migration `0016`): the `job_orders` insert policy allows `broker_id = current_broker_id() AND (broker_is_approved() OR (status='held' AND broker_is_pending()))` — so a pending broker can insert **only** `held` rows, approved brokers file normally, and rejected/suspended brokers can file nothing. Brokers have no `UPDATE` policy on `job_orders`, so a pending broker cannot self-promote a `held` order to `submitted`; only the security-definer release trigger can.
 
+**Anti-spam guards (migrations `0017`/`0018`).** Because a confirmed-but-unverified broker could otherwise spam held orders and burn the JO-number sequence: (1) a **cap** of 10 held orders per pending broker (`enforce_held_cap` trigger); (2) **deferred numbering** — held orders carry no official `X-######`; `jo_number` is nullable and assigned by `ensure_jo_number` only when an order reaches a live status, so spam/cancelled holds never gap the official sequence; (3) a **48h TTL** — `expire_unverified_brokers()` runs hourly via pg_cron and rejects pending brokers who confirmed their email >48h ago but never uploaded a valid ID (keyed on broker inaction, not admin latency), which requires them to re-register. Rejecting or suspending a broker cancels their held orders.
+
 ### Positive Consequences
 
 * Brokers can do real work immediately after confirming their email — no dead Submit button after filling a long form.

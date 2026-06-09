@@ -21,6 +21,9 @@ export default function AllJobOrders() {
       .select(
         'id, jo_number, entry_number, status, created_at, broker:brokers(full_name, email), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)',
       )
+      // Held orders belong to not-yet-verified brokers — keep them out of the queue
+      // until they're released (status -> submitted) on approval.
+      .neq('status', 'held')
       .order('created_at', { ascending: false })
       .then(({ data }) => {
         const rows = ((data ?? []) as unknown as AdminJobOrder[]).map((o) => ({
@@ -46,7 +49,7 @@ export default function AllJobOrders() {
             {orders.map((o) => (
               <div key={o.id} style={{ padding: '14px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                  <b style={{ fontSize: 15 }}>{o.jo_number}</b>
+                  <b style={{ fontSize: 15 }}>{o.jo_number ?? '—'}</b>
                   <span className="ktc-label" style={{ fontSize: 12 }}>{new Date(o.created_at).toLocaleString()} · {o.status}</span>
                 </div>
                 <div className="ktc-label" style={{ fontSize: 13, marginTop: 4 }}>
