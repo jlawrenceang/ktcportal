@@ -4,6 +4,7 @@ import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { hasAdminAccess } from '../lib/types'
 import PendingPanel from './PendingPanel'
+import BrokerStatusBanner from './BrokerStatusBanner'
 
 const baseLinks = [
   { to: '/', label: 'Home', end: true },
@@ -18,8 +19,11 @@ export default function Shell({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const links = baseLinks
 
-  // Account-approval gate: un-approved (non-admin) brokers can't use the tools yet.
-  const gated = !!broker && !hasAdminAccess(broker) && broker.status !== 'approved'
+  // Locked out entirely: rejected / suspended (non-admin) brokers get a message only.
+  const locked = !!broker && !hasAdminAccess(broker) && (broker.status === 'rejected' || broker.status === 'suspended')
+  // Pending (confirmed) brokers get the full portal + a status banner; submit is
+  // gated server-side (job_orders insert requires broker_is_approved()).
+  const pending = !!broker && !hasAdminAccess(broker) && broker.status === 'pending'
 
   async function handleSignOut() {
     await signOut()
@@ -33,10 +37,11 @@ export default function Shell({ children }: { children: ReactNode }) {
         <button className="ktc-link" onClick={handleSignOut}>Sign out</button>
       </header>
 
-      {gated ? (
+      {locked ? (
         <PendingPanel broker={broker!} />
       ) : (
         <>
+          {pending && <BrokerStatusBanner broker={broker!} />}
           <nav style={{ display: 'flex', gap: 8, marginBottom: 22, flexWrap: 'wrap' }}>
             {links.map((l) => (
               <NavLink

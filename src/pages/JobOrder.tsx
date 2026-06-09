@@ -75,11 +75,17 @@ export default function JobOrder() {
     setLines((ls) => (ls.length === 1 ? ls : ls.filter((_, idx) => idx !== i)))
   }
 
+  const approved = broker?.status === 'approved'
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
     if (!broker) {
       setError('Broker profile not found.')
+      return
+    }
+    if (!approved) {
+      setError('Your account is pending admin approval — you can prepare this order, but you can only submit it once approved.')
       return
     }
     if (!consigneeId) {
@@ -288,8 +294,14 @@ export default function JobOrder() {
 
           {error && <div style={{ color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
 
-          <button className="ktc-btn" type="submit" disabled={busy} style={{ marginTop: 4 }}>
-            {busy ? 'Submitting…' : 'Submit Job Order'}
+          {!approved && (
+            <div style={{ fontSize: 13, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, background: 'hsl(40 90% 97%)', border: '1px solid hsl(35 85% 82%)', color: 'hsl(30 60% 32%)' }}>
+              You can prepare this order now. <b>Submit unlocks once a KTC admin approves your account</b> (upload your valid ID above so they can review you).
+            </div>
+          )}
+
+          <button className="ktc-btn" type="submit" disabled={busy || !approved} style={{ marginTop: 4, opacity: approved ? 1 : 0.6, cursor: approved ? 'pointer' : 'not-allowed' }}>
+            {busy ? 'Submitting…' : approved ? 'Submit Job Order' : 'Submit — pending approval'}
           </button>
         </form>
       </div>
