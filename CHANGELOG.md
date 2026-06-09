@@ -4,6 +4,9 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-09
+- Added Playwright E2E (`e2e/`, `playwright.config.ts`, `test:e2e` scripts). Phase 1 `smoke.spec.ts` (8 tests) — unauthenticated smoke against the deployed site (routing, login render, protected-route redirects, SPA rewrite, Turnstile mounts + submit gated); all passing. Phase 2 `authenticated.spec.ts` (5 `test.fixme`) — ST01 Lanes 2–5, blocked on a CAPTCHA-free auth path (documented in-file).
+
 ### 2026-06-08
 - Added the canonical smoke-test template (`docs/smoke-test-template-canonical.md`) and ST01 portal smoke test (`docs/smoke-test-01-portal.md`) covering auth/CAPTCHA, broker onboarding, consignees/accreditation, job orders, and owner-only staff. Preflight P1–P7 verified PASS; lanes 1–5 are manual.
 

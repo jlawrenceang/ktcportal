@@ -40,6 +40,17 @@ curl -s -X POST "https://mdlnfhyylvapzdubhyic.supabase.co/auth/v1/token?grant_ty
 - Every test action names its owning backend (RPC / table write / storage), expected state change, side effects, and the guardrail it proves.
 - The current portal smoke test is `docs/smoke-test-01-portal.md` (ST01) — auth/CAPTCHA, broker onboarding, consignees/accreditation, job orders, owner-only staff. Its preflight lane (P1–P7) is automatable; lanes 1–5 are manual browser walks.
 
-## Current state of automated testing
+## Automated E2E (Playwright)
 
-There is **no Vitest/Playwright suite yet** — verification is `lint` + `build` + the ST01 preflight (`curl`) + the manual ST01 browser lanes. An automated smoke lane (Playwright against the deployed URL, encoding ST01's lanes) is a future hardening lane; see `docs/obsidian-vault/07-Memory/Pending Items.md`. When that lands, write new workflow coverage there first.
+Headless smoke tests live in `e2e/` (config `playwright.config.ts`). Default target is the deployed site; override with `BASE_URL`.
+
+```sh
+npm run test:e2e                                   # against portal.ktcterminal.com
+BASE_URL=http://localhost:4173 npm run test:e2e    # against a local `npm run preview`
+npm run test:e2e:ui                                # interactive
+```
+
+- **`e2e/smoke.spec.ts` — Phase 1, active (8 tests).** Unauthenticated smoke: routing, login render, protected-route redirects, SPA rewrite, Turnstile mounts + submit gated. Runs without completing a login, so the server-side CAPTCHA does not block it. This is the automated counterpart to ST01's no-auth checks.
+- **`e2e/authenticated.spec.ts` — Phase 2, `test.fixme` (5 tests).** ST01 Lanes 2–5. Blocked until a CAPTCHA-free auth path exists (dedicated test Supabase project, or service-role session minting) — see the file header. Do NOT disable prod CAPTCHA to run tests.
+
+There is no Vitest unit suite. When adding coverage for a new workflow, write the Playwright smoke first. See `docs/obsidian-vault/07-Memory/Pending Items.md` for the Phase 2 unblock decision.

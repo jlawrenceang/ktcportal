@@ -30,7 +30,7 @@ type: system
 - `npm run dev` — Vite dev server
 - `npm run build` — `tsc && vite build`
 - `npm run lint` — `tsc --noEmit`
-- No Vitest/Playwright suite yet (future hardening lane)
+- `npm run test:e2e` — Playwright E2E (`e2e/`); Phase 1 unauth smoke active (8 tests), Phase 2 auth flows `test.fixme`. No Vitest unit suite.
 
 ## Notes
 

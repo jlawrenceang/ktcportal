@@ -23,7 +23,9 @@ Detailed backlog. For sequencing, see [[Roadmap]].
 ## Go-live hardening (LATER)
 
 - [ ] Resend SMTP — broker email confirmation + password reset. Needs SPF/DKIM/MX on `ktcterminal.com` and Supabase SMTP config.
-- [ ] Automated smoke tests (Playwright vs deployed URL).
+- [x] Automated smoke tests — Playwright Phase 1 (`e2e/smoke.spec.ts`, 8 tests) passing vs the deployed URL.
+- [ ] **Playwright Phase 2** (authenticated flows, ST01 Lanes 2–5) — decide the CAPTCHA-free auth path: (A) dedicated test Supabase project with CAPTCHA off / Turnstile test keys, or (B) service-role session minting in CI. Then implement per-role storageState fixtures. See `e2e/authenticated.spec.ts`.
+- [ ] Wire Phase 1 Playwright into CI (GitHub Actions) once a workflow exists.
 - [ ] Process the 2,488 imported consignees through accreditation over time.
 - [ ] Public launch (remove access restriction).
 

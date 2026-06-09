@@ -17,7 +17,7 @@ last_updated: 2026-06-07
 | Storage buckets | `valid-ids` (broker IDs) + consignee 2303 docs |
 | Routes | broker (`/`, `/job-order`, `/accreditation`, `/job-orders`) + admin (`/admin`, `/admin/approvals`, `/admin/brokers`, `/admin/consignees`, `/admin/job-orders`, `/admin/settings`) + `/login` |
 | ADRs | **6** (`docs/adr/` — 0001–0006, all Accepted) |
-| Automated tests | 0 (lint + build + manual/`curl` smoke) |
+| Automated tests | **8 Playwright** (Phase 1 unauth smoke, passing) + 5 `test.fixme` (Phase 2, blocked on CAPTCHA-free env). No Vitest unit suite. |
 
 ## Data
 
