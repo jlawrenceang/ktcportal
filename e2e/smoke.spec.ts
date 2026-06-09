@@ -41,13 +41,12 @@ test.describe('KTC portal — unauthenticated smoke', () => {
     await expect(page).toHaveURL(/\/login$/)
   })
 
-  test('can switch to Create account and see the valid-ID upload', async ({ page }) => {
+  test('can switch to Create account (valid ID moved to post-confirmation)', async ({ page }) => {
     await page.goto('/login')
     await page.getByRole('button', { name: 'Create one' }).click()
     await expect(page.getByRole('heading', { name: 'Create account' })).toBeVisible()
     await expect(page.locator('#fullName')).toBeVisible()
-    await expect(page.locator('#validId')).toBeVisible()
-    await expect(page.getByText('Valid ID (image or PDF)')).toBeVisible()
+    await expect(page.locator('#validId')).toHaveCount(0) // ID is uploaded after email confirmation now
   })
 
   test('public Agreement page renders without auth', async ({ page }) => {

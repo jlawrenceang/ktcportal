@@ -52,9 +52,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        // IRR acceptance is recorded on the auth user immediately — works even
-        // when there is no session yet (email confirmation on) and before the
-        // 0011 migration adds the brokers columns.
+        // With email confirmation ON, the confirm link returns the broker to the app.
+        emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+        // Consent is recorded on the auth user immediately — works even when there
+        // is no session yet (email confirmation on). The valid ID + consent columns
+        // are synced after first login (see PendingPanel), since storage/RLS need a session.
         data: {
           full_name: extras?.fullName ?? null,
           irr_version: extras?.irrVersion ?? null,

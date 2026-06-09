@@ -12,7 +12,6 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
-  const [idFile, setIdFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
@@ -64,7 +63,6 @@ export default function Login() {
         ? await signIn(email, password, token)
         : await signUp(email, password, {
             fullName,
-            idFile,
             captchaToken: token,
             // One agreement → record terms acceptance + data-privacy consent together
             termsVersion: AGREEMENT_VERSION,
@@ -78,10 +76,9 @@ export default function Login() {
       return
     }
     if (mode === 'signup') {
-      setNotice('Account created. If email confirmation is on, confirm via email, then sign in.')
+      setNotice('Account created. Check your email to confirm your address, then sign in to upload your valid ID and finish your application.')
       setMode('signin')
       setFullName('')
-      setIdFile(null)
       setAgreedTerms(false)
       setConsentDpa(false)
       return
@@ -123,18 +120,6 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={isSignup ? 'new-password' : 'current-password'} />
           </div>
-
-          {isSignup && (
-            <div style={{ display: 'grid', gap: 6 }}>
-              <label className="ktc-label" htmlFor="validId">Valid ID (image or PDF)</label>
-              <input id="validId" className="ktc-input" type="file" accept="image/*,application/pdf"
-                onChange={(e) => setIdFile(e.target.files?.[0] ?? null)} required
-                style={{ padding: '9px 13px' }} />
-              <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>
-                Uploaded securely; only KTC admins can view it.
-              </span>
-            </div>
-          )}
 
           {isSignup && (
             <div style={{ display: 'grid', gap: 10 }}>

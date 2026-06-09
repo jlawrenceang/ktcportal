@@ -9,6 +9,10 @@ last_updated: 2026-06-07
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
 
+## 2026-06-09 — Email-confirmation registration flow
+
+**Confirm-email ON via Resend.** Registration now collects full name + email + password + 2 consents + CAPTCHA — **no valid ID at sign-up**. Broker confirms via email (Resend from `noreply@ktcterminal.com`; template `docs/email-templates/confirm-signup.html`), then on first login uploads their valid ID in the pending panel (`PendingPanel.tsx`), which also syncs consent columns from metadata. `emailRedirectTo` set. Email is the login identifier (no separate username). Rationale: the `valid-ids` storage policy needs a session, so post-confirmation upload keeps per-user security (no anon uploads). Resend domain `ktcterminal.com` verified + working (right-team API key in `.env.local`). **Still to do (you):** Supabase → Auth → Custom SMTP (Resend), paste the email template, Confirm email = ON, Site/Redirect URLs. See [[Broker Onboarding]].
+
 ## 2026-06-09 — Flow change Phase 1: approval workflow
 
 **Reject-with-reason + suspend (in progress flow overhaul).** `/admin/approvals` now captures a **required reason** when rejecting a broker or accreditation (shown to the broker on the gated panel). `/admin/brokers` can **suspend / reactivate** approved brokers (with reason). New broker status **`suspended`** (auto-gated out via `broker_is_approved()`). Needs migration **`0013_approval_workflow.sql`** applied (decision_reason columns + suspended in the status check). Vercel MCP added (`https://mcp.vercel.com`, pending OAuth). Remaining flow phases: consignee-request, job-order documents, broker edit/cancel, status lifecycle (after smoke test). See [[Roadmap]].
