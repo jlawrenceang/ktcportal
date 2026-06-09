@@ -50,26 +50,27 @@ test.describe('KTC portal — unauthenticated smoke', () => {
     await expect(page.getByText('Valid ID (image or PDF)')).toBeVisible()
   })
 
-  test('public legal pages (IRR, Terms, Privacy) render without auth', async ({ page }) => {
-    const cases: [string, RegExp][] = [
-      ['/irr', /Implementing Rules and Regulations/i],
-      ['/terms', /Terms and Conditions/i],
-      ['/privacy', /Privacy Notice/i],
-    ]
-    for (const [path, heading] of cases) {
-      const res = await page.goto(path)
-      expect(res?.status()).toBe(200)
-      await expect(page).toHaveURL(new RegExp(`${path}$`)) // public — not redirected to /login
-      await expect(page.getByRole('heading', { name: heading }).first()).toBeVisible()
+  test('public Agreement page renders without auth', async ({ page }) => {
+    const res = await page.goto('/agreement')
+    expect(res?.status()).toBe(200)
+    await expect(page).toHaveURL(/\/agreement$/) // public — not redirected to /login
+    await expect(page.getByRole('heading', { name: /KTC Broker Agreement/i }).first()).toBeVisible()
+  })
+
+  test('old legal routes redirect to /agreement', async ({ page }) => {
+    for (const path of ['/irr', '/terms', '/privacy']) {
+      await page.goto(path)
+      await expect(page).toHaveURL(/\/agreement$/)
     }
   })
 
-  test('registration requires Terms/IRR agreement and data-privacy consent', async ({ page }) => {
+  test('registration shows the inline agreement + Terms and DPA consent ticks', async ({ page }) => {
     await page.goto('/login')
     await page.getByRole('button', { name: 'Create one' }).click()
-    await expect(page.getByRole('checkbox')).toHaveCount(2)
-    await expect(page.getByRole('link', { name: /Terms & Conditions/i }).first()).toBeVisible()
-    await expect(page.getByRole('link', { name: /Privacy Notice/i }).first()).toBeVisible()
+    await expect(page.getByRole('checkbox')).toHaveCount(2) // Terms + DPA consent
+    await expect(page.getByRole('link', { name: /View full/i })).toBeVisible() // opens /agreement
+    await expect(page.getByText(/KTC Broker Agreement/i).first()).toBeVisible() // inline doc
+    await expect(page.getByText(/Data Privacy Act/i).first()).toBeVisible()
   })
 
   test('login enforces CAPTCHA: Turnstile mounts and the submit is gated', async ({ page }) => {

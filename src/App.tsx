@@ -5,9 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import { useBroker } from './lib/useBroker'
 import { hasAdminAccess } from './lib/types'
 import Login from './pages/Login'
-import Irr from './pages/Irr'
-import Terms from './pages/Terms'
-import Privacy from './pages/Privacy'
+import Agreement from './pages/Agreement'
 import Home from './pages/Home'
 import JobOrder from './pages/JobOrder'
 import Accreditation from './pages/Accreditation'
@@ -52,10 +50,12 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          {/* Public — readable before registering and linked from the registration consents */}
-          <Route path="/irr" element={<Irr />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
+          {/* Public — readable before registering and linked from the registration consent */}
+          <Route path="/agreement" element={<Agreement />} />
+          {/* Old split docs now folded into the one agreement */}
+          <Route path="/irr" element={<Navigate to="/agreement" replace />} />
+          <Route path="/terms" element={<Navigate to="/agreement" replace />} />
+          <Route path="/privacy" element={<Navigate to="/agreement" replace />} />
 
           {/* Broker portal */}
           <Route path="/" element={<Protected><RoleLanding /></Protected>} />

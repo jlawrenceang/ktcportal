@@ -64,4 +64,10 @@ Chosen option: **Option A**. The IRR content lives in `src/content/broker-irr.md
 * `src/content/broker-irr.md` · `src/content/irr.ts` · `src/pages/Irr.tsx`
 * `src/pages/Login.tsx` (acceptance checkbox) · `src/lib/AuthContext.tsx` (records acceptance)
 * `supabase/migrations/0011_broker_irr_acceptance.sql`
-* `docs/obsidian-vault/05-Concepts/Broker IRR.md`
+* `docs/obsidian-vault/05-Concepts/Broker Agreement.md`
+
+---
+
+## Current-State Addendum (2026-06-09)
+
+The standalone IRR document/page/route was **folded into the single KTC Broker Agreement** by [ADR-0011](0011-consolidate-legal-docs-into-one-broker-agreement.md). The acceptance-recording mechanism here (auth metadata + `brokers` columns, migration `0011`) still stands — IRR/terms acceptance is now captured under the Agreement's "Terms & Conditions" tick. `/irr` redirects to `/agreement`.

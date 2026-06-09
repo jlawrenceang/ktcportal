@@ -76,6 +76,12 @@ function renderMarkdown(md: string): ReactNode[] {
   return blocks
 }
 
+// Just the rendered document body (no page chrome) — reusable inside an inline
+// scroll box (e.g. the registration consent) as well as the full-page view.
+export function MarkdownBody({ body }: { body: string }) {
+  return <>{renderMarkdown(body)}</>
+}
+
 export default function MarkdownDoc({ body }: { body: string }) {
   const navigate = useNavigate()
   return (
@@ -85,7 +91,7 @@ export default function MarkdownDoc({ body }: { body: string }) {
         <button className="ktc-link" onClick={() => navigate(-1)}>← Back</button>
       </header>
       <div className="ktc-glass" style={{ padding: '32px 34px' }}>
-        {renderMarkdown(body)}
+        <MarkdownBody body={body} />
       </div>
     </div>
   )

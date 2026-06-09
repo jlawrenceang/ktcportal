@@ -67,4 +67,10 @@ Chosen option: **Option A**. Two public pages were added — `/terms` and `/priv
 * `src/components/MarkdownDoc.tsx` · `src/pages/Terms.tsx` · `src/pages/Privacy.tsx`
 * `src/pages/Login.tsx` (two consent checkboxes) · `src/lib/AuthContext.tsx`
 * `supabase/migrations/0012_broker_consents.sql`
-* `docs/obsidian-vault/05-Concepts/Data Privacy and Consents.md`
+* `docs/obsidian-vault/05-Concepts/Broker Agreement.md`
+
+---
+
+## Current-State Addendum (2026-06-09)
+
+The separate Terms and Privacy Notice documents were **consolidated into one KTC Broker Agreement** by [ADR-0011](0011-consolidate-legal-docs-into-one-broker-agreement.md). The **two-consent structure stands** (Terms tick + a separate DPA-consent tick) and so does the recording mechanism (auth metadata + `brokers` `terms_*` / `privacy_consent_*`, migration `0012`) — both ticks now reference the one Agreement document, shown inline (scrollable) at registration with a "View full" link to `/agreement`. `/terms` and `/privacy` redirect to `/agreement`.

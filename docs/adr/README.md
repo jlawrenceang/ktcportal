@@ -21,6 +21,7 @@ ADRs in this folder preserve decision history for the KTC broker portal.
 | [0008](0008-broker-irr-acceptance-at-registration.md) | Require broker IRR acceptance at registration | Accepted | 2026-06-09 | Workflow \| Security |
 | [0009](0009-terms-and-data-privacy-consent-at-registration.md) | Add Terms & Conditions and Data Privacy Act consent at registration | Accepted | 2026-06-09 | Security \| Workflow |
 | [0010](0010-e2e-auth-via-test-project-and-service-role-minting.md) | Test authenticated flows via an isolated project + service-role session minting | Accepted | 2026-06-09 | Workflow \| Security |
+| [0011](0011-consolidate-legal-docs-into-one-broker-agreement.md) | Consolidate the legal docs into one Broker Agreement (Terms + NDA + DPA) | Accepted | 2026-06-09 | Workflow \| Security |
 
 ## Governance
 

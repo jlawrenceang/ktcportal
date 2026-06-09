@@ -43,8 +43,7 @@ Rule of thumb: if you are asking *"what is the rule?"* open `docs/agent/*`. If y
 - [[Owner Failsafe]]
 - [[CAPTCHA Bot Protection]]
 - [[RLS Posture]]
-- [[Broker IRR]]
-- [[Data Privacy and Consents]]
+- [[Broker Agreement]]
 - [[visionOS Design System]]
 
 ## Documentation governance

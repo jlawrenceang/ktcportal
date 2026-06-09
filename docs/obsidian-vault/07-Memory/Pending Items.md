@@ -20,9 +20,9 @@ Detailed backlog. For sequencing, see [[Roadmap]].
 
 ## Legal docs / consents (NEXT)
 
-- [ ] KTC + counsel to finalize the templates: `broker-irr.md`, `terms-and-conditions.md`, `privacy-notice.md` — fees, penalties, dates, **DPO contact**, retention periods, venue, legal citations. Confirm **NPC registration** obligations. Bump the relevant `*_VERSION` on material change.
-- [ ] Enforce re-acceptance / re-consent when a `*_VERSION` changes for already-registered brokers (compare stored vs current on login).
-- [ ] Surface IRR/Terms/Privacy consent version + timestamp in the admin Brokers/Approvals view.
+- [ ] KTC + counsel to finalize the **one** template `src/content/broker-agreement.md` — DPO contact, retention periods, venue, fees, penalties, legal citations; confirm **NPC registration** obligations. Bump `AGREEMENT_VERSION` on material change.
+- [ ] Enforce re-acceptance when `AGREEMENT_VERSION` changes for already-registered brokers (compare stored vs current on login).
+- [ ] Surface the consent version + timestamp in the admin Brokers/Approvals view.
 
 ## Admin / processing (NEXT)
 
