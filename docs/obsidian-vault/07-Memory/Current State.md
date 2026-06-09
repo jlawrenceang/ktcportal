@@ -9,6 +9,10 @@ last_updated: 2026-06-07
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
 
+## 2026-06-09 — Flow change Phase 1: approval workflow
+
+**Reject-with-reason + suspend (in progress flow overhaul).** `/admin/approvals` now captures a **required reason** when rejecting a broker or accreditation (shown to the broker on the gated panel). `/admin/brokers` can **suspend / reactivate** approved brokers (with reason). New broker status **`suspended`** (auto-gated out via `broker_is_approved()`). Needs migration **`0013_approval_workflow.sql`** applied (decision_reason columns + suspended in the status check). Vercel MCP added (`https://mcp.vercel.com`, pending OAuth). Remaining flow phases: consignee-request, job-order documents, broker edit/cancel, status lifecycle (after smoke test). See [[Roadmap]].
+
 ## 2026-06-09 — Legal docs consolidated into one Broker Agreement
 
 **Consolidated (ADR-0011, supersedes the structure of the two entries below).** The Broker IRR + Terms & Conditions + Privacy Notice are fused into a single **KTC Broker Agreement** (`src/content/broker-agreement.md`), centered on **confidentiality/NDA** and the **Data Privacy Act (R.A. 10173)**, at the public `/agreement` route (old `/irr` `/terms` `/privacy` redirect there). Registration shows the Agreement **inline in a scrollable box** with a **"View full ↗"** link, and **two required ticks** below: (1) Terms & Conditions, (2) DPA consent. Acceptance recorded as before (`terms_*` + `privacy_consent_*`, migration `0012`). See [[Broker Agreement]].

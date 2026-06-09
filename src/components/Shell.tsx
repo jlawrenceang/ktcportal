@@ -35,14 +35,23 @@ export default function Shell({ children }: { children: ReactNode }) {
       {gated ? (
         <div className="ktc-glass" style={{ padding: 28 }}>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>
-            {broker!.status === 'rejected' ? 'Account not approved' : 'Account pending approval'}
+            {broker!.status === 'rejected' ? 'Account not approved'
+              : broker!.status === 'suspended' ? 'Account suspended'
+              : 'Account pending approval'}
           </h1>
           <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6 }}>
             {broker!.status === 'rejected'
-              ? 'Your account application was not approved. Please contact KTC for details.'
+              ? 'Your account application was not approved.'
+              : broker!.status === 'suspended'
+              ? 'Your account has been suspended. Please contact KTC for assistance.'
               : 'Thanks for registering. A KTC admin is reviewing your account and valid ID. ' +
                 "You'll be able to submit job orders once approved."}
           </p>
+          {(broker!.status === 'rejected' || broker!.status === 'suspended') && broker!.decision_reason && (
+            <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, background: 'hsl(0 70% 97%)', border: '1px solid hsl(0 60% 90%)' }}>
+              <b>Reason:</b> {broker!.decision_reason}
+            </p>
+          )}
         </div>
       ) : (
         <>

@@ -8,7 +8,7 @@ export interface Consignee {
   doc_2303_path: string | null
 }
 
-export type BrokerStatus = 'pending' | 'approved' | 'rejected'
+export type BrokerStatus = 'pending' | 'approved' | 'rejected' | 'suspended'
 
 export interface Broker {
   id: string
@@ -21,6 +21,7 @@ export interface Broker {
   valid_id_path: string | null
   status: BrokerStatus
   decided_at: string | null
+  decision_reason: string | null
   is_admin: boolean
   is_owner: boolean
   irr_version: string | null
