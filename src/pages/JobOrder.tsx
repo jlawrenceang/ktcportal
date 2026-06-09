@@ -29,6 +29,7 @@ export default function JobOrder() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [createdJo, setCreatedJo] = useState<string | null>(null)
+  const [createdHeld, setCreatedHeld] = useState(false)
 
   // Debounced server-side search (the master list has thousands of rows, past
   // the 1000-row select cap — so we query as the broker types).
@@ -76,16 +77,13 @@ export default function JobOrder() {
   }
 
   const approved = broker?.status === 'approved'
+  const hasId = !!broker?.valid_id_path
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
     if (!broker) {
       setError('Broker profile not found.')
-      return
-    }
-    if (!approved) {
-      setError('Your account is pending admin approval — you can prepare this order, but you can only submit it once approved.')
       return
     }
     if (!consigneeId) {
@@ -104,6 +102,9 @@ export default function JobOrder() {
         broker_id: broker.id,
         consignee_id: consigneeId,
         entry_number: entryNumber.trim() || null,
+        // Pending brokers file as 'held' (released to the admin queue on approval);
+        // approved brokers go straight to 'submitted'. Enforced by RLS either way.
+        status: approved ? 'submitted' : 'held',
       })
       .select('id, jo_number')
       .single()
@@ -126,6 +127,7 @@ export default function JobOrder() {
       return
     }
     setCreatedJo((jo as { jo_number: string }).jo_number)
+    setCreatedHeld(!approved)
     clearConsignee()
     setEntryNumber('')
     setLines([emptyLine()])
@@ -150,7 +152,15 @@ export default function JobOrder() {
               fontSize: 14,
             }}
           >
-            ✅ Job Order <b>{createdJo}</b> submitted.
+            ✅ Job Order <b>{createdJo}</b> {createdHeld ? 'filed.' : 'submitted.'}
+            {createdHeld && (
+              <div style={{ marginTop: 4, fontSize: 13 }}>
+                It’s <b>held — it can’t be processed until you pass final verification.</b>{' '}
+                {hasId
+                  ? 'Your valid ID is on file; a KTC admin will verify your account, then it’s sent automatically.'
+                  : 'Upload your valid ID for final verification (banner above) so KTC can process your job orders.'}
+              </div>
+            )}
           </div>
         )}
 
@@ -296,12 +306,15 @@ export default function JobOrder() {
 
           {!approved && (
             <div style={{ fontSize: 13, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, background: 'hsl(40 90% 97%)', border: '1px solid hsl(35 85% 82%)', color: 'hsl(30 60% 32%)' }}>
-              You can prepare this order now. <b>Submit unlocks once a KTC admin approves your account</b> (upload your valid ID above so they can review you).
+              You can file job orders now, but they <b>can’t be processed until you pass final verification</b>.{' '}
+              {hasId
+                ? 'Your valid ID is on file — a KTC admin is verifying your account. Once approved, your held orders are sent to KTC automatically.'
+                : 'Upload your valid ID for final verification (banner above); once a KTC admin approves you, your held orders are sent automatically.'}
             </div>
           )}
 
-          <button className="ktc-btn" type="submit" disabled={busy || !approved} style={{ marginTop: 4, opacity: approved ? 1 : 0.6, cursor: approved ? 'pointer' : 'not-allowed' }}>
-            {busy ? 'Submitting…' : approved ? 'Submit Job Order' : 'Submit — pending approval'}
+          <button className="ktc-btn" type="submit" disabled={busy} style={{ marginTop: 4 }}>
+            {busy ? (approved ? 'Submitting…' : 'Filing…') : approved ? 'Submit Job Order' : 'File Job Order'}
           </button>
         </form>
       </div>

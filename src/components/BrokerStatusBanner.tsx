@@ -56,16 +56,16 @@ export default function BrokerStatusBanner({ broker }: { broker: Broker }) {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'hsl(35 90% 90%)', color: 'hsl(30 80% 35%)', letterSpacing: '0.02em' }}>
-          PENDING APPROVAL
+          PENDING FINAL VERIFICATION
         </span>
         <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em' }}>
-          {needsId ? 'Upload your valid ID to finish your application' : 'Your account is awaiting admin review'}
+          {needsId ? 'Upload your valid ID to get verified' : 'Your account is awaiting admin verification'}
         </h2>
       </div>
       <p className="ktc-label" style={{ marginTop: 8, marginBottom: 0, lineHeight: 1.6, fontSize: 13 }}>
         {needsId
-          ? 'You can browse consignees and prepare a job order now — but you can only submit it once a KTC admin reviews your valid ID and approves your account. Upload it below to get reviewed.'
-          : 'Thanks — your valid ID is on file. A KTC admin is reviewing your account. You can prepare job orders now; the Submit button unlocks once you’re approved, and we’ll email you.'}
+          ? 'You can already file job orders — they’re held pending verification. To get verified, upload your valid ID below; a KTC admin reviews it, and once approved your held orders are sent to KTC automatically (we’ll email you).'
+          : 'Thanks — your valid ID is on file. A KTC admin is verifying your account. You can keep filing job orders; they’re held until you’re verified, then sent to KTC automatically and we’ll email you.'}
       </p>
 
       {needsId && (

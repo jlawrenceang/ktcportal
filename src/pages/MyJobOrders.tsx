@@ -4,6 +4,14 @@ import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import type { JobOrder } from '../lib/types'
 
+const STATUS_LABEL: Record<string, string> = {
+  held: 'Pending approval',
+  submitted: 'Submitted',
+  processing: 'Processing',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+}
+
 export default function MyJobOrders() {
   const [orders, setOrders] = useState<JobOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,9 +59,14 @@ export default function MyJobOrders() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                   <b style={{ fontSize: 15 }}>{o.jo_number}</b>
                   <span className="ktc-label" style={{ fontSize: 12 }}>
-                    {new Date(o.created_at).toLocaleDateString()} · {o.status}
+                    {new Date(o.created_at).toLocaleDateString()} · {STATUS_LABEL[o.status] ?? o.status}
                   </span>
                 </div>
+                {o.status === 'held' && (
+                  <div style={{ marginTop: 6, fontSize: 12, color: 'hsl(30 60% 38%)' }}>
+                    Can’t be processed until you pass final verification — upload your valid ID, then a KTC admin verifies your account and it’s sent automatically.
+                  </div>
+                )}
                 <div className="ktc-label" style={{ fontSize: 13, marginTop: 4 }}>
                   {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : 'No consignee'}
                   {o.entry_number ? ` · Entry ${o.entry_number}` : ''}

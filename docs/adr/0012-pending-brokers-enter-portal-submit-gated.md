@@ -1,9 +1,11 @@
-# ADR-0012: Let pending brokers into the portal; gate job-order submission on approval
+# ADR-0012: Let pending brokers into the portal; file job orders as held until verified
 
 * Status: Accepted
 * Deciders: KTC project stakeholders (owner)
 * Date: 2026-06-09
 * Category: Workflow | Security
+
+> **Revised 2026-06-09 (same day, pre-rollout):** the first cut blocked Submit for pending brokers (prepare-only, nothing persisted). To avoid a broker filling a long form only to find Submit disabled, the decision was changed to **file-then-hold-then-release**: pending brokers can submit, the order is saved as `held` (hidden from admin), and approving the broker releases all their held orders. The body below reflects the final decision.
 
 ## Context and Problem Statement
 
@@ -24,18 +26,21 @@ Originally (ADR-0001/0005), an un-approved broker was locked out of the entire p
 
 ## Decision Outcome
 
-Chosen option: **Option A**. A confirmed broker with `status='pending'` now lands in the normal portal (Home / New Job Order / My Job Orders / Agreement) with a persistent `BrokerStatusBanner` that carries the valid-ID upload and the consent sync that previously lived in the locked `PendingPanel`. They can fill the whole New Job Order form, but the Submit button is disabled with a "pending approval" message, and — the real enforcement — the **`job_orders` / `job_order_lines` insert policies already require `broker_is_approved()`** (migration `0003`), so a direct API call from a pending broker is denied server-side. `PendingPanel` is now only the locked screen for `rejected` / `suspended` brokers (with the decision reason). On approval the broker gets the welcome email (ADR-pending / migration `0015`) and Submit unlocks.
+Chosen option: **a refinement of Option A — file-then-hold-then-release.** A confirmed broker with `status='pending'` lands in the normal portal (Home / New Job Order / My Job Orders / Agreement) with a persistent `BrokerStatusBanner` that carries the valid-ID upload and the consent sync that previously lived in the locked `PendingPanel`. They can fill **and submit** a job order — it saves successfully as `status='held'` and shows in My Job Orders as "Pending approval"; it is **not** visible to the admin processing queue. When an admin approves the broker, an `AFTER UPDATE OF status` trigger on `brokers` (`release_held_job_orders`) flips all that broker's `held` orders to `submitted`, releasing them into the queue, and the welcome email fires (migration `0015`). `PendingPanel` is now only the locked screen for `rejected` / `suspended` brokers (with the decision reason).
+
+The security boundary is enforced in RLS (migration `0016`): the `job_orders` insert policy allows `broker_id = current_broker_id() AND (broker_is_approved() OR (status='held' AND broker_is_pending()))` — so a pending broker can insert **only** `held` rows, approved brokers file normally, and rejected/suspended brokers can file nothing. Brokers have no `UPDATE` policy on `job_orders`, so a pending broker cannot self-promote a `held` order to `submitted`; only the security-definer release trigger can.
 
 ### Positive Consequences
 
-* Brokers can prepare work and learn the tool immediately after confirming their email — less drop-off.
-* No code change to the security boundary: the approval gate that already protected submission is unchanged; only the UI lock was relaxed.
-* The admin checkpoint is preserved — un-reviewed brokers still cannot push an order into staff's queue.
+* Brokers can do real work immediately after confirming their email — no dead Submit button after filling a long form.
+* The admin checkpoint is preserved — held orders never reach staff's queue until the broker's ID is verified.
+* Release is automatic and atomic on approval; the broker doesn't have to re-submit anything.
 
 ### Negative Consequences / Trade-offs
 
-* Pending brokers can now browse the full consignee master list before approval (minor data exposure; the list is already broad per ADR-0007).
-* Prepared-but-unsubmitted job orders are ephemeral (client-side only) — they are not persisted as drafts, so a pending broker who navigates away loses their in-progress form. Persisting drafts as owned rows is a possible future enhancement.
+* The insert RLS is relaxed from "approved only" to "approved, or pending-as-held" — a wider surface than before, mitigated by the `held`-only constraint, the no-self-promote guarantee (no broker UPDATE policy), and the fact held rows are inert until release.
+* Pending brokers can browse the full consignee master list before approval (minor; already broad per ADR-0007).
+* When the admin job-order processing page is built, it must exclude `status='held'` from the queue (the rows are visible to admin RLS, but should not be processed pre-release).
 
 ## Pros and Cons of Options
 
