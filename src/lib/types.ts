@@ -22,6 +22,7 @@ export interface Broker {
   status: BrokerStatus
   decided_at: string | null
   decision_reason: string | null
+  email_confirmed_at: string | null
   is_admin: boolean
   is_owner: boolean
   irr_version: string | null

@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react'
 // the full Broker type.
 export interface ReviewBroker {
   valid_id_path: string | null
+  email_confirmed_at: string | null
   terms_version: string | null
   terms_accepted_at: string | null
   privacy_consent_version: string | null
@@ -28,9 +29,11 @@ export function BrokerReview({ b }: { b: ReviewBroker }) {
   const neutral = pill('rgba(0,0,0,0.06)', 'hsl(var(--ink-2))')
   const terms = fmtDate(b.terms_accepted_at)
   const dpa = fmtDate(b.privacy_consented_at)
+  const confirmed = fmtDate(b.email_confirmed_at)
   const ver = b.terms_version || b.privacy_consent_version
   return (
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+      <span style={confirmed ? ok : warn}>{confirmed ? `✓ Email confirmed ${confirmed}` : '⚠ Email not confirmed'}</span>
       <span style={b.valid_id_path ? ok : warn}>{b.valid_id_path ? '✓ Valid ID on file' : '⚠ No valid ID'}</span>
       {ver && <span style={neutral}>Agreement {ver}</span>}
       <span style={terms ? ok : warn}>{terms ? `✓ Terms ${terms}` : '⚠ Terms not accepted'}</span>
