@@ -17,7 +17,7 @@ last_updated: 2026-06-07
 | Storage buckets | `valid-ids` (broker IDs) + consignee 2303 docs |
 | Routes | broker (`/`, `/job-order`, `/job-orders`, `/agreement`) + `/accreditation` (notice) + admin (`/admin`, `/admin/approvals`, `/admin/brokers`, `/admin/consignees`, `/admin/job-orders`, `/admin/settings`) + `/login`. Old `/irr` `/terms` `/privacy` redirect → `/agreement`. |
 | ADRs | **11** (`docs/adr/` — 0001–0011, all Accepted) |
-| Automated tests | **10 Playwright** Phase 1 (unauth smoke, passing) + Phase 2 auth harness (6 role/surface + 4 `fixme`, runs when `E2E_*` set — service-role minting, ADR-0010). No Vitest unit suite. |
+| Automated tests | **11 Playwright** Phase 1 (unauth smoke, passing) + Phase 2 auth harness (6 role/surface + 4 `fixme`, runs when `E2E_*` set — service-role minting, ADR-0010). No Vitest unit suite. |
 
 ## Data
 

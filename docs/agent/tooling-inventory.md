@@ -28,7 +28,7 @@ KTC ships no repo-scoped skills, subagents, or conventions yet. Global/host skil
 ## Testing (`e2e/`, Playwright)
 
 - **Playwright** (`@playwright/test`) — headless E2E. Config `playwright.config.ts` (single chromium project; `BASE_URL` env, default `portal.ktcterminal.com`). Chromium installed via `npx playwright install chromium`.
-- `e2e/smoke.spec.ts` — Phase 1 unauthenticated smoke (active, 10 tests). `e2e/authenticated.spec.ts` + `e2e/helpers/session.ts` — Phase 2 authenticated harness (service-role magic-link minting; runs when `E2E_SUPABASE_URL`/`E2E_SERVICE_ROLE_KEY` set, else skips). See `docs/agent/testing-and-release.md`, `e2e/README.md`, ADR-0010.
+- `e2e/smoke.spec.ts` — Phase 1 unauthenticated smoke (active, 11 tests). `e2e/authenticated.spec.ts` + `e2e/helpers/session.ts` — Phase 2 authenticated harness (service-role magic-link minting; runs when `E2E_SUPABASE_URL`/`E2E_SERVICE_ROLE_KEY` set, else skips). See `docs/agent/testing-and-release.md`, `e2e/README.md`, ADR-0010.
 
 ## Build & scripts (`package.json`)
 

@@ -33,7 +33,7 @@ Detailed backlog. For sequencing, see [[Roadmap]].
 ## Go-live hardening (LATER)
 
 - [ ] Resend SMTP — broker email confirmation + password reset. Needs SPF/DKIM/MX on `ktcterminal.com` and Supabase SMTP config.
-- [x] Automated smoke tests — Playwright Phase 1 (`e2e/smoke.spec.ts`, 10 tests) passing vs the deployed URL.
+- [x] Automated smoke tests — Playwright Phase 1 (`e2e/smoke.spec.ts`, 11 tests) passing vs the deployed URL.
 - [x] **Playwright Phase 2 harness built** — `mintSession` (service-role magic link) + role/surface tests in `e2e/authenticated.spec.ts` (ADR-0010). Skips until configured.
 - [ ] **Run Phase 2** — create a dedicated test Supabase project (Option A), apply migrations, disable CAPTCHA / seed accounts, set `E2E_*` env, and implement the 4 mutation `fixme` lanes. See `e2e/README.md`.
 - [ ] Wire Phase 1 Playwright into CI (GitHub Actions) once a workflow exists.
