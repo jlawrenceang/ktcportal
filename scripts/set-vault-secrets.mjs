@@ -13,14 +13,18 @@ import { fileURLToPath } from 'node:url'
 import pg from 'pg'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+// File wins over the ambient environment (a stale RESEND_API_KEY exported in the
+// shell profile must NOT shadow .env.local). First file in the list wins per key.
+const seen = new Set()
 for (const f of ['.env.local', '.env.migrate', '.env']) {
   const p = path.join(root, f)
   if (!existsSync(p)) continue
   for (const line of readFileSync(p, 'utf8').split(/\r?\n/)) {
     const m = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*)\s*$/)
-    if (m && process.env[m[1]] === undefined) {
+    if (m && !seen.has(m[1])) {
       let v = m[2].trim(); if (/^".*"$/.test(v) || /^'.*'$/.test(v)) v = v.slice(1, -1)
       process.env[m[1]] = v
+      seen.add(m[1])
     }
   }
 }
@@ -35,14 +39,18 @@ const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized:
 await client.connect()
 
 async function upsert(name, value) {
-  const ex = await client.query('select id from vault.secrets where name = $1', [name])
-  if (ex.rows.length) {
-    await client.query('select vault.update_secret($1, $2)', [ex.rows[0].id, value])
-    console.log(`updated vault secret '${name}' (${value.length} chars)`)
-  } else {
-    await client.query('select vault.create_secret($1, $2)', [value, name])
-    console.log(`created vault secret '${name}' (${value.length} chars)`)
-  }
+  // Delete-then-create: vault.update_secret can silently leave the stored value
+  // unchanged, so we recreate to guarantee the new value actually lands.
+  await client.query('delete from vault.secrets where name = $1', [name])
+  await client.query('select vault.create_secret($1, $2)', [value, name])
+  // Verify the stored decrypted value matches what we set.
+  const chk = await client.query(
+    'select right(decrypted_secret, 4) as fp from vault.decrypted_secrets where name = $1',
+    [name],
+  )
+  const fp = chk.rows[0]?.fp
+  const ok = fp === value.slice(-4)
+  console.log(`set vault secret '${name}' (${value.length} chars) — stored …${fp} ${ok ? '✓' : '✗ MISMATCH'}`)
 }
 
 try {
