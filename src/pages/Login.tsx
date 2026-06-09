@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type UIEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
@@ -19,6 +19,8 @@ export default function Login() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [agreedTerms, setAgreedTerms] = useState(false) // KTC Broker Agreement — Terms & Conditions + NDA
   const [consentDpa, setConsentDpa] = useState(false) // Data Privacy Act consent
+  const [scrolledAgreement, setScrolledAgreement] = useState(false) // must read to the end to tick
+  const agreementRef = useRef<HTMLDivElement>(null)
   // bumping this remounts the widget, forcing a fresh single-use token
   const [captchaKey, setCaptchaKey] = useState(0)
 
@@ -26,6 +28,18 @@ export default function Login() {
     setCaptchaToken(null)
     setCaptchaKey((k) => k + 1)
   }
+
+  function onAgreementScroll(e: UIEvent<HTMLDivElement>) {
+    const el = e.currentTarget
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) setScrolledAgreement(true)
+  }
+
+  // Reset when leaving signup; if the agreement is too short to scroll, enable immediately.
+  useEffect(() => {
+    if (mode !== 'signup') { setScrolledAgreement(false); return }
+    const el = agreementRef.current
+    if (el && el.scrollHeight <= el.clientHeight + 8) setScrolledAgreement(true)
+  }, [mode])
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -133,6 +147,8 @@ export default function Login() {
                 </Link>
               </div>
               <div
+                ref={agreementRef}
+                onScroll={onAgreementScroll}
                 style={{
                   maxHeight: 200,
                   overflowY: 'auto',
@@ -145,11 +161,17 @@ export default function Login() {
               >
                 <MarkdownBody body={AGREEMENT_BODY} />
               </div>
-              <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.5 }}>
+              {!scrolledAgreement && (
+                <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>
+                  Please scroll to the end of the agreement to enable the checkboxes.
+                </span>
+              )}
+              <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.5, opacity: scrolledAgreement ? 1 : 0.5 }}>
                 <input
                   type="checkbox"
                   checked={agreedTerms}
                   onChange={(e) => setAgreedTerms(e.target.checked)}
+                  disabled={!scrolledAgreement}
                   style={{ marginTop: 2, flex: '0 0 auto' }}
                   required
                 />
@@ -158,11 +180,12 @@ export default function Login() {
                   obligations of the KTC Broker Agreement above.
                 </span>
               </label>
-              <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.5 }}>
+              <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.5, opacity: scrolledAgreement ? 1 : 0.5 }}>
                 <input
                   type="checkbox"
                   checked={consentDpa}
                   onChange={(e) => setConsentDpa(e.target.checked)}
+                  disabled={!scrolledAgreement}
                   style={{ marginTop: 2, flex: '0 0 auto' }}
                   required
                 />
