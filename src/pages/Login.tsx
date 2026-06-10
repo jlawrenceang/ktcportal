@@ -36,13 +36,24 @@ export default function Login() {
 
   async function resendConfirmation() {
     if (!email.trim()) { setError('Enter your email above first, then resend.'); return }
+    // Supabase enforces CAPTCHA on the resend endpoint too; the prior sign-in
+    // attempt consumed the last token, so we need a fresh one (Managed Turnstile
+    // re-issues automatically after resetCaptcha).
+    if (captchaEnabled && !captchaToken) {
+      setError('Please wait a second for the CAPTCHA to refresh, then tap Resend again.')
+      return
+    }
     setBusy(true); setError(null); setNotice(null)
     const { error: rErr } = await supabase.auth.resend({
       type: 'signup',
       email: email.trim(),
-      options: { emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/verify-id` : undefined },
+      options: {
+        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/verify-id` : undefined,
+        ...(captchaToken ? { captchaToken } : {}),
+      },
     })
     setBusy(false)
+    if (captchaEnabled) resetCaptcha() // token is single-use
     if (rErr) { setError(rErr.message); return }
     setShowResend(false)
     setNotice('✓ Confirmation email resent — check your inbox (and spam folder) for the link.')
