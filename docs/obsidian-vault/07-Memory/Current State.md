@@ -2,12 +2,20 @@
 title: Current State
 tags: [memory, current]
 type: memory
-last_updated: 2026-06-07
+last_updated: 2026-06-10
 ---
 
 # 📌 Current State (Runtime-Aligned)
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
+
+## 2026-06-10 — Processing workflow, printable slip, account self-service
+
+**Admin job-order processing is live (ADR-0014, migration `0029`).** The admin Job Orders page advances orders `submitted → processing → completed`, or **on_hold** / **rejected** with a customer-visible `admin_note`. "Approve = start processing." Admin UPDATE policy on `job_orders`; customers still can't self-update. **Printable A6 job-order slip** at `/job-order/:id/print`, styled as a mini KTC Service Invoice (logo/TIN header, JOB ORDER + red JO No., bordered customer block, container/service table with an Amount column ready for prices, signature lines) → browser print / Save-as-PDF; **"ON PROCESS" watermark** for in-progress orders. Available once approved (processing/completed); reachable from admin queue + My Job Orders.
+
+**My Account self-service (ADR-0013, migration `0028`).** `/account` lets a customer edit full name / contact, change email (re-confirm link to the new address), and change password (in-page + reset-by-email). An **approved** customer changing their legal name triggers **re-verification** (→ `pending`, re-upload ID), because the verified name was matched to the now-deleted ID; the protected-fields guard now permits `approved → pending` self-transition.
+
+**Polish:** unified `Notice` component (banner + login bubbles), Back-to-Home/Dashboard buttons + clickable logo on every page, **bulk-paste** containers (uncapped) + file→My-Job-Orders redirect, collapsible My-Job-Orders cards with status badges, square frosted-glass admin dashboard, and a **login lockout** (5 wrong passwords → 60s cooldown). Committed `aeac344`, tag `checkpoint-2026-06-10`, **live** on `portal.ktcterminal.com` (verified bundle).
 
 ## 2026-06-09 — Email-confirmation registration flow
 
@@ -46,21 +54,21 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 - **Auth** — broker email/password registration with valid-ID upload; staff username login; owner failsafe; invite-only staff creation. CAPTCHA enforced. See [[Authentication]].
 - **Brokers** — self-register → `pending` → admin approval → portal access. See [[Brokers]].
 - **Consignees** — admin CRUD, search, pagination (2,488 imported), approval, accreditation (address/TIN/2303). See [[Consignees]].
-- **Job Orders** — broker submission + history; admin processing maturing. See [[Job Orders]].
-- **Administration** — approvals, broker/consignee management, owner-only staff settings. See [[Administration]].
+- **Job Orders** — customer submission + history; **admin processing live** (approve/process · hold · reject w/ note · complete) + printable A6 slip. See [[Job Orders]].
+- **Account** — customer self-service at `/account` (name/contact/email/password; name change → re-verify). See [[Authentication]].
+- **Administration** — approvals, customer/consignee management, square frosted-glass dashboard, owner-only staff settings. See [[Administration]].
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … `0012_broker_consents` (`0011`–`0012` pending apply to the KTC DB; consents recorded in auth metadata until then). RLS enabled; role model via `is_owner`/`is_admin`/`status`.
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0029_admin_job_order_processing`** — **all applied + tracked** in `public._migrations` (runner applies only new files). RLS enabled; role model via `is_owner`/`is_admin`/`status`. Email (Resend) fully wired (confirm + approval + reset).
 
 ## In progress / not yet
 
-- Admin dashboard metrics + job-order processing workflow.
-- Per-broker accredited-consignee scoping.
-- Resend SMTP (email confirmations / password resets).
-- Supabase Auth Site URL / Redirect URLs not yet pointed at the custom domain.
-- Playwright Phase 1 unauth smoke (10 tests, passing); Phase 2 authenticated flows pending a CAPTCHA-free path. No Vitest unit suite.
+- Per-customer accredited-consignee scoping (currently master-list typeahead, ADR-0007).
+- **Pricing on job orders** — the printable slip has an Amount column + totals slot reserved; no price fields in the DB yet.
+- In-progress job-order **drafts**, document attachments, customer edit/cancel of own order.
+- Playwright Phase 1 unauth smoke (11 tests, passing); Phase 2 authenticated flows pending a CAPTCHA-free path. No Vitest unit suite.
 
 ## Immediate priorities
 
-**See [[Roadmap]] for authoritative sequencing.** Summary: (1) manual browser UAT on the live domain; (2) set Supabase Auth URLs; (3) admin job-order processing; (4) Resend SMTP for go-live.
+**See [[Roadmap]] for authoritative sequencing.** Summary: (1) walk **ST02** on the live domain (new flow end-to-end); (2) finalize the Customer Agreement with counsel; (3) decide pricing model for the slip; (4) public launch hardening.

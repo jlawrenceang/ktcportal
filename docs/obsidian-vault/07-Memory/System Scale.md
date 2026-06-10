@@ -2,7 +2,7 @@
 title: System Scale
 tags: [memory, scale, metrics]
 type: memory
-last_updated: 2026-06-07
+last_updated: 2026-06-10
 ---
 
 # 📏 System Scale
@@ -11,12 +11,13 @@ last_updated: 2026-06-07
 
 | Metric | Count |
 |--------|-------|
-| Migrations | **12** (`0001_init` … `0012_broker_consents`; 0011 + 0012 pending apply to KTC DB) |
-| Core tables | 5 (`brokers`, `consignees`, `accreditations`, `job_orders`, `job_order_lines`) |
-| SECURITY DEFINER RPCs | `create_staff` (+ defaults/triggers per migration) |
-| Storage buckets | `valid-ids` (broker IDs) + consignee 2303 docs |
-| Routes | broker (`/`, `/job-order`, `/job-orders`, `/agreement`) + `/accreditation` (notice) + admin (`/admin`, `/admin/approvals`, `/admin/brokers`, `/admin/consignees`, `/admin/job-orders`, `/admin/settings`) + `/login`. Old `/irr` `/terms` `/privacy` redirect → `/agreement`. |
-| ADRs | **11** (`docs/adr/` — 0001–0011, all Accepted) |
+| Migrations | **29** (`0001_init` … `0029_admin_job_order_processing`) — all applied + tracked in `public._migrations` (runner applies only new files) |
+| Core tables | 5 (`customers` [renamed from `brokers`, 0021], `consignees`, `accreditations`, `job_orders`, `job_order_lines`) |
+| Job-order statuses | `held` (unverified, queue-hidden) · `submitted` · `processing` (=approved) · `on_hold` · `completed` · `rejected` · `cancelled` |
+| SECURITY DEFINER RPCs | `create_staff`, `is_admin`, `current_broker_id`, `broker_is_approved/pending`, `enforce_order_caps`, `ensure_jo_number`, `release_held_job_orders`, `guard_broker_protected_fields`, `expire_unverified_brokers`, `send_broker_approved_email` |
+| Storage buckets | `valid-ids` (customer IDs) + consignee 2303 docs |
+| Routes | customer (`/`, `/account`, `/job-order`, `/job-order/:id/print`, `/job-orders`, `/verify-id`, `/agreement`) + auth (`/login`, `/confirmed`, `/forgot-password`, `/reset-password`) + admin (`/admin`, `/admin/approvals`, `/admin/customers`, `/admin/customers/:id`, `/admin/consignees`, `/admin/job-orders`, `/admin/settings`). Old `/irr` `/terms` `/privacy` redirect → `/agreement`. |
+| ADRs | **14** (`docs/adr/` — 0001–0014, all Accepted) |
 | Automated tests | **11 Playwright** Phase 1 (unauth smoke, passing) + Phase 2 auth harness (6 role/surface + 4 `fixme`, runs when `E2E_*` set — service-role minting, ADR-0010). No Vitest unit suite. |
 
 ## Data
@@ -40,7 +41,7 @@ last_updated: 2026-06-07
 
 ## Messaging channels
 
-- ⚠️ Email (Resend SMTP) — deferred to go-live
+- ✅ Email (Resend SMTP, domain `ktcterminal.com`) — confirm-signup, account-approved, password-reset all live
 
 ## Related
 

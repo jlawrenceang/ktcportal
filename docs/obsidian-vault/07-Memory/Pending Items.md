@@ -2,7 +2,7 @@
 title: Pending Items
 tags: [memory, pending, backlog]
 type: memory
-last_updated: 2026-06-07
+last_updated: 2026-06-10
 ---
 
 # 📋 Pending Items
@@ -16,7 +16,7 @@ Detailed backlog. For sequencing, see [[Roadmap]].
 
 ## Apply migrations
 
-- [x] **All migrations 0001–0013 applied + verified** (2026-06-09). `DATABASE_URL` (session pooler) now lives in the gitignored `.env.local`, so future KTC migrations apply directly via `node scripts/run-migrations.mjs` (idempotent). 0013 verified: `decision_reason` on brokers+accreditations, `suspended` in the status check.
+- [x] **All migrations 0001–0029 applied + tracked** (latest 2026-06-10). `DATABASE_URL` (session pooler) lives in gitignored `.env.local`; `node scripts/run-migrations.mjs` records each in `public._migrations` and applies only new files. Latest: `0028` (reverify on name change), `0029` (admin JO processing: `on_hold`/`rejected` statuses + `admin_note` + admin UPDATE policy).
 
 ## Legal docs / consents (NEXT)
 
@@ -24,11 +24,15 @@ Detailed backlog. For sequencing, see [[Roadmap]].
 - [ ] Enforce re-acceptance when `AGREEMENT_VERSION` changes for already-registered brokers (compare stored vs current on login).
 - [x] Surface the consent version + timestamp in the admin Approvals view (valid-ID + Terms/DPA badges on each broker card). *(Brokers list could get the same treatment later.)*
 
-## Admin / processing (NEXT)
+## Admin / processing
 
-- [ ] `/admin/job-orders` — status workflow + decisions (process/complete/reject).
-- [ ] `/admin` dashboard — live metrics (pending brokers, pending consignees, open job orders).
-- [ ] Per-broker accredited-consignee scoping — restrict job-order targets to a broker's accredited consignees.
+- [x] **`/admin/job-orders` status workflow + decisions** (approve→processing / complete / hold-for-info / reject-with-note) — ADR-0014, migration `0029` (2026-06-10).
+- [x] **`/admin` dashboard metrics** — live counts (pending accounts/accreditations/consignees, customers, consignees, job orders) on square frosted-glass tiles.
+- [x] **Printable job-order slip** — A6 invoice-style at `/job-order/:id/print`, ON PROCESS watermark (2026-06-10).
+- [x] **My Account self-service** — `/account` (name/contact/email/password; approved name change → re-verify), migration `0028`.
+- [ ] **Pricing on job orders** — add rate/amount fields + totals; the printable slip already reserves the Amount column + totals slot.
+- [ ] Per-customer accredited-consignee scoping — restrict job-order targets to a customer's accredited consignees.
+- [ ] Job-order draft persistence; document attachments; customer edit/cancel of own order.
 
 ## Go-live hardening (LATER)
 
