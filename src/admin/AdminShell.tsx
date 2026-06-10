@@ -19,8 +19,9 @@ export default function AdminShell({ children }: { children: ReactNode }) {
   const { broker } = useBroker()
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const current = CRUMBS[pathname] ?? ''
   const isDashboard = pathname === '/admin'
+  const isCustomerDetail = pathname.startsWith('/admin/customers/')
+  const current = CRUMBS[pathname] ?? (isCustomerDetail ? 'Customer' : '')
 
   async function handleSignOut() {
     await signOut()
@@ -57,6 +58,12 @@ export default function AdminShell({ children }: { children: ReactNode }) {
           <>
             <Link to="/admin" className="ktc-link">Dashboard</Link>
             <span style={{ color: 'hsl(var(--ink-2))', opacity: 0.5 }}>›</span>
+            {isCustomerDetail && (
+              <>
+                <Link to="/admin/customers" className="ktc-link">Customers</Link>
+                <span style={{ color: 'hsl(var(--ink-2))', opacity: 0.5 }}>›</span>
+              </>
+            )}
             <span style={{ fontWeight: 600 }}>{current}</span>
           </>
         )}

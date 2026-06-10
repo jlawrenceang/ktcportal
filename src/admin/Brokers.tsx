@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react'
+import { Link } from 'react-router-dom'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import type { Broker } from '../lib/types'
@@ -84,7 +85,7 @@ export default function Brokers() {
                         {b.customer_code && (
                           <span style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12, fontWeight: 600, color: 'hsl(var(--ink-2))' }}>{b.customer_code}</span>
                         )}
-                        <b>{b.full_name || b.email || 'Unknown'}</b>
+                        <Link to={`/admin/customers/${b.id}`} className="ktc-link" style={{ fontWeight: 600, color: 'inherit' }}>{b.full_name || b.email || 'Unknown'}</Link>
                         <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{b.status}</span>
                       </div>
                       <div className="ktc-label" style={{ fontSize: 13 }}>

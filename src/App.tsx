@@ -16,6 +16,7 @@ import AdminRoute from './admin/AdminRoute'
 import Dashboard from './admin/Dashboard'
 import Approvals from './admin/Approvals'
 import Brokers from './admin/Brokers'
+import CustomerDetail from './admin/CustomerDetail'
 import Consignees from './admin/Consignees'
 import AllJobOrders from './admin/AllJobOrders'
 import Settings from './admin/Settings'
@@ -71,6 +72,7 @@ export default function App() {
           <Route path="/admin" element={<Admin><Dashboard /></Admin>} />
           <Route path="/admin/approvals" element={<Admin><Approvals /></Admin>} />
           <Route path="/admin/customers" element={<Admin><Brokers /></Admin>} />
+          <Route path="/admin/customers/:id" element={<Admin><CustomerDetail /></Admin>} />
           <Route path="/admin/consignees" element={<Admin><Consignees /></Admin>} />
           <Route path="/admin/job-orders" element={<Admin><AllJobOrders /></Admin>} />
           <Route path="/admin/settings" element={<Admin><Settings /></Admin>} />
