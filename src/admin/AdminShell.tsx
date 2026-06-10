@@ -1,21 +1,26 @@
 import type { ReactNode } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 
-const adminLinks = [
-  { to: '/admin', label: 'Dashboard', end: true },
-  { to: '/admin/approvals', label: 'Approvals' },
-  { to: '/admin/customers', label: 'Customers' },
-  { to: '/admin/consignees', label: 'Consignees' },
-  { to: '/admin/job-orders', label: 'Job Orders' },
-  { to: '/admin/settings', label: 'Settings' },
-]
+// Path → breadcrumb label. The Dashboard cards are the primary navigation; this
+// just shows where you are and links back to the Dashboard.
+const CRUMBS: Record<string, string> = {
+  '/admin': 'Dashboard',
+  '/admin/approvals': 'Approvals',
+  '/admin/customers': 'Customers',
+  '/admin/consignees': 'Consignees',
+  '/admin/job-orders': 'Job Orders',
+  '/admin/settings': 'Settings',
+}
 
 export default function AdminShell({ children }: { children: ReactNode }) {
   const { signOut } = useAuth()
   const { broker } = useBroker()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const current = CRUMBS[pathname] ?? ''
+  const isDashboard = pathname === '/admin'
 
   async function handleSignOut() {
     await signOut()
@@ -45,22 +50,16 @@ export default function AdminShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <nav style={{ display: 'flex', gap: 8, marginBottom: 22, flexWrap: 'wrap' }}>
-        {adminLinks.map((l) => (
-          <NavLink
-            key={l.to}
-            to={l.to}
-            end={l.end}
-            style={({ isActive }) => ({
-              padding: '7px 14px', borderRadius: 999, fontSize: 13, fontWeight: 500, textDecoration: 'none',
-              color: isActive ? '#fff' : 'hsl(var(--ink-2))',
-              background: isActive ? 'linear-gradient(135deg, var(--acc), var(--acc-2))' : 'rgba(255,255,255,0.6)',
-              border: '1px solid var(--glass-brd)',
-            })}
-          >
-            {l.label}
-          </NavLink>
-        ))}
+      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 14 }}>
+        {isDashboard ? (
+          <span style={{ fontWeight: 600 }}>Dashboard</span>
+        ) : (
+          <>
+            <Link to="/admin" className="ktc-link">Dashboard</Link>
+            <span style={{ color: 'hsl(var(--ink-2))', opacity: 0.5 }}>›</span>
+            <span style={{ fontWeight: 600 }}>{current}</span>
+          </>
+        )}
       </nav>
       {children}
     </div>
