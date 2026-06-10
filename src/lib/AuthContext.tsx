@@ -4,6 +4,7 @@ import { supabase } from './supabase'
 
 interface SignUpExtras {
   fullName?: string
+  contactNumber?: string
   idFile?: File | null
   captchaToken?: string
   irrVersion?: string
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // are synced after first login (see PendingPanel), since storage/RLS need a session.
         data: {
           full_name: extras?.fullName ?? null,
+          contact_number: extras?.contactNumber ?? null,
           irr_version: extras?.irrVersion ?? null,
           irr_accepted_at: extras?.irrVersion ? acceptedAt : null,
           terms_version: extras?.termsVersion ?? null,
@@ -77,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // brokers update silently no-ops if the 0011 columns aren't applied yet.
     if (data.session && data.user) {
       const updates: Record<string, unknown> = {}
+      if (extras?.contactNumber) updates.contact_number = extras.contactNumber
       if (extras?.idFile) {
         const ext = extras.idFile.name.split('.').pop()?.toLowerCase() || 'dat'
         const path = `${data.user.id}/valid-id.${ext}`

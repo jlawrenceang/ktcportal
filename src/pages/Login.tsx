@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
 import { AGREEMENT_VERSION, AGREEMENT_VERSION_LABEL, AGREEMENT_BODY } from '../content/legal'
+import { APP_VERSION } from '../version'
 import { MarkdownBody } from '../components/MarkdownDoc'
 
 export default function Login() {
@@ -12,6 +13,7 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
+  const [contactNumber, setContactNumber] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
@@ -71,6 +73,7 @@ export default function Login() {
         ? await signIn(email, password, token)
         : await signUp(email, password, {
             fullName,
+            contactNumber,
             captchaToken: token,
             // One agreement → record terms acceptance + data-privacy consent together
             termsVersion: AGREEMENT_VERSION,
@@ -87,6 +90,7 @@ export default function Login() {
       setNotice('Account created. Check your email to confirm your address, then sign in to upload your valid ID and finish your application.')
       setMode('signin')
       setFullName('')
+      setContactNumber('')
       setAgreedTerms(false)
       setConsentDpa(false)
       return
@@ -113,6 +117,15 @@ export default function Login() {
               <label className="ktc-label" htmlFor="fullName">Full name</label>
               <input id="fullName" className="ktc-input" type="text" required value={fullName}
                 onChange={(e) => setFullName(e.target.value)} autoComplete="name" />
+            </div>
+          )}
+
+          {isSignup && (
+            <div style={{ display: 'grid', gap: 6 }}>
+              <label className="ktc-label" htmlFor="contactNumber">Contact number</label>
+              <input id="contactNumber" className="ktc-input" type="tel" required value={contactNumber}
+                onChange={(e) => setContactNumber(e.target.value)} autoComplete="tel"
+                placeholder="e.g. 0917 123 4567" />
             </div>
           )}
 
@@ -214,8 +227,8 @@ export default function Login() {
           </button>
         </p>
 
-        <p className="ktc-label" style={{ marginTop: 14, fontSize: 12, opacity: 0.85 }}>
-          <Link to="/agreement" className="ktc-link">KTC Customer Agreement</Link>
+        <p className="ktc-label" style={{ marginTop: 14, fontSize: 12, opacity: 0.7, textAlign: 'center' }}>
+          KTC Online Portal {APP_VERSION} · © {new Date().getFullYear()} KTC Container Terminal Corp.
         </p>
       </div>
     </div>

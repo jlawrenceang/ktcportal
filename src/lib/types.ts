@@ -18,6 +18,7 @@ export interface Broker {
   company_name: string | null
   full_name: string | null
   email: string | null
+  contact_number: string | null
   valid_id_path: string | null
   status: BrokerStatus
   decided_at: string | null
