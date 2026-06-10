@@ -23,6 +23,7 @@ export default function Login() {
   const [consentDpa, setConsentDpa] = useState(false) // Data Privacy Act consent
   const [scrolledAgreement, setScrolledAgreement] = useState(false) // must read to the end to tick
   const agreementRef = useRef<HTMLDivElement>(null)
+  const modalAgreementRef = useRef<HTMLDivElement>(null)
   // bumping this remounts the widget, forcing a fresh single-use token
   const [captchaKey, setCaptchaKey] = useState(0)
 
@@ -35,6 +36,14 @@ export default function Login() {
     const el = e.currentTarget
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) setScrolledAgreement(true)
   }
+
+  // Reading the agreement in the modal also satisfies the scroll-to-agree gate.
+  // If it's short enough not to scroll, unlock as soon as it's opened.
+  useEffect(() => {
+    if (!showAgreement) return
+    const el = modalAgreementRef.current
+    if (el && el.scrollHeight <= el.clientHeight + 8) setScrolledAgreement(true)
+  }, [showAgreement])
 
   // Surface an inactivity sign-out (set by the broker portal's idle timeout).
   useEffect(() => {
@@ -251,7 +260,7 @@ export default function Login() {
                 ✕
               </button>
             </div>
-            <div style={{ overflowY: 'auto', padding: '16px 20px', fontSize: 13 }}>
+            <div ref={modalAgreementRef} onScroll={onAgreementScroll} style={{ overflowY: 'auto', padding: '16px 20px', fontSize: 13 }}>
               <MarkdownBody body={AGREEMENT_BODY} />
             </div>
           </div>
