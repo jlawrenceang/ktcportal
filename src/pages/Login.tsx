@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type UIEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
 import { AGREEMENT_VERSION, AGREEMENT_VERSION_LABEL, AGREEMENT_BODY } from '../content/legal'
@@ -14,6 +14,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [contactNumber, setContactNumber] = useState('')
+  const [showAgreement, setShowAgreement] = useState(false) // full-agreement modal
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
@@ -148,9 +149,10 @@ export default function Login() {
                 <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>
                   KTC Customer Agreement ({AGREEMENT_VERSION_LABEL})
                 </span>
-                <Link to="/agreement" target="_blank" className="ktc-link" style={{ fontSize: 12 }}>
+                <button type="button" className="ktc-link" onClick={() => setShowAgreement(true)}
+                  style={{ fontSize: 12, border: 0, background: 'none', cursor: 'pointer', padding: 0 }}>
                   View full ↗
-                </Link>
+                </button>
               </div>
               <div
                 ref={agreementRef}
@@ -231,6 +233,30 @@ export default function Login() {
           KTC Online Portal {APP_VERSION} · © {new Date().getFullYear()} KTC Container Terminal Corp.
         </p>
       </div>
+
+      {showAgreement && (
+        <div
+          onClick={() => setShowAgreement(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 24 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="ktc-glass"
+            style={{ maxWidth: 640, width: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--glass-brd)' }}>
+              <span style={{ fontWeight: 600, fontSize: 15 }}>KTC Customer Agreement ({AGREEMENT_VERSION_LABEL})</span>
+              <button type="button" aria-label="Close" onClick={() => setShowAgreement(false)}
+                style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))' }}>
+                ✕
+              </button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: '16px 20px', fontSize: 13 }}>
+              <MarkdownBody body={AGREEMENT_BODY} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
