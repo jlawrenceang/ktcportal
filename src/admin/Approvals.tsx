@@ -108,12 +108,21 @@ export default function Approvals() {
 
   function resetReject() { setRejectId(null); setRejectReason('') }
 
-  async function decideBroker(id: string, status: 'approved' | 'rejected' | 'suspended', reason?: string) {
+  async function decideBroker(id: string, status: 'approved' | 'rejected' | 'suspended', reason?: string, path?: string | null) {
     setActing(id); setError(null)
-    const { error } = await supabase.from('customers').update({
+    // On a final decision (approve/suspend) the ID has been reviewed — delete it
+    // (DPA data-minimisation). Only clear valid_id_path if the file actually deleted.
+    let clearId = false
+    if ((status === 'approved' || status === 'suspended') && path) {
+      const { error: rmErr } = await supabase.storage.from('valid-ids').remove([path])
+      if (!rmErr) clearId = true
+    }
+    const patch: Record<string, unknown> = {
       status, decided_at: new Date().toISOString(),
       decision_reason: (status === 'rejected' || status === 'suspended') ? (reason?.trim() || null) : null,
-    }).eq('id', id)
+    }
+    if (clearId) patch.valid_id_path = null
+    const { error } = await supabase.from('customers').update(patch).eq('id', id)
     setActing(null)
     if (error) return setError(error.message)
     resetReject()
@@ -136,6 +145,12 @@ export default function Approvals() {
     if (error || !data) return setError(error?.message ?? 'Could not open ID.')
     window.open(data.signedUrl, '_blank', 'noopener')
   }
+  async function downloadId(path: string | null | undefined) {
+    if (!path) return
+    const { data, error } = await supabase.storage.from('valid-ids').createSignedUrl(path, 60, { download: true })
+    if (error || !data) return setError(error?.message ?? 'Could not download ID.')
+    window.open(data.signedUrl, '_blank', 'noopener')
+  }
 
   return (
     <AdminShell>
@@ -154,11 +169,12 @@ export default function Approvals() {
                   subtitle={`${b.email ?? ''}${b.contact_number ? ` · ${b.contact_number}` : ''}${b.customer_id ? ` · #${b.customer_id}` : ''}`}
                   extra={<BrokerReview b={b} />}
                   onViewId={b.valid_id_path ? () => viewId(b.valid_id_path) : undefined}
-                  busy={acting === b.id} onApprove={() => decideBroker(b.id, 'approved')}
+                  onDownloadId={b.valid_id_path ? () => downloadId(b.valid_id_path) : undefined}
+                  busy={acting === b.id} onApprove={() => decideBroker(b.id, 'approved', undefined, b.valid_id_path)}
                   onReject={() => { setRejectId(b.id); setRejectReason('') }} />
                 {rejectId === b.id && (
                   <RejectChoices busy={acting === b.id} note={rejectReason} onNote={setRejectReason}
-                    onChoose={(status, reason) => decideBroker(b.id, status, reason)} onCancel={resetReject} />
+                    onChoose={(status, reason) => decideBroker(b.id, status, reason, b.valid_id_path)} onCancel={resetReject} />
                 )}
               </div>
             ))}

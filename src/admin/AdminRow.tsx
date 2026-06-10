@@ -5,6 +5,7 @@ interface Props {
   subtitle: string
   extra?: ReactNode
   onViewId?: () => void
+  onDownloadId?: () => void
   busy: boolean
   onApprove: () => void
   onReject: () => void
@@ -26,9 +27,12 @@ export function AdminRow(props: Props) {
         <div className="ktc-label" style={{ fontSize: 13 }}>{props.subtitle}</div>
         {props.extra}
         {props.onViewId && (
-          <button className="ktc-link" style={{ fontSize: 12, marginTop: 2 }} onClick={props.onViewId}>
-            View valid ID
-          </button>
+          <div style={{ display: 'flex', gap: 12, marginTop: 2 }}>
+            <button className="ktc-link" style={{ fontSize: 12 }} onClick={props.onViewId}>View valid ID</button>
+            {props.onDownloadId && (
+              <button className="ktc-link" style={{ fontSize: 12 }} onClick={props.onDownloadId}>Download</button>
+            )}
+          </div>
         )}
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
