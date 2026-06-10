@@ -111,8 +111,7 @@ export default function Login() {
     if (res.error) {
       // Friendlier message for the unconfirmed-email case + offer to resend.
       if (mode === 'signin' && /not confirmed|confirm/i.test(res.error)) {
-        setError('Please confirm your email first — check your inbox (and spam folder) for the confirmation link.')
-        setShowResend(true)
+        setShowResend(true) // the top banner shows the message + resend button
       } else {
         setError(res.error)
       }
@@ -137,8 +136,22 @@ export default function Login() {
       <div className="ktc-glass" style={{ width: '100%', maxWidth: 440, padding: '36px 36px 32px' }}>
         <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 64, marginBottom: 20 }} />
         {notice && (
-          <div style={{ marginBottom: 18, padding: '12px 14px', borderRadius: 12, background: 'hsl(150 55% 95%)', border: '1px solid hsl(150 45% 80%)', color: 'hsl(150 55% 26%)', fontSize: 13, lineHeight: 1.55, fontWeight: 500 }}>
+          <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: 12, background: 'hsl(150 55% 95%)', border: '1px solid hsl(150 45% 80%)', color: 'hsl(150 55% 26%)', fontSize: 13, lineHeight: 1.55, fontWeight: 500 }}>
             {notice}
+          </div>
+        )}
+        {error && (
+          <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: 12, background: 'hsl(0 75% 96%)', border: '1px solid hsl(0 70% 85%)', color: 'hsl(0 65% 42%)', fontSize: 13, lineHeight: 1.55, fontWeight: 500 }}>
+            {error}
+          </div>
+        )}
+        {showResend && (
+          <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: 12, background: 'hsl(40 95% 94%)', border: '1px solid hsl(40 85% 78%)', color: 'hsl(30 75% 32%)', fontSize: 13, lineHeight: 1.55, display: 'grid', gap: 10 }}>
+            <span style={{ fontWeight: 500 }}>Please confirm your email first — check your inbox (and spam folder) for the confirmation link.</span>
+            <button type="button" disabled={busy} onClick={() => void resendConfirmation()}
+              style={{ justifySelf: 'start', border: 0, borderRadius: 9, padding: '7px 14px', fontWeight: 600, fontSize: 13, cursor: 'pointer', color: '#fff', background: 'linear-gradient(135deg, var(--acc), var(--acc-2))' }}>
+              {busy ? 'Resending…' : 'Resend confirmation email'}
+            </button>
           </div>
         )}
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em' }}>
@@ -254,18 +267,10 @@ export default function Login() {
             />
           )}
 
-          {error && <div style={{ color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
 
           <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken) || (isSignup && (!agreedTerms || !consentDpa))} style={{ marginTop: 6 }}>
             {busy ? 'Please wait…' : isSignup ? 'Sign up' : 'Sign in'}
           </button>
-
-          {showResend && !isSignup && (
-            <button type="button" className="ktc-link" disabled={busy} onClick={() => void resendConfirmation()}
-              style={{ fontSize: 13, border: 0, background: 'none', cursor: 'pointer', justifySelf: 'center' }}>
-              Resend confirmation email
-            </button>
-          )}
         </form>
 
         <p className="ktc-label" style={{ marginTop: 18, fontSize: 13 }}>
