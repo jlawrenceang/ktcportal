@@ -163,6 +163,16 @@ export default function Login() {
                   View full ↗
                 </button>
               </div>
+              <div style={{
+                fontSize: 12, fontWeight: 600, padding: '8px 12px', borderRadius: 8,
+                background: scrolledAgreement ? 'hsl(150 50% 94%)' : 'hsl(40 95% 90%)',
+                color: scrolledAgreement ? 'hsl(150 55% 28%)' : 'hsl(30 80% 34%)',
+                border: `1px solid ${scrolledAgreement ? 'hsl(150 45% 78%)' : 'hsl(40 85% 75%)'}`,
+              }}>
+                {scrolledAgreement
+                  ? '✓ Thanks for reading — you can now tick the consent boxes below.'
+                  : '↓ Please scroll to the end of the agreement to enable the consent checkboxes.'}
+              </div>
               <div
                 ref={agreementRef}
                 onScroll={onAgreementScroll}
@@ -178,11 +188,6 @@ export default function Login() {
               >
                 <MarkdownBody body={AGREEMENT_BODY} />
               </div>
-              {!scrolledAgreement && (
-                <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>
-                  Please scroll to the end of the agreement to enable the checkboxes.
-                </span>
-              )}
               <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.5, opacity: scrolledAgreement ? 1 : 0.5 }}>
                 <input
                   type="checkbox"
@@ -259,6 +264,16 @@ export default function Login() {
                 style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))' }}>
                 ✕
               </button>
+            </div>
+            <div style={{
+              fontSize: 12, fontWeight: 600, padding: '10px 20px',
+              background: scrolledAgreement ? 'hsl(150 50% 94%)' : 'hsl(40 95% 90%)',
+              color: scrolledAgreement ? 'hsl(150 55% 28%)' : 'hsl(30 80% 34%)',
+              borderBottom: `1px solid ${scrolledAgreement ? 'hsl(150 45% 80%)' : 'hsl(40 85% 78%)'}`,
+            }}>
+              {scrolledAgreement
+                ? '✓ Thanks for reading — you can now tick the consent boxes below.'
+                : '↓ Please scroll to the end to enable the consent checkboxes.'}
             </div>
             <div ref={modalAgreementRef} onScroll={onAgreementScroll} style={{ overflowY: 'auto', padding: '16px 20px', fontSize: 13 }}>
               <MarkdownBody body={AGREEMENT_BODY} />
