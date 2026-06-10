@@ -17,6 +17,14 @@ export default function Settings() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
+  // Pricing (service rates + flat fees + VAT) — admin-editable, read-only to others.
+  type Rate = { service: string; rate: number; unit: string; vatable: boolean; active: boolean }
+  type Setting = { key: string; value: number; label: string | null }
+  const [rates, setRates] = useState<Rate[]>([])
+  const [settings, setSettings] = useState<Setting[]>([])
+  const [pricingBusy, setPricingBusy] = useState(false)
+  const [pricingMsg, setPricingMsg] = useState<string | null>(null)
+
   async function load() {
     const { data, error } = await supabase
       .from('customers')
@@ -29,6 +37,32 @@ export default function Settings() {
     setLoading(false)
   }
   useEffect(() => { void load() }, [])
+
+  async function loadPricing() {
+    const [{ data: r }, { data: s }] = await Promise.all([
+      supabase.from('service_rates').select('service, rate, unit, vatable, active').order('service'),
+      supabase.from('pricing_settings').select('key, value, label').order('key'),
+    ])
+    setRates((r ?? []) as Rate[])
+    setSettings((s ?? []) as Setting[])
+  }
+  useEffect(() => { void loadPricing() }, [])
+
+  function setRateVal(service: string, rate: number) {
+    setRates((rs) => rs.map((x) => (x.service === service ? { ...x, rate } : x)))
+  }
+  function setSettingVal(key: string, value: number) {
+    setSettings((ss) => ss.map((x) => (x.key === key ? { ...x, value } : x)))
+  }
+  async function savePricing() {
+    setPricingBusy(true); setPricingMsg(null)
+    const updatedAt = new Date().toISOString()
+    const { error: e1 } = await supabase.from('service_rates').upsert(rates.map((r) => ({ ...r, updated_at: updatedAt })), { onConflict: 'service' })
+    const { error: e2 } = await supabase.from('pricing_settings').upsert(settings.map((s) => ({ ...s, updated_at: updatedAt })), { onConflict: 'key' })
+    setPricingBusy(false)
+    if (e1 || e2) { setPricingMsg((e1 || e2)!.message); return }
+    setPricingMsg('✓ Pricing saved.')
+  }
 
   async function createStaff(e: FormEvent) {
     e.preventDefault()
@@ -120,6 +154,50 @@ export default function Settings() {
 
         {notice && <div className="ktc-label" style={{ marginTop: 10, fontSize: 13 }}>{notice}</div>}
         {error && <div style={{ marginTop: 10, color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
+      </div>
+
+      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>Service rates &amp; fees</h2>
+        <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
+          Used for the online-payment computation (the official Service Invoice + receipt come from the ERP). Amounts in ₱. Editable by admins.
+        </p>
+
+        <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
+          {rates.map((r) => (
+            <div key={r.service} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{r.service}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
+                <input className="ktc-input" type="number" step="0.01" min="0" value={r.rate}
+                  onChange={(e) => setRateVal(r.service, Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
+                <span className="ktc-label" style={{ fontSize: 11, width: 86 }}>{r.unit.replace('per_', '/ ')}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ height: 1, background: 'hsl(var(--line-soft))', margin: '16px 0' }} />
+
+        <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
+          {settings.map((s) => (
+            <div key={s.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{s.label || s.key}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className="ktc-label" style={{ fontSize: 12 }}>{s.key === 'vat_rate' ? '×' : '₱'}</span>
+                <input className="ktc-input" type="number" step={s.key === 'vat_rate' ? '0.01' : '0.01'} min="0" value={s.value}
+                  onChange={(e) => setSettingVal(s.key, Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
+                {s.key === 'vat_rate' && <span className="ktc-label" style={{ fontSize: 11, width: 86 }}>= {(s.value * 100).toFixed(0)}%</span>}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
+          <button className="ktc-btn" type="button" disabled={pricingBusy} onClick={() => void savePricing()} style={{ width: 'auto', padding: '10px 20px' }}>
+            {pricingBusy ? 'Saving…' : 'Save pricing'}
+          </button>
+          {pricingMsg && <span className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600 }}>{pricingMsg}</span>}
+        </div>
       </div>
 
       <div className="ktc-glass" style={{ padding: 28 }}>
