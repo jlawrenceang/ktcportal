@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import type { JobOrder } from '../lib/types'
 
 interface AdminJobOrder extends JobOrder {
-  broker?: { full_name: string | null; email: string | null } | null
+  broker?: { full_name: string | null; email: string | null; contact_number: string | null } | null
 }
 
 function one<T>(v: T | T[] | null | undefined): T | null {
@@ -30,7 +30,26 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 }
 
 const SELECT =
-  'id, jo_number, entry_number, status, admin_note, created_at, broker:customers(full_name, email), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)'
+  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)'
+
+// Plain-text status message for chat apps (Viber / SMS / Messenger). Composed
+// per order; staff send it from their own device via the share buttons.
+function chatMessage(o: AdminJobOrder): string {
+  const name = (o.broker?.full_name || '').split(' ')[0] || 'there'
+  const jo = o.jo_number ?? 'your job order'
+  const status = STATUS_LABEL[o.status] ?? o.status
+  const lines = [
+    `Hi ${name}! This is KTC Container Terminal regarding job order ${jo}.`,
+    `Status: ${status}.`,
+  ]
+  if (o.admin_note && (o.status === 'on_hold' || o.status === 'rejected')) lines.push(`Note from KTC: ${o.admin_note}`)
+  if (o.status === 'on_hold') lines.push('Please open the portal to update the order and resubmit it.')
+  if (o.status === 'rejected' && o.rejected_recoverable !== false) lines.push('You can fix and resubmit the same order from the portal.')
+  if (o.status === 'completed') lines.push('Your order is complete — you can print the slip from the portal.')
+  lines.push('Track it here: https://portal.ktcterminal.com/job-orders')
+  lines.push('Thank you!')
+  return lines.join('\n')
+}
 
 const btn = (variant: 'solid' | 'ghost' | 'danger'): CSSProperties => ({
   border: variant === 'ghost' ? '1px solid var(--glass-brd)' : 0,
@@ -51,6 +70,10 @@ export default function AllJobOrders() {
   // Note prompt for hold / reject (the note is shown to the customer).
   const [modal, setModal] = useState<{ id: string; jo: string; target: 'on_hold' | 'rejected' } | null>(null)
   const [note, setNote] = useState('')
+  const [recoverable, setRecoverable] = useState(true) // reject: allow fix & resubmit
+  // Chat status-message generator (Viber / SMS / copy-paste).
+  const [msgOrder, setMsgOrder] = useState<AdminJobOrder | null>(null)
+  const [copied, setCopied] = useState(false)
 
   function load() {
     return supabase
@@ -71,10 +94,11 @@ export default function AllJobOrders() {
 
   useEffect(() => { void load() }, [])
 
-  async function apply(id: string, status: string, adminNote?: string | null) {
+  async function apply(id: string, status: string, adminNote?: string | null, rejectedRecoverable?: boolean) {
     setBusyId(id)
     const patch: Record<string, unknown> = { status }
     if (adminNote !== undefined) patch.admin_note = adminNote
+    if (rejectedRecoverable !== undefined) patch.rejected_recoverable = rejectedRecoverable
     const { error } = await supabase.from('job_orders').update(patch).eq('id', id)
     if (error) { setBusyId(null); alert(error.message); return }
     await load()
@@ -84,6 +108,7 @@ export default function AllJobOrders() {
   function openNote(o: AdminJobOrder, target: 'on_hold' | 'rejected') {
     setModal({ id: o.id, jo: o.jo_number ?? '—', target })
     setNote(o.admin_note ?? '')
+    setRecoverable(true)
   }
 
   async function confirmNote() {
@@ -91,8 +116,17 @@ export default function AllJobOrders() {
     if (!note.trim()) { alert('Please add a note for the customer.'); return }
     const id = modal.id, target = modal.target
     setModal(null)
-    await apply(id, target, note.trim())
+    await apply(id, target, note.trim(), target === 'rejected' ? recoverable : undefined)
     setNote('')
+  }
+
+  async function copyMessage() {
+    if (!msgOrder) return
+    try {
+      await navigator.clipboard.writeText(chatMessage(msgOrder))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch { /* clipboard unavailable — text is selectable in the box */ }
   }
 
   return (
@@ -133,6 +167,12 @@ export default function AllJobOrders() {
                   {o.admin_note && (o.status === 'on_hold' || o.status === 'rejected') && (
                     <div style={{ marginTop: 10, fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'hsl(40 90% 96%)', border: '1px solid hsl(35 85% 84%)', color: 'hsl(30 60% 32%)' }}>
                       <b>Note to customer:</b> {o.admin_note}
+                      {o.status === 'rejected' && o.rejected_recoverable === false && <> · <b>terminal</b> (customer can’t resubmit)</>}
+                    </div>
+                  )}
+                  {o.customer_note && (
+                    <div style={{ marginTop: 8, fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'hsl(210 60% 96%)', border: '1px solid hsl(210 55% 86%)', color: 'hsl(210 55% 32%)' }}>
+                      <b>Customer reply:</b> {o.customer_note}
                     </div>
                   )}
 
@@ -153,6 +193,9 @@ export default function AllJobOrders() {
                     {printable && (
                       <Link to={`/job-order/${o.id}/print`} target="_blank" style={{ ...btn('ghost'), textDecoration: 'none' }}>Print slip ↗</Link>
                     )}
+                    <button style={btn('ghost')} onClick={() => { setMsgOrder(o); setCopied(false) }} title="Compose a status message for Viber / SMS / Messenger">
+                      💬 Message
+                    </button>
                   </div>
                 </div>
               )
@@ -180,12 +223,71 @@ export default function AllJobOrders() {
               placeholder={modal.target === 'on_hold' ? 'e.g. Please confirm the entry number — it doesn’t match the consignee.' : 'e.g. Duplicate of JO-000123.'}
               style={{ marginTop: 12, resize: 'vertical', minHeight: 90 }}
             />
+            {modal.target === 'rejected' && (
+              <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 12, fontSize: 13, lineHeight: 1.5, cursor: 'pointer' }}>
+                <input type="checkbox" checked={recoverable} onChange={(e) => setRecoverable(e.target.checked)} style={{ marginTop: 2 }} />
+                <span className="ktc-label" style={{ fontSize: 13 }}>
+                  Allow the customer to <b>fix &amp; resubmit</b> this order (untick to close it permanently — they’d have to file a new one)
+                </span>
+              </label>
+            )}
             <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
               <button style={btn(modal.target === 'rejected' ? 'danger' : 'solid')} onClick={() => void confirmNote()}>
                 {modal.target === 'on_hold' ? 'Put on hold' : 'Reject order'}
               </button>
               <button type="button" className="ktc-link" onClick={() => setModal(null)}>Cancel</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat status-message generator: composes the message; staff send it via
+          their own Viber/SMS. Messenger has no prefill — use Copy, then paste. */}
+      {msgOrder && (
+        <div className="ktc-modal-backdrop" onClick={() => setMsgOrder(null)}>
+          <div className="ktc-glass-thick ktc-modal-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: '100%', padding: 24 }}>
+            <h2 style={{ margin: 0, fontSize: 17, fontWeight: 650 }}>
+              Status message · <span className="ktc-mono">{msgOrder.jo_number ?? '—'}</span>
+            </h2>
+            <p className="ktc-label" style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.5 }}>
+              To {msgOrder.broker?.full_name || msgOrder.broker?.email || 'customer'}
+              {msgOrder.broker?.contact_number ? <> · <span className="ktc-mono">{msgOrder.broker.contact_number}</span></> : ' · no contact number on file'}
+            </p>
+            <textarea
+              className="ktc-input"
+              readOnly
+              value={chatMessage(msgOrder)}
+              rows={8}
+              onFocus={(e) => e.currentTarget.select()}
+              style={{ marginTop: 10, resize: 'vertical', fontSize: 13, lineHeight: 1.55 }}
+            />
+            <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+              <button className="ktc-btn ktc-btn--sm" type="button" onClick={() => void copyMessage()}>
+                {copied ? '✓ Copied' : 'Copy message'}
+              </button>
+              <a
+                className="ktc-btn-secondary ktc-btn--sm"
+                href={`viber://forward?text=${encodeURIComponent(chatMessage(msgOrder))}`}
+                style={{ textDecoration: 'none' }}
+                title="Opens Viber's forward screen — pick the customer's chat"
+              >
+                Send via Viber
+              </a>
+              {msgOrder.broker?.contact_number && (
+                <a
+                  className="ktc-btn-secondary ktc-btn--sm"
+                  href={`sms:${msgOrder.broker.contact_number.replace(/[^+0-9]/g, '')}?body=${encodeURIComponent(chatMessage(msgOrder))}`}
+                  style={{ textDecoration: 'none' }}
+                  title="Opens your SMS app with the message pre-filled (mobile)"
+                >
+                  SMS
+                </a>
+              )}
+              <button type="button" className="ktc-link" onClick={() => setMsgOrder(null)} style={{ marginLeft: 'auto' }}>Close</button>
+            </div>
+            <p className="ktc-label" style={{ marginTop: 10, fontSize: 11.5, opacity: 0.8, lineHeight: 1.5 }}>
+              Messenger doesn’t allow pre-filled messages — use Copy, then paste into the chat. Viber/SMS buttons work on devices with those apps installed.
+            </p>
           </div>
         </div>
       )}

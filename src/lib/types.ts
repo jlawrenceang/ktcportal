@@ -59,6 +59,8 @@ export interface JobOrder {
   status: string
   created_at: string
   admin_note: string | null
+  customer_note?: string | null
+  rejected_recoverable?: boolean
   consignee?: Consignee | null
   lines?: JobOrderLine[]
 }

@@ -43,11 +43,11 @@ last_updated: 2026-06-11
 - **Approve & process** (admin) → `submitted` / `on_hold` → `processing`. ✅
 - **Mark completed** (admin) → `processing` → `completed`. ✅
 - **Hold for info** (admin, +note) → `submitted` / `processing` → `on_hold`. ✅
-- **Reject** (admin, +note) → `submitted` / `processing` / `on_hold` → `rejected`. ✅
-- **Resubmit / refile** (customer or admin) → `rejected` → `submitted`. 🔸 to build — admin decides **recoverable (resubmit/update)** vs **refile** (#6/#7).
-- **Respond to hold** (customer) → `on_hold` → `submitted`. ❓ path to define.
-- **Edit** (customer) → content change, state unchanged. 🔸 to build (#8).
-- **Cancel** (customer) → → `cancelled`. 🔸 to build (#8).
+- **Reject** (admin, +note) → `submitted` / `processing` / `on_hold` → `rejected`. ✅ Admin picks **recoverable** (default) vs **terminal** at reject time (`rejected_recoverable`, migration `0034`).
+- **Resubmit after reject** (customer) → `rejected` → `submitted`. ✅ (`resubmit_rejected` RPC; only when recoverable; re-checks the open-order cap; optional customer note.)
+- **Respond to hold** (customer) → `on_hold` → `submitted`. ✅ (`respond_to_hold` RPC; required reply note shown to admin as **Customer reply**; can correct the entry number.)
+- **Edit** (customer) → content change, state unchanged. 🔸 deferred — only the entry-number fix inside respond-to-hold exists; full edit ties to serving numbers (#8).
+- **Cancel** (customer) → `held` / `submitted` / `on_hold` → `cancelled`. ✅ (`cancel_job_order` RPC + confirm UI; not once `processing` — contact admin.)
 
 ## D. Numbering & priority
 
@@ -72,12 +72,12 @@ last_updated: 2026-06-11
 
 ## G. Open decisions to close before final build (❓)
 
-1. `on_hold` → customer response/update path.
-2. `rejected` recovery: resubmit/update vs refile (admin's call) — recoverable vs terminal.
-3. Edit/cancel own order UX + the serving-number effects above.
+1. ~~`on_hold` → customer response/update path~~ ✅ built (`0034`).
+2. ~~`rejected` recovery: recoverable vs terminal~~ ✅ built (`0034`, admin's call at reject time).
+3. ~~Cancel own order~~ ✅ built; full **edit** still deferred (serving-number effects, #8).
 4. Admin/employee **filing surface + JO-Processing tile**; possible **employee role**.
-5. Payment build + `service_invoice_no` + paid state; bank details/QR values.
-6. **Notifications** (emails on JO + payment status changes) — deferred until this lifecycle is final.
+5. Payment build + `service_invoice_no` + paid state; bank details/QR values — see [[Payment & Cashier Handoff (proposal)]] (parked for ops audit).
+6. ~~Notifications~~ ✅ lean set built (`0034`): emails on **`on_hold` + `rejected` only** (action-required; Resend-quota-friendly); completed/processing are in-app (auto-poll). Plus an admin **chat status-message generator** (Copy / Viber / SMS) per JO.
 7. Go-live: finalize Customer Agreement (counsel, bump `AGREEMENT_VERSION`), run **ST02** on live, public-launch hardening.
 
 ## Related
