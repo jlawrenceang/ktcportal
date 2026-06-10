@@ -58,4 +58,5 @@ The core transaction: an approved broker submits a Job Order requesting terminal
 
 - [[Brokers]] · [[Consignees]] · [[Administration]]
 - [[Job Order Submission]] — workflow
+- [[Job Order Lifecycle]] — **full state/transition/numbering source of truth (finalize before final build)**
 - ADR-0001, ADR-0005, ADR-0012 (held lifecycle), ADR-0014 (processing + printable slip)
