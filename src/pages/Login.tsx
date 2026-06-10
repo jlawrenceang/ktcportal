@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type UIEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
@@ -8,7 +8,7 @@ import { APP_VERSION } from '../version'
 import { MarkdownBody } from '../components/MarkdownDoc'
 
 export default function Login() {
-  const { signIn, signUp } = useAuth()
+  const { signIn, signUp, session } = useAuth()
   const navigate = useNavigate()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
@@ -141,6 +141,10 @@ export default function Login() {
   }
 
   const isSignup = mode === 'signup'
+
+  // Already signed in → don't show the login page; send to the role landing (/).
+  if (session) return <Navigate to="/" replace />
+
 
   return (
     <div style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24 }}>
