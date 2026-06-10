@@ -97,7 +97,7 @@ export default function Login() {
       return
     }
     if (mode === 'signup') {
-      setNotice('Account created. Check your email to confirm your address, then sign in to upload your valid ID and finish your application.')
+      setNotice('✓ Account created! We’ve emailed a confirmation link to your address. Please confirm your email, then log in again here to continue.')
       setMode('signin')
       setFullName('')
       setContactNumber('')
@@ -114,6 +114,11 @@ export default function Login() {
     <div style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24 }}>
       <div className="ktc-glass" style={{ width: '100%', maxWidth: 440, padding: '36px 36px 32px' }}>
         <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 64, marginBottom: 20 }} />
+        {notice && (
+          <div style={{ marginBottom: 18, padding: '12px 14px', borderRadius: 12, background: 'hsl(150 55% 95%)', border: '1px solid hsl(150 45% 80%)', color: 'hsl(150 55% 26%)', fontSize: 13, lineHeight: 1.55, fontWeight: 500 }}>
+            {notice}
+          </div>
+        )}
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em' }}>
           {isSignup ? 'Create account' : 'Sign in'}
         </h1>
@@ -228,7 +233,6 @@ export default function Login() {
           )}
 
           {error && <div style={{ color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
-          {notice && <div className="ktc-label" style={{ fontSize: 13 }}>{notice}</div>}
 
           <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken) || (isSignup && (!agreedTerms || !consentDpa))} style={{ marginTop: 6 }}>
             {busy ? 'Please wait…' : isSignup ? 'Sign up' : 'Sign in'}
