@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type UIEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
+import { supabase } from '../lib/supabase'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
 import { AGREEMENT_VERSION, AGREEMENT_VERSION_LABEL, AGREEMENT_BODY } from '../content/legal'
 import { APP_VERSION } from '../version'
@@ -15,6 +16,7 @@ export default function Login() {
   const [fullName, setFullName] = useState('')
   const [contactNumber, setContactNumber] = useState('')
   const [showAgreement, setShowAgreement] = useState(false) // full-agreement modal
+  const [showResend, setShowResend] = useState(false) // offer to resend confirmation after an unconfirmed-email login
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
@@ -30,6 +32,20 @@ export default function Login() {
   function resetCaptcha() {
     setCaptchaToken(null)
     setCaptchaKey((k) => k + 1)
+  }
+
+  async function resendConfirmation() {
+    if (!email.trim()) { setError('Enter your email above first, then resend.'); return }
+    setBusy(true); setError(null); setNotice(null)
+    const { error: rErr } = await supabase.auth.resend({
+      type: 'signup',
+      email: email.trim(),
+      options: { emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/verify-id` : undefined },
+    })
+    setBusy(false)
+    if (rErr) { setError(rErr.message); return }
+    setShowResend(false)
+    setNotice('✓ Confirmation email resent — check your inbox (and spam folder) for the link.')
   }
 
   function onAgreementScroll(e: UIEvent<HTMLDivElement>) {
@@ -93,7 +109,13 @@ export default function Login() {
     // tokens are single-use — always reset after an attempt
     if (captchaEnabled) resetCaptcha()
     if (res.error) {
-      setError(res.error)
+      // Friendlier message for the unconfirmed-email case + offer to resend.
+      if (mode === 'signin' && /not confirmed|confirm/i.test(res.error)) {
+        setError('Please confirm your email first — check your inbox (and spam folder) for the confirmation link.')
+        setShowResend(true)
+      } else {
+        setError(res.error)
+      }
       return
     }
     if (mode === 'signup') {
@@ -237,12 +259,19 @@ export default function Login() {
           <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken) || (isSignup && (!agreedTerms || !consentDpa))} style={{ marginTop: 6 }}>
             {busy ? 'Please wait…' : isSignup ? 'Sign up' : 'Sign in'}
           </button>
+
+          {showResend && !isSignup && (
+            <button type="button" className="ktc-link" disabled={busy} onClick={() => void resendConfirmation()}
+              style={{ fontSize: 13, border: 0, background: 'none', cursor: 'pointer', justifySelf: 'center' }}>
+              Resend confirmation email
+            </button>
+          )}
         </form>
 
         <p className="ktc-label" style={{ marginTop: 18, fontSize: 13 }}>
           {isSignup ? 'Already have an account? ' : "Don't have an account? "}
           <button className="ktc-link" type="button"
-            onClick={() => { setMode(isSignup ? 'signin' : 'signup'); setError(null); setNotice(null); resetCaptcha(); setAgreedTerms(false); setConsentDpa(false) }}>
+            onClick={() => { setMode(isSignup ? 'signin' : 'signup'); setError(null); setNotice(null); setShowResend(false); resetCaptcha(); setAgreedTerms(false); setConsentDpa(false) }}>
             {isSignup ? 'Sign in' : 'Create one'}
           </button>
         </p>
