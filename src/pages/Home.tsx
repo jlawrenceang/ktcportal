@@ -17,7 +17,7 @@ export default function Home() {
     <Shell>
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>
-          Welcome{session?.user.email ? `, ${session.user.email}` : ''}
+          Welcome{broker?.full_name ? `, ${broker.full_name}` : session?.user.email ? `, ${session.user.email}` : ''}
         </h1>
         {broker?.customer_code && (
           <p className="ktc-label" style={{ marginTop: 6 }}>
