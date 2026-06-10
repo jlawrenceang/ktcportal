@@ -21,7 +21,7 @@ export default function Home() {
         </h1>
         {broker?.broker_code && (
           <p className="ktc-label" style={{ marginTop: 6 }}>
-            Your Broker ID: <b style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>{broker.broker_code}</b>
+            Your Customer ID: <b style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>{broker.broker_code}</b>
           </p>
         )}
         <p className="ktc-label" style={{ marginTop: 8 }}>

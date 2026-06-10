@@ -83,7 +83,7 @@ export default function JobOrder() {
     e.preventDefault()
     setError(null)
     if (!broker) {
-      setError('Broker profile not found.')
+      setError('Customer profile not found.')
       return
     }
     if (!consigneeId) {

@@ -61,14 +61,14 @@ export default function Brokers() {
   return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Brokers</h1>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Customers</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>
-          All registered broker accounts and their status. Approve/reject pending ones under Approvals; suspend or reactivate approved accounts here.
+          All registered customer accounts and their status. Approve/reject pending ones under Approvals; suspend or reactivate approved accounts here.
         </p>
         {error && <div style={{ color: 'var(--acc-2)', fontSize: 13, marginBottom: 12 }}>{error}</div>}
 
         {loading ? <span className="ktc-label">Loading…</span> : rows.length === 0 ? (
-          <div className="ktc-label" style={{ fontSize: 14 }}>No broker accounts yet.</div>
+          <div className="ktc-label" style={{ fontSize: 14 }}>No customer accounts yet.</div>
         ) : (
           <div style={{ display: 'grid', gap: 8 }}>
             {rows.map((b) => {
@@ -106,7 +106,7 @@ export default function Brokers() {
                   </div>
                   {suspendId === b.id && (
                     <div style={{ padding: '12px 14px', borderRadius: 12, background: 'hsl(28 85% 97%)', border: '1px solid hsl(28 70% 88%)', display: 'grid', gap: 8 }}>
-                      <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>Reason for suspension (shown to the broker)</label>
+                      <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>Reason for suspension (shown to the customer)</label>
                       <textarea className="ktc-input" rows={2} value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)}
                         placeholder="e.g. Pending document re-verification." />
                       <div style={{ display: 'flex', gap: 8 }}>

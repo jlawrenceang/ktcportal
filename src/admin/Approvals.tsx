@@ -33,7 +33,7 @@ function ReasonBox({ reason, onChange, busy, onCancel, onConfirm }: {
 }) {
   return (
     <div style={{ padding: '12px 14px', borderRadius: 12, background: 'hsl(0 70% 98%)', border: '1px solid hsl(0 60% 88%)', display: 'grid', gap: 8 }}>
-      <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>Reason for rejection (shown to the broker)</label>
+      <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>Reason for rejection (shown to the customer)</label>
       <textarea className="ktc-input" rows={2} value={reason} onChange={(e) => onChange(e.target.value)}
         placeholder="e.g. Valid ID unreadable — please re-upload a clear copy." />
       <div style={{ display: 'flex', gap: 8 }}>
@@ -108,7 +108,7 @@ export default function Approvals() {
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Account approvals</h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>Review the broker's valid ID and confirm they accepted the Agreement (Terms + Data Privacy consent) before approving.</p>
+        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>Review the customer's valid ID and confirm they accepted the Agreement (Terms + Data Privacy consent) before approving.</p>
         {loading ? <span className="ktc-label">Loading…</span> : brokers.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>No accounts pending. 🎉</div>
         ) : (
@@ -133,14 +133,14 @@ export default function Approvals() {
 
       <div className="ktc-glass" style={{ padding: 28 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Accreditation approvals</h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>Approving makes the consignee selectable in that broker's Job Order form.</p>
+        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>Approving makes the consignee selectable in that customer's Job Order form.</p>
         {loading ? <span className="ktc-label">Loading…</span> : accreditations.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>No pending requests. 🎉</div>
         ) : (
           <div style={{ display: 'grid', gap: 10 }}>
             {accreditations.map((r) => (
               <div key={r.id} style={{ display: 'grid', gap: rejectId === r.id ? 8 : 0 }}>
-                <AdminRow title={r.broker?.full_name || r.broker?.email || 'Unknown broker'}
+                <AdminRow title={r.broker?.full_name || r.broker?.email || 'Unknown customer'}
                   subtitle={`requests ${r.consignee ? `${r.consignee.code} – ${r.consignee.name}` : 'consignee'}`}
                   busy={acting === r.id} onApprove={() => decideAccreditation(r.id, 'approved')}
                   onReject={() => { setRejectId(r.id); setRejectReason('') }} />

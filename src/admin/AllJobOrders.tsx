@@ -40,7 +40,7 @@ export default function AllJobOrders() {
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Job Orders</h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>All job orders submitted across brokers.</p>
+        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>All job orders submitted across customers.</p>
 
         {loading ? <span className="ktc-label">Loading…</span> : orders.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>No job orders yet.</div>
@@ -53,7 +53,7 @@ export default function AllJobOrders() {
                   <span className="ktc-label" style={{ fontSize: 12 }}>{new Date(o.created_at).toLocaleString()} · {o.status}</span>
                 </div>
                 <div className="ktc-label" style={{ fontSize: 13, marginTop: 4 }}>
-                  {o.broker?.full_name || o.broker?.email || 'Unknown broker'}
+                  {o.broker?.full_name || o.broker?.email || 'Unknown customer'}
                   {' · '}{o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : 'no consignee'}
                   {o.entry_number ? ` · Entry ${o.entry_number}` : ''}
                 </div>

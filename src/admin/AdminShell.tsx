@@ -6,7 +6,7 @@ import { useBroker } from '../lib/useBroker'
 const adminLinks = [
   { to: '/admin', label: 'Dashboard', end: true },
   { to: '/admin/approvals', label: 'Approvals' },
-  { to: '/admin/brokers', label: 'Brokers' },
+  { to: '/admin/brokers', label: 'Customers' },
   { to: '/admin/consignees', label: 'Consignees' },
   { to: '/admin/job-orders', label: 'Job Orders' },
   { to: '/admin/settings', label: 'Settings' },

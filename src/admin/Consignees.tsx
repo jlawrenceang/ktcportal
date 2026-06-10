@@ -227,7 +227,7 @@ export default function Consignees() {
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Consignees</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>
           Added consignees are <b>pending</b>. A consignee needs <b>address, TIN, and an attached 2303</b> before it
-          can be approved; only approved consignees are visible to brokers.
+          can be approved; only approved consignees are visible to customers.
         </p>
 
         <div style={{ display: 'grid', gap: 6, marginBottom: 18, maxWidth: 360 }}>
