@@ -19,7 +19,7 @@ export default function Settings() {
 
   async function load() {
     const { data, error } = await supabase
-      .from('brokers')
+      .from('customers')
       .select('*')
       .or('is_admin.eq.true,is_owner.eq.true')
       .order('is_owner', { ascending: false })
@@ -47,7 +47,7 @@ export default function Settings() {
     setBusy(true); setError(null); setNotice(null)
     const target = email.trim().toLowerCase()
     const { data, error } = await supabase
-      .from('brokers')
+      .from('customers')
       .update({ is_admin: true, status: 'approved', decided_at: new Date().toISOString() })
       .eq('email', target)
       .select('id')
@@ -64,7 +64,7 @@ export default function Settings() {
   async function revoke(b: Broker) {
     if (b.is_owner) return
     setBusy(true); setError(null); setNotice(null)
-    const { error } = await supabase.from('brokers').update({ is_admin: false }).eq('id', b.id)
+    const { error } = await supabase.from('customers').update({ is_admin: false }).eq('id', b.id)
     setBusy(false)
     if (error) return setError(error.message)
     setNotice(`Admin access revoked from ${b.email}.`)

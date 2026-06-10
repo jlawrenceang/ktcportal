@@ -19,7 +19,7 @@ export default function AllJobOrders() {
     supabase
       .from('job_orders')
       .select(
-        'id, jo_number, entry_number, status, created_at, broker:brokers(full_name, email), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)',
+        'id, jo_number, entry_number, status, created_at, broker:customers(full_name, email), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)',
       )
       // Held orders belong to not-yet-verified brokers — keep them out of the queue
       // until they're released (status -> submitted) on approval.

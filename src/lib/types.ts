@@ -13,7 +13,7 @@ export type BrokerStatus = 'pending' | 'approved' | 'rejected' | 'suspended'
 export interface Broker {
   id: string
   user_id: string
-  broker_code: string | null
+  customer_code: string | null
   customer_id: string | null
   company_name: string | null
   full_name: string | null
@@ -42,7 +42,7 @@ export type AccreditationStatus = 'pending' | 'approved' | 'rejected'
 
 export interface Accreditation {
   id: string
-  broker_id: string
+  customer_id: string
   consignee_id: string
   status: AccreditationStatus
   requested_at: string
@@ -59,7 +59,7 @@ export interface JobOrderLine {
 export interface JobOrder {
   id: string
   jo_number: string | null
-  broker_id: string
+  customer_id: string
   consignee_id: string | null
   entry_number: string | null
   status: string

@@ -23,7 +23,7 @@ export function useBroker() {
         return
       }
       supabase
-        .from('brokers')
+        .from('customers')
         .select('*')
         .eq('user_id', uid)
         .maybeSingle()

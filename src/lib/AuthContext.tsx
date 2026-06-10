@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updates.privacy_consented_at = acceptedAt
       }
       if (Object.keys(updates).length > 0) {
-        await supabase.from('brokers').update(updates).eq('user_id', data.user.id)
+        await supabase.from('customers').update(updates).eq('user_id', data.user.id)
       }
     }
     return { error: null }

@@ -46,13 +46,29 @@ const client = new pg.Client({
 })
 await client.connect()
 try {
+  // Track applied migrations so we never re-run an old one. (Re-running used to
+  // rely on idempotency, but a table rename like 0021 can't be made idempotent
+  // against a blind re-run of 0001's `create table if not exists brokers`.)
+  await client.query(
+    'create table if not exists public._migrations (filename text primary key, applied_at timestamptz not null default now())',
+  )
+  const applied = new Set(
+    (await client.query('select filename from public._migrations')).rows.map((r) => r.filename),
+  )
+  let n = 0
   for (const f of files) {
+    if (applied.has(f)) {
+      console.log(`skip ${f} (already applied)`)
+      continue
+    }
     const sql = readFileSync(path.join(dir, f), 'utf8')
     process.stdout.write(`applying ${f} ... `)
     await client.query(sql)
+    await client.query('insert into public._migrations (filename) values ($1) on conflict do nothing', [f])
     console.log('ok')
+    n++
   }
-  console.log(`done — ${files.length} migration(s) applied`)
+  console.log(`done — ${n} new migration(s) applied, ${files.length - n} already applied`)
 } catch (e) {
   console.error('\nFAILED:', e.message)
   process.exitCode = 1

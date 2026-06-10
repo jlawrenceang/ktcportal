@@ -99,7 +99,7 @@ export default function JobOrder() {
     const { data: jo, error: joErr } = await supabase
       .from('job_orders')
       .insert({
-        broker_id: broker.id,
+        customer_id: broker.id,
         consignee_id: consigneeId,
         entry_number: entryNumber.trim() || null,
         // Pending brokers file as 'held' (released to the admin queue on approval);

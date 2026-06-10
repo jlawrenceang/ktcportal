@@ -19,9 +19,9 @@ export default function Home() {
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>
           Welcome{session?.user.email ? `, ${session.user.email}` : ''}
         </h1>
-        {broker?.broker_code && (
+        {broker?.customer_code && (
           <p className="ktc-label" style={{ marginTop: 6 }}>
-            Your Customer ID: <b style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>{broker.broker_code}</b>
+            Your Customer ID: <b style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>{broker.customer_code}</b>
           </p>
         )}
         <p className="ktc-label" style={{ marginTop: 8 }}>

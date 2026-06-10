@@ -33,10 +33,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     Promise.all([
-      count('brokers', { col: 'status', val: 'pending' }),
+      count('customers', { col: 'status', val: 'pending' }),
       count('accreditations', { col: 'status', val: 'pending' }),
       count('consignees', { col: 'status', val: 'pending' }),
-      count('brokers'),
+      count('customers'),
       count('consignees'),
       count('job_orders'),
     ]).then(([pendingAccounts, pendingAccreditations, pendingConsignees, brokers, consignees, jobOrders]) =>

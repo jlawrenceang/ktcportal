@@ -24,7 +24,7 @@ export default function BrokerStatusBanner({ broker }: { broker: Broker }) {
       const keys = ['irr_version', 'irr_accepted_at', 'terms_version', 'terms_accepted_at', 'privacy_consent_version', 'privacy_consented_at']
       const updates: Record<string, unknown> = {}
       for (const k of keys) if (m[k]) updates[k] = m[k]
-      if (Object.keys(updates).length) await supabase.from('brokers').update(updates).eq('user_id', broker.user_id)
+      if (Object.keys(updates).length) await supabase.from('customers').update(updates).eq('user_id', broker.user_id)
     })()
   }, [broker.terms_version, broker.user_id])
 
@@ -34,7 +34,7 @@ export default function BrokerStatusBanner({ broker }: { broker: Broker }) {
     const path = `${broker.user_id}/valid-id.${ext}`
     const { error: upErr } = await supabase.storage.from('valid-ids').upload(path, file, { upsert: true })
     if (upErr) { setBusy(false); return setError(upErr.message) }
-    const { error: updErr } = await supabase.from('brokers').update({ valid_id_path: path }).eq('id', broker.id)
+    const { error: updErr } = await supabase.from('customers').update({ valid_id_path: path }).eq('id', broker.id)
     setBusy(false)
     if (updErr) return setError(updErr.message)
     setUploaded(true)

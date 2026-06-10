@@ -27,7 +27,7 @@ export default function VerifyId() {
     if (upErr) { setBusy(false); return setError(upErr.message) }
     // Record the valid ID + capture the DPA / Terms consent at the moment of submission.
     const now = new Date().toISOString()
-    const { error: updErr } = await supabase.from('brokers').update({
+    const { error: updErr } = await supabase.from('customers').update({
       valid_id_path: path,
       terms_version: AGREEMENT_VERSION,
       terms_accepted_at: now,
