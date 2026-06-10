@@ -8,7 +8,7 @@
 
 ## Purpose
 
-Verify the full customer lifecycle on the renamed/rebranded system (**KTC Online Portal**, `customers` table): register (with contact number) → **branded confirm email** → **/verify-id** (DPA consent + valid-ID upload) → portal as *pending final verification* → file **held** job orders (deferred `JO-#####` numbering) → admin verify/approve → held orders **release + number** + **approval email**. Plus the guards: held cap (10), open cap (10), 48h verification TTL, and 10-minute idle logout. Covers migrations `0014`–`0023` and ADR-0012.
+Verify the full customer lifecycle on the renamed/rebranded system (**KTC Online Portal**, `customers` table): register (with contact number) → **branded confirm email** → **/verify-id** (DPA consent + valid-ID upload) → portal as *pending final verification* → file **held** job orders (deferred `JO-######` numbering) → admin verify/approve → held orders **release + number** + **approval email**. Plus the guards: held cap (10), open cap (10), 48h verification TTL, and 10-minute idle logout. Covers migrations `0014`–`0023` and ADR-0012.
 
 ## Result codes
 
@@ -46,7 +46,7 @@ Exercised directly against the renamed `customers` schema (rows created, asserte
 | ID | Guardrail | Expected | Result |
 |---|---|---|---|
 | G-1 | Held order has no number | `held` insert → `jo_number IS NULL` | ✅ |
-| G-2 | Release assigns JO number | approve → `held`→`submitted` + **`JO-00001`** | ✅ |
+| G-2 | Release assigns JO number | approve → `held`→`submitted` + **`JO-000001`** | ✅ |
 | G-3 | Held cap | 11th `held` rejected | ✅ "at most 10 … on hold" |
 | G-4 | Open cap | 11th open (`submitted/processing`) rejected | ✅ "10 open job orders — contact KTC admin" |
 | G-5 | Completed frees a slot | `completed` doesn't count toward open cap | ✅ |
@@ -74,7 +74,7 @@ Exercised directly against the renamed `customers` schema (rows created, asserte
 | A-8 | `/admin/approvals` (owner) | Re-login as owner; review the card | Shows email + **contact number**; badges: ✓ Email confirmed · ✓ Valid ID on file · Agreement v1 · ✓ Terms · ✓ DPA. "View valid ID" opens (signed URL) | | |
 | A-9 | `/admin/approvals` | **Approve** | Row leaves queue | | |
 | A-10 | inbox | — | Customer receives the **branded "account approved"** email | | |
-| A-11 | `/job-orders` (customer) | Re-login as customer | The held order is now **`submitted`** with **`JO-00001`** | | |
+| A-11 | `/job-orders` (customer) | Re-login as customer | The held order is now **`submitted`** with **`JO-000001`** | | |
 | A-12 | `/admin/job-orders` (owner) | Admin queue | The released order is visible; held orders were **not** shown pre-release | | |
 
 #### Lane closeout
@@ -93,7 +93,7 @@ Exercised directly against the renamed `customers` schema (rows created, asserte
 
 | ID | UI Action | Expected | Result |
 |---|---|---|---|
-| C-1 | Submit 10 orders (approved) | All 10 `submitted`, each `JO-#####` | |
+| C-1 | Submit 10 orders (approved) | All 10 `submitted`, each `JO-######` | |
 | C-2 | Attempt an 11th | Blocked: "You have 10 open job orders — contact KTC admin to file more." | |
 | C-3 | Admin completes one (when processing UI exists) | A slot frees; can file again | |
 
@@ -137,5 +137,5 @@ Exercised directly against the renamed `customers` schema (rows created, asserte
 ## Cleanup after run
 
 - Delete the test customer (auth user + `customers` row) and its job orders; delete its `valid-ids/{uid}/…` file in the Storage dashboard.
-- Reset numbering if needed (only safe with zero job orders): `select setval('public.jo_number_seq', 1, false);` → next is `JO-00001`.
+- Reset numbering if needed (only safe with zero job orders): `select setval('public.jo_number_seq', 1, false);` → next is `JO-000001`.
 - (I can run the customer/auth cleanup via the transaction pooler on request.)

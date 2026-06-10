@@ -5,6 +5,8 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 ## [Unreleased]
 
 ### 2026-06-10
+- **JO series format:** job-order numbers are now **`JO-######`** (6-digit, e.g. `JO-000001`) — migrations `0023` (`X- → JO-`) + `0024` (5 → 6 digits). Assigned by `ensure_jo_number` on the first live status.
+- **Confirm-signup email installed via Management API:** `scripts/set-auth-email-template.mjs` PATCHes the project's Auth config (`mailer_templates_confirmation_content` + `mailer_subjects_confirmation`) with the branded template; needs `SUPABASE_ACCESS_TOKEN` in `.env.local`. Verified live (logo + button + subject, `mailer_autoconfirm=false`).
 - **Contact number at registration:** sign-up now collects a required contact number; stored on `customers.contact_number` via `handle_new_user` from signup metadata (migration `0022`), and shown on the admin Approvals card. `signUp` passes `contact_number`.
 - **Login footer:** replaced the "KTC Customer Agreement" link with version + copyright — "KTC Online Portal {APP_VERSION} · © {year} KTC Container Terminal Corp." (`src/version.ts`). The agreement is still linked inline during registration.
 - **Confirm-signup email:** the repo template already matches the approval email's styling (logo, orange button, links, footer); tweaked the copy for the new `/verify-id` flow. (Paste it into Supabase → Email Templates → Confirm signup to replace the default.)
