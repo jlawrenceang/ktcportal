@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type UIEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
@@ -73,7 +73,10 @@ export default function Login() {
 
   // Surface one-off notices (idle sign-out, or email just confirmed).
   useEffect(() => {
-    if (sessionStorage.getItem('ktc_email_confirmed')) {
+    if (sessionStorage.getItem('ktc_password_reset')) {
+      setNotice('✓ Your password has been updated — please sign in with your new password.')
+      sessionStorage.removeItem('ktc_password_reset')
+    } else if (sessionStorage.getItem('ktc_email_confirmed')) {
       setNotice('✓ Your email is confirmed — please sign in to continue.')
       sessionStorage.removeItem('ktc_email_confirmed')
     } else if (sessionStorage.getItem('ktc_idle_logout')) {
@@ -198,7 +201,10 @@ export default function Login() {
           </div>
 
           <div style={{ display: 'grid', gap: 6 }}>
-            <label className="ktc-label" htmlFor="password">Password</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+              <label className="ktc-label" htmlFor="password">Password</label>
+              {!isSignup && <Link to="/forgot-password" className="ktc-link" style={{ fontSize: 12 }}>Forgot password?</Link>}
+            </div>
             <input id="password" className="ktc-input" type="password" required minLength={6} value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={isSignup ? 'new-password' : 'current-password'} />
