@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { hasAdminAccess } from '../lib/types'
 import { useIdleLogout } from '../lib/useIdleLogout'
+import { APP_VERSION } from '../version'
 import PendingPanel from './PendingPanel'
 import BrokerStatusBanner from './BrokerStatusBanner'
 
@@ -13,7 +14,6 @@ const baseLinks = [
   { to: '/', label: 'Home', end: true },
   { to: '/job-order', label: 'New Job Order' },
   { to: '/job-orders', label: 'My Job Orders' },
-  { to: '/agreement', label: 'Agreement' },
 ]
 
 export default function Shell({ children }: { children: ReactNode }) {
@@ -75,6 +75,13 @@ export default function Shell({ children }: { children: ReactNode }) {
           {children}
         </>
       )}
+
+      <footer style={{ marginTop: 44, paddingTop: 18, borderTop: '1px solid var(--glass-brd)', textAlign: 'center', fontSize: 12, color: 'hsl(var(--ink-2))' }}>
+        <Link to="/agreement" className="ktc-link" style={{ fontSize: 12 }}>Customer Agreement (Terms &amp; Conditions)</Link>
+        <div style={{ marginTop: 6, opacity: 0.75 }}>
+          KTC Online Portal {APP_VERSION} · © {new Date().getFullYear()} KTC Container Terminal Corp.
+        </div>
+      </footer>
     </div>
   )
 }
