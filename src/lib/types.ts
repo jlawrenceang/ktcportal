@@ -90,6 +90,8 @@ export interface JobOrder {
   payment_submitted_at?: string | null
   payment_confirmed_at?: string | null
   payment_note?: string | null
+  completed_at?: string | null
+  archived_at?: string | null
   consignee?: Consignee | null
   lines?: JobOrderLine[]
   serving?: ServingNumber[]

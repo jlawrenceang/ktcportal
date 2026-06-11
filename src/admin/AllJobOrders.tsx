@@ -32,7 +32,24 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 }
 
 const SELECT =
-  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, payment_status, payment_proof_path, payment_submitted_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
+  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, payment_status, payment_proof_path, payment_submitted_at, completed_at, archived_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
+
+const PAGE = 50
+
+// Queue views (G4/G5): server-side filters + pagination. 'unpaid' is the EOD
+// audit — completed but no Service Invoice on file, with aging.
+type Filter = 'open' | 'unpaid' | 'completed' | 'closed' | 'archived' | 'all'
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: 'open', label: 'Open' },
+  { key: 'unpaid', label: 'Unpaid · completed' },
+  { key: 'completed', label: 'Completed' },
+  { key: 'closed', label: 'Rejected / cancelled' },
+  { key: 'archived', label: 'Archived' },
+  { key: 'all', label: 'All' },
+]
+
+const agingDays = (iso: string | null | undefined) =>
+  iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400_000) : null
 
 // A resubmitted order went to the back of the line; the admin can restore its
 // original (lower, same-week) number. Returns the restorable options.
@@ -107,25 +124,56 @@ export default function AllJobOrders() {
   const [payReject, setPayReject] = useState<AdminJobOrder | null>(null)
   const [payNote, setPayNote] = useState('')
   const { openFromStorage, viewerModal } = useFileViewer((m) => alert(m))
+  const [filter, setFilter] = useState<Filter>('open')
+  const [page, setPage] = useState(0)
+  const [total, setTotal] = useState(0)
+  const [archiving, setArchiving] = useState(false)
+  const [archiveMsg, setArchiveMsg] = useState<string | null>(null)
 
-  function load() {
-    return supabase
+  function load(f: Filter = filter, p: number = page) {
+    let q = supabase
       .from('job_orders')
-      .select(SELECT)
+      .select(SELECT, { count: 'exact' })
       .neq('status', 'held') // held = not-yet-verified customers; kept out of the queue
+    if (f === 'open') q = q.in('status', ['submitted', 'processing', 'on_hold']).is('archived_at', null)
+    else if (f === 'unpaid') q = q.eq('status', 'completed').is('service_invoice_no', null).is('archived_at', null)
+    else if (f === 'completed') q = q.eq('status', 'completed').is('archived_at', null)
+    else if (f === 'closed') q = q.in('status', ['rejected', 'cancelled']).is('archived_at', null)
+    else if (f === 'archived') q = q.not('archived_at', 'is', null)
+    return q
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
+      .range(p * PAGE, p * PAGE + PAGE - 1)
+      .then(({ data, count }) => {
         const rows = ((data ?? []) as unknown as AdminJobOrder[]).map((o) => ({
           ...o,
           broker: one(o.broker),
           consignee: one(o.consignee),
         }))
         setOrders(rows)
+        setTotal(count ?? 0)
         setLoading(false)
       })
   }
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function changeFilter(f: Filter) {
+    setFilter(f); setPage(0); setLoading(true); setArchiveMsg(null)
+    void load(f, 0)
+  }
+  function changePage(p: number) {
+    setPage(p); setLoading(true)
+    void load(filter, p)
+  }
+
+  async function archiveDone() {
+    setArchiving(true); setArchiveMsg(null)
+    const { data, error } = await supabase.rpc('archive_done_orders')
+    setArchiving(false)
+    if (error) { setArchiveMsg(error.message); return }
+    setArchiveMsg(`✓ Archived ${data ?? 0} paid & completed order${data === 1 ? '' : 's'}.`)
+    await load()
+  }
 
   async function apply(id: string, status: string, adminNote?: string | null, rejectedRecoverable?: boolean) {
     setBusyId(id)
@@ -193,10 +241,38 @@ export default function AllJobOrders() {
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28 }}>
         <h1 className="ktc-title">Job Orders</h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>Review and process job orders from verified customers.</p>
+        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 14 }}>Review and process job orders from verified customers.</p>
 
-        {loading ? <span className="ktc-label">Loading…</span> : orders.length === 0 ? (
-          <div className="ktc-label" style={{ fontSize: 14 }}>No job orders yet.</div>
+        {/* Views + archive */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 18 }}>
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              className={`ktc-nav-link${filter === f.key ? ' is-active' : ''}`}
+              onClick={() => changeFilter(f.key)}
+            >
+              {f.label}
+            </button>
+          ))}
+          {can('process_job_orders') && (filter === 'completed' || filter === 'all') && (
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" style={{ marginLeft: 'auto' }} disabled={archiving}
+              title="Archives every completed order that has a Service Invoice number (= paid). Also runs automatically every Monday."
+              onClick={() => void archiveDone()}>
+              {archiving ? 'Archiving…' : '🗄 Archive paid & completed'}
+            </button>
+          )}
+        </div>
+        {archiveMsg && <p className="ktc-label" style={{ fontSize: 13, fontWeight: 600, marginTop: -8, marginBottom: 14 }}>{archiveMsg}</p>}
+
+        {loading ? (
+          <div style={{ display: 'grid', gap: 12 }}>
+            {[72, 72, 72].map((h, i) => <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 14 }} />)}
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="ktc-label" style={{ fontSize: 14 }}>
+            {filter === 'unpaid' ? 'Nothing waiting for payment — every completed order has an invoice. 🎉' : 'No job orders in this view.'}
+          </div>
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
             {orders.map((o) => {
@@ -227,6 +303,13 @@ export default function AllJobOrders() {
                       {!o.service_invoice_no && o.payment_status === 'confirmed' && (
                         <span className="ktc-chip ktc-chip--success">Payment confirmed</span>
                       )}
+                      {o.status === 'completed' && !o.service_invoice_no && agingDays(o.completed_at) != null && (
+                        <span className={`ktc-chip ${agingDays(o.completed_at)! >= 3 ? 'ktc-chip--danger' : 'ktc-chip--warning'}`}
+                          title="Days since completion without a Service Invoice on file">
+                          unpaid {agingDays(o.completed_at)}d
+                        </span>
+                      )}
+                      {o.archived_at && <span className="ktc-chip" title={new Date(o.archived_at).toLocaleString()}>Archived</span>}
                       {o.xray_performed_at && !o.service_invoice_no && (
                         <span className="ktc-chip ktc-chip--info" title={new Date(o.xray_performed_at).toLocaleString()}>
                           X-ray done
@@ -336,6 +419,17 @@ export default function AllJobOrders() {
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {total > PAGE && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18, justifyContent: 'center' }}>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={page === 0} onClick={() => changePage(page - 1)}>← Prev</button>
+            <span className="ktc-label" style={{ fontSize: 12.5 }}>
+              {page * PAGE + 1}–{Math.min((page + 1) * PAGE, total)} of {total}
+            </span>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={(page + 1) * PAGE >= total} onClick={() => changePage(page + 1)}>Next →</button>
           </div>
         )}
       </div>

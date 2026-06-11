@@ -154,6 +154,23 @@ export default function Settings() {
     await load()
   }
 
+  // Owner-only staff password reset (staff use synthetic @ktc-staff.local
+  // emails, so the email reset flow can't reach them — RPC from 0039).
+  const [resetId, setResetId] = useState<string | null>(null)
+  const [resetPw, setResetPw] = useState('')
+
+  async function doResetPw(b: Broker) {
+    const username = (b.email ?? '').split('@')[0]
+    const pwIssue2 = passwordIssue(resetPw)
+    if (pwIssue2) { setError(pwIssue2); return }
+    setBusy(true); setError(null); setNotice(null)
+    const { error } = await supabase.rpc('reset_staff_password', { p_username: username, p_password: resetPw })
+    setBusy(false)
+    if (error) return setError(error.message)
+    setResetId(null); setResetPw('')
+    setNotice(`Password reset for "${username}" — hand them the new password.`)
+  }
+
   async function revoke(b: Broker) {
     if (b.is_owner) return
     setBusy(true); setError(null); setNotice(null)
@@ -382,9 +399,25 @@ export default function Settings() {
                   <div className="ktc-label" style={{ fontSize: 13 }}>{b.email}</div>
                 </div>
                 {isOwner && !b.is_owner && (
-                  <button className="ktc-link" disabled={busy} onClick={() => revoke(b)} style={{ fontSize: 13, fontWeight: 600 }}>
-                    Revoke access
-                  </button>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {b.email?.endsWith('@ktc-staff.local') && (
+                      resetId === b.id ? (
+                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                          <input className="ktc-input" type="text" value={resetPw} onChange={(e) => setResetPw(e.target.value)}
+                            placeholder="New password" title={PASSWORD_HINT} style={{ width: 150, padding: '7px 10px', fontSize: 13 }} autoFocus />
+                          <button className="ktc-link" disabled={busy || !resetPw} onClick={() => void doResetPw(b)} style={{ fontSize: 13, fontWeight: 600 }}>Save</button>
+                          <button className="ktc-link" onClick={() => { setResetId(null); setResetPw('') }} style={{ fontSize: 13 }}>Cancel</button>
+                        </span>
+                      ) : (
+                        <button className="ktc-link" disabled={busy} onClick={() => { setResetId(b.id); setResetPw(''); setError(null) }} style={{ fontSize: 13 }}>
+                          Reset password
+                        </button>
+                      )
+                    )}
+                    <button className="ktc-link" disabled={busy} onClick={() => revoke(b)} style={{ fontSize: 13, fontWeight: 600 }}>
+                      Revoke access
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
