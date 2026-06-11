@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10c — G9 invoice-number validation, real ERP formats)
+- **Invoice formats confirmed from the ERP** (erp.ktcport.com, Frappe): **OR #** = 5-digit printed Official Receipt pad serial (cash; BIR series 50001–125000) · **Billing Invoice** = 6-digit printed pad serial (credit) · **ERP control no.** = `OR-INV-########` (cash) / `BI-INV-########` (credit).
+- **Validation (G9, migration `0043`):** `record_service_invoice` now accepts an ERP control no. — tolerant of missing dashes/zeros, normalized to canonical form — or a bare printed pad serial (4–8 digits, leading zeros preserved). Anything else is rejected with a format hint. Input placeholder/tooltips updated.
+- **PAID vs BILLED:** a `BI-` control no. means billed on **credit**, not cash-paid — the admin queue chip shows **BILLED · SI …** (blue), the audit history says "billed · credit", and the customer's pay button / payment page say **Billed** instead of Paid. The release gate is unchanged: any invoice on file = released.
+
 ### 2026-06-12 (session 10b — G8 payment-rejected email + customer list views)
 - **Payment-rejected email (G8, migration `0042`):** a rejected payment proof now emails the customer (action-required — joins the lean on_hold/rejected set; confirmations stay in-app). The email carries the reviewer's note and links straight to the order's **pay page** for a re-upload. The branded template + Vault lookup + `pg_net` send were extracted into one server-only **`send_portal_email`** helper shared by all portal emails; the status trigger now watches `status` **and** `payment_status`.
 - **My Job Orders: views + pagination.** The customer list no longer loads full history — server-side filters (**Active** default · **Needs action** · Completed · Rejected/cancelled · All) with **10 per page**, a total count, and filter-aware empty states. "Needs action" surfaces on-hold orders, fixable rejections, and rejected payment proofs in one tap.

@@ -102,8 +102,11 @@ export default function Payment() {
 
       {paid && (
         <Notice tone="success" style={{ marginBottom: 16 }}>
-          ✓ Payment {order.service_invoice_no ? `recorded — Service Invoice ${order.service_invoice_no}` : 'confirmed by KTC'}.
-          {order.service_invoice_no ? '' : ' Collect the official Service Invoice at the KTC office.'}
+          {order.service_invoice_no?.toUpperCase().startsWith('BI')
+            ? `✓ Billed on account — Billing Invoice ${order.service_invoice_no}.`
+            : order.service_invoice_no
+              ? `✓ Payment recorded — Service Invoice ${order.service_invoice_no}.`
+              : '✓ Payment confirmed by KTC. Collect the official Service Invoice at the KTC office.'}
         </Notice>
       )}
       {order.payment_status === 'submitted' && (

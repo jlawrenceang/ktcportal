@@ -341,7 +341,8 @@ export default function MyJobOrders() {
                           )}
                           {!['held', 'cancelled', 'rejected'].includes(o.status) && (
                             <Link to={`/job-order/${o.id}/pay`} className="ktc-btn-secondary ktc-btn--sm" style={{ display: 'inline-flex', marginBottom: 12, textDecoration: 'none' }}>
-                              {o.payment_status === 'confirmed' || o.service_invoice_no ? '✓ Paid · view charges'
+                              {o.service_invoice_no?.toUpperCase().startsWith('BI') ? '✓ Billed · view charges'
+                                : o.payment_status === 'confirmed' || o.service_invoice_no ? '✓ Paid · view charges'
                                 : o.payment_status === 'submitted' ? 'Payment under review'
                                 : o.payment_status === 'rejected' ? 'Payment issue — fix'
                                 : 'View charges & pay'}

@@ -34,6 +34,9 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 const SELECT =
   'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, payment_status, payment_proof_path, payment_submitted_at, completed_at, archived_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at)'
 
+// BI-INV-… = billed on credit (not cash-paid); OR-INV-… / OR pad serial = cash.
+const isCreditInvoice = (si: string) => si.toUpperCase().startsWith('BI')
+
 // Lines this order needs, with their per-service completion state (G1).
 function serviceProgress(o: JobOrder): { line: ServiceLine; done: boolean }[] {
   const needed = new Set<ServiceLine>((o.lines ?? []).map((l) => serviceLineOf(l.service_request)))
@@ -52,7 +55,7 @@ function eventLabel(e: JobOrderEvent): string {
     case 'payment_confirmed': return 'Payment confirmed'
     case 'payment_rejected': return `Payment proof rejected${d.note ? ` — “${d.note}”` : ''}`
     case 'payment_unpaid': return 'Payment reset'
-    case 'invoice_recorded': return `Service Invoice ${d.si ?? ''} recorded (PAID)`
+    case 'invoice_recorded': return `Service Invoice ${d.si ?? ''} recorded (${isCreditInvoice(String(d.si ?? '')) ? 'BILLED · credit' : 'PAID'})`
     case 'archived': return 'Archived'
     default: return e.event
   }
@@ -341,8 +344,11 @@ export default function AllJobOrders() {
                         {STATUS_LABEL[o.status] ?? o.status}
                       </span>
                       {o.service_invoice_no && (
-                        <span className="ktc-chip ktc-chip--success" title={`Service Invoice ${o.service_invoice_no}`}>
-                          PAID · SI {o.service_invoice_no}
+                        <span
+                          className={`ktc-chip ${isCreditInvoice(o.service_invoice_no) ? 'ktc-chip--info' : 'ktc-chip--success'}`}
+                          title={`Service Invoice ${o.service_invoice_no}${isCreditInvoice(o.service_invoice_no) ? ' — billed on credit' : ''}`}
+                        >
+                          {isCreditInvoice(o.service_invoice_no) ? 'BILLED' : 'PAID'} · SI {o.service_invoice_no}
                         </span>
                       )}
                       {(o.serving ?? []).filter((s) => !s.vacated_at).map((s) => (
@@ -463,15 +469,15 @@ export default function AllJobOrders() {
                             className="ktc-input ktc-mono"
                             value={invoiceNo}
                             onChange={(e) => setInvoiceNo(e.target.value)}
-                            placeholder="Service Invoice no."
+                            placeholder="OR-INV-… / BI-INV-… or pad no."
                             autoFocus
-                            style={{ width: 170, padding: '7px 11px', fontSize: 13 }}
+                            style={{ width: 200, padding: '7px 11px', fontSize: 13 }}
                           />
-                          <button style={btn('solid')} disabled={isBusy || !invoiceNo.trim()} onClick={() => void recordInvoice()}>Save · PAID</button>
+                          <button style={btn('solid')} disabled={isBusy || !invoiceNo.trim()} onClick={() => void recordInvoice()}>Save invoice</button>
                           <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setInvoiceId(null); setInvoiceNo('') }}>Cancel</button>
                         </span>
                       ) : (
-                        <button style={btn('ghost')} onClick={() => { setInvoiceId(o.id); setInvoiceNo('') }} title="Record the ERP Service Invoice number — having one on file marks the order PAID">
+                        <button style={btn('ghost')} onClick={() => { setInvoiceId(o.id); setInvoiceNo('') }} title="Record the ERP control no. (OR-INV-… cash / BI-INV-… credit) or the printed OR / Billing Invoice pad serial — an invoice on file releases the order">
                           Record invoice #
                         </button>
                       )
