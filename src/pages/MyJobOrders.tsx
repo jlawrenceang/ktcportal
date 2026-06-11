@@ -27,6 +27,25 @@ const STATUS_TONE: Record<string, string> = {
   cancelled: '',
 }
 
+// Server-side views + pagination — a heavy filer's history stays fast to load
+// even after years of orders.
+const PAGE = 10
+type Filter = 'active' | 'action' | 'completed' | 'closed' | 'all'
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: 'active', label: 'Active' },
+  { key: 'action', label: 'Needs action' },
+  { key: 'completed', label: 'Completed' },
+  { key: 'closed', label: 'Rejected / cancelled' },
+  { key: 'all', label: 'All' },
+]
+const EMPTY_HINT: Record<Filter, string> = {
+  active: 'No active orders right now.',
+  action: 'Nothing needs your action. 🎉',
+  completed: 'No completed orders yet.',
+  closed: 'No rejected or cancelled orders.',
+  all: 'No job orders yet.',
+}
+
 function StatusBadge({ status }: { status: string }) {
   const tone = STATUS_TONE[status]
   return (
@@ -87,6 +106,9 @@ export default function MyJobOrders() {
   const [respondingId, setRespondingId] = useState<string | null>(null)
   const [cancelId, setCancelId] = useState<string | null>(null) // order pending cancel confirmation
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [filter, setFilter] = useState<Filter>('active')
+  const [page, setPage] = useState(0)
+  const [total, setTotal] = useState(0)
 
   function toggle(id: string) {
     setOpen((prev) => {
@@ -104,15 +126,25 @@ export default function MyJobOrders() {
     await load()
   }
 
-  async function load() {
-    const { data } = await supabase
+  async function load(f: Filter = filter, p: number = page) {
+    let q = supabase
       .from('job_orders')
       .select(
         'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, payment_status, service_invoice_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)',
+        { count: 'exact' },
       )
+    if (f === 'active') q = q.in('status', ['held', 'submitted', 'processing', 'on_hold'])
+    else if (f === 'action')
+      // On hold, fixable rejection, or a rejected payment proof on a live order.
+      q = q.or('status.eq.on_hold,and(status.eq.rejected,rejected_recoverable.eq.true),and(payment_status.eq.rejected,status.in.(submitted,processing,completed))')
+    else if (f === 'completed') q = q.eq('status', 'completed')
+    else if (f === 'closed') q = q.in('status', ['rejected', 'cancelled'])
+    const { data, count } = await q
       .order('created_at', { ascending: false })
+      .range(p * PAGE, p * PAGE + PAGE - 1)
     const rows = (data ?? []) as unknown as JobOrder[]
     setOrders(rows)
+    setTotal(count ?? rows.length)
     setLoading(false)
     // Auto-expand the order just filed (handed over from the New Job Order page).
     const filedId = sessionStorage.getItem('ktc_jo_filed_id')
@@ -123,6 +155,15 @@ export default function MyJobOrders() {
   }
 
   useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function changeFilter(f: Filter) {
+    setFilter(f); setPage(0); setLoading(true)
+    void load(f, 0)
+  }
+  function changePage(p: number) {
+    setPage(p); setLoading(true)
+    void load(filter, p)
+  }
 
   // Statuses auto-refresh every 60s while the tab is visible; the manual
   // button is rate-limited to one pull per 10s.
@@ -158,6 +199,26 @@ export default function MyJobOrders() {
           <NowServing />
         </div>
 
+        {/* Views — server-side filters, 10 per page */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              className={`ktc-nav-link${filter === f.key ? ' is-active' : ''}`}
+              onClick={() => changeFilter(f.key)}
+              style={{ fontSize: 12.5 }}
+            >
+              {f.label}
+            </button>
+          ))}
+          {!loading && total > 0 && (
+            <span className="ktc-label" style={{ fontSize: 12, marginLeft: 'auto' }}>
+              {total} order{total === 1 ? '' : 's'}
+            </span>
+          )}
+        </div>
+
         <div style={{ marginTop: 4 }}>
           {loading ? (
             <div style={{ display: 'grid', gap: 12 }} aria-label="Loading job orders">
@@ -167,8 +228,12 @@ export default function MyJobOrders() {
             </div>
           ) : orders.length === 0 ? (
             <div className="ktc-label" style={{ fontSize: 14 }}>
-              No job orders yet. Create one on the{' '}
-              <Link to="/job-order" className="ktc-link">New Job Order</Link> page.
+              {EMPTY_HINT[filter]}{' '}
+              {filter === 'all' || filter === 'active' ? (
+                <>Create one on the <Link to="/job-order" className="ktc-link">New Job Order</Link> page.</>
+              ) : (
+                <button type="button" className="ktc-link" onClick={() => changeFilter('all')}>Show all orders</button>
+              )}
             </div>
           ) : (
             <div style={{ display: 'grid', gap: 12 }}>
@@ -326,6 +391,17 @@ export default function MyJobOrders() {
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {total > PAGE && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18, justifyContent: 'center' }}>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={page === 0} onClick={() => changePage(page - 1)}>← Prev</button>
+            <span className="ktc-label" style={{ fontSize: 12.5 }}>
+              {page * PAGE + 1}–{Math.min((page + 1) * PAGE, total)} of {total}
+            </span>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={(page + 1) * PAGE >= total} onClick={() => changePage(page + 1)}>Next →</button>
+          </div>
+        )}
       </div>
     </Shell>
   )

@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10b — G8 payment-rejected email + customer list views)
+- **Payment-rejected email (G8, migration `0042`):** a rejected payment proof now emails the customer (action-required — joins the lean on_hold/rejected set; confirmations stay in-app). The email carries the reviewer's note and links straight to the order's **pay page** for a re-upload. The branded template + Vault lookup + `pg_net` send were extracted into one server-only **`send_portal_email`** helper shared by all portal emails; the status trigger now watches `status` **and** `payment_status`.
+- **My Job Orders: views + pagination.** The customer list no longer loads full history — server-side filters (**Active** default · **Needs action** · Completed · Rejected/cancelled · All) with **10 per page**, a total count, and filter-aware empty states. "Needs action" surfaces on-hold orders, fixable rejections, and rejected payment proofs in one tap.
+- **Admin queue page size 50 → 20** for snappier loads on the ops floor.
+
 ### 2026-06-12 (session 10 — gap fix G3: admin file-on-behalf)
 - **File for a Customer (G3, migration `0041`):** new admin page **`/admin/new-job-order`** ("New JO" nav tab) — pick the customer (typeahead over pending/approved accounts; staff excluded), then the same consignee + containers form customers use. Files via the **`admin_file_job_order`** SECURITY DEFINER RPC straight to `submitted`: JO number, serving numbers, and the audit `filed` event (actor = the staff member) all come from the existing triggers, identical to a customer filing. Success panel offers **Print slip / File another / View queue**.
 - **New owner gate `file_job_orders`** (admin ON, cashier/checker OFF — tweak in Settings → Roles & gates). **Staff filings bypass the 10-order caps**: the open-cap error itself says "contact KTC admin to file more", so admin filing is that escape hatch.

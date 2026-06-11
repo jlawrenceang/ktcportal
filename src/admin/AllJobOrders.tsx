@@ -58,7 +58,7 @@ function eventLabel(e: JobOrderEvent): string {
   }
 }
 
-const PAGE = 50
+const PAGE = 20
 
 // Queue views (G4/G5): server-side filters + pagination. 'unpaid' is the EOD
 // audit — completed but no Service Invoice on file, with aging.
