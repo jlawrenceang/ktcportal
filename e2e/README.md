@@ -46,6 +46,8 @@ Same env, but `E2E_SUPABASE_URL` / `E2E_SERVICE_ROLE_KEY` / `BASE_URL` point at 
 
 > The `service_role` key is highly privileged — keep it in your shell/CI secret store only, never in the repo. `.env*` is gitignored.
 
+> **MFA note (since migration `0049`):** minted sessions are `aal1`. An account with a verified TOTP factor will hit the MFA challenge screen (and the backend denies its staff permissions), so point `E2E_OWNER_EMAIL`/`E2E_STAFF_EMAIL` at accounts **without** an enrolled factor — e.g. a dedicated e2e admin on the test project, not the real 2FA-protected owner.
+
 ## Why auth flows aren't on by default
 
 Production Supabase enforces Cloudflare Turnstile on every UI sign-in, and the flows mutate data. We never weaken prod CAPTCHA or mutate prod data to test (ADR-0010) — so Phase 2 stays off until you point it at a properly configured project.

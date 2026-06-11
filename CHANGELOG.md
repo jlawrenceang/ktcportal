@@ -4,6 +4,12 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10j — 2FA scoped to admin/owner, demo tour, ST02 script)
+- **2FA scoped to admin + owner for now:** the "2FA" nav tab and `/admin/security` page now require admin access (cashier/checker get a notice). Enforcement keys off enrollment, so unenrolled floor roles are untouched.
+- **New-customer demo tour:** a 6-step "Quick tour" (welcome → verify ID → file → serving number → pay → print/release) **auto-opens on a customer's first Home visit** (remembered per browser) and stays re-openable via the "Quick tour ▸" link. Pure frontend, no backend.
+- **ST02 manual smoke-test script** (`docs/smoke-test-02-portal.md`): 8 lanes × ~40 checks covering everything since ST01 — onboarding+tour, filing+serving numbers, processing loops, checker, payments+invoice (incl. BILLED/PAID), roles & gates, security & monitoring (2FA, auto-suspend, Logs, health), housekeeping. Ready to execute on live.
+- **Phase 2 e2e prep:** README updated — minted sessions are `aal1`, so Phase 2 must use non-MFA test accounts; still blocked on `E2E_SERVICE_ROLE_KEY` (+ ideally a dedicated test project).
+
 ### 2026-06-12 (session 10i — owner transfer + TOTP MFA, server-enforced)
 - **Owner transferred** to `jlawrenceang@gmail.com` (the owner's 2FA-protected main account; was already a confirmed customer row — promoted to `is_owner` + admin). `jla.ktcport@gmail.com` demoted to a **plain admin** (fallback login; no failsafe). Watchdog/security alerts now go to the new owner email automatically (they follow the `is_owner` row). Current-state docs + seed script + e2e default updated; ADR-0004 amended.
 - **TOTP MFA (migration `0049` + `/admin/security`, new "2FA" nav tab for all staff):** enroll an authenticator app (QR or manual key → 6-digit verify), remove with confirm. Sign-in then shows a code challenge (`MfaChallenge` gate in `ProtectedRoute`). **Enforced server-side, not just UI:** once an account has a verified factor, `is_admin()` and `has_permission()` return false unless the session's JWT is `aal2` — a stolen password alone can't read or touch anything staff-gated. Accounts without a factor are unaffected. Lost-authenticator rescue: owner deletes the row from `auth.mfa_factors` via the server connection.

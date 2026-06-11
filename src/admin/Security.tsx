@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
+import { useBroker } from '../lib/useBroker'
+import { hasAdminAccess } from '../lib/types'
 
 // /admin/security — two-factor authentication self-service for staff + owner.
 // Enroll: QR (or manual secret) → 6-digit verify. Once verified, the backend
@@ -15,6 +17,7 @@ interface Enrolling {
 }
 
 export default function Security() {
+  const { broker, loading: brokerLoading } = useBroker()
   const [verified, setVerified] = useState<{ id: string; name: string | null }[]>([])
   const [loading, setLoading] = useState(true)
   const [enrolling, setEnrolling] = useState<Enrolling | null>(null)
@@ -78,6 +81,20 @@ export default function Security() {
     if (err) { setError(err.message); return }
     setNotice('Two-factor authentication removed. Your account is back to password-only — consider re-enrolling.')
     await loadFactors()
+  }
+
+  // Rollout decision 2026-06-12: 2FA is for admin + owner accounts for now
+  // (cashier/checker tablets stay password-only until the floor workflow is
+  // settled). Enforcement (0049) keys off enrollment, so unenrolled roles
+  // are unaffected.
+  if (!brokerLoading && !hasAdminAccess(broker)) {
+    return (
+      <AdminShell>
+        <div className="ktc-glass" style={{ padding: 28 }}>
+          <p className="ktc-label">Two-factor authentication is currently available for admin and owner accounts only.</p>
+        </div>
+      </AdminShell>
+    )
   }
 
   return (

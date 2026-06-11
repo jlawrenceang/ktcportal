@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import Shell from '../components/Shell'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
+import WelcomeTour, { tourSeen } from '../components/WelcomeTour'
 
 const iconProps = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
 
@@ -31,8 +32,15 @@ export default function Home() {
   const { broker } = useBroker()
   const firstName = (broker?.full_name || session?.user.email || '').split(' ')[0]
 
+  // First visit → quick tour (re-openable from the link below the welcome).
+  const [tourOpen, setTourOpen] = useState(false)
+  useEffect(() => {
+    if (broker && !tourSeen()) setTourOpen(true)
+  }, [broker])
+
   return (
     <Shell>
+      {tourOpen && <WelcomeTour onClose={() => setTourOpen(false)} />}
       <div style={{ margin: '18px 4px 26px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, letterSpacing: '-0.028em', lineHeight: 1.15 }}>
@@ -45,7 +53,10 @@ export default function Home() {
           )}
         </div>
         <p className="ktc-sub" style={{ maxWidth: 480 }}>
-          File job orders for terminal services and track them through processing.
+          File job orders for terminal services and track them through processing.{' '}
+          <button type="button" className="ktc-link" style={{ fontSize: 'inherit' }} onClick={() => setTourOpen(true)}>
+            Quick tour ▸
+          </button>
         </p>
       </div>
 
