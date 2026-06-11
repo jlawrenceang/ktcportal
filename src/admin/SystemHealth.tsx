@@ -11,6 +11,13 @@ interface Health {
   outbound_24h: number
   client_errors_24h: number
   client_errors: { message: string; path: string | null; at: string }[]
+  /** Owner-only (admins receive an empty list). */
+  security_events: { kind: string; actor: string | null; detail: Record<string, unknown>; at: string }[]
+}
+
+const SECURITY_LABEL: Record<string, string> = {
+  protected_field_attempt: '🚨 Blocked privilege-escalation attempt',
+  role_gate_changed: 'Role gate changed',
 }
 
 const JOB_HINT: Record<string, string> = {
@@ -99,6 +106,30 @@ export default function SystemHealth() {
               </div>
             )}
           </div>
+
+          {/* Security events (owner only — empty for admins) */}
+          {health.security_events.length > 0 && (
+            <div>
+              <h3 className="ktc-label" style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Security events
+              </h3>
+              <div style={{ display: 'grid', gap: 6 }}>
+                {health.security_events.map((s, i) => (
+                  <div key={i} style={{
+                    fontSize: 12.5, padding: '8px 12px', borderRadius: 9,
+                    background: s.kind === 'protected_field_attempt' ? 'hsl(0 75% 97%)' : 'rgba(255,255,255,0.55)',
+                    border: s.kind === 'protected_field_attempt' ? '1px solid hsl(0 70% 88%)' : '1px solid var(--glass-brd)',
+                  }}>
+                    <b>{SECURITY_LABEL[s.kind] ?? s.kind}</b>
+                    <span className="ktc-mono" style={{ fontSize: 11.5, marginLeft: 8 }}>{JSON.stringify(s.detail)}</span>
+                    <span className="ktc-label" style={{ fontSize: 11.5, marginLeft: 8 }}>
+                      {s.actor ? `actor ${s.actor.slice(0, 8)}…` : 'system'} · {new Date(s.at).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Client errors */}
           <div>

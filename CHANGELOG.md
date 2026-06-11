@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10f — security alerts: anything bad emails the owner)
+- **Breach-attempt detection (migration `0046`):** new owner-readable **`security_events`** log. The `guard_broker_protected_fields` trigger — which silently reverted attempts to change `is_owner`/`is_admin`/`status`/`staff_role` — now **records every attempt** (`protected_field_attempt`, with the fields tried and the actor). Role-gate matrix edits are logged too (`role_gate_changed`, audit).
+- **Watchdog upgraded:** runs every **15 minutes** (was hourly) and emails the owner on **any** client error (was ≥10/h spike) and **any** blocked privilege-escalation attempt (🚨 subject line), plus the existing failed-cron / failed-send alerts. One combined email per run with **per-category dedupe** (security 1h, others 6h) so a noisy category can't mute a new one.
+- **System health panel** now shows security events (owner only; admins get an empty list).
+
 ### 2026-06-12 (session 10e — G12 observability + stale-session logout)
 - **Observability (G12, migration `0045`)** — all in-Supabase, no third-party SDK:
   - **Client error tracking:** global `error`/`unhandledrejection` handlers + a React **ErrorBoundary** (friendly "Something went wrong — reload" panel instead of a white screen) report to the `log_client_error` RPC → `app_errors` table. Throttled client-side (5/min, once per distinct error per session, browser noise ignored) and capped server-side (20/h per user, 200/h global); pruned at 30 days; admin-read only.
