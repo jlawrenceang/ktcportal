@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import AdminShell from './AdminShell'
+import SystemHealth from './SystemHealth'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import type { Broker } from '../lib/types'
@@ -425,6 +426,9 @@ export default function Settings() {
           </div>
         )}
       </div>
+
+      {/* G12: cron / outbound / client-error monitor */}
+      <SystemHealth />
     </AdminShell>
   )
 }

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
+import { stampActivity } from './useIdleLogout'
 
 interface SignUpExtras {
   fullName?: string
@@ -45,6 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: captchaToken ? { captchaToken } : undefined,
     })
+    // Fresh sign-in = fresh idle clock (a stale marker from a previous
+    // session must not instantly log the new session out).
+    if (!error) stampActivity()
     return { error: error?.message ?? null }
   }
   const signUp: AuthValue['signUp'] = async (email, password, extras) => {

@@ -4,6 +4,14 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10e — G12 observability + stale-session logout)
+- **Observability (G12, migration `0045`)** — all in-Supabase, no third-party SDK:
+  - **Client error tracking:** global `error`/`unhandledrejection` handlers + a React **ErrorBoundary** (friendly "Something went wrong — reload" panel instead of a white screen) report to the `log_client_error` RPC → `app_errors` table. Throttled client-side (5/min, once per distinct error per session, browser noise ignored) and capped server-side (20/h per user, 200/h global); pruned at 30 days; admin-read only.
+  - **Outbound-call log:** `send_portal_email` and the BOC mirror call (now `run_boc_mirror()`) record every `pg_net` request id in `outbound_requests`; results (HTTP status / timeout / error) are reconciled from `net._http_response` — sends are no longer fire-and-forget.
+  - **Settings → System health panel:** one-click snapshot via the admin-gated `system_health()` RPC — each pg_cron job's last run + status (with plain-language hints), outbound failures this week, client errors in 24h.
+  - **Hourly watchdog (`ops-watchdog-hourly`):** emails the **owner** when a cron run failed, an outbound call failed, or client errors spike (≥10/h) — deduped to at most one alert per 6 hours; also prunes `app_errors`/`outbound_requests` (30d) and `cron.job_run_details` (14d). Verified once against the live DB.
+- **Stale-session logout:** the 10-minute idle rule now survives a closed browser — last activity is persisted (`localStorage`), so reopening the portal past the limit signs the customer out immediately instead of resuming the old session. Bonus: the shared marker makes the idle timer **multi-tab aware** (activity in any tab keeps the others alive). Fresh sign-ins stamp the clock so a leftover marker can't insta-logout a new session. Admin portal stays exempt (checker tablet / cashier station must stay signed in).
+
 ### 2026-06-12 (session 10d — recording an invoice requires BOTH numbers)
 - **Both control numbers now required (migration `0044`):** recording an invoice takes the **ERP control no.** (`OR-INV-…` / `BI-INV-…`, normalized) **and** the **printed invoice serial** (OR / Billing Invoice pad no., e.g. `001323`, leading zeros kept → new `invoice_pad_no` column) — validated separately, saved atomically, both logged in the audit event. The queue form shows two hinted inputs; the chip and history show `PAID/BILLED · OR-INV-… · #094303`; the customer's payment page now quotes the **printed** receipt/invoice number (the paper they hold).
 
