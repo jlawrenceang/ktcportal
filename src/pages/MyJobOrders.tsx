@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
-import type { JobOrder } from '../lib/types'
+import NowServing from '../components/NowServing'
+import { SERVICE_LINE_LABEL, type JobOrder } from '../lib/types'
 
 const STATUS_LABEL: Record<string, string> = {
   held: 'Pending approval',
@@ -107,7 +108,7 @@ export default function MyJobOrders() {
     const { data } = await supabase
       .from('job_orders')
       .select(
-        'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, payment_status, service_invoice_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)',
+        'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, payment_status, service_invoice_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)',
       )
       .order('created_at', { ascending: false })
     const rows = (data ?? []) as unknown as JobOrder[]
@@ -153,7 +154,11 @@ export default function MyJobOrders() {
           </div>
         )}
 
-        <div style={{ marginTop: 22 }}>
+        <div style={{ marginTop: 18 }}>
+          <NowServing />
+        </div>
+
+        <div style={{ marginTop: 4 }}>
           {loading ? (
             <div style={{ display: 'grid', gap: 12 }} aria-label="Loading job orders">
               {[64, 64, 64].map((h, i) => (
@@ -194,6 +199,11 @@ export default function MyJobOrders() {
                         <span style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                           <b className={o.jo_number ? 'ktc-mono' : undefined} style={{ fontSize: o.jo_number ? 14.5 : 14 }}>{o.jo_number ?? 'Draft (no number yet)'}</b>
                           <StatusBadge status={o.status} />
+                          {(o.serving ?? []).filter((s) => !s.vacated_at).map((s) => (
+                            <span key={s.service_line} className="ktc-chip ktc-chip--accent" title={`Your number in this week's ${SERVICE_LINE_LABEL[s.service_line]} line`}>
+                              {SERVICE_LINE_LABEL[s.service_line]} #{s.serving_no}
+                            </span>
+                          ))}
                         </span>
                         <span className="ktc-label" style={{ display: 'block', fontSize: 12.5, marginTop: 4 }}>
                           {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : 'No consignee'}

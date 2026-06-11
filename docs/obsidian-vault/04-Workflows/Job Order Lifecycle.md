@@ -52,11 +52,11 @@ last_updated: 2026-06-11
 ## D. Numbering & priority
 
 - **JO number `JO-######`** ✅ — **permanent identity**; assigned by `ensure_jo_number` on first live status; global, atomic, never reused; gaps are fine.
-- **Service serving number** 🔸 (DECIDED, to build) — **system-generated** "now serving" per service line, **separate** from the JO number.
-  - Grain: **per JO, per service**. Reset: **weekly** (current KTC practice). Assigned when the JO enters that service's line (on `submitted`).
-  - **Edit** → keeps its serving number.
-  - **Cancel / reject** → vacates it (burned; others keep theirs).
-  - **Resubmit after reject** → **back of line** (new number) by default; admin can **restore** original priority.
+- **Service serving number** ✅ BUILT (migration `0038`, `serving_numbers` table) — "now serving" per service line (`xray`/`dea`/`oog`), **separate** from the JO number.
+  - Grain: **per JO, per service line**. Reset: **weekly** (Monday, Asia/Manila). Assigned on `submitted` (triggers on status + line insert; numbers only written by SECURITY DEFINER functions).
+  - **Edit / respond-to-hold** → keeps its number ✅. **Cancel / reject** → vacated (burned, unique index keeps it unreusable) ✅. **Resubmit after reject** → back of line; admin **"↩ Restore #N"** button on the queue (`restore_serving_number`, same week only) ✅.
+  - Surfaces: **Now-Serving board** (`now_serving()` RPC — My Job Orders + Checker), serving chips on customer/admin cards, checker queue **sorted by line number**, and the number printed on the **A6 slip**.
+  - ❓ Carry-over policy at the weekly reset still open — see [[Process Flow Map]] G2.
 
 ## E. Pricing & payment (parallel, **non-gated** — never blocks processing)
 

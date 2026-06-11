@@ -50,6 +50,20 @@ export function isStaff(b: Pick<Broker, 'is_admin' | 'is_owner' | 'staff_role'> 
 // removed 2026-06-11; the DB table remains — see the ADR-0007 addendum).
 export type AccreditationStatus = 'pending' | 'approved' | 'rejected'
 
+export type ServiceLine = 'xray' | 'dea' | 'oog' | 'other'
+
+export const SERVICE_LINE_LABEL: Record<ServiceLine, string> = {
+  xray: 'X-ray', dea: 'DEA', oog: 'OOG', other: 'Other',
+}
+
+/** Weekly per-service-line queue number (separate from the permanent JO number). */
+export interface ServingNumber {
+  service_line: ServiceLine
+  serving_no: number
+  week_start: string
+  vacated_at: string | null
+}
+
 export interface JobOrderLine {
   id: string
   job_order_id: string
@@ -78,6 +92,7 @@ export interface JobOrder {
   payment_note?: string | null
   consignee?: Consignee | null
   lines?: JobOrderLine[]
+  serving?: ServingNumber[]
 }
 
 export const SERVICE_REQUESTS = [

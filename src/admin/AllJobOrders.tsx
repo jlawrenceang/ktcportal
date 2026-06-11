@@ -4,7 +4,7 @@ import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { usePermissions } from '../lib/usePermissions'
 import { useFileViewer } from '../components/FileViewerModal'
-import type { JobOrder } from '../lib/types'
+import { SERVICE_LINE_LABEL, type JobOrder, type ServingNumber } from '../lib/types'
 
 interface AdminJobOrder extends JobOrder {
   broker?: { full_name: string | null; email: string | null; contact_number: string | null } | null
@@ -32,7 +32,30 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 }
 
 const SELECT =
-  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, payment_status, payment_proof_path, payment_submitted_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)'
+  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, payment_status, payment_proof_path, payment_submitted_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
+
+// A resubmitted order went to the back of the line; the admin can restore its
+// original (lower, same-week) number. Returns the restorable options.
+function restorable(o: JobOrder): { line: ServingNumber['service_line']; no: number }[] {
+  const out: { line: ServingNumber['service_line']; no: number }[] = []
+  if (!['submitted', 'processing', 'on_hold'].includes(o.status)) return out
+  const byLine = new Map<string, ServingNumber[]>()
+  for (const s of o.serving ?? []) {
+    if (!byLine.has(s.service_line)) byLine.set(s.service_line, [])
+    byLine.get(s.service_line)!.push(s)
+  }
+  for (const [line, rows] of byLine) {
+    const active = rows.find((r) => !r.vacated_at)
+    const week = active?.week_start
+    const oldBest = rows
+      .filter((r) => r.vacated_at && (!week || r.week_start === week))
+      .sort((a, b) => a.serving_no - b.serving_no)[0]
+    if (oldBest && active && oldBest.serving_no < active.serving_no) {
+      out.push({ line: line as ServingNumber['service_line'], no: oldBest.serving_no })
+    }
+  }
+  return out
+}
 
 // Plain-text status message for chat apps (Viber / SMS / Messenger). Composed
 // per order; staff send it from their own device via the share buttons.
@@ -130,6 +153,14 @@ export default function AllJobOrders() {
     setNote('')
   }
 
+  async function restoreNumber(id: string, line: string) {
+    setBusyId(id)
+    const { error } = await supabase.rpc('restore_serving_number', { p_jo: id, p_line: line })
+    setBusyId(null)
+    if (error) { alert(error.message); return }
+    await load()
+  }
+
   async function reviewPayment(id: string, confirm: boolean, note?: string) {
     setBusyId(id)
     const { error } = await supabase.rpc('review_payment', { p_id: id, p_confirm: confirm, p_note: note ?? null })
@@ -185,6 +216,11 @@ export default function AllJobOrders() {
                           PAID · SI {o.service_invoice_no}
                         </span>
                       )}
+                      {(o.serving ?? []).filter((s) => !s.vacated_at).map((s) => (
+                        <span key={s.service_line} className="ktc-chip ktc-chip--accent" title={`This week's ${SERVICE_LINE_LABEL[s.service_line]} line number`}>
+                          {SERVICE_LINE_LABEL[s.service_line]} #{s.serving_no}
+                        </span>
+                      ))}
                       {!o.service_invoice_no && o.payment_status === 'submitted' && (
                         <span className="ktc-chip ktc-chip--warning">Payment proof to review</span>
                       )}
@@ -223,6 +259,13 @@ export default function AllJobOrders() {
 
                   {/* Actions — gated by the owner-tweakable role permissions */}
                   <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {can('process_job_orders') && restorable(o).map((r) => (
+                      <button key={r.line} style={btn('ghost')} disabled={isBusy}
+                        title="This order was resubmitted and went to the back of the line — restore its original number"
+                        onClick={() => void restoreNumber(o.id, r.line)}>
+                        ↩ Restore {SERVICE_LINE_LABEL[r.line]} #{r.no}
+                      </button>
+                    ))}
                     {can('process_job_orders') && (
                       <>
                         {(o.status === 'submitted' || o.status === 'on_hold') && (

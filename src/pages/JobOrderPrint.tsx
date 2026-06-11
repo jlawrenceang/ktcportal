@@ -11,7 +11,10 @@ interface PrintOrder {
   customer?: { full_name: string | null; customer_code: string | null } | null
   consignee?: { code: string; name: string } | null
   lines?: { container_number: string; service_request: string }[]
+  serving?: { service_line: string; serving_no: number; vacated_at: string | null }[]
 }
+
+const LINE_LABEL: Record<string, string> = { xray: 'X-ray', dea: 'DEA', oog: 'OOG', other: 'Other' }
 
 function one<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : (v ?? null)
@@ -45,7 +48,7 @@ export default function JobOrderPrint() {
     if (!id) return
     supabase
       .from('job_orders')
-      .select('id, jo_number, entry_number, status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)')
+      .select('id, jo_number, entry_number, status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, vacated_at)')
       .eq('id', id)
       .maybeSingle()
       .then(({ data }) => {
@@ -124,8 +127,13 @@ export default function JobOrderPrint() {
                 <span style={{ color: '#5a6678' }}>JO No. </span>
                 <b style={{ color: '#d6321e', fontSize: 13, letterSpacing: '0.02em' }}>{order.jo_number ?? '—'}</b>
               </div>
-              <div style={{ fontSize: 9, color: '#5a6678' }}>
+              <div style={{ fontSize: 9, color: '#5a6678', textAlign: 'right' }}>
                 Date: <b style={{ color: '#15233a' }}>{new Date(order.created_at).toLocaleDateString()}</b>
+                {(order.serving ?? []).filter((s) => !s.vacated_at).map((s) => (
+                  <div key={s.service_line} style={{ marginTop: 2 }}>
+                    {LINE_LABEL[s.service_line] ?? s.service_line} line: <b style={{ color: '#15233a', fontSize: 10.5 }}>#{s.serving_no}</b>
+                  </div>
+                ))}
               </div>
             </div>
 

@@ -3,6 +3,8 @@ import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import { usePermissions } from '../lib/usePermissions'
+import NowServing from '../components/NowServing'
+import type { ServingNumber } from '../lib/types'
 
 // X-ray checker station (tablet-first, big touch targets).
 //  * Queue: open orders with an X-ray service line, oldest first.
@@ -20,14 +22,19 @@ interface CheckerOrder {
   broker?: { full_name: string | null } | null
   consignee?: { code: string; name: string } | null
   lines?: { container_number: string; service_request: string }[]
+  serving?: ServingNumber[]
 }
+
+// This week's active X-ray line number (the queue sorts by it).
+const xrayNo = (o: CheckerOrder) =>
+  o.serving?.find((s) => s.service_line === 'xray' && !s.vacated_at)?.serving_no ?? null
 
 function one<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : (v ?? null)
 }
 
 const SELECT =
-  'id, jo_number, status, xray_performed_at, service_invoice_no, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)'
+  'id, jo_number, status, xray_performed_at, service_invoice_no, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
 
 const isXray = (s: string) => s.toLowerCase().includes('x-ray')
 
@@ -64,6 +71,7 @@ export default function Checker() {
     const rows = ((data ?? []) as unknown as CheckerOrder[])
       .map((o) => ({ ...o, broker: one(o.broker), consignee: one(o.consignee) }))
       .filter((o) => (o.lines ?? []).some((l) => isXray(l.service_request)))
+      .sort((a, b) => (xrayNo(a) ?? Infinity) - (xrayNo(b) ?? Infinity)) // serve in line order
     setQueue(rows)
     setLoading(false)
   }
@@ -112,6 +120,11 @@ export default function Checker() {
         border: highlight ? '1px solid rgb(var(--acc-rgb) / 0.45)' : '1px solid var(--glass-brd)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          {xrayNo(o) != null && (
+            <span className="ktc-mono" style={{ fontSize: 21, fontWeight: 700, color: 'var(--acc-2)', letterSpacing: '-0.01em' }}>
+              #{xrayNo(o)}
+            </span>
+          )}
           <b className="ktc-mono" style={{ fontSize: 17 }}>{o.jo_number ?? '—'}</b>
           <Clearance o={o} />
           <span className="ktc-label" style={{ fontSize: 12.5, marginLeft: 'auto' }}>
@@ -166,6 +179,8 @@ export default function Checker() {
           {error}
         </div>
       )}
+
+      <NowServing only={['xray']} />
 
       {/* Lookup */}
       <div className="ktc-glass" style={{ padding: 22, marginBottom: 18 }}>
