@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { usePermissions } from '../lib/usePermissions'
+import { useFileViewer } from '../components/FileViewerModal'
 import type { JobOrder } from '../lib/types'
 
 interface AdminJobOrder extends JobOrder {
@@ -31,7 +32,7 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 }
 
 const SELECT =
-  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)'
+  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, payment_status, payment_proof_path, payment_submitted_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)'
 
 // Plain-text status message for chat apps (Viber / SMS / Messenger). Composed
 // per order; staff send it from their own device via the share buttons.
@@ -79,6 +80,10 @@ export default function AllJobOrders() {
   // Chat status-message generator (Viber / SMS / copy-paste).
   const [msgOrder, setMsgOrder] = useState<AdminJobOrder | null>(null)
   const [copied, setCopied] = useState(false)
+  // Payment-proof review (permission: review_payments).
+  const [payReject, setPayReject] = useState<AdminJobOrder | null>(null)
+  const [payNote, setPayNote] = useState('')
+  const { openFromStorage, viewerModal } = useFileViewer((m) => alert(m))
 
   function load() {
     return supabase
@@ -123,6 +128,15 @@ export default function AllJobOrders() {
     setModal(null)
     await apply(id, target, note.trim(), target === 'rejected' ? recoverable : undefined)
     setNote('')
+  }
+
+  async function reviewPayment(id: string, confirm: boolean, note?: string) {
+    setBusyId(id)
+    const { error } = await supabase.rpc('review_payment', { p_id: id, p_confirm: confirm, p_note: note ?? null })
+    setBusyId(null)
+    if (error) { alert(error.message); return }
+    setPayReject(null); setPayNote('')
+    await load()
   }
 
   async function recordInvoice() {
@@ -170,6 +184,12 @@ export default function AllJobOrders() {
                         <span className="ktc-chip ktc-chip--success" title={`Service Invoice ${o.service_invoice_no}`}>
                           PAID · SI {o.service_invoice_no}
                         </span>
+                      )}
+                      {!o.service_invoice_no && o.payment_status === 'submitted' && (
+                        <span className="ktc-chip ktc-chip--warning">Payment proof to review</span>
+                      )}
+                      {!o.service_invoice_no && o.payment_status === 'confirmed' && (
+                        <span className="ktc-chip ktc-chip--success">Payment confirmed</span>
                       )}
                       {o.xray_performed_at && !o.service_invoice_no && (
                         <span className="ktc-chip ktc-chip--info" title={new Date(o.xray_performed_at).toLocaleString()}>
@@ -219,6 +239,30 @@ export default function AllJobOrders() {
                         )}
                       </>
                     )}
+                    {can('review_payments') && o.payment_status === 'submitted' && (
+                      payReject?.id === o.id ? (
+                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <input
+                            className="ktc-input"
+                            value={payNote}
+                            onChange={(e) => setPayNote(e.target.value)}
+                            placeholder="Why? (shown to the customer)"
+                            autoFocus
+                            style={{ width: 230, padding: '7px 11px', fontSize: 13 }}
+                          />
+                          <button style={btn('danger')} disabled={isBusy || !payNote.trim()} onClick={() => void reviewPayment(o.id, false, payNote.trim())}>Reject proof</button>
+                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setPayReject(null); setPayNote('') }}>Cancel</button>
+                        </span>
+                      ) : (
+                        <>
+                          <button style={btn('ghost')} onClick={() => void openFromStorage('payment-slips', o.payment_proof_path, `Payment slip — ${o.jo_number ?? ''} (${o.broker?.full_name ?? ''})`)}>
+                            View payment slip
+                          </button>
+                          <button style={btn('solid')} disabled={isBusy} onClick={() => void reviewPayment(o.id, true)}>Confirm payment</button>
+                          <button style={btn('danger')} disabled={isBusy} onClick={() => { setPayReject(o); setPayNote('') }}>Reject proof</button>
+                        </>
+                      )
+                    )}
                     {can('record_invoice') && o.status === 'completed' && !o.service_invoice_no && (
                       invoiceId === o.id ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
@@ -252,6 +296,8 @@ export default function AllJobOrders() {
           </div>
         )}
       </div>
+
+      {viewerModal}
 
       {modal && (
         <div onClick={() => setModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 24 }}>

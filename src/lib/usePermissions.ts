@@ -7,6 +7,7 @@ export type Permission =
   | 'process_job_orders'
   | 'confirm_xray'
   | 'record_invoice'
+  | 'review_payments'
   | 'manage_approvals'
   | 'manage_customers'
   | 'manage_consignees'

@@ -107,7 +107,7 @@ export default function MyJobOrders() {
     const { data } = await supabase
       .from('job_orders')
       .select(
-        'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)',
+        'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, payment_status, service_invoice_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)',
       )
       .order('created_at', { ascending: false })
     const rows = (data ?? []) as unknown as JobOrder[]
@@ -258,11 +258,21 @@ export default function MyJobOrders() {
                             Your note to KTC: “{o.customer_note}”
                           </div>
                         )}
-                        {(o.status === 'processing' || o.status === 'completed') && (
-                          <Link to={`/job-order/${o.id}/print`} target="_blank" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-flex', marginBottom: 12, textDecoration: 'none' }}>
-                            Print slip ↗
-                          </Link>
-                        )}
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                          {(o.status === 'processing' || o.status === 'completed') && (
+                            <Link to={`/job-order/${o.id}/print`} target="_blank" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-flex', marginBottom: 12, textDecoration: 'none' }}>
+                              Print slip ↗
+                            </Link>
+                          )}
+                          {!['held', 'cancelled', 'rejected'].includes(o.status) && (
+                            <Link to={`/job-order/${o.id}/pay`} className="ktc-btn-secondary ktc-btn--sm" style={{ display: 'inline-flex', marginBottom: 12, textDecoration: 'none' }}>
+                              {o.payment_status === 'confirmed' || o.service_invoice_no ? '✓ Paid · view charges'
+                                : o.payment_status === 'submitted' ? 'Payment under review'
+                                : o.payment_status === 'rejected' ? 'Payment issue — fix'
+                                : 'View charges & pay'}
+                            </Link>
+                          )}
+                        </div>
                         {count === 0 ? (
                           <div className="ktc-label" style={{ fontSize: 13 }}>No containers on this order.</div>
                         ) : (

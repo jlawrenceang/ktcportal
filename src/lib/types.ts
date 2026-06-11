@@ -71,6 +71,11 @@ export interface JobOrder {
   xray_performed_at?: string | null
   service_invoice_no?: string | null
   invoice_recorded_at?: string | null
+  payment_status?: 'unpaid' | 'submitted' | 'confirmed' | 'rejected'
+  payment_proof_path?: string | null
+  payment_submitted_at?: string | null
+  payment_confirmed_at?: string | null
+  payment_note?: string | null
   consignee?: Consignee | null
   lines?: JobOrderLine[]
 }

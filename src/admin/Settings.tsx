@@ -40,6 +40,36 @@ export default function Settings() {
   }
   useEffect(() => { void load() }, [])
 
+  // Payment details (bank/GCash + QR) shown on the customer payment page.
+  type PayInfo = { key: string; value: string; label: string | null }
+  const [payInfo, setPayInfo] = useState<PayInfo[]>([])
+  const [payBusy, setPayBusy] = useState(false)
+  const [payMsg, setPayMsg] = useState<string | null>(null)
+  const [qrFile, setQrFile] = useState<File | null>(null)
+
+  useEffect(() => {
+    void supabase.from('payment_info').select('key, value, label').order('key')
+      .then(({ data }) => setPayInfo((data ?? []) as PayInfo[]))
+  }, [])
+  function setPayVal(key: string, value: string) {
+    setPayInfo((xs) => xs.map((x) => (x.key === key ? { ...x, value } : x)))
+  }
+  async function savePayInfo() {
+    setPayBusy(true); setPayMsg(null)
+    let qrPath: string | null = null
+    if (qrFile) {
+      const { error: upErr } = await supabase.storage.from('payment-qr').upload('ktc-qr.png', qrFile, { upsert: true, contentType: qrFile.type })
+      if (upErr) { setPayBusy(false); setPayMsg(upErr.message); return }
+      qrPath = 'ktc-qr.png'
+    }
+    const rows = payInfo.filter((x) => x.key !== 'qr_path').map((x) => ({ ...x, updated_at: new Date().toISOString() }))
+    if (qrPath) rows.push({ key: 'qr_path', value: qrPath, label: 'QR image path', updated_at: new Date().toISOString() } as PayInfo & { updated_at: string })
+    const { error } = await supabase.from('payment_info').upsert(rows, { onConflict: 'key' })
+    setPayBusy(false)
+    setQrFile(null)
+    setPayMsg(error ? error.message : '✓ Payment details saved.')
+  }
+
   // Roles & gates (owner-only editor; backend enforced via has_permission()).
   type Gate = { role: string; permission: string; allowed: boolean }
   const [gates, setGates] = useState<Gate[]>([])
@@ -237,6 +267,35 @@ export default function Settings() {
         </div>
       </div>
 
+      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>Payment details (customer payment page)</h2>
+        <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
+          Bank / GCash details + QR shown when a customer pays online. Leave fields blank to hide them.
+        </p>
+        <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
+          {payInfo.filter((x) => x.key !== 'qr_path').map((x) => (
+            <div key={x.key} style={{ display: 'grid', gap: 5 }}>
+              <label className="ktc-label" htmlFor={`pi-${x.key}`} style={{ fontSize: 12 }}>{x.label || x.key}</label>
+              {x.key === 'instructions' ? (
+                <textarea id={`pi-${x.key}`} className="ktc-input" rows={2} value={x.value} onChange={(e) => setPayVal(x.key, e.target.value)} />
+              ) : (
+                <input id={`pi-${x.key}`} className="ktc-input" value={x.value} onChange={(e) => setPayVal(x.key, e.target.value)} />
+              )}
+            </div>
+          ))}
+          <div style={{ display: 'grid', gap: 5 }}>
+            <label className="ktc-label" htmlFor="pi-qr" style={{ fontSize: 12 }}>QR code image (bank / GCash){payInfo.some((x) => x.key === 'qr_path' && x.value) ? ' — replace current' : ''}</label>
+            <input id="pi-qr" className="ktc-input" type="file" accept="image/*" onChange={(e) => setQrFile(e.target.files?.[0] ?? null)} style={{ padding: '9px 11px' }} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
+          <button className="ktc-btn" type="button" disabled={payBusy} onClick={() => void savePayInfo()} style={{ width: 'auto', padding: '10px 20px' }}>
+            {payBusy ? 'Saving…' : 'Save payment details'}
+          </button>
+          {payMsg && <span className="ktc-label" style={{ fontSize: 13, fontWeight: 600 }}>{payMsg}</span>}
+        </div>
+      </div>
+
       {isOwner && (
         <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
           <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>Roles &amp; gates</h2>
@@ -262,6 +321,7 @@ export default function Settings() {
                     ['process_job_orders', 'Process job orders (approve / hold / reject / complete)'],
                     ['confirm_xray', 'Confirm X-ray done (checker station)'],
                     ['record_invoice', 'Record Service Invoice no. (= PAID)'],
+                    ['review_payments', 'Review payment proofs (confirm / reject)'],
                     ['manage_approvals', 'Account approvals + dashboard'],
                     ['manage_customers', 'Manage customers'],
                     ['manage_consignees', 'Manage consignees'],

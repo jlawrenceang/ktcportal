@@ -15,10 +15,14 @@ const OrdersIcon = () => (
 const AccountIcon = () => (
   <svg {...iconProps}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
 )
+const CalcIcon = () => (
+  <svg {...iconProps}><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" /></svg>
+)
 
 const cards: { to: string; title: string; desc: string; icon: ReactNode }[] = [
   { to: '/job-order', title: 'New Job Order', desc: 'File for X-ray, DEA or OOG stripping services', icon: <NewOrderIcon /> },
-  { to: '/job-orders', title: 'My Job Orders', desc: 'Track statuses and print approved slips', icon: <OrdersIcon /> },
+  { to: '/job-orders', title: 'My Job Orders', desc: 'Track statuses, pay, and print approved slips', icon: <OrdersIcon /> },
+  { to: '/calculator', title: 'Rate Calculator', desc: 'Estimate charges before you file', icon: <CalcIcon /> },
   { to: '/account', title: 'My Account', desc: 'Profile, email & password', icon: <AccountIcon /> },
 ]
 

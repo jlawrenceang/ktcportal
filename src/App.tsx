@@ -19,6 +19,8 @@ import AdminRoute from './admin/AdminRoute'
 // Code-split: customers never download the admin portal (and vice versa for
 // the rarely-visited print view) — keeps the first paint lean.
 const JobOrderPrint = lazy(() => import('./pages/JobOrderPrint'))
+const Payment = lazy(() => import('./pages/Payment'))
+const Calculator = lazy(() => import('./pages/Calculator'))
 const Dashboard = lazy(() => import('./admin/Dashboard'))
 const Approvals = lazy(() => import('./admin/Approvals'))
 const Brokers = lazy(() => import('./admin/Brokers'))
@@ -85,6 +87,8 @@ export default function App() {
           <Route path="/verify-id" element={<Protected><VerifyId /></Protected>} />
           <Route path="/job-order" element={<Protected><JobOrder /></Protected>} />
           <Route path="/job-order/:id/print" element={<Protected><JobOrderPrint /></Protected>} />
+          <Route path="/job-order/:id/pay" element={<Protected><Payment /></Protected>} />
+          <Route path="/calculator" element={<Protected><Calculator /></Protected>} />
           {/* /accreditation removed 2026-06-11 (page deleted; consignee accreditation
               disabled per ADR-0007) — old links fall through to the catch-all → / */}
           <Route path="/job-orders" element={<Protected><MyJobOrders /></Protected>} />

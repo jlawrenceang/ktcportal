@@ -61,14 +61,15 @@ last_updated: 2026-06-11
 ## E. Pricing & payment (parallel, **non-gated** — never blocks processing)
 
 - **Rates/fees** ✅ — `service_rates` + `pricing_settings` (admin-editable in Settings, migration `0030`).
-- **Computation** (X-ray): `rate × no. of containers` (VAT-exclusive) + `12% VAT` + flat `admin/service fee` + flat `print fee` = Total. 🔸 computation page to build.
-- **Payment** 🔸 — page shows computation + KTC **bank details + QR** (placeholders for now) + **upload deposit/payment slip** → admin **confirm/reject**. No gateway. Mirrors valid-ID upload+review (`payment-slips` bucket, `payment_status` on `job_orders`).
-- **Invoice link** 🔸 — admin records `service_invoice_no` on the JO at payment / **EOD audit** = **paid**. The official **Service Invoice + BIR receipt come from the ERP**, not this app (operational-only, #5).
+- **Computation** ✅ (`src/lib/pricing.ts`): `Σ rate × containers per service` (VAT-exclusive) + `VAT` on the vatable portion + flat `admin/service fee` + flat `print fee` = Total. Shown on the **payment page** and the standalone **Rate Calculator** (`/calculator`, Home card + nav).
+- **Payment** ✅ (migration `0036`) — `/job-order/:id/pay`: computation + KTC **bank/GCash details + QR** (admin-editable in Settings → "Payment details") + **deposit-slip upload** (`payment-slips` bucket, per-user, auto-compressed) → staff **confirm/reject** on the admin queue (`review_payments` gate; reject requires a customer-visible note; customer re-uploads). `payment_status`: `unpaid → submitted → confirmed | rejected`. No gateway.
+- **Invoice link** ✅ (`0035`) — cashier records `service_invoice_no` = **PAID** (final word; an in-app payment confirmation doesn't replace it). The official **Service Invoice + BIR receipt come from the ERP**, not this app (operational-only, #5).
 
 ## F. External systems
 
-- **KTC ERP** — official invoice/receipt; not linked yet (future integration).
-- **Google Sheets** — one-way **app→Sheet mirror** for checking + **bounded/scheduled validated import** for entry; **no live two-way sync** (Supabase stays source of truth).
+- **KTC ERP** — official invoice/receipt; not linked yet (future integration). Cross-ref = `service_invoice_no` on the JO + the JO number written on the ERP invoice.
+- **Google Sheets** — ✅ one-way **app→Sheet mirror for BOC** built (hourly Edge Function + pg_cron, see [[BOC Sheets Mirror]]; awaiting the Google service-account credentials). **No live two-way sync** (Supabase stays source of truth). Internal Sheets data entry replaced by the in-portal Checker station.
+- **Vessel schedules (next phase)** — staff sheet-upload → validated import → schedule board; see [[Vessel Schedule Monitoring]].
 
 ## G. Open decisions to close before final build (❓)
 

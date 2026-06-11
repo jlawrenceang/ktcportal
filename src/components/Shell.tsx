@@ -18,6 +18,7 @@ const NAV = [
   { to: '/', label: 'Home', end: true },
   { to: '/job-order', label: 'New Job Order' },
   { to: '/job-orders', label: 'My Job Orders' },
+  { to: '/calculator', label: 'Rates' },
   { to: '/account', label: 'My Account' },
 ]
 
