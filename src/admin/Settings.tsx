@@ -335,6 +335,7 @@ export default function Settings() {
                 <tbody>
                   {([
                     ['view_job_orders', 'View job orders'],
+                    ['file_job_orders', 'File JO on behalf of a customer (walk-ins / in-house)'],
                     ['process_job_orders', 'Process job orders (approve / hold / reject / complete)'],
                     ['confirm_xray', 'Confirm X-ray done (checker station)'],
                     ['record_invoice', 'Record Service Invoice no. (= PAID)'],

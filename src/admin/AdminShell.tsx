@@ -12,6 +12,7 @@ const NAV: { to: string; label: string; end?: boolean; perm: Permission }[] = [
   { to: '/admin/customers', label: 'Customers', perm: 'manage_customers' },
   { to: '/admin/consignees', label: 'Consignees', perm: 'manage_consignees' },
   { to: '/admin/job-orders', label: 'Job Orders', perm: 'view_job_orders' },
+  { to: '/admin/new-job-order', label: 'New JO', perm: 'file_job_orders' },
   { to: '/admin/checker', label: 'X-ray Checker', perm: 'confirm_xray' },
   { to: '/admin/settings', label: 'Settings', perm: 'manage_pricing' },
 ]

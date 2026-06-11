@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10 — gap fix G3: admin file-on-behalf)
+- **File for a Customer (G3, migration `0041`):** new admin page **`/admin/new-job-order`** ("New JO" nav tab) — pick the customer (typeahead over pending/approved accounts; staff excluded), then the same consignee + containers form customers use. Files via the **`admin_file_job_order`** SECURITY DEFINER RPC straight to `submitted`: JO number, serving numbers, and the audit `filed` event (actor = the staff member) all come from the existing triggers, identical to a customer filing. Success panel offers **Print slip / File another / View queue**.
+- **New owner gate `file_job_orders`** (admin ON, cashier/checker OFF — tweak in Settings → Roles & gates). **Staff filings bypass the 10-order caps**: the open-cap error itself says "contact KTC admin to file more", so admin filing is that escape hatch.
+- **Refactor:** the consignee typeahead and container-lines editor (incl. bulk paste) are now shared components (`SearchPicker`, `ContainerLinesEditor`) used by both the customer form and the admin form — one implementation to maintain.
+
 ### 2026-06-11 (session 9 — gap fixes G1 + G2 + G6)
 - **Per-service completion (G1, migration `0040`):** new `service_completions` table (per JO per service line) + `record_service_done(jo, line)` RPC — X-ray confirmable by checker or admin, DEA/OOG by admin. The JO flips to **`completed` only when EVERY service line it carries is done** (first completion moves `submitted → processing`); the admin force-complete (direct status set) auto-syncs the per-line rows so views can't disagree. `record_xray` is now a thin wrapper (checker app unchanged); the **checker queue drops an order once its X-ray is done** even if OOG/DEA keep it open. Admin queue shows per-line **✓ / pending chips** and per-line **"✓ {service} done"** buttons on mixed-service orders; existing completed orders backfilled.
 - **Weekly carry-over (G2):** policy = **carry-overs keep priority**. A Monday 00:15 PH pg_cron run (`requeue_carryovers`, also manually callable by admins) moves still-open orders holding last week's numbers to the **front of the new week's line in their old order**; old numbers are burned. Runs before the archive job and before anyone files.

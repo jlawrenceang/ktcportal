@@ -30,6 +30,7 @@ flowchart LR
 
 ```mermaid
 flowchart TD
+  ADM[Staff files for customer<br/>walk-in / in-house] --> SUB
   F[Customer files JO] -->|pending account| H[held<br/>no JO no., ≤10]
   F -->|approved account| SUB[submitted<br/>JO-###### + serving № per line]
   H -->|account approved| SUB
@@ -67,7 +68,7 @@ flowchart LR
 |---|-----|----------|----------------------|
 | G1 | ~~Per-service completion~~ | ✅ **Fixed** (`0040`) | `service_completions` per line; `record_service_done` RPC (checker = X-ray, admin = any); JO completes only when ALL its lines are done (else submitted→processing); admin force-complete syncs the rows; checker queue drops orders once their X-ray is done; per-line ✓/pending chips + per-line done buttons on the admin queue. |
 | G2 | ~~Carry-over at the weekly reset~~ | ✅ **Fixed** (`0040`) | Policy: carry-overs **keep priority** — Monday 00:15 PH cron (`requeue_carryovers`, also runnable manually) re-queues still-open orders at the FRONT of the new week's line in their old order; old numbers burned. |
-| G3 | **Admin "file on behalf of"** (walk-ins, in-house ops) — decided, not built | Medium | Reuse the JobOrder form under `/admin` with a customer picker; admin INSERT policy or RPC. Last unbuilt lifecycle item. |
+| G3 | ~~Admin "file on behalf of"~~ | ✅ **Fixed** (`0041`) | `/admin/new-job-order` ("New JO" tab): customer picker + the same consignee/containers form, filed via `admin_file_job_order` RPC straight to `submitted` (JO no. + serving numbers + audit actor from the same triggers as a customer filing). New owner gate `file_job_orders` (admin ON); staff filings bypass the order caps (admin filing IS the "contact admin" escape hatch). Success panel → print slip / file another. |
 | G4 | ~~Completed-but-unpaid report~~ | ✅ **Fixed** (`0039`) | "Unpaid · completed" queue view with `unpaid Nd` aging chips (red 3+ days) off the new `completed_at` stamp. |
 | G5 | ~~Admin queue scale~~ | ✅ **Fixed** | Segmented server-side views (Open default / Unpaid / Completed / Rejected·cancelled / Archived / All) + 50-row pagination. Plus a **weekly archive**: completed+paid orders auto-archive Mondays (pg_cron) or via the 🗄 button; archived orders leave the default views, customer history untouched. |
 | G6 | ~~No actor audit on JO transitions~~ | ✅ **Fixed** (`0040`) | Append-only `job_order_events` (filed, status changes w/ note, per-service completions, payment events, invoice recorded, archived; `actor` = user, null = system). Written only by triggers/definer functions; staff-readable; **🕘 History** expander on every queue card with actor names + timestamps. |

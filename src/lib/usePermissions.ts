@@ -4,6 +4,7 @@ import { useBroker } from './useBroker'
 
 export type Permission =
   | 'view_job_orders'
+  | 'file_job_orders'
   | 'process_job_orders'
   | 'confirm_xray'
   | 'record_invoice'

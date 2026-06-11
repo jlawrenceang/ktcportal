@@ -38,7 +38,7 @@ last_updated: 2026-06-11
 ## C. Transitions (who triggers)
 
 - **File** (customer) → `held` (if pending) or `submitted` (if approved). ✅
-- **File on behalf** (admin/employee, in-house ops) → `submitted`. 🔸 to build (#9) + a **JO-Processing tile**.
+- **File on behalf** (admin/employee, in-house ops) → `submitted`. ✅ (`0041`, `/admin/new-job-order`, `file_job_orders` gate; staff filings bypass the order caps.)
 - **Account approved** (admin) → all that customer's `held` → `submitted` (release trigger). ✅
 - **Approve & process** (admin) → `submitted` / `on_hold` → `processing`. ✅
 - **Mark completed** (admin) → `processing` → `completed`. ✅
