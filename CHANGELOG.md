@@ -4,6 +4,9 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10g — auto-suspend + kick on escalation attempts)
+- **Migration `0047`:** a privilege-escalation attempt by a **customer on their own row** (crafted API call touching `is_admin`/`is_owner`/`status`/`staff_role` — the real UI never sends these, so no accidental triggers) now: reverts the change, **auto-suspends the account** (terminal lock — RLS blocks everything, portal shows the locked panel, held orders cancelled), **revokes their auth sessions/refresh tokens**, and logs `auto_suspended: true` → 🚨 owner email within 15 min. Attempts **by staff** (e.g. an admin touching the owner row) are alerted but NOT auto-revoked — the owner decides, so a false positive can never lock out the ops floor.
+
 ### 2026-06-12 (session 10f — security alerts: anything bad emails the owner)
 - **Breach-attempt detection (migration `0046`):** new owner-readable **`security_events`** log. The `guard_broker_protected_fields` trigger — which silently reverted attempts to change `is_owner`/`is_admin`/`status`/`staff_role` — now **records every attempt** (`protected_field_attempt`, with the fields tried and the actor). Role-gate matrix edits are logged too (`role_gate_changed`, audit).
 - **Watchdog upgraded:** runs every **15 minutes** (was hourly) and emails the owner on **any** client error (was ≥10/h spike) and **any** blocked privilege-escalation attempt (🚨 subject line), plus the existing failed-cron / failed-send alerts. One combined email per run with **per-category dedupe** (security 1h, others 6h) so a noisy category can't mute a new one.
