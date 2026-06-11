@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useBroker } from '../lib/useBroker'
-import { hasAdminAccess } from '../lib/types'
+import { isStaff } from '../lib/types'
 
+// Gate for the back office: owner, admin, and restricted staff roles
+// (cashier/checker) all enter — what they can see/do inside is decided by
+// the permission gates (usePermissions UI-side, has_permission() backend-side).
 export default function AdminRoute({ children }: { children: ReactNode }) {
   const { broker, loading } = useBroker()
   if (loading) {
@@ -12,6 +15,6 @@ export default function AdminRoute({ children }: { children: ReactNode }) {
       </div>
     )
   }
-  if (!hasAdminAccess(broker)) return <Navigate to="/" replace />
+  if (!isStaff(broker)) return <Navigate to="/" replace />
   return <>{children}</>
 }

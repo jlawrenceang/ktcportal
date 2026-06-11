@@ -75,8 +75,8 @@ last_updated: 2026-06-11
 1. ~~`on_hold` → customer response/update path~~ ✅ built (`0034`).
 2. ~~`rejected` recovery: recoverable vs terminal~~ ✅ built (`0034`, admin's call at reject time).
 3. ~~Cancel own order~~ ✅ built; full **edit** still deferred (serving-number effects, #8).
-4. Admin/employee **filing surface + JO-Processing tile**; possible **employee role**.
-5. Payment build + `service_invoice_no` + paid state; bank details/QR values — see [[Payment & Cashier Handoff (proposal)]] (parked for ops audit).
+4. Admin/employee **filing surface + JO-Processing tile** still open. ~~Employee role~~ ✅ built (`0035`): **staff roles** `admin` / `cashier` / `checker` with an **owner-only permission-gate matrix** (`role_permissions`, Settings → "Roles & gates"; enforced via `has_permission()` in RLS + RPCs, restricted roles are NOT `is_admin`). **X-ray Checker station** ✅ (`/admin/checker`, tablet-first): pending-X-ray queue + container/JO **clearance lookup** ("is this van cleared?") + confirm-done → stamps `xray_performed_at` and completes the JO (`record_xray`).
+5. Payment build + bank details/QR values — see [[Payment & Cashier Handoff (proposal)]] (parked for ops audit). ~~`service_invoice_no` + paid state~~ ✅ built (`0035`): cashier (or admin) records the ERP **Service Invoice no.** on a completed JO (`record_service_invoice`) → **PAID** chip; decided flow: ERP invoice carries the JO number for cross-reference.
 6. ~~Notifications~~ ✅ lean set built (`0034`): emails on **`on_hold` + `rejected` only** (action-required; Resend-quota-friendly); completed/processing are in-app (auto-poll). Plus an admin **chat status-message generator** (Copy / Viber / SMS) per JO.
 7. Go-live: finalize Customer Agreement (counsel, bump `AGREEMENT_VERSION`), run **ST02** on live, public-launch hardening.
 

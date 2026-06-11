@@ -26,6 +26,8 @@ export interface Broker {
   email_confirmed_at: string | null
   is_admin: boolean
   is_owner: boolean
+  /** Staff role ('admin' | 'cashier' | 'checker'); null for customers. */
+  staff_role: string | null
   irr_version: string | null
   irr_accepted_at: string | null
   terms_version: string | null
@@ -37,6 +39,11 @@ export interface Broker {
 /** Owner is a superset of admin — treat both as admin in the UI. */
 export function hasAdminAccess(b: Pick<Broker, 'is_admin' | 'is_owner'> | null | undefined): boolean {
   return !!b && (b.is_admin || b.is_owner)
+}
+
+/** Any back-office account: owner, admin, or a restricted role (cashier/checker). */
+export function isStaff(b: Pick<Broker, 'is_admin' | 'is_owner' | 'staff_role'> | null | undefined): boolean {
+  return !!b && (b.is_admin || b.is_owner || !!b.staff_role)
 }
 
 // Also the consignee approval status (the accreditation *feature* UI was
@@ -61,6 +68,9 @@ export interface JobOrder {
   admin_note: string | null
   customer_note?: string | null
   rejected_recoverable?: boolean
+  xray_performed_at?: string | null
+  service_invoice_no?: string | null
+  invoice_recorded_at?: string | null
   consignee?: Consignee | null
   lines?: JobOrderLine[]
 }

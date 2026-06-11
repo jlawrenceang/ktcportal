@@ -26,6 +26,7 @@ const CustomerDetail = lazy(() => import('./admin/CustomerDetail'))
 const Consignees = lazy(() => import('./admin/Consignees'))
 const AllJobOrders = lazy(() => import('./admin/AllJobOrders'))
 const Settings = lazy(() => import('./admin/Settings'))
+const Checker = lazy(() => import('./admin/Checker'))
 
 function Protected({ children }: { children: ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>
@@ -39,7 +40,7 @@ function Admin({ children }: { children: ReactNode }) {
   )
 }
 
-// Admins land in the admin portal; brokers see the broker home.
+// Staff land where their role works; customers see the broker home.
 function RoleLanding() {
   const { broker, loading } = useBroker()
   if (loading) {
@@ -49,6 +50,8 @@ function RoleLanding() {
       </div>
     )
   }
+  if (broker?.staff_role === 'checker') return <Navigate to="/admin/checker" replace />
+  if (broker?.staff_role === 'cashier') return <Navigate to="/admin/job-orders" replace />
   if (hasAdminAccess(broker)) return <Navigate to="/admin" replace />
   return <Home />
 }
@@ -93,6 +96,7 @@ export default function App() {
           <Route path="/admin/customers/:id" element={<Admin><CustomerDetail /></Admin>} />
           <Route path="/admin/consignees" element={<Admin><Consignees /></Admin>} />
           <Route path="/admin/job-orders" element={<Admin><AllJobOrders /></Admin>} />
+          <Route path="/admin/checker" element={<Admin><Checker /></Admin>} />
           <Route path="/admin/settings" element={<Admin><Settings /></Admin>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />

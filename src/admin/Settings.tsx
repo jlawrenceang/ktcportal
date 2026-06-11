@@ -14,6 +14,7 @@ export default function Settings() {
   const [suUser, setSuUser] = useState('')
   const [suPass, setSuPass] = useState('')
   const [suName, setSuName] = useState('')
+  const [suRole, setSuRole] = useState<'admin' | 'cashier' | 'checker'>('admin')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -30,7 +31,7 @@ export default function Settings() {
     const { data, error } = await supabase
       .from('customers')
       .select('*')
-      .or('is_admin.eq.true,is_owner.eq.true')
+      .or('is_admin.eq.true,is_owner.eq.true,staff_role.not.is.null')
       .order('is_owner', { ascending: false })
       .order('email', { ascending: true })
     if (error) { setError(error.message); setLoading(false); return }
@@ -38,6 +39,31 @@ export default function Settings() {
     setLoading(false)
   }
   useEffect(() => { void load() }, [])
+
+  // Roles & gates (owner-only editor; backend enforced via has_permission()).
+  type Gate = { role: string; permission: string; allowed: boolean }
+  const [gates, setGates] = useState<Gate[]>([])
+  const [gatesBusy, setGatesBusy] = useState(false)
+  const [gatesMsg, setGatesMsg] = useState<string | null>(null)
+
+  async function loadGates() {
+    const { data } = await supabase.from('role_permissions').select('role, permission, allowed')
+    setGates((data ?? []) as Gate[])
+  }
+  useEffect(() => { if (isOwner) void loadGates() }, [isOwner])
+
+  function toggleGate(role: string, permission: string) {
+    setGates((gs) => gs.map((g) => (g.role === role && g.permission === permission ? { ...g, allowed: !g.allowed } : g)))
+  }
+  async function saveGates() {
+    setGatesBusy(true); setGatesMsg(null)
+    const { error } = await supabase.from('role_permissions').upsert(
+      gates.map((g) => ({ ...g, updated_at: new Date().toISOString() })),
+      { onConflict: 'role,permission' },
+    )
+    setGatesBusy(false)
+    setGatesMsg(error ? error.message : '✓ Gates saved. Staff see the change on their next page load.')
+  }
 
   async function loadPricing() {
     const [{ data: r }, { data: s }] = await Promise.all([
@@ -71,11 +97,11 @@ export default function Settings() {
     const pwIssue = passwordIssue(suPass)
     if (pwIssue) { setError(pwIssue); return }
     setBusy(true); setError(null); setNotice(null)
-    const { error } = await supabase.rpc('create_staff', { p_username: u, p_password: suPass, p_full_name: suName.trim() })
+    const { error } = await supabase.rpc('create_staff', { p_username: u, p_password: suPass, p_full_name: suName.trim(), p_role: suRole })
     setBusy(false)
     if (error) { setError(error.message); return }
-    setSuUser(''); setSuPass(''); setSuName('')
-    setNotice(`Staff account created. They sign in with username "${u}" and the password you set.`)
+    setSuUser(''); setSuPass(''); setSuName(''); setSuRole('admin')
+    setNotice(`Staff account created (${suRole}). They sign in with username "${u}" and the password you set.`)
     await load()
   }
 
@@ -101,10 +127,10 @@ export default function Settings() {
   async function revoke(b: Broker) {
     if (b.is_owner) return
     setBusy(true); setError(null); setNotice(null)
-    const { error } = await supabase.from('customers').update({ is_admin: false }).eq('id', b.id)
+    const { error } = await supabase.from('customers').update({ is_admin: false, staff_role: null }).eq('id', b.id)
     setBusy(false)
     if (error) return setError(error.message)
-    setNotice(`Admin access revoked from ${b.email}.`)
+    setNotice(`Staff access revoked from ${b.email}.`)
     await load()
   }
 
@@ -132,6 +158,14 @@ export default function Settings() {
               <div style={{ display: 'grid', gap: 6 }}>
                 <label className="ktc-label" htmlFor="suPass">Password</label>
                 <input id="suPass" className="ktc-input" type="text" required minLength={8} value={suPass} onChange={(e) => setSuPass(e.target.value)} style={{ width: 160 }} title={PASSWORD_HINT} />
+              </div>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label className="ktc-label" htmlFor="suRole">Role</label>
+                <select id="suRole" className="ktc-input" value={suRole} onChange={(e) => setSuRole(e.target.value as 'admin' | 'cashier' | 'checker')} style={{ width: 130 }}>
+                  <option value="admin">Admin</option>
+                  <option value="cashier">Cashier</option>
+                  <option value="checker">Checker</option>
+                </select>
               </div>
               <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>Create staff</button>
             </form>
@@ -203,6 +237,67 @@ export default function Settings() {
         </div>
       </div>
 
+      {isOwner && (
+        <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+          <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>Roles &amp; gates</h2>
+          <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
+            What each staff role may do. Owner-only — enforced server-side (RLS + RPCs), the UI just mirrors it.
+          </p>
+          {gates.length === 0 ? (
+            <span className="ktc-label">Loading…</span>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ borderCollapse: 'collapse', fontSize: 13, minWidth: 460 }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '6px 14px 6px 0', fontWeight: 600 }} className="ktc-label">Gate</th>
+                    {['admin', 'cashier', 'checker'].map((r) => (
+                      <th key={r} style={{ padding: '6px 14px', fontWeight: 650, textTransform: 'capitalize' }}>{r}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {([
+                    ['view_job_orders', 'View job orders'],
+                    ['process_job_orders', 'Process job orders (approve / hold / reject / complete)'],
+                    ['confirm_xray', 'Confirm X-ray done (checker station)'],
+                    ['record_invoice', 'Record Service Invoice no. (= PAID)'],
+                    ['manage_approvals', 'Account approvals + dashboard'],
+                    ['manage_customers', 'Manage customers'],
+                    ['manage_consignees', 'Manage consignees'],
+                    ['manage_pricing', 'Settings · rates & fees'],
+                  ] as const).map(([perm, label]) => (
+                    <tr key={perm} style={{ borderTop: '1px solid hsl(var(--line-soft))' }}>
+                      <td style={{ padding: '8px 14px 8px 0', lineHeight: 1.4 }}>{label}</td>
+                      {['admin', 'cashier', 'checker'].map((r) => {
+                        const g = gates.find((x) => x.role === r && x.permission === perm)
+                        return (
+                          <td key={r} style={{ textAlign: 'center', padding: '8px 14px' }}>
+                            <input
+                              type="checkbox"
+                              checked={g?.allowed ?? false}
+                              onChange={() => toggleGate(r, perm)}
+                              aria-label={`${r}: ${label}`}
+                              style={{ width: 17, height: 17, cursor: 'pointer' }}
+                            />
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
+            <button className="ktc-btn" type="button" disabled={gatesBusy || gates.length === 0} onClick={() => void saveGates()} style={{ width: 'auto', padding: '10px 20px' }}>
+              {gatesBusy ? 'Saving…' : 'Save gates'}
+            </button>
+            {gatesMsg && <span className="ktc-label" style={{ fontSize: 13, fontWeight: 600 }}>{gatesMsg}</span>}
+          </div>
+        </div>
+      )}
+
       <div className="ktc-glass" style={{ padding: 28 }}>
         <h2 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 600 }}>Current staff</h2>
         {loading ? <span className="ktc-label">Loading…</span> : staff.length === 0 ? (
@@ -218,14 +313,17 @@ export default function Settings() {
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <b>{b.full_name || b.email}</b>
                     <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, color: '#fff', background: 'linear-gradient(135deg, var(--acc), var(--acc-2))' }}>
-                      {b.is_owner ? 'Owner' : 'Admin'}
+                      {b.is_owner ? 'Owner'
+                        : b.staff_role === 'cashier' ? 'Cashier'
+                        : b.staff_role === 'checker' ? 'Checker'
+                        : 'Admin'}
                     </span>
                   </div>
                   <div className="ktc-label" style={{ fontSize: 13 }}>{b.email}</div>
                 </div>
                 {isOwner && !b.is_owner && (
                   <button className="ktc-link" disabled={busy} onClick={() => revoke(b)} style={{ fontSize: 13, fontWeight: 600 }}>
-                    Revoke admin
+                    Revoke access
                   </button>
                 )}
               </div>

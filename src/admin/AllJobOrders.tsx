@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
+import { usePermissions } from '../lib/usePermissions'
 import type { JobOrder } from '../lib/types'
 
 interface AdminJobOrder extends JobOrder {
@@ -30,7 +31,7 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 }
 
 const SELECT =
-  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)'
+  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)'
 
 // Plain-text status message for chat apps (Viber / SMS / Messenger). Composed
 // per order; staff send it from their own device via the share buttons.
@@ -64,9 +65,13 @@ const btn = (variant: 'solid' | 'ghost' | 'danger'): CSSProperties => ({
 })
 
 export default function AllJobOrders() {
+  const { can } = usePermissions()
   const [orders, setOrders] = useState<AdminJobOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  // ERP Service Invoice recording (cashier): JO id being recorded + the number.
+  const [invoiceId, setInvoiceId] = useState<string | null>(null)
+  const [invoiceNo, setInvoiceNo] = useState('')
   // Note prompt for hold / reject (the note is shown to the customer).
   const [modal, setModal] = useState<{ id: string; jo: string; target: 'on_hold' | 'rejected' } | null>(null)
   const [note, setNote] = useState('')
@@ -120,6 +125,16 @@ export default function AllJobOrders() {
     setNote('')
   }
 
+  async function recordInvoice() {
+    if (!invoiceId || !invoiceNo.trim()) return
+    setBusyId(invoiceId)
+    const { error } = await supabase.rpc('record_service_invoice', { p_id: invoiceId, p_invoice_no: invoiceNo.trim() })
+    setBusyId(null)
+    if (error) { alert(error.message); return }
+    setInvoiceId(null); setInvoiceNo('')
+    await load()
+  }
+
   async function copyMessage() {
     if (!msgOrder) return
     try {
@@ -147,10 +162,20 @@ export default function AllJobOrders() {
                 <div key={o.id} style={{ padding: '14px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <b style={{ fontSize: 15 }}>{o.jo_number ?? '—'}</b>
+                      <b className="ktc-mono" style={{ fontSize: 14.5 }}>{o.jo_number ?? '—'}</b>
                       <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 999, background: sp.bg, color: sp.ink, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
                         {STATUS_LABEL[o.status] ?? o.status}
                       </span>
+                      {o.service_invoice_no && (
+                        <span className="ktc-chip ktc-chip--success" title={`Service Invoice ${o.service_invoice_no}`}>
+                          PAID · SI {o.service_invoice_no}
+                        </span>
+                      )}
+                      {o.xray_performed_at && !o.service_invoice_no && (
+                        <span className="ktc-chip ktc-chip--info" title={new Date(o.xray_performed_at).toLocaleString()}>
+                          X-ray done
+                        </span>
+                      )}
                     </span>
                     <span className="ktc-label" style={{ fontSize: 12 }}>{new Date(o.created_at).toLocaleString()}</span>
                   </div>
@@ -176,19 +201,43 @@ export default function AllJobOrders() {
                     </div>
                   )}
 
-                  {/* Actions */}
-                  <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-                    {(o.status === 'submitted' || o.status === 'on_hold') && (
-                      <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'processing', null)}>Approve &amp; process</button>
+                  {/* Actions — gated by the owner-tweakable role permissions */}
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {can('process_job_orders') && (
+                      <>
+                        {(o.status === 'submitted' || o.status === 'on_hold') && (
+                          <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'processing', null)}>Approve &amp; process</button>
+                        )}
+                        {o.status === 'processing' && (
+                          <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'completed')}>Mark completed</button>
+                        )}
+                        {(o.status === 'submitted' || o.status === 'processing') && (
+                          <button style={btn('ghost')} disabled={isBusy} onClick={() => openNote(o, 'on_hold')}>Hold for info</button>
+                        )}
+                        {(o.status === 'submitted' || o.status === 'processing' || o.status === 'on_hold') && (
+                          <button style={btn('danger')} disabled={isBusy} onClick={() => openNote(o, 'rejected')}>Reject</button>
+                        )}
+                      </>
                     )}
-                    {o.status === 'processing' && (
-                      <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'completed')}>Mark completed</button>
-                    )}
-                    {(o.status === 'submitted' || o.status === 'processing') && (
-                      <button style={btn('ghost')} disabled={isBusy} onClick={() => openNote(o, 'on_hold')}>Hold for info</button>
-                    )}
-                    {(o.status === 'submitted' || o.status === 'processing' || o.status === 'on_hold') && (
-                      <button style={btn('danger')} disabled={isBusy} onClick={() => openNote(o, 'rejected')}>Reject</button>
+                    {can('record_invoice') && o.status === 'completed' && !o.service_invoice_no && (
+                      invoiceId === o.id ? (
+                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                          <input
+                            className="ktc-input ktc-mono"
+                            value={invoiceNo}
+                            onChange={(e) => setInvoiceNo(e.target.value)}
+                            placeholder="Service Invoice no."
+                            autoFocus
+                            style={{ width: 170, padding: '7px 11px', fontSize: 13 }}
+                          />
+                          <button style={btn('solid')} disabled={isBusy || !invoiceNo.trim()} onClick={() => void recordInvoice()}>Save · PAID</button>
+                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setInvoiceId(null); setInvoiceNo('') }}>Cancel</button>
+                        </span>
+                      ) : (
+                        <button style={btn('ghost')} onClick={() => { setInvoiceId(o.id); setInvoiceNo('') }} title="Record the ERP Service Invoice number — having one on file marks the order PAID">
+                          Record invoice #
+                        </button>
+                      )
                     )}
                     {printable && (
                       <Link to={`/job-order/${o.id}/print`} target="_blank" style={{ ...btn('ghost'), textDecoration: 'none' }}>Print slip ↗</Link>
@@ -268,8 +317,9 @@ export default function AllJobOrders() {
               <a
                 className="ktc-btn-secondary ktc-btn--sm"
                 href={`viber://forward?text=${encodeURIComponent(chatMessage(msgOrder))}`}
+                onClick={() => void copyMessage()} // also copy, so paste works if the prefill doesn't carry over
                 style={{ textDecoration: 'none' }}
-                title="Opens Viber's forward screen — pick the customer's chat"
+                title="Copies the message and opens Viber's forward screen — pick the customer's chat (paste if the text doesn't carry over)"
               >
                 Send via Viber
               </a>
