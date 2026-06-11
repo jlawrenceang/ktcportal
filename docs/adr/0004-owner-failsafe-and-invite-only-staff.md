@@ -62,3 +62,7 @@ Chosen option: **Option A**. The owner (`jla.ktcport@gmail.com`) carries a serve
 * `supabase/migrations/0010_create_staff.sql`
 * `src/admin/Settings.tsx` · `src/lib/AuthContext.tsx` (`signIn` username mapping)
 * `docs/agent/workflow-invariants.md`
+
+## Amendments
+
+* **2026-06-12 — owner transferred** to `jlawrenceang@gmail.com` (the owner's 2FA-protected main account); `jla.ktcport@gmail.com` demoted to a regular admin (fallback login, no failsafe). TOTP MFA added portal-wide for staff/owner with server-side aal2 enforcement (migration `0049`, `/admin/security`).

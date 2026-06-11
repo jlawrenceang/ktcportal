@@ -10,7 +10,7 @@ A guarantee that the business owner can never be locked out of KTC.
 
 ## What it is
 
-- The owner account `jla.ktcport@gmail.com` carries a **server-only** `is_owner = true` flag on its `brokers` row.
+- The owner account `jlawrenceang@gmail.com` carries a **server-only** `is_owner = true` flag on its `brokers` row.
 - The owner **overrides every gate**, sees everything (admin RLS), and is treated as admin via `hasAdminAccess()`.
 - The owner **cannot be revoked**: the Settings staff list hides "Revoke admin" on the owner row, and staff cannot demote the owner.
 

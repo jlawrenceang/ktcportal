@@ -1,7 +1,8 @@
 import { Navigate } from 'react-router-dom'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
+import MfaChallenge from './MfaChallenge'
 
 function AwaitingEmailConfirmation({ email }: { email: string | undefined }) {
   const { signOut } = useAuth()
@@ -54,6 +55,20 @@ function AwaitingEmailConfirmation({ email }: { email: string | undefined }) {
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth()
+
+  // MFA gate: an account with a verified TOTP factor must pass the challenge
+  // (aal2) before the portal renders. Backend-enforced too — is_admin() /
+  // has_permission() return false at aal1 for enrolled accounts.
+  const [aal, setAal] = useState<{ current: string; next: string } | null>(null)
+  useEffect(() => {
+    if (!session) { setAal(null); return }
+    let active = true
+    void supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data }) => {
+      if (active) setAal({ current: data?.currentLevel ?? 'aal1', next: data?.nextLevel ?? 'aal1' })
+    })
+    return () => { active = false }
+  }, [session])
+
   if (loading) {
     return (
       <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
@@ -72,6 +87,17 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const emailConfirmed = !!(user.email_confirmed_at || user.confirmed_at)
   if (!isStaff && !emailConfirmed) {
     return <AwaitingEmailConfirmation email={user.email} />
+  }
+
+  if (!aal) {
+    return (
+      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+        <span className="ktc-label">Loading…</span>
+      </div>
+    )
+  }
+  if (aal.next === 'aal2' && aal.current !== 'aal2') {
+    return <MfaChallenge onVerified={() => setAal({ current: 'aal2', next: 'aal2' })} />
   }
 
   return <>{children}</>

@@ -17,7 +17,7 @@ Work outside this boundary is allowed but requires explicit planning and impact 
 
 ## Access-control invariants (do not regress)
 
-- **Owner failsafe.** `jla.ktcport@gmail.com` has server-only `is_owner`. The owner overrides every gate, sees everything, and **cannot be locked out or revoked**. Staff cannot revoke the owner.
+- **Owner failsafe.** `jlawrenceang@gmail.com` has server-only `is_owner`. The owner overrides every gate, sees everything, and **cannot be locked out or revoked**. Staff cannot revoke the owner.
 - **Invite-only staff.** Admin/staff accounts are created only by the owner via `rpc('create_staff', {p_username, p_password, p_full_name})` — username login (no email), mapped to a synthetic `<username>@ktc-staff.local`. There is no self-signup path to admin.
 - **Broker approval gate.** Un-approved, non-admin brokers must not reach broker features — the Shell shows the pending-approval panel. `status` transitions to `approved` only from the admin portal.
 - **Consignee approval gate (admin-side).** Consignees and their accreditations require admin approval; accreditation cannot be approved without name + address + TIN + 2303 document. This is admin-side data quality — as of ADR-0007 it no longer gates which consignees a broker can target.

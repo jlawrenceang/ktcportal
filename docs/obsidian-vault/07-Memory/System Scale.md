@@ -25,7 +25,7 @@ last_updated: 2026-06-10
 | Metric | Count |
 |--------|-------|
 | Consignees imported | **2,488** (from `Customer.csv`) |
-| Owner accounts | 1 (`jla.ktcport@gmail.com`) |
+| Owner accounts | 1 (`jlawrenceang@gmail.com`) |
 | Staff accounts | created on demand via Settings |
 
 ## Stack

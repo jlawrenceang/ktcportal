@@ -24,7 +24,7 @@ Identity, sign-in/registration, the role model (owner / admin / broker), invite-
 ## Role model
 
 - `brokers` row carries `is_owner` + `is_admin` + `status`. `hasAdminAccess(b) = is_admin || is_owner` (`src/lib/types.ts`).
-- **Owner:** `jla.ktcport@gmail.com`, server-only `is_owner`. Overrides everything, cannot be locked out/revoked. See [[Owner Failsafe]].
+- **Owner:** `jlawrenceang@gmail.com`, server-only `is_owner`. Overrides everything, cannot be locked out/revoked. See [[Owner Failsafe]].
 - **Staff/admin:** created only by the owner (see [[Administration]]).
 - **Brokers:** self-register, start `pending` (see [[Brokers]]).
 

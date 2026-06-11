@@ -18,7 +18,7 @@ PASS / AMBER / FAIL / BLOCKED / N/A (see template).
 
 | Role | Identity | Notes |
 |---|---|---|
-| Owner | `jla.ktcport@gmail.com` | server-only `is_owner`; must land on Admin Portal |
+| Owner | `jlawrenceang@gmail.com` | server-only `is_owner`; must land on Admin Portal |
 | Test broker | a throwaway email you control | created during Lane 2 |
 | Test staff | username created during Lane 5 | e.g. `smoketest1` |
 | Test consignee | created during Lane 3 | e.g. name "ST01 Test Consignee" |

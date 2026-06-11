@@ -10,7 +10,7 @@ Build and maintain the **KTC Container Terminal** broker portal — a port / con
 
 - **Backend-enforced access.** Auth, approvals, and roles live in RLS + SECURITY DEFINER RPCs, not frontend-only. CAPTCHA is enforced server-side in Supabase.
 - **Runtime authority is `src/lib/supabase.ts`.** Production project: `mdlnfhyylvapzdubhyic` (KTC's own Supabase account). The connected `mcp__supabase__*` tools point at **jta-sys**, NOT KTC — never use them here. Detail in `docs/agent/runtime-data-safety.md`.
-- **Owner failsafe.** `jla.ktcport@gmail.com` is the server-only owner — overrides everything, cannot be locked out. Staff are owner-created (invite-only); no self-signup as admin.
+- **Owner failsafe.** `jlawrenceang@gmail.com` is the server-only owner — overrides everything, cannot be locked out. Staff are owner-created (invite-only); no self-signup as admin.
 - **Migrations are forward-only.** `git push` deploys the frontend to Vercel; it does NOT deploy DB changes.
 - **Responsive web only.** No native mobile without an explicit ask.
 

@@ -7,7 +7,7 @@ import { mintSession, e2eAuthConfigured } from './helpers/session'
 // E2E_SERVICE_ROLE_KEY are set — point them at a dedicated TEST Supabase project
 // (Option A) for the mutation lanes; do not mutate prod data. See e2e/README.md.
 
-const OWNER = process.env.E2E_OWNER_EMAIL ?? 'jla.ktcport@gmail.com'
+const OWNER = process.env.E2E_OWNER_EMAIL ?? 'jlawrenceang@gmail.com'
 const BROKER = process.env.E2E_BROKER_EMAIL // a seeded, approved broker
 const STAFF = process.env.E2E_STAFF_EMAIL // e.g. <username>@ktc-staff.local
 

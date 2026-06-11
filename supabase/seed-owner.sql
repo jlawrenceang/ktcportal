@@ -17,7 +17,7 @@ set is_owner   = true,
     is_admin   = true,
     status     = 'approved',
     decided_at = now()
-where email = 'jla.ktcport@gmail.com';
+where email = 'jlawrenceang@gmail.com';
 
 -- Verify:
 -- select email, is_owner, is_admin, status from public.customers order by is_owner desc, is_admin desc;
