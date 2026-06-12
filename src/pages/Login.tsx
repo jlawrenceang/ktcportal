@@ -117,8 +117,14 @@ export default function Login() {
     } else if (sessionStorage.getItem('ktc_email_confirmed')) {
       setNotice('✓ Your email is confirmed — please sign in to continue.')
       sessionStorage.removeItem('ktc_email_confirmed')
+    } else if (sessionStorage.getItem('ktc_session_superseded')) {
+      setNotice('You were signed out because this account signed in on another device or browser. If that wasn’t you, change your password now.')
+      sessionStorage.removeItem('ktc_session_superseded')
     } else if (sessionStorage.getItem('ktc_idle_logout')) {
-      setNotice('You were signed out after 10 minutes of inactivity. Please sign in again.')
+      // The flag's value carries the minutes ('15' customer / '60' staff);
+      // a bare legacy '1' falls back to the customer wording.
+      const mins = sessionStorage.getItem('ktc_idle_logout')
+      setNotice(`You were signed out after ${/^\d{2,}$/.test(mins ?? '') ? mins : '15'} minutes of inactivity. Please sign in again.`)
       sessionStorage.removeItem('ktc_idle_logout')
     }
   }, [])

@@ -36,12 +36,18 @@ export default function MfaChallenge({ onVerified }: { onVerified: () => void })
       challengeId: ch.id,
       code: code.trim(),
     })
-    setBusy(false)
     if (vErr) {
+      setBusy(false)
       setError("That code didn't match — check your authenticator app and try again.")
       setCode('')
       return
     }
+    // Now fully authenticated (aal2): claim the single allowed session for
+    // this account, evicting any other device (0054). The aal1 claim in
+    // signIn was a no-op for MFA-enrolled accounts precisely so that a
+    // password alone can never kick the real session.
+    await supabase.rpc('claim_session').then(() => undefined, () => undefined)
+    setBusy(false)
     onVerified()
   }
 

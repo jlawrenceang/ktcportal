@@ -21,6 +21,8 @@ import AdminRoute from './admin/AdminRoute'
 const JobOrderPrint = lazy(() => import('./pages/JobOrderPrint'))
 const Payment = lazy(() => import('./pages/Payment'))
 const Calculator = lazy(() => import('./pages/Calculator'))
+const Manual = lazy(() => import('./pages/Manual'))
+const AdminManual = lazy(() => import('./admin/ManualPage'))
 const Dashboard = lazy(() => import('./admin/Dashboard'))
 const Approvals = lazy(() => import('./admin/Approvals'))
 const Brokers = lazy(() => import('./admin/Brokers'))
@@ -95,6 +97,7 @@ export default function App() {
           {/* /accreditation removed 2026-06-11 (page deleted; consignee accreditation
               disabled per ADR-0007) — old links fall through to the catch-all → / */}
           <Route path="/job-orders" element={<Protected><MyJobOrders /></Protected>} />
+          <Route path="/manual" element={<Protected><Manual /></Protected>} />
 
           {/* Admin portal */}
           <Route path="/admin" element={<Admin><Dashboard /></Admin>} />
@@ -108,6 +111,7 @@ export default function App() {
           <Route path="/admin/logs" element={<Admin><Logs /></Admin>} />
           <Route path="/admin/security" element={<Admin><Security /></Admin>} />
           <Route path="/admin/settings" element={<Admin><Settings /></Admin>} />
+          <Route path="/admin/manual" element={<Admin><AdminManual /></Admin>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

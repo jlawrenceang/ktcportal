@@ -1,13 +1,23 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { usePermissions, type Permission } from '../lib/usePermissions'
 import { purgeExpiredIds } from '../lib/idPurge'
+import { useIdleLogout } from '../lib/useIdleLogout'
+import { useSessionGuard } from '../lib/useSessionGuard'
+import IdleWarning from '../components/IdleWarning'
+import AdminTour, { staffTourRole, staffTourSeen } from './AdminTour'
+
+// All staff sessions time out — on a longer leash than the 15-min customer
+// rule because back-office work happens in bursts (review, step away, come
+// back). The hour also keeps cashier/checker floor stations workable: a
+// "still there?" prompt fires a minute before, and one tap keeps them alive.
+const ADMIN_IDLE_LOGOUT_MS = 60 * 60 * 1000
 
 // Persistent frosted admin nav — every admin surface one tap away; the active
 // pill shows where you are. Items are gated by the owner-tweakable role
 // permissions (cashier/checker only see what their role allows).
-const NAV: { to: string; label: string; end?: boolean; perm: Permission }[] = [
+const NAV: { to: string; label: string; end?: boolean; perm?: Permission }[] = [
   { to: '/admin', label: 'Dashboard', end: true, perm: 'manage_approvals' },
   { to: '/admin/approvals', label: 'Approvals', perm: 'manage_approvals' },
   { to: '/admin/customers', label: 'Customers', perm: 'manage_customers' },
@@ -18,6 +28,7 @@ const NAV: { to: string; label: string; end?: boolean; perm: Permission }[] = [
   { to: '/admin/logs', label: 'Logs', perm: 'manage_approvals' },
   { to: '/admin/security', label: '2FA', perm: 'manage_approvals' },
   { to: '/admin/settings', label: 'Settings', perm: 'manage_pricing' },
+  { to: '/admin/manual', label: 'Manual' }, // every staff role gets the guide
 ]
 
 export default function AdminShell({ children }: { children: ReactNode; crumb?: string }) {
@@ -32,10 +43,28 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
     if (broker && (broker.is_admin || broker.is_owner)) purgeExpiredIds()
   }, [broker])
 
+  // First visit → role-appropriate quick tour (re-openable from the ✨ button).
+  const tourRole = staffTourRole(broker)
+  const [tourOpen, setTourOpen] = useState(false)
+  useEffect(() => {
+    if (tourRole && !staffTourSeen(tourRole)) setTourOpen(true)
+  }, [tourRole])
+
   async function handleSignOut() {
     await signOut()
     navigate('/login', { replace: true })
   }
+
+  // One session per account: sign out (locally) if a newer login claimed it.
+  useSessionGuard()
+
+  // Idle timeout for every staff role — the enabled flag stays false until
+  // the broker row loads so nobody gets kicked by a stale activity marker
+  // during the loading flash.
+  const idleWarning = useIdleLogout(() => {
+    sessionStorage.setItem('ktc_idle_logout', String(ADMIN_IDLE_LOGOUT_MS / 60000))
+    void handleSignOut()
+  }, ADMIN_IDLE_LOGOUT_MS, !!broker)
 
   const role = broker?.is_owner ? 'Owner'
     : broker?.staff_role === 'cashier' ? 'Cashier'
@@ -61,7 +90,7 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
           {role || 'Admin'}
         </span>
         <div className="ktc-nav-links">
-          {NAV.filter((n) => can(n.perm)).map((n) => (
+          {NAV.filter((n) => !n.perm || can(n.perm)).map((n) => (
             <NavLink
               key={n.to}
               to={n.to}
@@ -72,12 +101,20 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
             </NavLink>
           ))}
         </div>
+        {tourRole && (
+          <button className="ktc-nav-link" onClick={() => setTourOpen(true)} style={{ flex: '0 0 auto' }} title="Replay the quick tour">
+            ✨
+          </button>
+        )}
         <button className="ktc-nav-link" onClick={handleSignOut} style={{ flex: '0 0 auto' }}>
           Sign out
         </button>
       </nav>
 
       <div className="ktc-stagger">{children}</div>
+
+      {tourOpen && tourRole && <AdminTour role={tourRole} onClose={() => setTourOpen(false)} />}
+      {idleWarning && <IdleWarning />}
     </div>
   )
 }

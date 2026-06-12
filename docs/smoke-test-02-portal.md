@@ -2,9 +2,10 @@
 
 **Smoke Test ID:** ST02
 **Date authored:** 2026-06-12
-**Status:** DRAFT (ready to execute)
+**Status:** IN PROGRESS — preflight P1–P8 PASS; P9 (rates + payment data entry) pending; manual Lanes 1–8 not yet run
 **Target:** https://portal.ktcterminal.com (live, pre-public)
-**Covers:** migrations `0011`–`0049` / sessions 4–10 — order lifecycle loops, serving numbers, per-service completion, checker station, payments + invoice, roles & gates, admin file-on-behalf, Logs, observability, MFA, auto-suspend, demo tour.
+**Covers:** migrations `0011`–`0055` / sessions 4–10r — order lifecycle loops, serving numbers, per-service completion, checker station, payments + invoice, roles & gates, admin file-on-behalf, Logs, observability, MFA, auto-suspend, demo tour, pricing lock + statutory VAT, service catalogue management, ID retention (24h guaranteed / 3-day purge).
+**Refreshed:** 2026-06-12 after sessions 10k–10q (Agreement v2, pricing lock `0050`, catalogue `0051`, ID retention `0052`/`0053`, prod wiped clean for go-live — first real order will be `JO-000001`).
 
 ## Result codes
 
@@ -36,7 +37,7 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | P6 SPA rewrite (deep link `/admin/job-orders`) | `200` | ✅ PASS |
 | P7 CAPTCHA server-enforced (tokenless password grant) | `captcha_failed` | ✅ PASS |
 | P8 Playwright Phase 2 (test project) | 16/16 | ✅ PASS (2026-06-12) |
-| P9 Lane-5 pre-reqs: service rates + payment details configured | non-zero rates; bank/GCash/QR filled | ⚠️ **NOT READY** as of 2026-06-12 — all rates ₱0, fees ₱0, bank/GCash blank. Fill **Settings → Service rates & fees** and **Payment details** before Lane 5. |
+| P9 Lane-5 pre-reqs: service rates + payment details configured | non-zero rates; bank/GCash/QR filled | ⚠️ **NOT READY** — re-verified live 2026-06-12 (post-10q): all 6 rates ₱0, admin/print fees ₱0, bank/account/GCash empty. Fill via step **5.0** before Lane 5. |
 
 **Preflight: PASS** (P1–P8 green; P9 is a data-entry to-do, not a defect). The lanes below are manual.
 
@@ -51,13 +52,14 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | 1.3 | Skip to portal → Home | **Quick tour auto-opens** (6 steps, dots, Skip); closing it and reloading does NOT reopen; "Quick tour ▸" link reopens it | |
 | 1.4 | File a JO while pending | saved as **held** ("Draft (no number yet)"), notice says verify to process | |
 | 1.5 | Upload valid ID (banner) | admin Approvals shows the account with ID + consent badges | |
+| 1.6 | Footer → **User Manual** | customer guide renders (`/manual`); "Print this guide" opens the print dialog | |
 
 ## Lane 2 — Customer filing & serving numbers
 
 | # | Step | Expected | Result |
 |---|---|---|---|
 | 2.1 | Admin approves the test customer | approval email arrives; held order flips to **submitted** with `JO-######` | |
-| 2.2 | Order shows serving chips | per-service line number (e.g. `X-ray #N`); **Now serving** strip on My Job Orders | |
+| 2.2 | Order shows serving chips | per-service line number (e.g. `X-Ray #N`); **Now serving** strip on My Job Orders | |
 | 2.3 | File a 2nd JO using **Bulk paste** (3 containers, mixed services) | one row per container; duplicates skipped note | |
 | 2.4 | My Job Orders filters | Active default; Needs action / Completed / Closed / All switch server-side; >10 orders paginate 10/page | |
 | 2.5 | Cancel the 2nd JO (confirm prompt) | status cancelled; its serving numbers vacate (burned, not reused) | |
@@ -86,7 +88,9 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 
 | # | Step | Expected | Result |
 |---|---|---|---|
-| 5.1 | `/calculator` as customer | rates match Settings; X-ray VAT 12%; flat admin + print fees not VATed | |
+| 5.0 | Owner: Settings → rates card shows **🔒 Locked** → unlock → enter real X-Ray rate + admin/print fees → drag a row to reorder → Save; fill **Payment details** (bank, account, GCash) + upload QR | inputs disabled until unlocked; VAT shown read-only "12% · statutory · fixed"; Save re-locks; values persist on reload (clears P9) | |
+| 5.0b | Owner: catalogue — **+ Add service** (e.g. `ST02 Temp`, VATable) → confirm it appears in the customer JO form selector → toggle **inactive** → **✕ delete** (two-step) | active service joins the live catalogue (new filings only); deactivated → gone from new filings; delete succeeds only because it was never used by an order line | |
+| 5.1 | `/calculator` as customer | rates match Settings (in the dragged order); X-Ray VAT 12%; flat admin + print fees not VATed | |
 | 5.2 | "View charges & pay" on a JO | same computation; bank/GCash details + QR render | |
 | 5.3 | Upload a payment slip (try a >5 MB image) | auto-compressed under 5 MB; status → submitted; admin queue shows "Payment proof to review" | |
 | 5.4 | Admin: view slip (modal w/ Print + Save), **Reject** with note | customer gets **payment-rejected email** linking to the pay page; can re-upload | |
@@ -103,18 +107,28 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | 6.2 | Sign in as cashier | lands on Job Orders; nav shows ONLY what the matrix allows (no Approvals/Settings/2FA); can record invoice, can't approve/hold/reject | |
 | 6.3 | Owner: toggle a gate (e.g. cashier `view_job_orders` off) → cashier reloads | access disappears (server-side: queue empty/denied, not just hidden) — then toggle back | |
 | 6.4 | Owner: reset `st02cash` password from Settings | new password works | |
+| 6.5 | Per-role tours & manuals: first sign-in of cashier / checker / admin; then nav → **Manual** | role-matched quick tour auto-opens once per browser (✨ in the nav replays it); Manual tab shows the cashier/checker their own guide; admin/owner get tabs for all four guides (Admin · Cashier · Checker · Customer) | |
 
-## Lane 7 — Security & monitoring
+## Lane 7 — Security & monitoring (full feature checklist)
+
+> **Inventory under test:** server-enforced CAPTCHA (P7) · email-confirmation gate (Lane 1) · login lockout · idle timeouts + warning prompt · single session per account (last-login-wins, MFA-guarded, dead-session RLS cut-off `0055`) · TOTP 2FA with server-side aal2 · RLS + role-permission matrix (Lane 6) · protected-field guard + auto-suspend (`0046`/`0047`) · security-events log + 15-min watchdog · browser security headers (CSP etc.) · ID retention windows (8.4) · owner failsafe (invite-only staff, server-only `is_owner`).
 
 | # | Step | Expected | Result |
 |---|---|---|---|
 | 7.1 | Owner: 2FA tab → enroll (scan QR, verify code) | "2FA is ON"; sign out → sign in → **code challenge** appears; wrong code rejected; right code lands in admin | |
 | 7.2 | Cashier opens `/admin/security` directly | "available for admin and owner accounts only" message | |
-| 7.3 | Idle: leave the customer portal untouched 10+ min (or close browser, return after 10 min) | signed out; login shows the inactivity notice | |
+| 7.3 | Idle: leave the customer portal untouched 14 min | **"Are you still there?"** prompt appears; any click/movement dismisses it and resets the timer; ignore it 1 more min → signed out, login notice says "after 15 minutes" (closed-browser return after 15 min also signs out) | |
+| 7.3b | Idle (staff): same on the admin portal (any role incl. cashier/checker) | warning at 59 min, sign-out at 60 with "after 60 minutes" notice | |
+| 7.3c | Single session: sign the test customer in on a second browser (or private window) | first browser signs out ≤1 min (on focus: instantly) with "signed in on another device" notice; second browser unaffected. For the 2FA owner: password alone on browser 2 does NOT kick browser 1 — only completing the 6-digit verify does | |
+| 7.3d | Eviction audit: after 7.3c, owner opens Logs → Security | "Session evicted — account signed in on a new device" entry for the test customer; **no** owner alert email for it (routine event) | |
+| 7.3e | (Advanced, optional) Dead-session cut-off: capture the evicted browser's access token *before* 7.3c, then after eviction replay it against REST (`curl …/rest/v1/job_orders -H "apikey: <anon>" -H "Authorization: Bearer <evicted JWT>"`) | empty result / denied — the deleted session fails `session_alive()` inside every RLS helper, even though the JWT itself is unexpired | |
 | 7.4 | Login lockout: 5 wrong passwords | 60s cooldown message | |
 | 7.5 | (Advanced, optional) As the test customer, send a crafted PATCH to set `is_admin=true` on own row (curl + access token) | change reverted; account **auto-suspended** + sessions revoked; owner gets 🚨 email ≤15 min; Logs → Security shows the attempt. Reinstate the account afterwards. | |
 | 7.6 | Logs tab (owner) | all four views populated from this run (orders / security / errors / emails & sync) | |
 | 7.7 | Settings → System health → Run health check | all 5 cron jobs listed with recent runs; outbound calls show HTTP 200s; this run's emails listed | |
+| 7.8 | Security headers: `curl -I https://portal.ktcterminal.com` | `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` all present (+ existing HSTS) | |
+| 7.9 | CSP didn't break anything: load login (CAPTCHA widget renders), fonts look right (Schibsted Grotesk, not Times), view/print an uploaded ID and a payment slip, pay page shows the QR image | all render normally; Logs → Client errors shows **no** CSP violation errors from this run | |
+| 7.10 | URL gating: logged out, open `/job-orders`, `/admin`, `/account` directly; as the test customer open `/admin/job-orders` | logged out → `/login`; customer at `/admin/*` → bounced to `/` (no admin data flash) | |
 
 ## Lane 8 — Housekeeping (observe, no action)
 
@@ -123,5 +137,6 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | 8.1 | 🗄 Archive paid & completed (or wait for Monday cron) | completed+invoiced orders leave default views; visible under Archived; customer history intact | |
 | 8.2 | Monday 00:15 PH carry-over (observe next Monday) | open orders re-queued at the FRONT of the new week's lines in old order | |
 | 8.3 | BOC mirror | BLOCKED until Google service-account creds are set (`scripts/setup-boc-mirror.mjs`) — expected | |
+| 8.4 | ID retention (`0052`/`0053`): open the test customer's ID in the file viewer <24h after upload, then check again later | <24h: **no 🗑** (storage policy blocks deletion — review window); 24h–3d: 🗑 appears (two-step delete works); 3d: auto-purged (lazy admin-load purge + hourly `purge_expired_ids` cron — cron is a silent no-op until `scripts/setup-id-purge.mjs` puts the service key in Vault) | |
 
-**Teardown:** suspend/reject the throwaway customer, revoke `st02cash`/`st02check`, remove test JOs if desired (or archive).
+**Teardown:** suspend/reject the throwaway customer, revoke `st02cash`/`st02check`, remove test JOs if desired (or archive). **Go-live note:** prod was wiped (session 10p) so the first *real* order is meant to be `JO-000001` — this run will consume `JO-000001+` and `BR-000001+`, so after teardown delete the test orders/customer and reset `jo_number_seq` / `broker_code_seq` (only safe at zero orders). Test IDs uploaded during the run can't be manually deleted for 24h (`0053` window) — the 3-day purge clears them regardless.

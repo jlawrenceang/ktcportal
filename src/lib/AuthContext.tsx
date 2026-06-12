@@ -46,9 +46,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: captchaToken ? { captchaToken } : undefined,
     })
-    // Fresh sign-in = fresh idle clock (a stale marker from a previous
-    // session must not instantly log the new session out).
-    if (!error) stampActivity()
+    if (!error) {
+      // Fresh sign-in = fresh idle clock (a stale marker from a previous
+      // session must not instantly log the new session out).
+      stampActivity()
+      // One session per account: claim this one, evicting any other device
+      // (0054). For MFA-enrolled accounts this is a no-op at aal1 — the
+      // claim happens after the 6-digit verify in MfaChallenge instead.
+      await supabase.rpc('claim_session').then(() => undefined, () => undefined)
+    }
     return { error: error?.message ?? null }
   }
   const signUp: AuthValue['signUp'] = async (email, password, extras) => {

@@ -4,12 +4,14 @@ import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { hasAdminAccess } from '../lib/types'
 import { useIdleLogout } from '../lib/useIdleLogout'
+import { useSessionGuard } from '../lib/useSessionGuard'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import { APP_VERSION } from '../version'
 import PendingPanel from './PendingPanel'
 import BrokerStatusBanner from './BrokerStatusBanner'
+import IdleWarning from './IdleWarning'
 
-const IDLE_LOGOUT_MS = 10 * 60 * 1000 // auto sign-out after 10 min of inactivity
+const IDLE_LOGOUT_MS = 15 * 60 * 1000 // auto sign-out after 15 min of inactivity (warning at 14)
 
 // Primary navigation — persistent frosted bar (replaces the old back-button +
 // breadcrumb pattern: every page is one tap away, and the active pill shows
@@ -42,9 +44,13 @@ export default function Shell({ children }: { children: ReactNode }) {
     navigate('/login', { replace: true })
   }
 
-  // Idle timeout: sign brokers out after 10 minutes of inactivity.
-  useIdleLogout(() => {
-    sessionStorage.setItem('ktc_idle_logout', '1')
+  // One session per account: sign out (locally) if a newer login claimed it.
+  useSessionGuard()
+
+  // Idle timeout: sign customers out after 15 minutes of inactivity,
+  // with a "still there?" prompt one minute before.
+  const idleWarning = useIdleLogout(() => {
+    sessionStorage.setItem('ktc_idle_logout', '15')
     void handleSignOut()
   }, IDLE_LOGOUT_MS)
 
@@ -83,11 +89,15 @@ export default function Shell({ children }: { children: ReactNode }) {
       )}
 
       <footer style={{ marginTop: 44, paddingTop: 18, borderTop: '1px solid var(--glass-brd)', textAlign: 'center', fontSize: 12, color: 'hsl(var(--ink-2))' }}>
+        <Link to="/manual" className="ktc-link" style={{ fontSize: 12 }}>User Manual</Link>
+        <span aria-hidden style={{ margin: '0 8px', opacity: 0.5 }}>·</span>
         <Link to="/agreement" className="ktc-link" style={{ fontSize: 12 }}>Customer Agreement (Terms &amp; Conditions)</Link>
         <div style={{ marginTop: 6, opacity: 0.75 }}>
           KTC Online Portal {APP_VERSION} · © {new Date().getFullYear()} KTC Container Terminal Corp.
         </div>
       </footer>
+
+      {idleWarning && <IdleWarning />}
     </div>
   )
 }

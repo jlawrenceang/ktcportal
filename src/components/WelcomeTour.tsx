@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import Tour, { type TourStep } from './Tour'
 
 // First-login walkthrough for new customers (also re-openable from Home).
-// Pure frontend — six short cards explaining the filing → serving number →
-// payment → release flow. Dismissal is remembered per browser.
+// Six short cards explaining the filing → serving number → payment →
+// release flow. Dismissal is remembered per browser. The card UI itself
+// lives in Tour.tsx, shared with the per-role staff tours.
 
 const TOUR_KEY = 'ktc_tour_done'
 
@@ -13,7 +14,7 @@ export function markTourSeen() {
   try { localStorage.setItem(TOUR_KEY, '1') } catch { /* ignore */ }
 }
 
-const STEPS: { icon: string; title: string; body: string }[] = [
+const STEPS: TourStep[] = [
   {
     icon: '👋',
     title: 'Welcome to the KTC Online Portal',
@@ -47,63 +48,9 @@ const STEPS: { icon: string; title: string; body: string }[] = [
 ]
 
 export default function WelcomeTour({ onClose }: { onClose: () => void }) {
-  const [step, setStep] = useState(0)
-  const s = STEPS[step]
-  const last = step === STEPS.length - 1
-
   function close() {
     markTourSeen()
     onClose()
   }
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Quick tour"
-      onClick={close}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 60, display: 'grid', placeItems: 'center',
-        background: 'rgba(20, 24, 32, 0.45)', backdropFilter: 'blur(6px)', padding: 20,
-      }}
-    >
-      <div
-        className="ktc-glass ktc-rise"
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: 430, width: '100%', padding: '30px 30px 24px', background: 'rgba(255,255,255,0.94)' }}
-      >
-        <div aria-hidden style={{ fontSize: 40, lineHeight: 1 }}>{s.icon}</div>
-        <h2 style={{ margin: '14px 0 0', fontSize: 19, fontWeight: 700, letterSpacing: '-0.02em' }}>{s.title}</h2>
-        <p className="ktc-label" style={{ marginTop: 10, fontSize: 13.5, lineHeight: 1.65, minHeight: 88 }}>{s.body}</p>
-
-        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', margin: '18px 0' }} aria-hidden>
-          {STEPS.map((_, i) => (
-            <span key={i} style={{
-              width: i === step ? 22 : 7, height: 7, borderRadius: 999, transition: 'all 0.25s ease',
-              background: i === step ? 'var(--acc)' : 'rgba(0,0,0,0.15)',
-            }} />
-          ))}
-        </div>
-
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {step > 0 && (
-            <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => setStep(step - 1)}>← Back</button>
-          )}
-          <button
-            type="button"
-            className="ktc-btn"
-            style={{ flex: 1 }}
-            onClick={() => (last ? close() : setStep(step + 1))}
-          >
-            {last ? "Let's go 🚀" : 'Next →'}
-          </button>
-        </div>
-        {!last && (
-          <button type="button" className="ktc-link" onClick={close} style={{ fontSize: 12.5, display: 'block', margin: '12px auto 0' }}>
-            Skip the tour
-          </button>
-        )}
-      </div>
-    </div>
-  )
+  return <Tour steps={STEPS} onClose={close} />
 }

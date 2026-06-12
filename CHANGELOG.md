@@ -4,6 +4,31 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-13 (session 10s — user manual + demo tour, per role)
+- **User manuals for all 5 roles**, written as repo markdown (`src/content/manual-{customer,admin,cashier,checker}.md`) and rendered by the existing `MarkdownDoc` renderer:
+  - **Customer** at `/manual` (new "User Manual" footer link): register→verify→file→queue→pay→print, statuses, account self-service, security expectations (15-min idle, single session, lockout).
+  - **Staff** at `/admin/manual` (new "Manual" nav tab, visible to every role): cashier and checker each see *their own* guide; admin/owner get tabs for all four guides. "Print this guide" button on both pages.
+- **Demo tours per role:** the customer Quick tour's card UI extracted into a shared `Tour` component; new `AdminTour` with role-specific steps — **admin/owner** (6 steps: dashboard→approvals→processing→payments/invoices→file-on-behalf→settings/logs/security), **cashier** (4 steps) and **checker** (4 steps). Auto-opens once per browser per role on the first admin-portal visit; replayable from a new **✨** nav button. Customer tour unchanged.
+- ST02: new checks 1.6 (customer manual) and 6.5 (per-role tours + manual tabs).
+
+### 2026-06-13 (session 10r — dead-session hardening + security headers)
+- **Evicted-JWT caveat closed (migration `0055`):** `session_alive()` — true only while the JWT's session row still exists in `auth.sessions` (eviction/auto-suspend deletes it) — is now woven into all five core RLS helpers (`current_broker_id`, `broker_is_approved`, `broker_is_pending`, `is_admin`, `has_permission`). A kicked session's unexpired JWT now gets nothing from any helper-gated policy instantly, raw REST included. Server contexts (no `session_id` claim) pass untouched. Accepted remainder: raw-`auth.uid()` policies (own profile row / own storage folders) honor a dead JWT ≤1h — same-account data only.
+- **Eviction audit trail:** `claim_session()` logs `session_evicted` to `security_events` when it actually kicked something — visible in Logs → Security (new label), and deliberately NOT in the watchdog's alert filter (routine device switches don't email the owner).
+- **Browser security headers (vercel.json):** full CSP (self + Supabase + Turnstile + Google Fonts + blob: for the file viewer; `object-src 'none'`, `frame-ancestors 'none'`), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` — previously only Vercel's default HSTS.
+- ST02 Lane 7 rewritten as a **full security-feature checklist** (inventory header + new checks 7.3d eviction log, 7.3e dead-JWT replay, 7.8 headers, 7.9 CSP-didn't-break-anything, 7.10 URL gating).
+
+### 2026-06-13 (session 10r — one session per account, last login wins)
+- **Single session per account (migration `0054`, everyone — customers + all staff):** a fresh sign-in calls `claim_session()`, which records the new session id in server-only `active_sessions` and **deletes every other auth session / refresh token** for that user (the 0047 eviction mechanism). The evicted browser signs itself out within ~a minute (`useSessionGuard` in both shells polls `is_current_session()` on mount/focus/60s — local-scope sign-out so it can't revoke the winner) and the login page explains: "signed in on another device… if that wasn't you, change your password."
+- **Why kick-old, not refuse-new:** refusing the new login creates a lockout loophole (close the browser without signing out → wait out the idle timeout). Last-login-wins has no wait, and makes a credential thief *visible* — their login throws the real user out, who then resets the password (revoking everything).
+- **MFA guard:** accounts with a verified TOTP factor can only claim at `aal2` — the claim runs after the 6-digit verify, so a stolen password alone can never evict the real session. Pre-rollout sessions are grandfathered until their next sign-in. Residual: an evicted JWT stays valid ≤1h for raw REST (same account, RLS/aal2 still apply).
+- Note: multiple tabs/windows of the same browser are one shared session — unaffected.
+
+### 2026-06-13 (session 10r — idle timeout everywhere + "still there?" prompt)
+- **Every signed-in session now times out on inactivity** (was: only customers; the whole admin portal was exempt): **customers 15 min** (up from 10), **all staff — owner, admin, cashier, checker — 60 min**. Same persisted-marker mechanics everywhere (survives a closed browser, multi-tab aware), wired into `AdminShell` via a new `enabled` flag on `useIdleLogout` (off until the broker row loads, so nobody is kicked by a stale marker during the loading flash).
+- **"Are you still there?" prompt one minute before sign-out** (new `IdleWarning` modal in both shells): any click, keypress or mouse movement — including pressing the prompt's button — resets the timer and dismisses it. The hook now returns the warning state.
+- Login inactivity notice now states the actual window (the sessionStorage flag carries the minutes: `15` customer / `60` staff).
+- ST02 refreshed to current behavior (covers `0050`–`0053`): new checks for the pricing lock + payment-details entry (5.0), catalogue add/deactivate/delete (5.0b), idle timeouts + warning prompt (7.3/7.3b), ID retention windows (8.4); teardown notes the `JO-000001`/`BR-000001` sequence reset for go-live.
+
 ### 2026-06-12 (session 10q — ID retention finalized: 24h guaranteed · 3-day auto-purge)
 - **Final policy (migration `0053`, supersedes 0052's 7-day window):** uploaded IDs are guaranteed kept **24 hours** (storage policy blocks any deletion — review/print/save window) → **manually deletable 24h–3 days** (🗑 in the viewer) → **auto-deleted at 3 days** so storage never bloats.
 - **Auto-purge, two layers:** (a) **lazy client purge** — any admin page load deletes expired files (hourly-throttled per browser, active immediately); (b) **hourly pg_cron `purge_expired_ids()`** calling the Storage REST API via `pg_net` (SQL can't delete storage objects) — silent no-op until Vault holds the service key (`scripts/setup-id-purge.mjs`; needs `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`). Purge calls are logged to `outbound_requests` (watchdog-visible).
