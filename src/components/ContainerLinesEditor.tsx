@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { SERVICE_REQUESTS } from '../lib/types'
+import { useServices } from '../lib/useServices'
 
 export interface LineDraft {
   container_number: string
@@ -22,10 +23,30 @@ export default function ContainerLinesEditor({
   lines: LineDraft[]
   onChange: (lines: LineDraft[]) => void
 }) {
+  const services = useServices()
   const [showBulk, setShowBulk] = useState(false)
   const [bulkText, setBulkText] = useState('')
   const [bulkService, setBulkService] = useState<string>(SERVICE_REQUESTS[0])
   const [bulkNote, setBulkNote] = useState<string | null>(null)
+
+  // When the live catalogue loads, swap stale defaults on untouched rows
+  // (and the bulk default) for the first active service.
+  useEffect(() => {
+    if (!services.length) return
+    if (!services.includes(bulkService)) setBulkService(services[0])
+    if (lines.some((l) => !l.container_number.trim() && !services.includes(l.service_request))) {
+      onChange(lines.map((l) =>
+        !l.container_number.trim() && !services.includes(l.service_request)
+          ? { ...l, service_request: services[0] }
+          : l,
+      ))
+    }
+  }, [services]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Keep a stale (deactivated) service selectable on rows that already carry
+  // it, so editing an old draft doesn't silently change the service.
+  const optionsFor = (current: string) =>
+    services.includes(current) || !current ? services : [current, ...services]
 
   function updateLine(i: number, patch: Partial<LineDraft>) {
     onChange(lines.map((l, idx) => (idx === i ? { ...l, ...patch } : l)))
@@ -75,7 +96,7 @@ export default function ContainerLinesEditor({
             value={line.service_request}
             onChange={(e) => updateLine(i, { service_request: e.target.value })}
           >
-            {SERVICE_REQUESTS.map((s) => (
+            {optionsFor(line.service_request).map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
@@ -111,7 +132,7 @@ export default function ContainerLinesEditor({
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <label className="ktc-label" htmlFor="bulkSvc" style={{ fontSize: 12 }}>Service for all:</label>
             <select id="bulkSvc" className="ktc-input" style={{ width: 'auto', minWidth: 160, flex: '0 1 auto' }} value={bulkService} onChange={(e) => setBulkService(e.target.value)}>
-              {SERVICE_REQUESTS.map((s) => <option key={s} value={s}>{s}</option>)}
+              {optionsFor(bulkService).map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
             <button type="button" className="ktc-btn" onClick={addBulk} style={{ width: 'auto', padding: '9px 18px' }}>Add to list</button>
           </div>

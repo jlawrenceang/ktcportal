@@ -111,6 +111,25 @@ export default function Settings() {
   function setRateVal(service: string, rate: number) {
     setRates((rs) => rs.map((x) => (x.service === service ? { ...x, rate } : x)))
   }
+  function setRateActive(service: string, active: boolean) {
+    setRates((rs) => rs.map((x) => (x.service === service ? { ...x, active } : x)))
+  }
+
+  // Add a new service to the catalogue (saved with "Save pricing"). The name
+  // is the primary key — it can't be renamed later, only deactivated.
+  const [newService, setNewService] = useState('')
+  const [newVatable, setNewVatable] = useState(true)
+  function addService() {
+    const name = newService.trim()
+    if (!name) { setPricingMsg('Enter the service name first.'); return }
+    if (rates.some((r) => r.service.toLowerCase() === name.toLowerCase())) {
+      setPricingMsg('That service already exists — reactivate it instead.')
+      return
+    }
+    setRates((rs) => [...rs, { service: name, rate: 0, unit: 'per_container', vatable: newVatable, active: true }])
+    setNewService(''); setNewVatable(true)
+    setPricingMsg(`"${name}" added — set its rate and Save pricing.`)
+  }
   function setSettingVal(key: string, value: number) {
     setSettings((ss) => ss.map((x) => (x.key === key ? { ...x, value } : x)))
   }
@@ -264,18 +283,41 @@ export default function Settings() {
           </button>
         </div>
 
-        <div style={{ display: 'grid', gap: 8, maxWidth: 520, opacity: pricingLocked ? 0.65 : 1 }}>
+        <div style={{ display: 'grid', gap: 8, maxWidth: 560, opacity: pricingLocked ? 0.65 : 1 }}>
           {rates.map((r) => (
-            <div key={r.service} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>{r.service}</span>
+            <div key={r.service} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: r.active ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.3)', border: '1px solid var(--glass-brd)', opacity: r.active ? 1 : 0.6 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                {r.service}
+                {!r.active && <span className="ktc-chip" style={{ fontSize: 10 }}>inactive</span>}
+              </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
                 <input className="ktc-input" type="number" step="0.01" min="0" value={r.rate} disabled={pricingLocked}
-                  onChange={(e) => setRateVal(r.service, Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
-                <span className="ktc-label" style={{ fontSize: 11, width: 86 }}>{r.unit.replace('per_', '/ ')}</span>
+                  onChange={(e) => setRateVal(r.service, Number(e.target.value))} style={{ width: 110, padding: '7px 10px' }} />
+                <span className="ktc-label" style={{ fontSize: 11, width: 72 }}>{r.unit.replace('per_', '/ ')}</span>
+                <label className="ktc-label" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: pricingLocked ? 'default' : 'pointer' }}
+                  title={r.active ? 'Untick to remove from the New Job Order form and calculator (existing orders unaffected)' : 'Tick to offer this service again'}>
+                  <input type="checkbox" checked={r.active} disabled={pricingLocked}
+                    onChange={(e) => setRateActive(r.service, e.target.checked)} />
+                  active
+                </label>
               </span>
             </div>
           ))}
+
+          {!pricingLocked && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, border: '1px dashed var(--glass-brd)' }}>
+              <input className="ktc-input" placeholder="New service name (can't be renamed later)" value={newService}
+                onChange={(e) => setNewService(e.target.value)} style={{ flex: '1 1 220px', padding: '7px 10px', fontSize: 13 }} />
+              <label className="ktc-label" style={{ fontSize: 11.5, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <input type="checkbox" checked={newVatable} onChange={(e) => setNewVatable(e.target.checked)} /> VATable
+              </label>
+              <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={addService}>+ Add service</button>
+              <span className="ktc-label" style={{ flexBasis: '100%', fontSize: 11, lineHeight: 1.5, opacity: 0.8 }}>
+                Names containing “X-ray”, “DEA”, or “OOG” join those serving-number queues; anything else queues under “Other”. Deactivate instead of deleting — past orders keep their pricing.
+              </span>
+            </div>
+          )}
         </div>
 
         <div style={{ height: 1, background: 'hsl(var(--line-soft))', margin: '16px 0' }} />

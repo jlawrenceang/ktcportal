@@ -4,6 +4,10 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10n — service catalogue is data, not code)
+- **Add / deactivate services from Settings** (no code changes, no migration — `service_rates` was already built for it): each rate row gains an **active** toggle, and an unlocked card offers **+ Add service** (name + VATable; name is the primary key, so it can't be renamed later — deactivate instead). Customer + admin JO forms and the bulk-paste selector now read the **live active catalogue** (`useServices`, cached, falls back to the built-in list); the Calculator already did. Deactivating removes a service from new filings only — existing orders keep their label and pricing (`computeCharges` loads all rates), and a draft row already carrying a deactivated service keeps it selectable so editing doesn't silently change it.
+- Queue routing note: service names containing “X-ray” / “DEA” / “OOG” join those serving-number lines; anything else queues under “Other”.
+
 ### 2026-06-12 (session 10m — pricing lock + statutory VAT; honest dashboard counts)
 - **Pricing lock:** the Settings rates/fees card is **locked by default** — inputs disabled (dimmed), Save disabled — until "🔒 Locked — unlock to edit" is tapped; saving re-locks automatically. No more accidental nudges.
 - **VAT rate is now read-only everywhere** (shown as "12% · statutory · fixed") and **server-guarded (migration `0050`)**: a database trigger rejects any client-session change or delete of `pricing_settings.vat_rate` — even an admin via direct API. If the law ever changes it, it's a one-line server-side update. Applied to prod + test projects.
