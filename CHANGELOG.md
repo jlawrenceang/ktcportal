@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10o — catalogue ordering, safe delete, renames)
+- **Drag & drop ordering (migration `0051`):** new `sort_order` drives the service order everywhere (JO form, bulk paste, calculator, Settings). Unlock the pricing card and drag rows by the ⠿ handle; order persists on Save.
+- **Safe delete:** inactive services get a ✕ (two-step confirm). A DB trigger only permits deleting a service that is **inactive AND never used by any order line** — otherwise it tells you to keep it deactivated so history keeps its pricing.
+- **Renames applied to live data:** `X-ray` → **X-Ray** (all variants) and `DEA ONLY` → **DEA** / `DEA ONLY (For PDEA)` → **DEA (For PDEA)** — updated in `service_rates` **and** all existing `job_order_lines` together (pricing matches by exact label). Queue mapping unaffected (substring, case-insensitive). Fallback list + both projects updated.
+
 ### 2026-06-12 (session 10n — service catalogue is data, not code)
 - **Add / deactivate services from Settings** (no code changes, no migration — `service_rates` was already built for it): each rate row gains an **active** toggle, and an unlocked card offers **+ Add service** (name + VATable; name is the primary key, so it can't be renamed later — deactivate instead). Customer + admin JO forms and the bulk-paste selector now read the **live active catalogue** (`useServices`, cached, falls back to the built-in list); the Calculator already did. Deactivating removes a service from new filings only — existing orders keep their label and pricing (`computeCharges` loads all rates), and a draft row already carrying a deactivated service keeps it selectable so editing doesn't silently change it.
 - Queue routing note: service names containing “X-ray” / “DEA” / “OOG” join those serving-number lines; anything else queues under “Other”.
