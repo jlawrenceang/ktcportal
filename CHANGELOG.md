@@ -4,6 +4,16 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10k — Customer Agreement v2: DPA-aligned protective redraft)
+- **Customer Agreement rewritten as Version 2.0** (`AGREEMENT_VERSION = 'v2'` — new registrants record v2; prior acceptances are test accounts). Drafted for **maximum lawful protection**, not blanket immunity (blanket waivers are void under the DPA + Civil Code):
+  - **Account security:** customer solely responsible for credentials/devices; all account activity deemed theirs; KTC not responsible for unauthorized use caused by their failure to safeguard (to the extent permitted by law).
+  - **NDA hardened:** unauthorized use/disclosure/exploitation of Portal data = material breach; injunctive relief; KTC-side promise limited to "personnel/processors bound by confidentiality" (no absolute-safety warranty).
+  - **Liability:** "as is"; no indirect/consequential damages; aggregate cap = fees paid for the job order(s) at issue; third-party criminal acts + customer-side incidents excluded **conditioned on KTC's DPA-compliant safeguards**; statutory carve-out (fraud/gross negligence/non-excludable liability) kept — that's what makes the rest enforceable.
+  - **Customer indemnity expanded:** false submissions, acting without consignee authority, **their leak/misuse of data accessed via the Portal**, unsafeguarded account use, violations of law.
+  - **DPA compliance restored/added:** DPO line (name TBC), NPC complaint + damages right, security-measures clause (matches what's actually built: RLS, encryption, MFA, audit logs), 72h-style breach-notification commitment, retention incl. customs/tax record rules.
+  - **General:** force majeure, exclusive Davao City venue, severability, no-waiver, assignment, entire-agreement.
+- ⚠️ Still requires **counsel sign-off before public launch** (release gate) — esp. the DPO designation, NPC registration check, and the liability cap amount.
+
 ### 2026-06-12 (session 10j — 2FA scoped to admin/owner, demo tour, ST02 script)
 - **2FA scoped to admin + owner for now:** the "2FA" nav tab and `/admin/security` page now require admin access (cashier/checker get a notice). Enforcement keys off enrollment, so unenrolled floor roles are untouched.
 - **New-customer demo tour:** a 6-step "Quick tour" (welcome → verify ID → file → serving number → pay → print/release) **auto-opens on a customer's first Home visit** (remembered per browser) and stays re-openable via the "Quick tour ▸" link. Pure frontend, no backend.
