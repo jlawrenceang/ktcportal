@@ -24,6 +24,24 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 
 ---
 
+## Preflight gate (automated — run first)
+
+| Check | Expected | Result |
+|---|---|---|
+| P1 TypeScript (`npx tsc --noEmit`) | 0 errors | ✅ PASS (2026-06-12) |
+| P2 Smoke suite vs prod (`BASE_URL=https://portal.ktcterminal.com npx playwright test smoke`) | 11/11 | ✅ PASS — 11 passed (2026-06-12) |
+| P3 Deploy health (`curl` root) | `200` | ✅ PASS |
+| P4 Bundle target | prod ref `mdlnfhyylvapzdubhyic` present; test ref + jta-sys ref ABSENT | ✅ PASS (`index-C8KaRoxp.js`) |
+| P5 Turnstile site key inlined | present | ✅ PASS |
+| P6 SPA rewrite (deep link `/admin/job-orders`) | `200` | ✅ PASS |
+| P7 CAPTCHA server-enforced (tokenless password grant) | `captcha_failed` | ✅ PASS |
+| P8 Playwright Phase 2 (test project) | 16/16 | ✅ PASS (2026-06-12) |
+| P9 Lane-5 pre-reqs: service rates + payment details configured | non-zero rates; bank/GCash/QR filled | ⚠️ **NOT READY** as of 2026-06-12 — all rates ₱0, fees ₱0, bank/GCash blank. Fill **Settings → Service rates & fees** and **Payment details** before Lane 5. |
+
+**Preflight: PASS** (P1–P8 green; P9 is a data-entry to-do, not a defect). The lanes below are manual.
+
+---
+
 ## Lane 1 — Onboarding + demo tour
 
 | # | Step | Expected | Result |
