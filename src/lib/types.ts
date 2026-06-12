@@ -38,12 +38,12 @@ export interface Broker {
   privacy_consented_at: string | null
 }
 
-/** Minimum days an uploaded valid ID is retained before it can be deleted
- *  (mirrors the storage policy in migration 0052). */
-export const ID_RETENTION_DAYS = 7
+/** Valid-ID retention (migration 0053): guaranteed kept 24h (no deletion),
+ *  manually deletable 24h–3d, auto-purged at 3 days. */
+export const ID_MIN_RETENTION_MS = 24 * 3_600_000
 export function idDeletable(b: Pick<Broker, 'valid_id_uploaded_at'>): boolean {
   if (!b.valid_id_uploaded_at) return true // legacy file, age unknown
-  return Date.now() - new Date(b.valid_id_uploaded_at).getTime() >= ID_RETENTION_DAYS * 86_400_000
+  return Date.now() - new Date(b.valid_id_uploaded_at).getTime() >= ID_MIN_RETENTION_MS
 }
 
 /** Owner is a superset of admin — treat both as admin in the UI. */

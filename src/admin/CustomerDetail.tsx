@@ -69,8 +69,8 @@ export default function CustomerDetail() {
           <div>Email: {cust.email}</div>
           <div>Contact: {cust.contact_number || '—'}</div>
           {cust.valid_id_path && <div>Valid ID: <button className="ktc-link" style={{ fontSize: 13 }} onClick={() => void openFromStorage('valid-ids', cust.valid_id_path, `Valid ID — ${cust.full_name || cust.email || 'customer'}`, {
-            // 🗑 appears only past the 7-day minimum retention; the storage
-            // policy re-checks server-side either way.
+            // 🗑 appears only past the 24h guaranteed window (auto-purge at
+            // 3 days); the storage policy re-checks server-side either way.
             onDeleted: idDeletable(cust) ? async () => {
               await supabase.from('customers').update({ valid_id_path: null }).eq('id', cust.id)
               setCust({ ...cust, valid_id_path: null })

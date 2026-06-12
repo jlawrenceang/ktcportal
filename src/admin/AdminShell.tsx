@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { usePermissions, type Permission } from '../lib/usePermissions'
+import { purgeExpiredIds } from '../lib/idPurge'
 
 // Persistent frosted admin nav — every admin surface one tap away; the active
 // pill shows where you are. Items are gated by the owner-tweakable role
@@ -23,6 +24,13 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
   const { signOut } = useAuth()
   const { can, broker } = usePermissions()
   const navigate = useNavigate()
+
+  // 3-day ID retention: admins opportunistically purge expired files
+  // (hourly-throttled; the pg_cron purge is the backstop). Admin-only —
+  // cashier/checker sessions can't pass the storage delete policy.
+  useEffect(() => {
+    if (broker && (broker.is_admin || broker.is_owner)) purgeExpiredIds()
+  }, [broker])
 
   async function handleSignOut() {
     await signOut()

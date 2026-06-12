@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10q — ID retention finalized: 24h guaranteed · 3-day auto-purge)
+- **Final policy (migration `0053`, supersedes 0052's 7-day window):** uploaded IDs are guaranteed kept **24 hours** (storage policy blocks any deletion — review/print/save window) → **manually deletable 24h–3 days** (🗑 in the viewer) → **auto-deleted at 3 days** so storage never bloats.
+- **Auto-purge, two layers:** (a) **lazy client purge** — any admin page load deletes expired files (hourly-throttled per browser, active immediately); (b) **hourly pg_cron `purge_expired_ids()`** calling the Storage REST API via `pg_net` (SQL can't delete storage objects) — silent no-op until Vault holds the service key (`scripts/setup-id-purge.mjs`; needs `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`). Purge calls are logged to `outbound_requests` (watchdog-visible).
+- Agreement §4 retention updated: "automatically and securely deleted no later than 3 days after upload."
+
 ### 2026-06-12 (session 10p — clean slate; valid-ID delete + 7-day retention window)
 - **Production wiped for go-live** (owner request): all job orders (+ lines, serving numbers, completions, events) and all non-staff users deleted; `jo_number_seq` reset — the first real order will be `JO-000001`. Remaining accounts: owner + admin fallback. Ops/monitoring logs kept. (One leftover stored ID file flagged for dashboard deletion — SQL can't delete storage objects.)
 - **Valid-ID retention policy changed (migration `0052`):** IDs are **no longer deleted instantly on approval** — they're kept a **minimum of 7 days from upload** (verification + dispute window), then deletable. New `valid_id_uploaded_at` stamp (trigger); the storage DELETE policy enforces the window **server-side** (legacy/orphaned files stay deletable). Agreement §4 retention wording updated to match.

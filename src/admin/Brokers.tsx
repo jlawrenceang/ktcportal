@@ -87,9 +87,9 @@ export default function Brokers() {
                       <div className="ktc-label" style={{ fontSize: 13 }}>
                         {b.email}{b.customer_id ? ` · #${b.customer_id}` : ''}
                         {b.valid_id_path && (<> · <button className="ktc-link" style={{ fontSize: 12 }} onClick={() => void openFromStorage('valid-ids', b.valid_id_path, `Valid ID — ${b.full_name || b.email || 'customer'}`, {
-                          // 🗑 appears only past the 7-day minimum retention
-                          // (unknown age = legacy = deletable); the storage
-                          // policy re-checks server-side either way.
+                          // 🗑 appears only past the 24h guaranteed window
+                          // (auto-purge at 3 days); the storage policy
+                          // re-checks server-side either way.
                           onDeleted: idDeletable(b) ? async () => {
                             await supabase.from('customers').update({ valid_id_path: null }).eq('id', b.id)
                             await load()
