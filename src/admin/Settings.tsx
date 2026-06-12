@@ -27,6 +27,8 @@ export default function Settings() {
   const [settings, setSettings] = useState<Setting[]>([])
   const [pricingBusy, setPricingBusy] = useState(false)
   const [pricingMsg, setPricingMsg] = useState<string | null>(null)
+  // Locked by default; saving re-locks — prices can't be nudged accidentally.
+  const [pricingLocked, setPricingLocked] = useState(true)
 
   async function load() {
     const { data, error } = await supabase
@@ -116,10 +118,13 @@ export default function Settings() {
     setPricingBusy(true); setPricingMsg(null)
     const updatedAt = new Date().toISOString()
     const { error: e1 } = await supabase.from('service_rates').upsert(rates.map((r) => ({ ...r, updated_at: updatedAt })), { onConflict: 'service' })
-    const { error: e2 } = await supabase.from('pricing_settings').upsert(settings.map((s) => ({ ...s, updated_at: updatedAt })), { onConflict: 'key' })
+    // vat_rate is statutory (12%) — read-only here, server-guarded (0050)
+    const editable = settings.filter((s) => s.key !== 'vat_rate')
+    const { error: e2 } = await supabase.from('pricing_settings').upsert(editable.map((s) => ({ ...s, updated_at: updatedAt })), { onConflict: 'key' })
     setPricingBusy(false)
     if (e1 || e2) { setPricingMsg((e1 || e2)!.message); return }
     setPricingMsg('✓ Pricing saved.')
+    setPricingLocked(true)
   }
 
   async function createStaff(e: FormEvent) {
@@ -242,18 +247,30 @@ export default function Settings() {
       </div>
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
-        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>Service rates &amp; fees</h2>
-        <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
-          Used for the online-payment computation (the official Service Invoice + receipt come from the ERP). Amounts in ₱. Editable by admins.
-        </p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>Service rates &amp; fees</h2>
+            <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
+              Used for the online-payment computation (the official Service Invoice + receipt come from the ERP). Amounts in ₱.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="ktc-btn-secondary ktc-btn--sm"
+            onClick={() => { setPricingLocked((v) => !v); setPricingMsg(null) }}
+            title={pricingLocked ? 'Prices are locked against accidental edits — unlock to change them' : 'Lock editing again'}
+          >
+            {pricingLocked ? '🔒 Locked — unlock to edit' : '🔓 Editing · tap to lock'}
+          </button>
+        </div>
 
-        <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
+        <div style={{ display: 'grid', gap: 8, maxWidth: 520, opacity: pricingLocked ? 0.65 : 1 }}>
           {rates.map((r) => (
             <div key={r.service} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
               <span style={{ fontSize: 13, fontWeight: 600 }}>{r.service}</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
-                <input className="ktc-input" type="number" step="0.01" min="0" value={r.rate}
+                <input className="ktc-input" type="number" step="0.01" min="0" value={r.rate} disabled={pricingLocked}
                   onChange={(e) => setRateVal(r.service, Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
                 <span className="ktc-label" style={{ fontSize: 11, width: 86 }}>{r.unit.replace('per_', '/ ')}</span>
               </span>
@@ -264,23 +281,35 @@ export default function Settings() {
         <div style={{ height: 1, background: 'hsl(var(--line-soft))', margin: '16px 0' }} />
 
         <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
-          {settings.map((s) => (
-            <div key={s.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>{s.label || s.key}</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span className="ktc-label" style={{ fontSize: 12 }}>{s.key === 'vat_rate' ? '×' : '₱'}</span>
-                <input className="ktc-input" type="number" step={s.key === 'vat_rate' ? '0.01' : '0.01'} min="0" value={s.value}
-                  onChange={(e) => setSettingVal(s.key, Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
-                {s.key === 'vat_rate' && <span className="ktc-label" style={{ fontSize: 11, width: 86 }}>= {(s.value * 100).toFixed(0)}%</span>}
-              </span>
-            </div>
-          ))}
+          {settings.map((s) =>
+            s.key === 'vat_rate' ? (
+              // Statutory — read-only here, server-guarded (migration 0050).
+              <div key={s.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.35)', border: '1px dashed var(--glass-brd)' }}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{s.label || 'VAT rate'}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <b className="ktc-mono" style={{ fontSize: 14 }}>{(s.value * 100).toFixed(0)}%</b>
+                  <span className="ktc-chip" title="Philippine statutory VAT — changeable only server-side if the law changes">statutory · fixed</span>
+                </span>
+              </div>
+            ) : (
+              <div key={s.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)', opacity: pricingLocked ? 0.65 : 1 }}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{s.label || s.key}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
+                  <input className="ktc-input" type="number" step="0.01" min="0" value={s.value} disabled={pricingLocked}
+                    onChange={(e) => setSettingVal(s.key, Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
+                </span>
+              </div>
+            ),
+          )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
-          <button className="ktc-btn" type="button" disabled={pricingBusy} onClick={() => void savePricing()} style={{ width: 'auto', padding: '10px 20px' }}>
+          <button className="ktc-btn" type="button" disabled={pricingBusy || pricingLocked} onClick={() => void savePricing()} style={{ width: 'auto', padding: '10px 20px' }}
+            title={pricingLocked ? 'Unlock editing first' : undefined}>
             {pricingBusy ? 'Saving…' : 'Save pricing'}
           </button>
+          {pricingLocked && !pricingMsg && <span className="ktc-label" style={{ fontSize: 12.5 }}>Locked against accidental edits.</span>}
           {pricingMsg && <span className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600 }}>{pricingMsg}</span>}
         </div>
       </div>

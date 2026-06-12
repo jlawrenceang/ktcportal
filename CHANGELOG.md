@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10m — pricing lock + statutory VAT; honest dashboard counts)
+- **Pricing lock:** the Settings rates/fees card is **locked by default** — inputs disabled (dimmed), Save disabled — until "🔒 Locked — unlock to edit" is tapped; saving re-locks automatically. No more accidental nudges.
+- **VAT rate is now read-only everywhere** (shown as "12% · statutory · fixed") and **server-guarded (migration `0050`)**: a database trigger rejects any client-session change or delete of `pricing_settings.vat_rate` — even an admin via direct API. If the law ever changes it, it's a one-line server-side update. Applied to prod + test projects.
+- **Dashboard/Customers counts fixed** (earlier in session): staff/admin/owner rows no longer counted as customers; job-orders tile counts the open queue it links to; restricted staff excluded from the Customers list.
+
 ### 2026-06-12 (session 10l — Playwright Phase 2 LIVE: 16/16 on the test project)
 - **Dedicated test Supabase project** (`zwvzadkgeyhkhyshkwhc`, ADR-0010 Option A) stood up: all **49 migrations applied**, e2e accounts seeded (owner promoted / customer approved / staff via the real `create_staff` RPC — none with MFA), consignees seeded (the test project's own compliance trigger validated them — schema fidelity confirmed). New `E2E_DATABASE_URL` / `E2E_PUBLISHABLE_KEY` entries in `.env.local`; local test build runs on `:3000` (matches the project's default redirect, no dashboard config needed).
 - **Harness fixes:** `mintSession` had a race — it navigated away before supabase-js persisted the magic-link session (the old "left /login" check passed instantly); now waits for the `sb-*-auth-token` localStorage key. Two stale strict-mode selectors fixed (nav-scoped Consignees link; exact-match New Job Order). CAPTCHA-mount smoke test auto-skips on localhost test builds (CAPTCHA is intentionally off there; prod still runs it).
