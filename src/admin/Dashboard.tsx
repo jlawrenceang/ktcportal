@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 
-async function count(table: string, filter?: { col: string; val: string }) {
-  let q = supabase.from(table).select('id', { count: 'exact', head: true })
-  if (filter) q = q.eq(filter.col, filter.val)
-  const { count } = await q
-  return count ?? 0
+// External customers only — staff/admin/owner accounts are not "customers".
+function customers() {
+  return supabase.from('customers').select('id', { count: 'exact', head: true })
+    .eq('is_admin', false).eq('is_owner', false).is('staff_role', null)
 }
+const n = async (q: PromiseLike<{ count: number | null }>) => (await q).count ?? 0
 
 interface Stats {
   pendingAccounts: number
@@ -30,7 +30,7 @@ const cards: { key: keyof Stats; label: string; to: string; icon: ReactNode; acc
   { key: 'pendingConsignees', label: 'Consignees pending', to: '/admin/consignees', icon: <InboxIcon />, accent: true },
   { key: 'brokers', label: 'Customers', to: '/admin/customers', icon: <CustomersIcon /> },
   { key: 'consignees', label: 'Consignees', to: '/admin/consignees', icon: <ConsigneesIcon /> },
-  { key: 'jobOrders', label: 'Job orders', to: '/admin/job-orders', icon: <JobOrdersIcon /> },
+  { key: 'jobOrders', label: 'Open job orders', to: '/admin/job-orders', icon: <JobOrdersIcon /> },
 ]
 
 export default function Dashboard() {
@@ -38,11 +38,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     Promise.all([
-      count('customers', { col: 'status', val: 'pending' }),
-      count('consignees', { col: 'status', val: 'pending' }),
-      count('customers'),
-      count('consignees'),
-      count('job_orders'),
+      n(customers().eq('status', 'pending')),
+      n(supabase.from('consignees').select('id', { count: 'exact', head: true }).eq('status', 'pending')),
+      n(customers()),
+      n(supabase.from('consignees').select('id', { count: 'exact', head: true })),
+      // matches the queue's default "Open" view this tile links to
+      n(supabase.from('job_orders').select('id', { count: 'exact', head: true })
+        .in('status', ['submitted', 'processing', 'on_hold']).is('archived_at', null)),
     ]).then(([pendingAccounts, pendingConsignees, brokers, consignees, jobOrders]) =>
       setStats({ pendingAccounts, pendingConsignees, brokers, consignees, jobOrders }),
     )

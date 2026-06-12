@@ -33,7 +33,7 @@ export default function Brokers() {
   async function load() {
     // External brokers only — staff/admins live under Settings.
     const { data, error } = await supabase
-      .from('customers').select('*').eq('is_admin', false).eq('is_owner', false)
+      .from('customers').select('*').eq('is_admin', false).eq('is_owner', false).is('staff_role', null)
       .order('created_at', { ascending: false })
     if (error) setError(error.message)
     else setRows((data ?? []) as Broker[])
