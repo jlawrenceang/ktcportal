@@ -42,6 +42,12 @@ export async function mintSession(page: Page, email: string): Promise<void> {
   await page.goto(`${BASE_URL}/login`)
   await page.evaluate(() => window.localStorage.clear())
   await page.goto(link)
-  // Verified link redirects back to the app (away from /login) once the session is set.
-  await page.waitForURL((u) => !u.toString().includes('/login'), { timeout: 20000 }).catch(() => {})
+  // The verify redirect lands with tokens in the URL hash; supabase-js then
+  // consumes them asynchronously. Navigating away before it persists the
+  // session loses it — so wait for the auth token to hit localStorage.
+  await page.waitForFunction(
+    () => Object.keys(window.localStorage).some((k) => k.startsWith('sb-') && k.endsWith('-auth-token')),
+    undefined,
+    { timeout: 20000 },
+  )
 }

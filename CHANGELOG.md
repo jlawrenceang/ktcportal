@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10l — Playwright Phase 2 LIVE: 16/16 on the test project)
+- **Dedicated test Supabase project** (`zwvzadkgeyhkhyshkwhc`, ADR-0010 Option A) stood up: all **49 migrations applied**, e2e accounts seeded (owner promoted / customer approved / staff via the real `create_staff` RPC — none with MFA), consignees seeded (the test project's own compliance trigger validated them — schema fidelity confirmed). New `E2E_DATABASE_URL` / `E2E_PUBLISHABLE_KEY` entries in `.env.local`; local test build runs on `:3000` (matches the project's default redirect, no dashboard config needed).
+- **Harness fixes:** `mintSession` had a race — it navigated away before supabase-js persisted the magic-link session (the old "left /login" check passed instantly); now waits for the `sb-*-auth-token` localStorage key. Two stale strict-mode selectors fixed (nav-scoped Consignees link; exact-match New Job Order). CAPTCHA-mount smoke test auto-skips on localhost test builds (CAPTCHA is intentionally off there; prod still runs it).
+- **Result: 16 passed / 0 failed** — 11 smoke + 5 authenticated lanes (owner→admin landing, consignees admin, owner settings, customer home + consignee typeahead, staff landing). Remaining 4 mutation lanes are `test.fixme` stubs to implement later. Note: with `.env.local` filled, `npx playwright test` targets the local test build by default — set `BASE_URL=https://portal.ktcterminal.com` to smoke prod.
+
 ### 2026-06-12 (session 10k — Customer Agreement v2: DPA-aligned protective redraft)
 - **Customer Agreement rewritten as Version 2.0** (`AGREEMENT_VERSION = 'v2'` — new registrants record v2; prior acceptances are test accounts). Drafted for **maximum lawful protection**, not blanket immunity (blanket waivers are void under the DPA + Civil Code):
   - **Account security:** customer solely responsible for credentials/devices; all account activity deemed theirs; KTC not responsible for unauthorized use caused by their failure to safeguard (to the extent permitted by law).

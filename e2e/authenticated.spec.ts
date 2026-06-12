@@ -24,7 +24,8 @@ test.describe('KTC portal — authenticated (Phase 2)', () => {
     await mintSession(page, OWNER)
     await page.goto('/')
     await expect(page).toHaveURL(/\/admin$/)
-    await expect(page.getByRole('link', { name: 'Consignees' })).toBeVisible()
+    // scope to the nav — the dashboard also has a Consignees tile
+    await expect(page.getByRole('navigation', { name: 'Admin' }).getByRole('link', { name: 'Consignees' })).toBeVisible()
   })
 
   test('owner can open the Consignees admin (master list)', async ({ page }) => {
@@ -44,7 +45,8 @@ test.describe('KTC portal — authenticated (Phase 2)', () => {
     test.skip(!BROKER, 'set E2E_BROKER_EMAIL (a seeded approved broker) to run')
     await mintSession(page, BROKER!)
     await page.goto('/')
-    await expect(page.getByRole('link', { name: 'New Job Order' })).toBeVisible()
+    // exact: the home page also has a "New Job Order …" card link
+    await expect(page.getByRole('link', { name: 'New Job Order', exact: true })).toBeVisible()
   })
 
   test('approved broker can open New Job Order and search the consignee master list', async ({ page }) => {

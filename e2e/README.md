@@ -5,12 +5,20 @@ Headless browser tests for the KTC portal.
 ## Run
 
 ```sh
-npm run test:e2e            # against the deployed site (default)
+npm run test:e2e            # target = BASE_URL from .env.local (test build) or prod if unset
 npm run test:e2e:ui        # interactive UI mode
-BASE_URL=http://localhost:4173 npm run test:e2e   # against a local preview
+BASE_URL=https://portal.ktcterminal.com npx playwright test smoke   # force prod smoke run
 ```
 
-Default target is `https://portal.ktcterminal.com`. First-time setup (already done once): `npx playwright install chromium`.
+`playwright.config.ts` loads `.env.local`, so with the Phase 2 block filled the default target is the **local test build** (`BASE_URL=http://localhost:3000`). To run Phase 2: build pointed at the test project, serve it, then test —
+
+```sh
+VITE_SUPABASE_URL=$E2E_SUPABASE_URL VITE_SUPABASE_ANON_KEY=$E2E_PUBLISHABLE_KEY VITE_TURNSTILE_SITE_KEY= npx vite build
+npx vite preview --port 3000 --strictPort   # keep running
+npx playwright test
+```
+
+First-time setup (already done once): `npx playwright install chromium`.
 
 ## Layout
 
