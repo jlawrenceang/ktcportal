@@ -21,7 +21,7 @@ export default function Settings() {
   const [notice, setNotice] = useState<string | null>(null)
 
   // Pricing (service rates + flat fees + VAT) — admin-editable, read-only to others.
-  type Rate = { service: string; rate: number; unit: string; vatable: boolean; active: boolean }
+  type Rate = { service: string; rate: number; unit: string; vatable: boolean; active: boolean; sort_order: number }
   type Setting = { key: string; value: number; label: string | null }
   const [rates, setRates] = useState<Rate[]>([])
   const [settings, setSettings] = useState<Setting[]>([])
@@ -100,7 +100,7 @@ export default function Settings() {
 
   async function loadPricing() {
     const [{ data: r }, { data: s }] = await Promise.all([
-      supabase.from('service_rates').select('service, rate, unit, vatable, active').order('service'),
+      supabase.from('service_rates').select('service, rate, unit, vatable, active, sort_order').order('sort_order').order('service'),
       supabase.from('pricing_settings').select('key, value, label').order('key'),
     ])
     setRates((r ?? []) as Rate[])
@@ -115,6 +115,28 @@ export default function Settings() {
     setRates((rs) => rs.map((x) => (x.service === service ? { ...x, active } : x)))
   }
 
+  // Drag & drop ordering (unlocked only); position is persisted on save.
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  function moveRate(from: number, to: number) {
+    setRates((rs) => {
+      const next = [...rs]
+      const [moved] = next.splice(from, 1)
+      next.splice(to, 0, moved)
+      return next
+    })
+  }
+
+  // Delete (inactive + unreferenced only — the DB trigger re-checks).
+  const [delService, setDelService] = useState<string | null>(null)
+  async function deleteService(name: string) {
+    setPricingBusy(true); setPricingMsg(null)
+    const { error } = await supabase.from('service_rates').delete().eq('service', name)
+    setPricingBusy(false); setDelService(null)
+    if (error) { setPricingMsg(error.message); return }
+    setRates((rs) => rs.filter((r) => r.service !== name))
+    setPricingMsg(`"${name}" deleted.`)
+  }
+
   // Add a new service to the catalogue (saved with "Save pricing"). The name
   // is the primary key — it can't be renamed later, only deactivated.
   const [newService, setNewService] = useState('')
@@ -126,7 +148,7 @@ export default function Settings() {
       setPricingMsg('That service already exists — reactivate it instead.')
       return
     }
-    setRates((rs) => [...rs, { service: name, rate: 0, unit: 'per_container', vatable: newVatable, active: true }])
+    setRates((rs) => [...rs, { service: name, rate: 0, unit: 'per_container', vatable: newVatable, active: true, sort_order: rs.length + 1 }])
     setNewService(''); setNewVatable(true)
     setPricingMsg(`"${name}" added — set its rate and Save pricing.`)
   }
@@ -136,7 +158,8 @@ export default function Settings() {
   async function savePricing() {
     setPricingBusy(true); setPricingMsg(null)
     const updatedAt = new Date().toISOString()
-    const { error: e1 } = await supabase.from('service_rates').upsert(rates.map((r) => ({ ...r, updated_at: updatedAt })), { onConflict: 'service' })
+    // sort_order = current list position (drag & drop arranges the array)
+    const { error: e1 } = await supabase.from('service_rates').upsert(rates.map((r, i) => ({ ...r, sort_order: i + 1, updated_at: updatedAt })), { onConflict: 'service' })
     // vat_rate is statutory (12%) — read-only here, server-guarded (0050)
     const editable = settings.filter((s) => s.key !== 'vat_rate')
     const { error: e2 } = await supabase.from('pricing_settings').upsert(editable.map((s) => ({ ...s, updated_at: updatedAt })), { onConflict: 'key' })
@@ -283,10 +306,25 @@ export default function Settings() {
           </button>
         </div>
 
-        <div style={{ display: 'grid', gap: 8, maxWidth: 560, opacity: pricingLocked ? 0.65 : 1 }}>
-          {rates.map((r) => (
-            <div key={r.service} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: r.active ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.3)', border: '1px solid var(--glass-brd)', opacity: r.active ? 1 : 0.6 }}>
+        <div style={{ display: 'grid', gap: 8, maxWidth: 600, opacity: pricingLocked ? 0.65 : 1 }}>
+          {rates.map((r, i) => (
+            <div
+              key={r.service}
+              draggable={!pricingLocked}
+              onDragStart={() => setDragIdx(i)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => { if (dragIdx !== null && dragIdx !== i) moveRate(dragIdx, i); setDragIdx(null) }}
+              onDragEnd={() => setDragIdx(null)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10,
+                background: r.active ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.3)',
+                border: dragIdx === i ? '1px dashed rgb(var(--acc-rgb) / 0.6)' : '1px solid var(--glass-brd)',
+                opacity: r.active ? 1 : 0.6,
+                cursor: pricingLocked ? 'default' : 'grab',
+              }}
+            >
               <span style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                {!pricingLocked && <span aria-hidden title="Drag to reorder" style={{ color: 'hsl(var(--ink-3))', fontSize: 14 }}>⠿</span>}
                 {r.service}
                 {!r.active && <span className="ktc-chip" style={{ fontSize: 10 }}>inactive</span>}
               </span>
@@ -301,6 +339,18 @@ export default function Settings() {
                     onChange={(e) => setRateActive(r.service, e.target.checked)} />
                   active
                 </label>
+                {!pricingLocked && !r.active && (
+                  delService === r.service ? (
+                    <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', fontSize: 12 }}>
+                      <button type="button" className="ktc-link" style={{ fontWeight: 700, color: 'var(--acc-2)' }} disabled={pricingBusy}
+                        onClick={() => void deleteService(r.service)}>delete?</button>
+                      <button type="button" className="ktc-link" onClick={() => setDelService(null)}>no</button>
+                    </span>
+                  ) : (
+                    <button type="button" className="ktc-link" aria-label={`Delete ${r.service}`} title="Delete (only possible while unused by any order)"
+                      style={{ fontSize: 14, color: 'var(--acc-2)', opacity: 0.8 }} onClick={() => setDelService(r.service)}>✕</button>
+                  )
+                )}
               </span>
             </div>
           ))}
@@ -314,7 +364,7 @@ export default function Settings() {
               </label>
               <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={addService}>+ Add service</button>
               <span className="ktc-label" style={{ flexBasis: '100%', fontSize: 11, lineHeight: 1.5, opacity: 0.8 }}>
-                Names containing “X-ray”, “DEA”, or “OOG” join those serving-number queues; anything else queues under “Other”. Deactivate instead of deleting — past orders keep their pricing.
+                Names containing “X-Ray”, “DEA”, or “OOG” join those serving-number queues; anything else queues under “Other”. Drag ⠿ to arrange the display order. Deactivate to retire a service (past orders keep their pricing); ✕ delete is only possible while no order has ever used it.
               </span>
             </div>
           )}

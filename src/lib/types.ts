@@ -123,11 +123,13 @@ export interface JobOrder {
   completions?: ServiceCompletion[]
 }
 
+// Last-resort fallback only — the live catalogue is service_rates
+// (admin-managed in Settings; cached per browser by useServices).
 export const SERVICE_REQUESTS = [
-  'X-ray',
-  'DEA ONLY',
-  'X-ray + DEA',
-  'X-ray + DEA (For PDEA)',
-  'DEA ONLY (For PDEA)',
+  'X-Ray',
+  'DEA',
+  'X-Ray + DEA',
+  'X-Ray + DEA (For PDEA)',
+  'DEA (For PDEA)',
   'OOG Stripping',
 ] as const

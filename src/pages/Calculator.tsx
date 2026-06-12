@@ -14,7 +14,7 @@ export default function Calculator() {
   useEffect(() => {
     void (async () => {
       const [{ data: r }, { data: s }] = await Promise.all([
-        supabase.from('service_rates').select('service, rate, unit, vatable, active').eq('active', true).order('service'),
+        supabase.from('service_rates').select('service, rate, unit, vatable, active').eq('active', true).order('sort_order').order('service'),
         supabase.from('pricing_settings').select('key, value'),
       ])
       const settings = new Map(((s ?? []) as { key: string; value: number }[]).map((x) => [x.key, Number(x.value)]))

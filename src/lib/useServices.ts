@@ -29,6 +29,7 @@ export function useServices(): string[] {
       .from('service_rates')
       .select('service')
       .eq('active', true)
+      .order('sort_order')
       .order('service')
       .then(({ data }) => {
         if (!on || !data?.length) return
