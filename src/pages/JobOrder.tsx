@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
@@ -9,6 +9,7 @@ import { searchConsignees } from '../lib/pickerSearches'
 import { usePageTour } from '../components/TourProvider'
 import { jobOrderSteps } from '../components/WelcomeTour'
 import { useT } from '../lib/i18n'
+import Wizard, { type WizardStep } from '../components/Wizard'
 
 export default function JobOrder() {
   const { t } = useT()
@@ -43,8 +44,15 @@ export default function JobOrder() {
   const approved = broker?.status === 'approved'
   const hasId = !!broker?.valid_id_path
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault()
+  // Per-step validation (used to gate Next on mobile; the full re-check still
+  // runs in submit()).
+  function consigneeError() { return !consignee ? t('Select a consignee from the list.') : null }
+  function vesselError() {
+    if (notListed) return (!mVessel.trim() || !mVoyage.trim()) ? t('Enter the vessel name and voyage number.') : null
+    return !vessels.find((v) => v.vessel_visit === vesselVisit) ? t('Select the vessel & voyage (or tick “not listed”).') : null
+  }
+
+  async function submit() {
     if (submittingRef.current) return
     setError(null)
     if (!broker) {
@@ -112,15 +120,21 @@ export default function JobOrder() {
     navigate('/job-orders')
   }
 
-  return (
-    <Shell>
-      <div className="ktc-glass" style={{ padding: 28 }}>
-        <h1 className="ktc-title">{t('New Job Order')}</h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 22 }}>
-          {t('For X-ray / DEA / OOG stripping service orders.')}
-        </p>
+  const pendingNotice = !approved ? (
+    <div style={{ fontSize: 13, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, marginTop: 14, background: 'hsl(40 90% 97%)', border: '1px solid hsl(35 85% 82%)', color: 'hsl(30 60% 32%)' }}>
+      {t('You can file job orders now, but they')}{' '}<b>{t('can’t be processed until you pass final verification')}</b>.{' '}
+      {hasId
+        ? t('Your valid ID is on file — a KTC admin is verifying your account. Once approved, your held orders are sent to KTC automatically.')
+        : t('Upload your valid ID for final verification (banner above); once a KTC admin approves you, your held orders are sent automatically.')}
+    </div>
+  ) : null
 
-        <form onSubmit={onSubmit} style={{ display: 'grid', gap: 16 }}>
+  const wizardSteps: WizardStep[] = [
+    {
+      title: 'Consignee & entry',
+      validate: consigneeError,
+      content: (
+        <div style={{ display: 'grid', gap: 16 }}>
           <div data-tour="jo-consignee" style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="consignee">{t('Consignee')}</label>
             <SearchPicker
@@ -131,7 +145,6 @@ export default function JobOrder() {
               search={searchConsignees}
             />
           </div>
-
           <div style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="entry">{t('Entry Number')}</label>
             <input
@@ -142,45 +155,59 @@ export default function JobOrder() {
               onChange={(e) => setEntryNumber(e.target.value)}
             />
           </div>
-
-          <div data-tour="jo-vessel" style={{ display: 'grid', gap: 6 }}>
-            <label className="ktc-label" htmlFor="vessel">{t('Vessel & Voyage')}</label>
-            {!notListed ? (
-              <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
-                <option value="">{t('Select a vessel…')}</option>
-                {vessels.map((v) => (
-                  <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name} — {v.voyage_number}</option>
-                ))}
-              </select>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <input className="ktc-input" placeholder={t('Vessel name')} value={mVessel} onChange={(e) => setMVessel(e.target.value)} />
-                <input className="ktc-input" placeholder={t('Voyage number')} value={mVoyage} onChange={(e) => setMVoyage(e.target.value)} />
-              </div>
-            )}
-            <label className="ktc-label" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <input type="checkbox" checked={notListed} onChange={(e) => setNotListed(e.target.checked)} />
-              {t('My vessel isn’t listed — enter it manually (operations will match it)')}
-            </label>
-          </div>
-
-          <div data-tour="jo-containers"><ContainerLinesEditor lines={lines} onChange={setLines} /></div>
-
-          {error && <div style={{ color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
-
-          {!approved && (
-            <div style={{ fontSize: 13, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, background: 'hsl(40 90% 97%)', border: '1px solid hsl(35 85% 82%)', color: 'hsl(30 60% 32%)' }}>
-              {t('You can file job orders now, but they')}{' '}<b>{t('can’t be processed until you pass final verification')}</b>.{' '}
-              {hasId
-                ? t('Your valid ID is on file — a KTC admin is verifying your account. Once approved, your held orders are sent to KTC automatically.')
-                : t('Upload your valid ID for final verification (banner above); once a KTC admin approves you, your held orders are sent automatically.')}
+        </div>
+      ),
+    },
+    {
+      title: 'Vessel & voyage',
+      validate: vesselError,
+      content: (
+        <div data-tour="jo-vessel" style={{ display: 'grid', gap: 6 }}>
+          <label className="ktc-label" htmlFor="vessel">{t('Vessel & Voyage')}</label>
+          {!notListed ? (
+            <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
+              <option value="">{t('Select a vessel…')}</option>
+              {vessels.map((v) => (
+                <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name} — {v.voyage_number}</option>
+              ))}
+            </select>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <input className="ktc-input" placeholder={t('Vessel name')} value={mVessel} onChange={(e) => setMVessel(e.target.value)} />
+              <input className="ktc-input" placeholder={t('Voyage number')} value={mVoyage} onChange={(e) => setMVoyage(e.target.value)} />
             </div>
           )}
+          <label className="ktc-label" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <input type="checkbox" checked={notListed} onChange={(e) => setNotListed(e.target.checked)} />
+            {t('My vessel isn’t listed — enter it manually (operations will match it)')}
+          </label>
+        </div>
+      ),
+    },
+    {
+      title: 'Containers',
+      content: (
+        <div data-tour="jo-containers"><ContainerLinesEditor lines={lines} onChange={setLines} /></div>
+      ),
+    },
+  ]
 
-          <button className="ktc-btn" type="submit" disabled={busy} style={{ marginTop: 4 }}>
-            {busy ? (approved ? t('Submitting…') : t('Filing…')) : approved ? t('Submit Job Order') : t('File Job Order')}
-          </button>
-        </form>
+  return (
+    <Shell>
+      <div className="ktc-glass ktc-pad-mobile" style={{ padding: 28 }}>
+        <h1 className="ktc-title">{t('New Job Order')}</h1>
+        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 22 }}>
+          {t('For X-ray / DEA / OOG stripping service orders.')}
+        </p>
+
+        <Wizard
+          steps={wizardSteps}
+          onSubmit={submit}
+          busy={busy}
+          error={error}
+          footer={pendingNotice}
+          submitLabel={busy ? (approved ? t('Submitting…') : t('Filing…')) : approved ? t('Submit Job Order') : t('File Job Order')}
+        />
       </div>
     </Shell>
   )

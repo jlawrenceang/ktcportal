@@ -61,7 +61,7 @@ export default function Shell({ children }: { children: ReactNode }) {
   }, IDLE_LOGOUT_MS)
 
   return (
-    <div style={{ maxWidth: 880, margin: '0 auto', padding: '14px 20px 60px' }}>
+    <div className="ktc-page">
       <nav className="ktc-nav" aria-label="Primary">
         <Link to="/" aria-label="Go to Home" style={{ display: 'inline-flex', flex: '0 0 auto', padding: '0 6px' }}>
           <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 34 }} />

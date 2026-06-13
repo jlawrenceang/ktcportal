@@ -345,6 +345,89 @@
     .ktc-modal-backdrop, .ktc-modal-panel { animation: none; }
   }
 
+  /* ---- Responsive page container ----
+     Replaces per-shell inline max-width/padding so the mobile layer below can
+     tighten it. --wide is the admin/operations variant. */
+  .ktc-page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 14px 20px 60px;
+  }
+  .ktc-page--wide { max-width: 1040px; }
+
+  /* ---- Action bar ----
+     On desktop it's a plain button row at the end of the form (unchanged look).
+     On phones it becomes a frosted bar that STICKS to the bottom of the
+     viewport, so the primary button is always reachable without scrolling to
+     the end. The mobile treatment lives in the @media block below. */
+  .ktc-actionbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .ktc-actionbar > .ktc-btn,
+  .ktc-actionbar > .ktc-btn-secondary { margin: 0; }
+
+  /* ---- Wizard (multi-step forms on small screens) ---- */
+  .ktc-step-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .ktc-dots { display: inline-flex; gap: 6px; }
+  .ktc-dot {
+    width: 7px; height: 7px; border-radius: 999px;
+    background: rgba(0, 0, 0, 0.15);
+    transition: all var(--dur) var(--ease-spring);
+  }
+  .ktc-dot.is-on { width: 22px; background: var(--acc); }
+  .ktc-dot.is-done { background: rgb(var(--acc-rgb) / 0.5); }
+
+  /* ---- Mobile layer — phones & small tablets in portrait ----
+     The app is otherwise desktop-first; this tightens the chrome, shrinks the
+     generous spacing, and guarantees comfortable touch targets. */
+  @media (max-width: 640px) {
+    .ktc-page { padding: 8px 12px 92px; }
+    .ktc-page--wide { max-width: 100%; }
+
+    .ktc-nav {
+      top: 6px;
+      gap: 4px;
+      padding: 6px 8px;
+      margin-bottom: 16px;
+      border-radius: 14px;
+    }
+    .ktc-nav-link { padding: 8px 11px; font-size: 13px; }
+
+    .ktc-title { font-size: 20px; }
+    .ktc-sub { font-size: 13px; }
+
+    /* Comfortable tap targets everywhere on touch. */
+    .ktc-input { padding: 12px 13px; font-size: 16px; } /* 16px stops iOS zoom-on-focus */
+    .ktc-btn { padding: 13px 22px; }
+    .ktc-btn-secondary { padding: 12px 18px; }
+
+    /* Denser glass cards on phones (opt-in via .ktc-pad-mobile on a .ktc-glass). */
+    .ktc-pad-mobile { padding: 18px !important; }
+
+    /* Floating sticky action bar — primary button always within thumb reach. */
+    .ktc-actionbar {
+      position: sticky;
+      bottom: 10px;
+      z-index: 30;
+      margin: 18px -6px 0;
+      padding: 10px;
+      border-radius: 16px;
+      background: var(--glass-thick, var(--glass));
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+      backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+      border: 1px solid var(--glass-brd);
+      box-shadow: var(--shadow-lg), var(--edge);
+    }
+  }
+
   /* Skeleton shimmer — frosted placeholder while content loads */
   .ktc-skeleton {
     position: relative;

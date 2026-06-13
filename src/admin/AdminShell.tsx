@@ -134,7 +134,7 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
     : '/admin'
 
   return (
-    <div style={{ maxWidth: 1020, margin: '0 auto', padding: '14px 20px 60px' }}>
+    <div className="ktc-page ktc-page--wide">
       <nav className="ktc-nav" aria-label={t('Admin')}>
         <Link to={home} aria-label={t('Go to start page')} style={{ display: 'inline-flex', flex: '0 0 auto', padding: '0 6px' }}>
           <img src="/ktc-logo.png" alt="KTC" style={{ height: 34 }} />
