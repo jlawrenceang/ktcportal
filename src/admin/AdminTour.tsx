@@ -33,27 +33,39 @@ export function markStaffTourSeen(role: StaffTourRole) {
 const ADMIN_STEPS: TourStep[] = [
   {
     icon: '🧭', title: 'Welcome to the KTC admin portal',
-    body: 'The Dashboard shows the live picture: pending approvals, the open job-order queue, and customer counts. Every tile links to where the work happens. This tour walks the main jobs — the full details live in the Manual tab.',
+    body: 'The Dashboard is your live overview. Let\'s walk through the tiles — each is a live count that links straight to where the work happens.',
   },
   {
-    icon: '✅', title: '1 · Verify new customers', to: '/admin/approvals', target: 'a[href="/admin/approvals"]',
-    body: 'Approvals lists accounts awaiting verification with consent badges. View the uploaded valid ID, then Approve (releases their held orders + emails them) or Reject — recoverable or Suspend. IDs auto-delete 3 days after upload.',
+    icon: '✅', title: 'Accounts awaiting approval', to: '/admin', target: '[data-tour="dash-pendingAccounts"]',
+    body: 'New customers who confirmed their email and need verifying. A ring/dot means work is waiting — tap it to open Approvals, view their valid ID, and approve or reject.',
   },
   {
-    icon: '⚙️', title: '2 · Process job orders', to: '/admin/job-orders', target: 'a[href="/admin/job-orders"]',
-    body: 'Job Orders is the working queue. Tick each service line ✓ as it\'s done — the order completes when all lines are done. Hold with a note, or Reject. 🕘 shows the full history.',
+    icon: '🏷️', title: 'Consignees pending', to: '/admin', target: '[data-tour="dash-pendingConsignees"]',
+    body: 'Consignees added but not yet approved. Tap to review and approve them so they\'re selectable when customers file job orders.',
   },
   {
-    icon: '💳', title: '3 · Payments & invoices', to: '/admin/job-orders', target: 'a[href="/admin/job-orders"]',
-    body: 'Review deposit slips from the queue (X-ray and RPS payments are confirmed separately). When the ERP issues the Service Invoice, record both numbers: OR = PAID, BI = BILLED.',
+    icon: '👥', title: 'Customers', to: '/admin', target: '[data-tour="dash-brokers"]',
+    body: 'Your accredited customers (customs brokers). Tap to search, open a customer\'s detail, or suspend / reinstate an account.',
   },
   {
-    icon: '📝', title: '4 · File on behalf', to: '/admin/new-job-order', target: 'a[href="/admin/new-job-order"]',
-    body: 'New JO files a job order for a walk-in customer — it goes straight to submitted with a serving number, and History records you as the filer.',
+    icon: '🏗️', title: 'Consignees', to: '/admin', target: '[data-tour="dash-consignees"]',
+    body: 'The full consignee master list customers pick from when filing. Tap to add, edit, or bulk-import consignees.',
   },
   {
-    icon: '🛡️', title: '5 · Settings, logs & security', to: '/admin/settings', target: 'a[href="/admin/settings"]',
-    body: 'Settings holds rates & fees, free-days, RPS move rates, payment details, staff accounts and role gates. Logs shows every event. Enroll 2FA, and remember sessions time out after 60 idle minutes.',
+    icon: '📦', title: 'Open job orders', to: '/admin', target: '[data-tour="dash-jobOrders"]',
+    body: 'The live queue — submitted, processing, and on-hold orders. Tap to open the working queue where the day-to-day happens.',
+  },
+  {
+    icon: '⚙️', title: 'Process & get paid', to: '/admin/job-orders', target: 'a[href="/admin/job-orders"]',
+    body: 'In the queue you tick each service ✓ as it\'s done, hold or reject with a note, confirm X-ray and RPS payments separately, and record the ERP invoice (OR = PAID / BI = BILLED). 🕘 shows the full history.',
+  },
+  {
+    icon: '📝', title: 'File on behalf', to: '/admin/new-job-order', target: 'a[href="/admin/new-job-order"]',
+    body: 'New JO files a job order for a walk-in customer — straight to submitted with a serving number; History records you as the filer.',
+  },
+  {
+    icon: '🛡️', title: 'Settings, logs & security', to: '/admin/settings', target: 'a[href="/admin/settings"]',
+    body: 'Rates & fees, free-days, RPS move rates, payment details, staff & role gates. Logs shows every event; enroll 2FA in the 2FA tab. Sessions time out after 60 idle minutes.',
   },
 ]
 

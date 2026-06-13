@@ -65,6 +65,7 @@ export default function Dashboard() {
             <Link
               key={c.key}
               to={c.to}
+              data-tour={`dash-${c.key}`}
               className="ktc-glass ktc-card"
               style={{
                 position: 'relative',

@@ -58,7 +58,13 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
   }
 
   const pad = 6
-  const cardCentered = !rect
+  // Anchor the card near the spotlight (below if there's room, else above);
+  // centered when there's no target.
+  const cardPos: Record<string, number | string> = rect
+    ? (rect.bottom + 250 < window.innerHeight
+        ? { top: rect.bottom + 14 }
+        : { bottom: Math.max(16, window.innerHeight - rect.top + 14) })
+    : { top: '50%', marginTop: -150 }
 
   return (
     <>
@@ -83,7 +89,7 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
           position: 'fixed', zIndex: 61, left: '50%', transform: 'translateX(-50%)',
           maxWidth: 420, width: 'calc(100% - 40px)', padding: '24px 26px 20px',
           background: 'rgba(255,255,255,0.96)',
-          ...(cardCentered ? { top: '50%', marginTop: -150 } : { bottom: 26 }),
+          ...cardPos,
         }}
       >
         <div aria-hidden style={{ fontSize: 34, lineHeight: 1 }}>{s.icon}</div>
