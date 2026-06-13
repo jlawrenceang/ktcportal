@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { usePermissions, type Permission } from '../lib/usePermissions'
@@ -6,7 +6,8 @@ import { purgeExpiredIds } from '../lib/idPurge'
 import { useIdleLogout } from '../lib/useIdleLogout'
 import { useSessionGuard } from '../lib/useSessionGuard'
 import IdleWarning from '../components/IdleWarning'
-import AdminTour, { staffTourRole, staffTourSeen } from './AdminTour'
+import { staffTourRole, staffTourSeen, markStaffTourSeen, staffSteps, staffTourHome } from './AdminTour'
+import { useTour } from '../components/TourProvider'
 import { VERSION_LABEL } from '../version'
 
 // All staff sessions time out — on a longer leash than the 15-min customer
@@ -45,12 +46,15 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
     if (broker && (broker.is_admin || broker.is_owner)) purgeExpiredIds()
   }, [broker])
 
-  // First visit → role-appropriate quick tour (re-openable from the ✨ button).
+  // First visit → role-appropriate guided tour (re-openable from the ✨ button).
   const tourRole = staffTourRole(broker)
-  const [tourOpen, setTourOpen] = useState(false)
+  const { startTour, active } = useTour()
+  function openTour() {
+    if (tourRole) startTour({ steps: staffSteps[tourRole], home: staffTourHome(tourRole), label: `${tourRole} tour`, onDone: () => markStaffTourSeen(tourRole) })
+  }
   useEffect(() => {
-    if (tourRole && !staffTourSeen(tourRole)) setTourOpen(true)
-  }, [tourRole])
+    if (tourRole && !staffTourSeen(tourRole) && !active) { markStaffTourSeen(tourRole); openTour() }
+  }, [tourRole]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSignOut() {
     await signOut()
@@ -106,7 +110,7 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
           ))}
         </div>
         {tourRole && (
-          <button className="ktc-nav-link" onClick={() => setTourOpen(true)} style={{ flex: '0 0 auto' }} title="Replay the quick tour">
+          <button className="ktc-nav-link" onClick={openTour} style={{ flex: '0 0 auto' }} title="Replay the quick tour">
             ✨
           </button>
         )}
@@ -121,7 +125,6 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
         KTC Online Portal {VERSION_LABEL}
       </footer>
 
-      {tourOpen && tourRole && <AdminTour role={tourRole} onClose={() => setTourOpen(false)} />}
       {idleWarning && <IdleWarning />}
     </div>
   )

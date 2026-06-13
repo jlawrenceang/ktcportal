@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './lib/AuthContext'
+import TourProvider from './components/TourProvider'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useBroker } from './lib/useBroker'
 import { hasAdminAccess } from './lib/types'
@@ -68,6 +69,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <TourProvider>
         <Suspense
           fallback={
             <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
@@ -118,6 +120,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>
+        </TourProvider>
       </BrowserRouter>
     </AuthProvider>
   )
