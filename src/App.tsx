@@ -22,6 +22,7 @@ import AdminRoute from './admin/AdminRoute'
 const JobOrderPrint = lazy(() => import('./pages/JobOrderPrint'))
 const Payment = lazy(() => import('./pages/Payment'))
 const Calculator = lazy(() => import('./pages/Calculator'))
+const Vessels = lazy(() => import('./pages/Vessels'))
 const Manual = lazy(() => import('./pages/Manual'))
 const AdminManual = lazy(() => import('./admin/ManualPage'))
 const Dashboard = lazy(() => import('./admin/Dashboard'))
@@ -97,6 +98,7 @@ export default function App() {
           <Route path="/job-order/:id/print" element={<Protected><JobOrderPrint /></Protected>} />
           <Route path="/job-order/:id/pay" element={<Protected><Payment /></Protected>} />
           <Route path="/calculator" element={<Protected><Calculator /></Protected>} />
+          <Route path="/vessels" element={<Protected><Vessels /></Protected>} />
           {/* /accreditation removed 2026-06-11 (page deleted; consignee accreditation
               disabled per ADR-0007) — old links fall through to the catch-all → / */}
           <Route path="/job-orders" element={<Protected><MyJobOrders /></Protected>} />

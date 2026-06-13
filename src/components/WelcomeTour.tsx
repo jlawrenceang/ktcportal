@@ -52,3 +52,14 @@ export const myJobOrdersSteps: TourStep[] = [
     body: 'Every order you file shows here with its live status and serving number. Open one to "View charges & pay" (upload your deposit slip) and to Print the A6 slip once it\'s approved. The "Now serving" board up top helps you time your trip to the terminal.',
   },
 ]
+
+export const vesselsCustomerSteps: TourStep[] = [
+  {
+    icon: '🚢', title: 'Vessel schedule', target: '[data-tour="vessels-intro"]',
+    body: 'The current vessel calls at KTC, maintained by operations. Check your vessel & voyage before filing, and watch the Last Free Day — the last day of free storage before charges start.',
+  },
+  {
+    icon: '🗓️', title: 'Table or calendar', target: '[data-tour="vessels-view"]',
+    body: 'Switch between a table and a month calendar (vessels shown on their arrival date). Tick "Show past/cancelled" to see the full history. View only — KTC keeps the schedule up to date.',
+  },
+]
