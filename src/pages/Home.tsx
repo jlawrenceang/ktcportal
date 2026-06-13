@@ -66,6 +66,7 @@ export default function Home() {
           <Link
             key={c.to}
             to={c.to}
+            data-tour={`home-${c.to.slice(1)}`}
             className="ktc-glass ktc-card"
             style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '20px 20px 18px', borderRadius: 20, textDecoration: 'none', color: 'inherit', minHeight: 130 }}
           >

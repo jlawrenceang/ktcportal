@@ -116,7 +116,7 @@ export default function JobOrder() {
         </p>
 
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 16 }}>
-          <div style={{ display: 'grid', gap: 6 }}>
+          <div data-tour="jo-consignee" style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="consignee">Consignee</label>
             <SearchPicker
               inputId="consignee"
@@ -138,7 +138,7 @@ export default function JobOrder() {
             />
           </div>
 
-          <div style={{ display: 'grid', gap: 6 }}>
+          <div data-tour="jo-vessel" style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="vessel">Vessel &amp; Voyage</label>
             {!notListed ? (
               <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
@@ -159,7 +159,7 @@ export default function JobOrder() {
             </label>
           </div>
 
-          <ContainerLinesEditor lines={lines} onChange={setLines} />
+          <div data-tour="jo-containers"><ContainerLinesEditor lines={lines} onChange={setLines} /></div>
 
           {error && <div style={{ color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
 

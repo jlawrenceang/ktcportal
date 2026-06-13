@@ -83,7 +83,7 @@ export default function Shell({ children }: { children: ReactNode }) {
         </div>
       ) : (
         <div className="ktc-stagger">
-          {pending && <BrokerStatusBanner broker={broker!} onRefresh={pullStatus} refreshCooling={cooling} />}
+          {pending && <div data-tour="id-banner"><BrokerStatusBanner broker={broker!} onRefresh={pullStatus} refreshCooling={cooling} /></div>}
           {children}
         </div>
       )}
