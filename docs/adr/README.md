@@ -4,7 +4,7 @@ ADRs in this folder preserve decision history for the KTC broker portal.
 
 ## Reading order
 
-1. `0001` to `0006` in numeric order.
+1. `0001` to `0015` in numeric order.
 2. Then check each ADR for **Current-State Addendum** sections.
 
 ## Log
@@ -23,6 +23,9 @@ ADRs in this folder preserve decision history for the KTC broker portal.
 | [0010](0010-e2e-auth-via-test-project-and-service-role-minting.md) | Test authenticated flows via an isolated project + service-role session minting | Accepted | 2026-06-09 | Workflow \| Security |
 | [0011](0011-consolidate-legal-docs-into-one-broker-agreement.md) | Consolidate the legal docs into one Broker Agreement (Terms + NDA + DPA) | Accepted | 2026-06-09 | Workflow \| Security |
 | [0012](0012-pending-brokers-enter-portal-submit-gated.md) | Let pending brokers into the portal; gate job-order submission on approval | Accepted | 2026-06-09 | Workflow \| Security |
+| [0013](0013-customer-account-self-service-and-reverify-on-name-change.md) | Customer account self-service + re-verify on name change | Accepted | 2026-06-10 | Workflow \| Security |
+| [0014](0014-admin-job-order-processing-and-printable-slip.md) | Admin job-order processing ("approve = start processing") + printable slip | Accepted | 2026-06-10 | Workflow |
+| [0015](0015-modular-terminal-depot-operating-system-north-star.md) | Octopi-class modular terminal + depot operating system as the north star, container/EIR spine first | Accepted | 2026-06-13 | Architecture |
 
 ## Governance
 

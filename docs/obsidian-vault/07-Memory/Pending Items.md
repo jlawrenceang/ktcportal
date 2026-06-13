@@ -2,54 +2,56 @@
 title: Pending Items
 tags: [memory, pending, backlog]
 type: memory
-last_updated: 2026-06-10
+last_updated: 2026-06-13
 ---
 
 # 📋 Pending Items
 
-Detailed backlog. For sequencing, see [[Roadmap]].
+Detailed backlog. For sequencing, see [[Roadmap]]. (Pre-v1.1.0 completed items moved to [[Completed Milestones]] / `CHANGELOG.md`.)
 
-## Prod-testing readiness (NOW)
+## ST02 / trial run (NOW)
 
-- [ ] Execute **ST01 browser lanes** (`docs/smoke-test-01-portal.md`, lanes 1–5) on `portal.ktcterminal.com`. Preflight P1–P7 already PASS (2026-06-07); lanes 1–5 need a manual walk.
-- [ ] Supabase Auth → URL Configuration: Site URL `https://portal.ktcterminal.com`; add Redirect URL `https://portal.ktcterminal.com/**`.
+- [ ] **ST02 manual Lanes 1–8** on `portal.ktcterminal.com` (`docs/smoke-test-02-portal.md`). Preflight P1–P8 ✅ (P8 cleared 2026-06-13 after E2E key regen → Playwright 16/16). Owner walking lanes now.
+- [ ] **P9 / Lane 5.0 data entry:** real X-Ray rate + admin/print fees, bank/GCash details + QR upload (Settings, owner).
+- [ ] **ST02 teardown:** suspend/remove test accounts + orders, reset `jo_number_seq` / `broker_code_seq` (only safe at zero orders) so the first real order is `JO-000001`.
 
-## Apply migrations
+## Go-live gate (NEXT)
 
-- [x] **All migrations 0001–0029 applied + tracked** (latest 2026-06-10). `DATABASE_URL` (session pooler) lives in gitignored `.env.local`; `node scripts/run-migrations.mjs` records each in `public._migrations` and applies only new files. Latest: `0028` (reverify on name change), `0029` (admin JO processing: `on_hold`/`rejected` statuses + `admin_note` + admin UPDATE policy).
+- [ ] **Counsel sign-off on Customer Agreement v2** — DPO designation, NPC registration check, liability cap amount. Bump `AGREEMENT_VERSION` on material change.
+- [ ] Enforce re-acceptance when `AGREEMENT_VERSION` changes for already-registered customers.
+- [ ] Public-launch call (remove the prod-testing restriction).
 
-## Legal docs / consents (NEXT)
+## Payments / pricing open decisions
 
-- [ ] KTC + counsel to finalize the **one** template `src/content/broker-agreement.md` — DPO contact, retention periods, venue, fees, penalties, legal citations; confirm **NPC registration** obligations. Bump `AGREEMENT_VERSION` on material change.
-- [ ] Enforce re-acceptance when `AGREEMENT_VERSION` changes for already-registered brokers (compare stored vs current on login).
-- [x] Surface the consent version + timestamp in the admin Approvals view (valid-ID + Terms/DPA badges on each broker card). *(Brokers list could get the same treatment later.)*
+- [ ] **Invoice generation trigger** — when is the cashier's Service Invoice produced (on `completed`? "ready for payment"? on demand)? Invoice lives in the **ERP**; app records `OR-INV-`/`BI-INV-` + pad no. as PAID/BILLED.
+- [ ] **Payment ↔ cashier handoff** — does an admin-confirmed online payment proof replace the cashier visit for the official BIR invoice/OR, or still require it?
+- [ ] Pricing for non-X-ray services (only X-Ray priced today; DEA/OOG = 0 placeholders).
 
-## Admin / processing
+## Integrations / automation
 
-- [x] **`/admin/job-orders` status workflow + decisions** (approve→processing / complete / hold-for-info / reject-with-note) — ADR-0014, migration `0029` (2026-06-10).
-- [x] **`/admin` dashboard metrics** — live counts (pending accounts/accreditations/consignees, customers, consignees, job orders) on square frosted-glass tiles.
-- [x] **Printable job-order slip** — A6 invoice-style at `/job-order/:id/print`, ON PROCESS watermark (2026-06-10).
-- [x] **My Account self-service** — `/account` (name/contact/email/password; approved name change → re-verify), migration `0028`.
-- [ ] **Pricing via a Service Invoice generated from the JO** (clarified 2026-06-11) — the JO has no fees; a corresponding **Service Invoice** is produced at payment time for the cashier. X-ray = rate × containers (per-container, VAT-exclusive) + 12% VAT + flat admin/service fee + flat print fee (fees not VATable). Admin-configurable rates/fees. Decide: invoice generation trigger; relationship to the official BIR numbered form; non-X-ray pricing.
-- [ ] **Online payment = manual proof upload (NO gateway)** — non-gated. Payment page per JO: fees computation + total, KTC bank details + QR (static admin-config), **upload deposit/payment slip** → admin **review → confirm/reject**. Mirrors valid-ID upload+review: `payment-slips` bucket (per-user RLS), `job_orders.payment_status` (`unpaid`/`submitted`/`confirmed`/`rejected`) + `payment_proof_path` + timestamps + admin note. No external integration; needs only rate/fee config + bank details/QR.
-- [ ] **Google Sheets link (view + entry)** — keep Supabase as source of truth (a Sheet bypasses RLS/caps/guards → no live two-way sync). Build a one-way **app→Sheet mirror** (read-only) for checking + add missing operational fields to the in-app JO form and/or a **bounded admin import** for data entry. Decide which fields, who may import, mirror cadence. **Scheduled imports** feasible via a scheduled Edge Function (or `pg_cron`→`pg_net`→Edge Function) + Google service account — must be validated, idempotent (upsert key + `last_synced`), logged, scoped to specific fields; prefer import-to-staging + admin confirm for sensitive data.
-- [ ] Per-customer accredited-consignee scoping — restrict job-order targets to a customer's accredited consignees.
-- [ ] Job-order draft persistence; document attachments; customer edit/cancel of own order.
+- [ ] **BOC Sheets mirror** — blocked on Google service-account creds (`scripts/setup-boc-mirror.mjs`). One-way app→Sheet only (no two-way sync — bypasses RLS/caps/guards).
+- [ ] **Bounded admin import** (staff template sheet → validated RPC upsert) if staff data-entry need materializes; decide fields/who/cadence. Prefer import-to-staging + admin confirm.
+- [ ] **Regenerate a real `sbp_` personal access token** — `SUPABASE_ACCESS_TOKEN` in `.env.local` is a secret API key; the 4 Management-API scripts fail until then (see `docs/agent/tooling-inventory.md`).
 
-## Go-live hardening (LATER)
+## Deferred features
 
-- [ ] Resend SMTP — broker email confirmation + password reset. Needs SPF/DKIM/MX on `ktcterminal.com` and Supabase SMTP config.
-- [x] Automated smoke tests — Playwright Phase 1 (`e2e/smoke.spec.ts`, 11 tests) passing vs the deployed URL.
-- [x] **Playwright Phase 2 harness built** — `mintSession` (service-role magic link) + role/surface tests in `e2e/authenticated.spec.ts` (ADR-0010). Skips until configured.
-- [ ] **Run Phase 2** — create a dedicated test Supabase project (Option A), apply migrations, disable CAPTCHA / seed accounts, set `E2E_*` env, and implement the 4 mutation `fixme` lanes. See `e2e/README.md`.
-- [ ] Wire Phase 1 Playwright into CI (GitHub Actions) once a workflow exists.
+- [ ] JO operational fields: container size, vessel/voyage, plug-in/out timestamps (deferred 2026-06-11).
+- [ ] Per-customer accredited-consignee scoping (ADR-0007 keeps the open master list; revisit on chokepoints).
+- [ ] JO draft persistence; document attachments on orders.
+- [ ] Status-change notification emails beyond the current set (decide after lifecycle finalization).
+- [ ] Possible **employee role** distinct from admin for in-house filing division.
+
+## Testing / CI (LATER)
+
+- [ ] Implement the 4 Playwright mutation `fixme` lanes (registration→approval, consignee CRUD, JO submit, staff creation).
+- [ ] Wire Playwright into CI (GitHub Actions) once a workflow exists.
 - [ ] Process the 2,488 imported consignees through accreditation over time.
-- [ ] Public launch (remove access restriction).
 
 ## Ops notes
 
-- Turnstile secret rotated; lives only in Supabase. Site key in Vercel env (`VITE_TURNSTILE_SITE_KEY`).
-- Changing a Vercel env var requires a redeploy.
+- Turnstile secret lives only in Supabase; site key in Vercel env (`VITE_TURNSTILE_SITE_KEY`). Env changes need a redeploy.
+- Session pooler (`:5432`) can exhaust mid-session → use transaction pooler (`:6543`) for one-off scripts.
+- ID purge cron is ACTIVE (Vault has `service_role_key` + `project_url`; verified 2026-06-13). All 6 crons green.
 
 ## Related
 

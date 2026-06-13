@@ -6,6 +6,19 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-13 (session 11 — charter expanded: TOS north star + Navis research)
+- **Mission broadened:** `CLAUDE.md` now frames KTC as a **container-terminal + port-services + container-depot operator** (three pillars) with the north star of an **Octopi-class, modular Navis-style terminal + depot operating system** — the portal so far solved *ancillary-services queuing* (one module). Constitution word-cap relaxed from a hard "≤200" to a one-screen guideline (~220) in `doc-governance.md`, with the reason recorded. Persistent memory (system identity + project overview) updated to match.
+- **Navis research (ultracode):** a multi-agent run (5 facet researchers → adversarial fact-check of 14 claims; 13 confirmed, 1 refuted — *PowerYard is a third-party e4Score YMS, not a Navis product*) produced `docs/research/navis-tos-landscape-2026-06-13.md` (Navis product map, TOS module map, depot M&R, EDI/data standards, KTC gap analysis, modular roadmap, glossary).
+- **Vision + decision recorded:** new vault note `09-Future/Terminal & Depot Operating System (North Star).md` and **ADR-0015** (Octopi-class modular TOS; build the **container/EIR data spine** first, lead with Gate/EIR + Depot M&R, explicit "do-not-attempt-early" list). Linked from `Home`, `09-Future/README`, and the **Roadmap** (refreshed — it was stale at "prod-testing"). ADR log updated (was stale at 0012; now through 0015).
+
+### 2026-06-13 (session 11 — doc governance hardened + vault resync; ST02 P8 cleared)
+- **Doc governance strengthened to jta-sys parity** (`docs/agent/doc-governance.md`): freshness directive (no stale docs ever — update or archive in the same change; deletion is OWNER-only; vault navigational layer always current), what-belongs-where rules, ≤200-word constitution cap, deferred-folder registry (`plans/`, `audits/`, `operator-guide/`, `flows/` created on first need).
+- **`docs/archive/` created** (holding pen per the new directive) — Jotform/Sheets-era docs moved in (`branding.md`, `form-spec.md`, `sheet-schema.md`, `migration-to-supabase.md`) plus the original ST02 lifecycle script (superseded by `smoke-test-02-portal.md`). `docs/README.md` map refreshed.
+- **`docs/agent/tooling-inventory.md` completed:** all 11 `scripts/` entries documented with purpose + env needs; flagged that `SUPABASE_ACCESS_TOKEN` currently holds a secret API key (not a `sbp_` PAT), so the 4 Management-API scripts are broken until a PAT is generated; `apply-theme.sh` marked legacy.
+- **Vault resynced to v1.1.0 reality:** `System Scale` (29→55 migrations, roles, crons, buckets, routes), `Current State` (2026-06-13 snapshot of sessions 10a–10s), `Pending Items` (rewritten around ST02/go-live gate), `Home` (new at-a-glance metrics block). `workflow-invariants.md` gained the brokers→customers naming note (migration `0021`).
+- **ST02 P8 cleared:** test-project API keys regenerated (new `sb_publishable_`/`sb_secret_` format) → Playwright **16/16** against the localhost test build. Preflight now P1–P8 green; P9 + manual lanes with the owner.
+- **`CLAUDE.md` brought under the ≤200-word cap** (268 → 198 words, matching the new doc-governance rule and jta-sys parity): prose tightened, the redundant intro pointers dropped (Supporting docs already indexes them), and the working-style directive "fix root causes, not symptoms — no blind edits" relocated to its owning file `docs/agent/coding-guardrails.md`. All five non-negotiables (incl. the jta-sys-MCP cross-wiring warning) intact.
+
 ## v1.1.0 — 2026-06-13 (trial-run release)
 
 ### 2026-06-13 (session 10s — version provenance in the footers)

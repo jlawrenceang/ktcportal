@@ -2,7 +2,7 @@
 title: System Scale
 tags: [memory, scale, metrics]
 type: memory
-last_updated: 2026-06-10
+last_updated: 2026-06-13
 ---
 
 # 📏 System Scale
@@ -11,37 +11,41 @@ last_updated: 2026-06-10
 
 | Metric | Count |
 |--------|-------|
-| Migrations | **29** (`0001_init` … `0029_admin_job_order_processing`) — all applied + tracked in `public._migrations` (runner applies only new files) |
-| Core tables | 5 (`customers` [renamed from `brokers`, 0021], `consignees`, `accreditations`, `job_orders`, `job_order_lines`) |
-| Job-order statuses | `held` (unverified, queue-hidden) · `submitted` · `processing` (=approved) · `on_hold` · `completed` · `rejected` · `cancelled` |
-| SECURITY DEFINER RPCs | `create_staff`, `is_admin`, `current_broker_id`, `broker_is_approved/pending`, `enforce_order_caps`, `ensure_jo_number`, `release_held_job_orders`, `guard_broker_protected_fields`, `expire_unverified_brokers`, `send_broker_approved_email` |
-| Storage buckets | `valid-ids` (customer IDs) + consignee 2303 docs |
-| Routes | customer (`/`, `/account`, `/job-order`, `/job-order/:id/print`, `/job-orders`, `/verify-id`, `/agreement`) + auth (`/login`, `/confirmed`, `/forgot-password`, `/reset-password`) + admin (`/admin`, `/admin/approvals`, `/admin/customers`, `/admin/customers/:id`, `/admin/consignees`, `/admin/job-orders`, `/admin/settings`). Old `/irr` `/terms` `/privacy` redirect → `/agreement`. |
+| App version | **v1.1.0** (`src/version.ts`; footers show version + git commit + build date) |
+| Migrations | **55** (`0001_init` … `0055_dead_session_hardening`) — all applied + tracked in `public._migrations` (runner applies only new files) |
+| Core tables | `customers` (renamed from `brokers`, 0021), `consignees`, `accreditations`, `job_orders`, `job_order_lines` + ops tables (`service_rates`, `pricing_settings`, `active_sessions`, `security_events`, `app_errors`, `outbound_requests`, serving-number/completion/event tables) |
+| Job-order statuses | `held` (unverified, queue-hidden) · `submitted` · `processing` · `on_hold` · `completed` · `rejected` · `cancelled`; payment: `unpaid`/`submitted`/`confirmed`/`rejected`; invoice chip PAID (`OR-INV-`) / BILLED (`BI-INV-`) |
+| Staff roles | owner · admin · cashier · checker, gated by the role-permission matrix (`has_permission`), TOTP 2FA for admin/owner (server-enforced aal2) |
+| Routes | customer (`/`, `/account`, `/job-order`, `/job-order/:id/print`, `/job-order/:id/pay`, `/job-orders`, `/calculator`, `/manual`, `/verify-id`, `/agreement`) + auth (`/login`, `/confirmed`, `/forgot-password`, `/reset-password`) + admin (`/admin`, `/admin/approvals`, `/admin/customers[/:id]`, `/admin/consignees`, `/admin/job-orders`, `/admin/new-job-order`, `/admin/checker`, `/admin/logs`, `/admin/security`, `/admin/settings`, `/admin/manual`). Old `/irr` `/terms` `/privacy` redirect → `/agreement`. |
 | ADRs | **14** (`docs/adr/` — 0001–0014, all Accepted) |
-| Automated tests | **11 Playwright** Phase 1 (unauth smoke, passing) + Phase 2 auth harness (6 role/surface + 4 `fixme`, runs when `E2E_*` set — service-role minting, ADR-0010). No Vitest unit suite. |
+| Automated tests | **Playwright 16/16** — 11 Phase 1 unauth smoke + 5 Phase 2 authenticated lanes vs the dedicated test project (`zwvzadkgeyhkhyshkwhc`, ADR-0010); 4 mutation lanes remain `fixme`. No Vitest unit suite. |
+| pg_cron jobs | **6** — `expire-unverified-brokers` (hourly), `boc-mirror-hourly`, `ops-watchdog` (15 min), `purge-expired-ids` (hourly), `archive-done-orders-weekly`, `requeue-carryovers-weekly` (Mon 00:15 PH) |
+| Storage buckets | `valid-ids` (24h-guaranteed / 3-day purge), `payment-slips`, consignee 2303 docs |
 
 ## Data
 
 | Metric | Count |
 |--------|-------|
 | Consignees imported | **2,488** (from `Customer.csv`) |
-| Owner accounts | 1 (`jlawrenceang@gmail.com`) |
+| Job orders / customers | **0 / 0** — prod wiped clean 2026-06-12 (session 10p) for go-live; first real order = `JO-000001` |
+| Owner accounts | 1 (`jlawrenceang@gmail.com`, 2FA) + `jla.ktcport@gmail.com` as plain admin fallback |
 | Staff accounts | created on demand via Settings |
 
 ## Stack
 
-- Vite + React 18 + TypeScript + Tailwind 3 + react-router-dom 6 + `@supabase/supabase-js` 2 (SPA)
-- Supabase (Auth + Postgres + RLS + Storage) — project `mdlnfhyylvapzdubhyic`
+- Vite + React 18 + TypeScript + Tailwind 3 + react-router-dom 6 + `@supabase/supabase-js` 2 (SPA, visionOS theme layer)
+- Supabase (Auth + Postgres + RLS + Storage + pg_cron/pg_net + Vault) — project `mdlnfhyylvapzdubhyic`
 - Cloudflare Turnstile CAPTCHA (server-verified)
 
 ## Hosting
 
 - Vercel project `ktc-joborderform` → `portal.ktcterminal.com` (DNS on Vercel)
+- `vercel.json` ships full security headers (CSP, XFO DENY, nosniff, Referrer-Policy, Permissions-Policy)
 - Env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_TURNSTILE_SITE_KEY`
 
 ## Messaging channels
 
-- ✅ Email (Resend SMTP, domain `ktcterminal.com`) — confirm-signup, account-approved, password-reset all live
+- ✅ Email (Resend, domain `ktcterminal.com`) — confirm-signup, account-approved, on-hold/rejected, payment-rejected, password-reset, watchdog alerts
 
 ## Related
 

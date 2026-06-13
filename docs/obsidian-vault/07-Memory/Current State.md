@@ -2,12 +2,24 @@
 title: Current State
 tags: [memory, current]
 type: memory
-last_updated: 2026-06-10
+last_updated: 2026-06-13
 ---
 
 # 📌 Current State (Runtime-Aligned)
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
+
+## 2026-06-13 — v1.1.0 trial-run release; ST02 manual lanes underway
+
+**v1.1.0 live on `portal.ktcterminal.com`** (migrations through `0055`; prod wiped clean 2026-06-12 — first real order will be `JO-000001`). Everything since the 2026-06-10 snapshot, in one line each:
+
+- **Payments & invoicing:** per-JO pay page (charges computation, bank/GCash + QR, payment-slip upload → admin confirm/reject), `/calculator`, ERP invoice recording (`OR-INV-`/`BI-INV-` + pad no. → PAID/BILLED chips), unpaid-completed view, admin-configurable `service_rates`/fees with pricing lock + server-guarded statutory VAT (`0050`), data-driven service catalogue (add/deactivate/reorder/safe-delete, `0051`).
+- **Lifecycle & stations:** per-service serving numbers (weekly reset, vacate/restore rules), on-hold respond-&-resubmit + recoverable rejection loops, per-service ✓ completion, checker station (`/admin/checker`), admin file-on-behalf (`/admin/new-job-order`), order history trail, weekly archive + carry-over crons.
+- **Roles & security:** cashier/checker roles + role-permission matrix, TOTP 2FA for admin/owner (server-enforced aal2, `0049`), single session per account — last-login-wins + dead-session RLS cut-off (`0054`/`0055`), idle timeouts everywhere (customer 15 min / staff 60 min) with "still there?" prompt, auto-suspend + owner alerts on escalation attempts (`0046`–`0048`), security headers/CSP in `vercel.json`, Logs tab + 15-min ops watchdog + System health panel (`0045`).
+- **Onboarding & content:** Customer Agreement v2 (counsel sign-off pending), contact number at registration, `/verify-id` flow, ID retention 24h-guaranteed → 3-day auto-purge (`0052`/`0053`), per-role manuals + demo tours, version provenance in footers.
+- **Testing:** ST02 (`docs/smoke-test-02-portal.md`) preflight **P1–P8 green** (P8 = Playwright 16/16 vs the test project, keys regenerated 2026-06-13); P9 (rates + payment-details entry) and manual Lanes 1–8 in progress with the owner.
+
+*Detail: `CHANGELOG.md` v1.1.0 + sessions 10a–10s.*
 
 ## 2026-06-10 — Processing workflow, printable slip, account self-service
 
@@ -51,24 +63,25 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## What is live
 
-- **Auth** — broker email/password registration with valid-ID upload; staff username login; owner failsafe; invite-only staff creation. CAPTCHA enforced. See [[Authentication]].
-- **Brokers** — self-register → `pending` → admin approval → portal access. See [[Brokers]].
+- **Auth** — customer email/password registration (contact no. + Agreement v2 consents) → confirm email → `/verify-id`; staff username login; owner failsafe; invite-only staff; CAPTCHA, lockout, 2FA (admin/owner), single session, idle timeouts. See [[Authentication]].
+- **Customers** — self-register → `pending` (full portal, held orders) → upload ID → admin approval; 48h TTL; suspend/reject loops. See [[Brokers]].
 - **Consignees** — admin CRUD, search, pagination (2,488 imported), approval, accreditation (address/TIN/2303). See [[Consignees]].
-- **Job Orders** — customer submission + history; **admin processing live** (approve/process · hold · reject w/ note · complete) + printable A6 slip. See [[Job Orders]].
-- **Account** — customer self-service at `/account` (name/contact/email/password; name change → re-verify). See [[Authentication]].
-- **Administration** — approvals, customer/consignee management, square frosted-glass dashboard, owner-only staff settings. See [[Administration]].
+- **Job Orders** — customer + admin-on-behalf filing, serving numbers, processing loops (hold/respond, recoverable reject, per-service ✓), checker station, printable A6 slip, payments + ERP invoice recording, weekly archive/carry-over. See [[Job Orders]].
+- **Account** — `/account` self-service (name/contact/email/password; name change → re-verify). See [[Authentication]].
+- **Administration** — approvals, customers, consignees, JO queue, payments review, rates/fees + catalogue config, staff + role gates, Logs, System health, manuals + tours. See [[Administration]].
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0029_admin_job_order_processing`** — **all applied + tracked** in `public._migrations` (runner applies only new files). RLS enabled; role model via `is_owner`/`is_admin`/`status`. Email (Resend) fully wired (confirm + approval + reset).
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0055_dead_session_hardening`** — **all applied + tracked** in `public._migrations`. RLS + role-permission matrix + `session_alive()` woven into all helpers; 6 pg_cron jobs (see [[System Scale]]). Email (Resend) fully wired.
 
 ## In progress / not yet
 
-- Per-customer accredited-consignee scoping (currently master-list typeahead, ADR-0007).
-- **Pricing on job orders** — the printable slip has an Amount column + totals slot reserved; no price fields in the DB yet.
-- In-progress job-order **drafts**, document attachments, customer edit/cancel of own order.
-- Playwright Phase 1 unauth smoke (11 tests, passing); Phase 2 authenticated flows pending a CAPTCHA-free path. No Vitest unit suite.
+- **ST02 manual Lanes 1–8** on live (owner walking them now); P9 = real rates/fees + bank/GCash/QR entry in Settings.
+- Customer Agreement v2 **counsel sign-off** (DPO designation, NPC registration, liability cap).
+- Per-customer accredited-consignee scoping (master-list typeahead stands, ADR-0007).
+- JO drafts, document attachments; BOC Sheets mirror (blocked on Google service-account creds); 4 Playwright mutation lanes (`fixme`). No Vitest unit suite.
+- Management-API scripts blocked: `SUPABASE_ACCESS_TOKEN` holds a secret key, not a `sbp_` PAT (see `docs/agent/tooling-inventory.md`).
 
 ## Immediate priorities
 
-**See [[Roadmap]] for authoritative sequencing.** Summary: (1) walk **ST02** on the live domain (new flow end-to-end); (2) finalize the Customer Agreement with counsel; (3) decide pricing model for the slip; (4) public launch hardening.
+**See [[Roadmap]] for authoritative sequencing.** Summary: (1) finish **ST02** manual lanes + teardown (reset `jo_number_seq`/`broker_code_seq` after); (2) counsel sign-off on Agreement v2; (3) go-live/public-launch call.

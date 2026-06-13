@@ -2,7 +2,7 @@
 
 **Smoke Test ID:** ST02
 **Date authored:** 2026-06-12
-**Status:** IN PROGRESS — preflight P1–P8 PASS; P9 (rates + payment data entry) pending; manual Lanes 1–8 not yet run
+**Status:** IN PROGRESS — preflight P1–P8 PASS (P8 cleared after key regen); P9 (rates + payment data entry) pending; manual Lanes 1–8 in progress
 **Target:** https://portal.ktcterminal.com (live, pre-public)
 **Covers:** migrations `0011`–`0055` / sessions 4–10r — order lifecycle loops, serving numbers, per-service completion, checker station, payments + invoice, roles & gates, admin file-on-behalf, Logs, observability, MFA, auto-suspend, demo tour, pricing lock + statutory VAT, service catalogue management, ID retention (24h guaranteed / 3-day purge).
 **Refreshed:** 2026-06-12 after sessions 10k–10q (Agreement v2, pricing lock `0050`, catalogue `0051`, ID retention `0052`/`0053`, prod wiped clean for go-live — first real order will be `JO-000001`).
@@ -36,10 +36,10 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | P5 Turnstile site key inlined | present | ✅ PASS (2026-06-13) |
 | P6 SPA rewrite (deep link `/admin/job-orders`) | `200` | ✅ PASS (2026-06-13) |
 | P7 CAPTCHA server-enforced (tokenless password grant) | `captcha_failed` | ✅ PASS (2026-06-13) |
-| P8 Playwright Phase 2 (test project) | 16/16 | 🚧 **BLOCKED 2026-06-13** — the test project (`zwvzadkgeyhkhyshkwhc`) rejects BOTH its API keys (`Invalid API key`; DB itself reachable, schema synced to 0055). Not a leak — keys stopped working, nothing exposed. **Action: regenerate keys in the test project's dashboard → update `E2E_SERVICE_ROLE_KEY` / `E2E_PUBLISHABLE_KEY` in `.env.local`.** Coverage gap mitigated by P2 passing on live. |
+| P8 Playwright Phase 2 (test project) | 16/16 | ✅ PASS (2026-06-13, second run) — keys regenerated to the new `sb_publishable_`/`sb_secret_` format in `.env.local`; **16 passed / 0 failed** against a localhost test-project build (5 skipped = 4 `fixme` mutation stubs + CAPTCHA-mount test, intentionally off on localhost). |
 | P9 Lane-5 pre-reqs: service rates + payment details configured | non-zero rates; bank/GCash/QR filled | ⚠️ **NOT READY** — re-verified 2026-06-13: 0 rates set, 0 fees set, payment details empty. Fill via step **5.0** before Lane 5. |
 
-**Preflight (2026-06-13, v1.1.0): GO for manual lanes** — P1–P7 green on the live deploy; P8 blocked on test-project keys (environmental, mitigated by P2); P9 is the Lane-5 data entry (step 5.0). Security telemetry at start: 0 security events (7d), 0 client errors (24h), 0 outbound failures (7d).
+**Preflight (2026-06-13, v1.1.0): GO for manual lanes** — P1–P8 green (P8 cleared 2026-06-13 after key regeneration); P9 is the Lane-5 data entry (step 5.0). Security telemetry at start: 0 security events (7d), 0 client errors (24h), 0 outbound failures (7d).
 
 ---
 

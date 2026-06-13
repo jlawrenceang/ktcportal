@@ -8,7 +8,11 @@ type: moc
 
 Parking lot for ideas not on the committed [[Roadmap]]. Nothing here is a commitment; promote to the Roadmap when decided.
 
-## Candidates
+## ⭐ North star
+
+- **[[Terminal & Depot Operating System (North Star)]]** — the endgame: create/upgrade KTC's existing TOS into an **Octopi-class, modular Navis-style terminal + depot operating system**. Container/EIR data spine first, then gate/depot-M&R/yard/billing/EDI. Recorded in **ADR-0015**; grounded by `docs/research/navis-tos-landscape-2026-06-13.md`.
+
+## Candidates (smaller ideas)
 
 - **Per-broker consignee assignment UI** — explicit accreditation linking brokers ↔ consignees (beyond the global approved set). *(Partially on the Roadmap as scoping.)*
 - **Notifications** — email/SMS on broker approval, job-order status changes (after Resend lands).

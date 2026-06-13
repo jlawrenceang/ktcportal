@@ -13,9 +13,28 @@ Stable reference for repo-level tooling. Update this file when a tool is added o
 
 ## Database tooling
 
-- `scripts/run-migrations.mjs` — applies `supabase/migrations/*` over `DATABASE_URL` (session pooler, `ssl rejectUnauthorized:false`).
+- `scripts/run-migrations.mjs` — applies `supabase/migrations/*` over `DATABASE_URL`; tracks applied files in `public._migrations` and applies only new ones.
+- `scripts/verify-schema.mjs` — read-only schema sanity check against `DATABASE_URL`.
 - `scripts/import-consignees.mjs` — one-off importer (loaded 2,488 consignees from `Customer.csv`).
 - Supabase SQL Editor (KTC project `mdlnfhyylvapzdubhyic`) — manual fallback for applying SQL.
+- Pooler note: the session pooler (`:5432`) occasionally exhausts mid-session — swap to the transaction pooler (`:6543`) for one-off scripts.
+
+## Ops / setup scripts (`scripts/`)
+
+All read the gitignored `.env.local`; none print or commit secrets.
+
+| Script | Purpose | Needs |
+|---|---|---|
+| `set-vault-secrets.mjs` | Upserts Resend key/sender into Supabase Vault for the email triggers. Reads `.env.local` over any stale ambient `RESEND_API_KEY` shell var. | `DATABASE_URL`, `RESEND_API_KEY`, `RESEND_FROM` |
+| `setup-id-purge.mjs` | Puts `service_role_key` + `project_url` in Vault so the hourly `purge_expired_ids()` cron can delete expired ID files via the Storage API (already run — purge is ACTIVE). | `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL` |
+| `setup-boc-mirror.mjs` | Deploys + configures the BOC Sheets mirror Edge Function (deploy, secrets, Vault wiring for the hourly cron). Blocked until Google service-account creds exist. | `SUPABASE_ACCESS_TOKEN` (PAT), Google creds |
+| `set-auth-email-template.mjs` | Installs the branded confirm-signup template + subject into GoTrue via the Management API (only programmatic way — templates aren't in Postgres). | `SUPABASE_ACCESS_TOKEN` (PAT) |
+| `set-auth-security.mjs` | Tightens server-side GoTrue security settings (e.g. password min length). | `SUPABASE_ACCESS_TOKEN` (PAT) |
+| `check-auth-rate-limits.mjs` | Read-only print of Auth rate-limit/security settings (verifies the server limits behind the cosmetic client lockout). | `SUPABASE_ACCESS_TOKEN` (PAT) |
+| `send-test-email.mjs` | Sends the confirm-signup template to yourself via Resend to preview rendering. | `RESEND_API_KEY`, `RESEND_FROM` |
+| `apply-theme.sh` | **LEGACY (Jotform era)** — styled the old Jotform form. Dead since the React SPA; candidate for OWNER deletion. | — |
+
+> ⚠️ **Management-API scripts are currently broken:** `SUPABASE_ACCESS_TOKEN` in `.env.local` holds a project **secret API key** (`sb_secret_…`), not a personal access token (`sbp_…`). The Management API rejects it (verified 2026-06-13). Generate a PAT (Dashboard → Account → Access Tokens) before running the four PAT-marked scripts.
 
 ## MCP servers
 

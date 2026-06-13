@@ -5,7 +5,7 @@
 When changing portal code:
 - Think like an operator first, developer second.
 - Protect access controls before improving UX.
-- Prefer small, grounded, verifiable fixes.
+- Prefer small, grounded, verifiable fixes; fix root causes, not symptoms — no blind edits.
 - Avoid unrelated redesign in the same change.
 - Verify code *and* runtime behavior before concluding (see `testing-and-release.md`).
 

@@ -4,6 +4,8 @@ Rules that protect the operational backbone. A regression here is a production i
 
 For the *current* snapshot of what is live, read `docs/obsidian-vault/07-Memory/Current State.md`. This file is the durable rule set.
 
+> **Naming note (migration `0021`):** the `brokers` table is now **`customers`** (with `customer_code`/`customer_id` columns), and the user-facing term is "customer". Helper-function *names* were deliberately kept (`current_broker_id`, `broker_is_approved`, `useBroker`, …). Where this file says "broker", read it as the customer role; where it names a function, the name is literal.
+
 ## Stable operational boundary
 
 The portal runs four gated chains:
