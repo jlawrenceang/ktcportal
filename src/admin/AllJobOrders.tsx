@@ -33,7 +33,7 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 }
 
 const SELECT =
-  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, completed_at, archived_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at)'
+  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, rps_status, rps_payment_status, rps_payment_proof_path, rps_payment_submitted_at, completed_at, archived_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at)'
 
 // Lines this order needs, with their per-service completion state (G1).
 function serviceProgress(o: JobOrder): { line: ServiceLine; done: boolean }[] {
@@ -131,6 +131,7 @@ export default function AllJobOrders() {
   const [copied, setCopied] = useState(false)
   // Payment-proof review (permission: review_payments).
   const [payReject, setPayReject] = useState<AdminJobOrder | null>(null)
+  const [payRejectKind, setPayRejectKind] = useState<'base' | 'rps'>('base')
   const [payNote, setPayNote] = useState('')
   const { openFromStorage, viewerModal } = useFileViewer((m) => alert(m))
   const [filter, setFilter] = useState<Filter>('open')
@@ -247,9 +248,9 @@ export default function AllJobOrders() {
     await load()
   }
 
-  async function reviewPayment(id: string, confirm: boolean, note?: string) {
+  async function reviewPayment(id: string, confirm: boolean, note?: string, kind: 'base' | 'rps' = 'base') {
     setBusyId(id)
-    const { error } = await supabase.rpc('review_payment', { p_id: id, p_confirm: confirm, p_note: note ?? null })
+    const { error } = await supabase.rpc('review_payment', { p_id: id, p_confirm: confirm, p_note: note ?? null, p_kind: kind })
     setBusyId(null)
     if (error) { alert(error.message); return }
     setPayReject(null); setPayNote('')
@@ -341,10 +342,13 @@ export default function AllJobOrders() {
                         </span>
                       ))}
                       {!o.service_invoice_no && o.payment_status === 'submitted' && (
-                        <span className="ktc-chip ktc-chip--warning">Payment proof to review</span>
+                        <span className="ktc-chip ktc-chip--warning">X-ray payment to review</span>
                       )}
                       {!o.service_invoice_no && o.payment_status === 'confirmed' && (
-                        <span className="ktc-chip ktc-chip--success">Payment confirmed</span>
+                        <span className="ktc-chip ktc-chip--success">X-ray payment confirmed</span>
+                      )}
+                      {o.rps_payment_status === 'submitted' && (
+                        <span className="ktc-chip ktc-chip--warning">RPS payment to review</span>
                       )}
                       {o.status === 'completed' && !o.service_invoice_no && agingDays(o.completed_at) != null && (
                         <span className={`ktc-chip ${agingDays(o.completed_at)! >= 3 ? 'ktc-chip--danger' : 'ktc-chip--warning'}`}
@@ -423,26 +427,36 @@ export default function AllJobOrders() {
                       </>
                     )}
                     {can('review_payments') && o.payment_status === 'submitted' && (
-                      payReject?.id === o.id ? (
+                      payReject?.id === o.id && payRejectKind === 'base' ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <input
-                            className="ktc-input"
-                            value={payNote}
-                            onChange={(e) => setPayNote(e.target.value)}
-                            placeholder="Why? (shown to the customer)"
-                            autoFocus
-                            style={{ width: 230, padding: '7px 11px', fontSize: 13 }}
-                          />
-                          <button style={btn('danger')} disabled={isBusy || !payNote.trim()} onClick={() => void reviewPayment(o.id, false, payNote.trim())}>Reject proof</button>
+                          <input className="ktc-input" value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder="Why? (shown to the customer)" autoFocus style={{ width: 230, padding: '7px 11px', fontSize: 13 }} />
+                          <button style={btn('danger')} disabled={isBusy || !payNote.trim()} onClick={() => void reviewPayment(o.id, false, payNote.trim(), 'base')}>Reject proof</button>
                           <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setPayReject(null); setPayNote('') }}>Cancel</button>
                         </span>
                       ) : (
                         <>
-                          <button style={btn('ghost')} onClick={() => void openFromStorage('payment-slips', o.payment_proof_path, `Payment slip — ${o.jo_number ?? ''} (${o.broker?.full_name ?? ''})`)}>
-                            View payment slip
+                          <button style={btn('ghost')} onClick={() => void openFromStorage('payment-slips', o.payment_proof_path, `X-ray payment slip — ${o.jo_number ?? ''} (${o.broker?.full_name ?? ''})`)}>
+                            View X-ray payment
                           </button>
-                          <button style={btn('solid')} disabled={isBusy} onClick={() => void reviewPayment(o.id, true)}>Confirm payment</button>
-                          <button style={btn('danger')} disabled={isBusy} onClick={() => { setPayReject(o); setPayNote('') }}>Reject proof</button>
+                          <button style={btn('solid')} disabled={isBusy} onClick={() => void reviewPayment(o.id, true, undefined, 'base')}>Confirm X-ray payment</button>
+                          <button style={btn('danger')} disabled={isBusy} onClick={() => { setPayReject(o); setPayRejectKind('base'); setPayNote('') }}>Reject</button>
+                        </>
+                      )
+                    )}
+                    {can('review_payments') && o.rps_payment_status === 'submitted' && (
+                      payReject?.id === o.id && payRejectKind === 'rps' ? (
+                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <input className="ktc-input" value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder="Why? (shown to the customer)" autoFocus style={{ width: 230, padding: '7px 11px', fontSize: 13 }} />
+                          <button style={btn('danger')} disabled={isBusy || !payNote.trim()} onClick={() => void reviewPayment(o.id, false, payNote.trim(), 'rps')}>Reject proof</button>
+                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setPayReject(null); setPayNote('') }}>Cancel</button>
+                        </span>
+                      ) : (
+                        <>
+                          <button style={btn('ghost')} onClick={() => void openFromStorage('payment-slips', o.rps_payment_proof_path, `RPS payment slip — ${o.jo_number ?? ''} (${o.broker?.full_name ?? ''})`)}>
+                            View RPS payment
+                          </button>
+                          <button style={btn('solid')} disabled={isBusy} onClick={() => void reviewPayment(o.id, true, undefined, 'rps')}>Confirm RPS payment</button>
+                          <button style={btn('danger')} disabled={isBusy} onClick={() => { setPayReject(o); setPayRejectKind('rps'); setPayNote('') }}>Reject</button>
                         </>
                       )
                     )}

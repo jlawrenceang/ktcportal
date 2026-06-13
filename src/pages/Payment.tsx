@@ -23,15 +23,15 @@ export default function Payment() {
   const [info, setInfo] = useState<Map<string, string>>(new Map())
   const [loading, setLoading] = useState(true)
   const [file, setFile] = useState<File | null>(null)
+  const [rpsFile, setRpsFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [done, setDone] = useState(false)
 
   async function load() {
     if (!id) return
     const [{ data: jo }, pricing, { data: pi }, { data: rm }] = await Promise.all([
       supabase.from('job_orders')
-        .select('id, jo_number, status, payment_status, payment_note, payment_submitted_at, service_invoice_no, invoice_pad_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)')
+        .select('id, jo_number, status, payment_status, payment_note, payment_submitted_at, service_invoice_no, invoice_pad_no, xray_performed_at, rps_status, rps_payment_status, rps_payment_note, rps_payment_submitted_at, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)')
         .eq('id', id).maybeSingle(),
       loadPricingConfig(),
       supabase.from('payment_info').select('key, value, label'),
@@ -52,19 +52,34 @@ export default function Payment() {
     return computeCharges(counts, cfg, moves)
   }, [order, cfg, moves])
 
-  async function submitProof() {
-    if (!order || !file || !broker) return
+  // Running balance: total = X-ray base + assessed RPS; paid = confirmed
+  // components; balance = total − paid.
+  const breakdown = useMemo(() => {
+    if (!order || !cfg) return null
+    const counts = new Map<string, number>()
+    for (const l of order.lines ?? []) counts.set(l.service_request, (counts.get(l.service_request) ?? 0) + 1)
+    const baseTotal = computeCharges(counts, cfg).total
+    const total = computeCharges(counts, cfg, moves).total
+    const rpsAmount = Math.max(0, total - baseTotal)
+    const baseConfirmed = order.payment_status === 'confirmed' || !!order.service_invoice_no
+    const rpsConfirmed = order.rps_payment_status === 'confirmed'
+    const paid = (baseConfirmed ? baseTotal : 0) + (rpsConfirmed ? rpsAmount : 0)
+    return { baseTotal, rpsAmount, total, paid, balance: total - paid }
+  }, [order, cfg, moves])
+
+  async function submitProof(kind: 'base' | 'rps', theFile: File | null) {
+    if (!order || !theFile || !broker) return
     setBusy(true); setError(null)
-    const prepared = await prepareUpload(file)
+    const prepared = await prepareUpload(theFile)
     if ('error' in prepared) { setBusy(false); setError(prepared.error); return }
     const ext = prepared.file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const path = `${broker.user_id}/jo-${order.id}.${ext}`
+    const path = `${broker.user_id}/jo-${order.id}${kind === 'rps' ? '-rps' : ''}.${ext}`
     const { error: upErr } = await supabase.storage.from('payment-slips').upload(path, prepared.file, { upsert: true })
     if (upErr) { setBusy(false); setError(upErr.message); return }
-    const { error: rpcErr } = await supabase.rpc('submit_payment_proof', { p_id: order.id, p_path: path })
+    const { error: rpcErr } = await supabase.rpc('submit_payment_proof', { p_id: order.id, p_path: path, p_kind: kind })
     setBusy(false)
     if (rpcErr) { setError(rpcErr.message); return }
-    setFile(null); setDone(true)
+    if (kind === 'rps') setRpsFile(null); else setFile(null)
     await load()
   }
 
@@ -87,7 +102,11 @@ export default function Payment() {
     )
   }
 
-  const paid = order.payment_status === 'confirmed' || !!order.service_invoice_no
+  const baseConfirmed = order.payment_status === 'confirmed' || !!order.service_invoice_no
+  const rpsDue = order.rps_status === 'needed' && (breakdown?.rpsAmount ?? 0) > 0
+  const rpsConfirmed = order.rps_payment_status === 'confirmed'
+  const fullySettled = !!breakdown && breakdown.total > 0 && breakdown.balance <= 0.005
+  const clearedForRelease = !!order.xray_performed_at && fullySettled
   const qrPath = info.get('qr_path')
   const qrUrl = qrPath ? supabase.storage.from('payment-qr').getPublicUrl(qrPath).data.publicUrl : null
 
@@ -103,23 +122,16 @@ export default function Payment() {
         </p>
       </div>
 
-      {paid && (
+      {clearedForRelease && (
         <Notice tone="success" style={{ marginBottom: 16 }}>
-          {order.service_invoice_no?.toUpperCase().startsWith('BI')
-            ? `✓ Billed on account — Billing Invoice No. ${order.invoice_pad_no ?? order.service_invoice_no}.`
-            : order.service_invoice_no
-              ? `✓ Payment recorded — Official Receipt No. ${order.invoice_pad_no ?? order.service_invoice_no}.`
-              : '✓ Payment confirmed by KTC. Collect the official Service Invoice at the KTC office.'}
+          ✓ <b>Cleared for release</b> — X-ray done and balance fully paid. Collect your gate pass / official Service Invoice at the KTC office.
         </Notice>
       )}
-      {order.payment_status === 'submitted' && (
-        <Notice tone="info" style={{ marginBottom: 16 }}>
-          Your payment proof is with KTC for review (sent {order.payment_submitted_at ? new Date(order.payment_submitted_at).toLocaleString() : ''}). You’ll see the result here.
-        </Notice>
-      )}
-      {order.payment_status === 'rejected' && (
-        <Notice tone="error" style={{ marginBottom: 16 }}>
-          Your payment proof was not accepted{order.payment_note ? <>: <b>{order.payment_note}</b></> : ''}. Please re-upload a corrected slip below.
+      {order.service_invoice_no && (
+        <Notice tone="success" style={{ marginBottom: 16 }}>
+          {order.service_invoice_no.toUpperCase().startsWith('BI')
+            ? `Billed on account — Billing Invoice No. ${order.invoice_pad_no ?? order.service_invoice_no}.`
+            : `Official Receipt No. ${order.invoice_pad_no ?? order.service_invoice_no} recorded at the KTC office.`}
         </Notice>
       )}
 
@@ -149,18 +161,33 @@ export default function Payment() {
                   <td style={{ padding: '8px 0' }} className="ktc-label">Print fee</td>
                   <td className="ktc-mono" style={{ textAlign: 'right' }}>{peso(charges.printFee)}</td></tr>
                 <tr>
-                  <td style={{ padding: '12px 0', fontWeight: 700, fontSize: 15 }}>Total</td>
-                  <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 17, color: 'var(--acc-2)' }}>{peso(charges.total)}</td>
+                  <td style={{ padding: '10px 0', fontWeight: 700, fontSize: 15 }}>Total</td>
+                  <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 16 }}>{peso(breakdown?.total ?? charges.total)}</td>
+                </tr>
+                {(breakdown?.paid ?? 0) > 0 && (
+                  <tr><td style={{ padding: '6px 0' }} className="ktc-label">Paid</td>
+                    <td className="ktc-mono" style={{ textAlign: 'right', color: 'hsl(150 60% 30%)' }}>− {peso(breakdown!.paid)}</td></tr>
+                )}
+                <tr style={{ borderTop: '1px solid hsl(var(--line-soft))' }}>
+                  <td style={{ padding: '12px 0', fontWeight: 700, fontSize: 15 }}>{fullySettled ? 'Balance' : 'Balance due'}</td>
+                  <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 17, color: fullySettled ? 'hsl(150 60% 30%)' : 'var(--acc-2)' }}>
+                    {fullySettled ? 'PAID' : peso(breakdown?.balance ?? charges.total)}
+                  </td>
                 </tr>
               </tbody>
             </table>
+            {rpsDue && (
+              <p className="ktc-label" style={{ fontSize: 12, marginTop: 10 }}>
+                Includes <b>port-services (RPS)</b> assessed by operations — payable separately below.
+              </p>
+            )}
           </>
         )}
       </div>
 
-      {!paid && (
+      {!fullySettled && (
         <>
-          {/* How to pay */}
+          {/* How to pay (shared) */}
           <div className="ktc-glass" style={{ padding: 26, marginBottom: 16, display: 'flex', gap: 24, flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 240px', minWidth: 0 }}>
               <h2 style={{ margin: 0, fontSize: 16.5, fontWeight: 650 }}>How to pay</h2>
@@ -185,40 +212,33 @@ export default function Payment() {
             )}
           </div>
 
-          {/* Upload proof */}
-          <div className="ktc-glass" style={{ padding: 26 }}>
-            <h2 style={{ margin: 0, fontSize: 16.5, fontWeight: 650 }}>
-              {order.payment_status === 'rejected' ? 'Re-upload your payment slip' : 'Upload your payment slip'}
-            </h2>
-            <p className="ktc-label" style={{ fontSize: 13, marginTop: 6 }}>
-              A clear photo or PDF of the deposit / transfer / GCash receipt. KTC reviews it and confirms here.
-            </p>
-            {error && <Notice tone="error" style={{ marginTop: 12 }}>{error}</Notice>}
-            {done && order.payment_status === 'submitted' ? null : (
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 14 }}>
-                {!file ? (
-                  <input
-                    className="ktc-input"
-                    type="file"
-                    accept="image/*,application/pdf"
-                    disabled={busy}
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) { setFile(f); setError(null) } }}
-                    style={{ maxWidth: 340, padding: '10px 13px' }}
-                  />
-                ) : (
-                  <>
-                    <span style={{ fontSize: 13, fontWeight: 500, padding: '9px 13px', borderRadius: 10, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      📎 {file.name}
-                    </span>
-                    <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void submitProof()}>
-                      {busy ? 'Sending…' : 'Submit to KTC'}
-                    </button>
-                    <button type="button" className="ktc-link" disabled={busy} onClick={() => setFile(null)}>Remove</button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+          {error && <Notice tone="error" style={{ marginBottom: 16 }}>{error}</Notice>}
+
+          <PaySection
+            title="X-ray charges"
+            amount={breakdown?.baseTotal ?? 0}
+            status={baseConfirmed ? 'confirmed' : (order.payment_status ?? 'unpaid')}
+            note={order.payment_note ?? null}
+            submittedAt={order.payment_submitted_at ?? null}
+            file={file}
+            setFile={setFile}
+            onSubmit={() => void submitProof('base', file)}
+            busy={busy}
+          />
+
+          {rpsDue && (
+            <PaySection
+              title="Port-services (RPS) charges"
+              amount={breakdown?.rpsAmount ?? 0}
+              status={rpsConfirmed ? 'confirmed' : (order.rps_payment_status ?? 'unpaid')}
+              note={order.rps_payment_note ?? null}
+              submittedAt={order.rps_payment_submitted_at ?? null}
+              file={rpsFile}
+              setFile={setRpsFile}
+              onSubmit={() => void submitProof('rps', rpsFile)}
+              busy={busy}
+            />
+          )}
         </>
       )}
 
@@ -226,5 +246,54 @@ export default function Payment() {
         <Link to="/job-orders" className="ktc-link" style={{ fontSize: 13 }}>← Back to My Job Orders</Link>
       </p>
     </Shell>
+  )
+}
+
+function PaySection({ title, amount, status, note, submittedAt, file, setFile, onSubmit, busy }: {
+  title: string
+  amount: number
+  status: string
+  note: string | null
+  submittedAt: string | null
+  file: File | null
+  setFile: (f: File | null) => void
+  onSubmit: () => void
+  busy: boolean
+}) {
+  return (
+    <div className="ktc-glass" style={{ padding: 26, marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+        <h2 style={{ margin: 0, fontSize: 16.5, fontWeight: 650 }}>{title}</h2>
+        <span className="ktc-mono" style={{ fontWeight: 700, fontSize: 15 }}>{peso(amount)}</span>
+      </div>
+      {status === 'confirmed' ? (
+        <Notice tone="success" style={{ marginTop: 12 }}>✓ Confirmed by KTC.</Notice>
+      ) : status === 'submitted' ? (
+        <Notice tone="info" style={{ marginTop: 12 }}>
+          Your proof is with KTC for review{submittedAt ? ` (sent ${new Date(submittedAt).toLocaleString()})` : ''}. You’ll see the result here.
+        </Notice>
+      ) : (
+        <>
+          {status === 'rejected' && (
+            <Notice tone="error" style={{ marginTop: 12 }}>Your proof wasn’t accepted{note ? <>: <b>{note}</b></> : ''}. Please re-upload a corrected slip.</Notice>
+          )}
+          <p className="ktc-label" style={{ fontSize: 13, marginTop: 10 }}>
+            Upload a clear photo or PDF of the deposit / transfer / GCash receipt.
+          </p>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 12 }}>
+            {!file ? (
+              <input className="ktc-input" type="file" accept="image/*,application/pdf" disabled={busy}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) setFile(f) }} style={{ maxWidth: 340, padding: '10px 13px' }} />
+            ) : (
+              <>
+                <span style={{ fontSize: 13, fontWeight: 500, padding: '9px 13px', borderRadius: 10, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📎 {file.name}</span>
+                <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy} onClick={onSubmit}>{busy ? 'Sending…' : 'Submit to KTC'}</button>
+                <button type="button" className="ktc-link" disabled={busy} onClick={() => setFile(null)}>Remove</button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </div>
   )
 }

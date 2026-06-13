@@ -125,6 +125,12 @@ export interface JobOrder {
   payment_submitted_at?: string | null
   payment_confirmed_at?: string | null
   payment_note?: string | null
+  rps_status?: 'not_assessed' | 'not_needed' | 'needed'
+  rps_payment_status?: 'unpaid' | 'submitted' | 'confirmed' | 'rejected'
+  rps_payment_proof_path?: string | null
+  rps_payment_submitted_at?: string | null
+  rps_payment_confirmed_at?: string | null
+  rps_payment_note?: string | null
   completed_at?: string | null
   archived_at?: string | null
   consignee?: Consignee | null

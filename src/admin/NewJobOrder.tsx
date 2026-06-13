@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
@@ -29,11 +29,24 @@ export default function NewJobOrder() {
   const [filed, setFiled] = useState<Filed | null>(null)
   const submittingRef = useRef(false)
 
+  // Vessel + voyage from the current schedule (escape hatch for not-listed).
+  type VesselOpt = { vessel_visit: string; vessel_name: string; voyage_number: string }
+  const [vessels, setVessels] = useState<VesselOpt[]>([])
+  const [vesselVisit, setVesselVisit] = useState('')
+  const [notListed, setNotListed] = useState(false)
+  const [mVessel, setMVessel] = useState('')
+  const [mVoyage, setMVoyage] = useState('')
+  useEffect(() => {
+    void supabase.from('vessel_schedule_v').select('vessel_visit, vessel_name, voyage_number').eq('is_current', true).order('vessel_name')
+      .then(({ data }) => setVessels((data ?? []) as VesselOpt[]))
+  }, [])
+
   function reset() {
     setCustomer(null)
     setConsignee(null)
     setEntryNumber('')
     setLines([emptyLine()])
+    setVesselVisit(''); setNotListed(false); setMVessel(''); setMVoyage('')
     setFiled(null)
     setError(null)
   }
@@ -44,6 +57,15 @@ export default function NewJobOrder() {
     setError(null)
     if (!customer) { setError('Pick the customer this order is for.'); return }
     if (!consignee) { setError('Select a consignee from the list.'); return }
+    let vVisit: string | null = null, vName = '', vVoyage = ''
+    if (notListed) {
+      vName = mVessel.trim(); vVoyage = mVoyage.trim()
+      if (!vName || !vVoyage) { setError('Enter the vessel name and voyage number.'); return }
+    } else {
+      const sel = vessels.find((v) => v.vessel_visit === vesselVisit)
+      if (!sel) { setError('Select the vessel & voyage (or tick “not listed”).'); return }
+      vVisit = sel.vessel_visit; vName = sel.vessel_name; vVoyage = sel.voyage_number
+    }
     const filled = lines.filter((l) => l.container_number.trim())
     if (filled.length === 0) { setError('Add at least one container.'); return }
 
@@ -57,6 +79,9 @@ export default function NewJobOrder() {
         container_number: l.container_number.trim(),
         service_request: l.service_request,
       })),
+      p_vessel_visit: vVisit,
+      p_vessel_name: vName,
+      p_voyage_number: vVoyage,
     })
     submittingRef.current = false
     setBusy(false)
@@ -135,6 +160,26 @@ export default function NewJobOrder() {
                 value={entryNumber}
                 onChange={(e) => setEntryNumber(e.target.value)}
               />
+            </div>
+
+            <div style={{ display: 'grid', gap: 6 }}>
+              <label className="ktc-label" htmlFor="vessel">Vessel &amp; Voyage</label>
+              {!notListed ? (
+                <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
+                  <option value="">Select a vessel…</option>
+                  {vessels.map((v) => (
+                    <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name} — {v.voyage_number}</option>
+                  ))}
+                </select>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <input className="ktc-input" placeholder="Vessel name" value={mVessel} onChange={(e) => setMVessel(e.target.value)} />
+                  <input className="ktc-input" placeholder="Voyage number" value={mVoyage} onChange={(e) => setMVoyage(e.target.value)} />
+                </div>
+              )}
+              <label className="ktc-label" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <input type="checkbox" checked={notListed} onChange={(e) => setNotListed(e.target.checked)} /> Vessel not listed — enter manually
+              </label>
             </div>
 
             <ContainerLinesEditor lines={lines} onChange={setLines} />
