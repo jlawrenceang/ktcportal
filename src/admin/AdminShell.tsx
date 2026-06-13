@@ -7,6 +7,7 @@ import { useIdleLogout } from '../lib/useIdleLogout'
 import { useSessionGuard } from '../lib/useSessionGuard'
 import IdleWarning from '../components/IdleWarning'
 import { useTour } from '../components/TourProvider'
+import LangToggle from '../components/LangToggle'
 import { VERSION_LABEL } from '../version'
 
 // All staff sessions time out — on a longer leash than the 15-min customer
@@ -146,6 +147,7 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
           {role || 'Admin'}
         </span>
         <AdminNav can={can} />
+        <LangToggle />
         {hasPageTour && (
           <button className="ktc-nav-link" onClick={replayPageTour} style={{ flex: '0 0 auto', fontWeight: 700 }} title="Show this page's walkthrough" aria-label="Show this page's walkthrough">
             ?

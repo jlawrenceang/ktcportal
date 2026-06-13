@@ -5,6 +5,7 @@ import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { homeSteps } from '../components/WelcomeTour'
 import { usePageTour, useTour } from '../components/TourProvider'
+import { useT } from '../lib/i18n'
 
 const iconProps = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
 
@@ -35,6 +36,7 @@ const cards: { to: string; title: string; desc: string; icon: ReactNode }[] = [
 export default function Home() {
   const { session } = useAuth()
   const { broker } = useBroker()
+  const { t } = useT()
   const firstName = (broker?.full_name || session?.user.email || '').split(' ')[0]
 
   // First visit to Home auto-opens its tour; "Quick tour" replays it.
@@ -46,7 +48,7 @@ export default function Home() {
       <div style={{ margin: '18px 4px 26px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, letterSpacing: '-0.028em', lineHeight: 1.15 }}>
-            Welcome{firstName ? `, ${firstName}` : ''}
+            {firstName ? t('Welcome, {name}', { name: firstName }) : t('Welcome')}
           </h1>
           {broker?.customer_code && (
             <span className="ktc-mono" style={{ fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)', color: 'hsl(var(--ink-2))' }}>
@@ -55,9 +57,9 @@ export default function Home() {
           )}
         </div>
         <p className="ktc-sub" style={{ maxWidth: 480 }}>
-          File job orders for terminal services and track them through processing.{' '}
+          {t('File job orders for terminal services and track them through processing.')}{' '}
           <button type="button" className="ktc-link" style={{ fontSize: 'inherit' }} onClick={replayPageTour}>
-            Quick tour ▸
+            {t('Quick tour ▸')}
           </button>
         </p>
       </div>
@@ -76,10 +78,10 @@ export default function Home() {
             </span>
             <span style={{ marginTop: 'auto' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15.5, fontWeight: 650, letterSpacing: '-0.01em' }}>
-                {c.title}
+                {t(c.title)}
                 <span aria-hidden style={{ color: 'hsl(var(--ink-3))', fontSize: 17, lineHeight: 1, transition: 'transform 0.2s' }}>›</span>
               </span>
-              <span className="ktc-label" style={{ display: 'block', fontSize: 12.5, marginTop: 4, lineHeight: 1.45 }}>{c.desc}</span>
+              <span className="ktc-label" style={{ display: 'block', fontSize: 12.5, marginTop: 4, lineHeight: 1.45 }}>{t(c.desc)}</span>
             </span>
           </Link>
         ))}

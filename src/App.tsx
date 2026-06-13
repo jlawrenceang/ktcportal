@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './lib/AuthContext'
+import { I18nProvider } from './lib/i18n'
 import TourProvider from './components/TourProvider'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useBroker } from './lib/useBroker'
@@ -68,6 +69,7 @@ function RoleLanding() {
 
 export default function App() {
   return (
+    <I18nProvider>
     <AuthProvider>
       <BrowserRouter>
         <TourProvider>
@@ -125,5 +127,6 @@ export default function App() {
         </TourProvider>
       </BrowserRouter>
     </AuthProvider>
+    </I18nProvider>
   )
 }

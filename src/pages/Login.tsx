@@ -7,6 +7,7 @@ import { AGREEMENT_VERSION, AGREEMENT_VERSION_LABEL, AGREEMENT_BODY } from '../c
 import { VERSION_LABEL } from '../version'
 import { MarkdownBody } from '../components/MarkdownDoc'
 import Notice from '../components/Notice'
+import LangToggle from '../components/LangToggle'
 import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
 
 // Client-side brute-force deterrent: after MAX_FAILS wrong passwords for an
@@ -225,6 +226,7 @@ export default function Login() {
   return (
     <div style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24 }}>
       <div className="ktc-glass ktc-rise" style={{ width: '100%', maxWidth: 440, padding: '36px 36px 32px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}><LangToggle /></div>
         <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 64, marginBottom: 20 }} />
         {notice && <Notice tone="success" style={{ marginBottom: 14 }}>{notice}</Notice>}
         {isLocked && (

@@ -11,12 +11,14 @@ import PendingPanel from './PendingPanel'
 import BrokerStatusBanner from './BrokerStatusBanner'
 import IdleWarning from './IdleWarning'
 import { useTour } from './TourProvider'
+import { useT } from '../lib/i18n'
+import LangToggle from './LangToggle'
 
 const IDLE_LOGOUT_MS = 15 * 60 * 1000 // auto sign-out after 15 min of inactivity (warning at 14)
 
 // Primary navigation — persistent frosted bar (replaces the old back-button +
 // breadcrumb pattern: every page is one tap away, and the active pill shows
-// where you are).
+// where you are). Labels are translated at render via t().
 const NAV = [
   { to: '/', label: 'Home', end: true },
   { to: '/job-order', label: 'New Job Order' },
@@ -31,6 +33,7 @@ export default function Shell({ children }: { children: ReactNode }) {
   const { broker, refresh } = useBroker()
   const navigate = useNavigate()
   const { replayPageTour, hasPageTour } = useTour()
+  const { t } = useT()
 
   // Locked out entirely: rejected / suspended (non-admin) brokers get a message only.
   const locked = !!broker && !hasAdminAccess(broker) && (broker.status === 'rejected' || broker.status === 'suspended')
@@ -71,18 +74,19 @@ export default function Shell({ children }: { children: ReactNode }) {
               end={n.end}
               className={({ isActive }) => `ktc-nav-link${isActive ? ' is-active' : ''}`}
             >
-              {n.label}
+              {t(n.label)}
             </NavLink>
           ))}
         </div>
+        <LangToggle />
         {hasPageTour && (
           <button className="ktc-nav-link" onClick={replayPageTour}
-            style={{ flex: '0 0 auto', fontWeight: 700 }} title="Show this page's walkthrough" aria-label="Show this page's walkthrough">
+            style={{ flex: '0 0 auto', fontWeight: 700 }} title={t("Show this page's walkthrough")} aria-label={t("Show this page's walkthrough")}>
             ?
           </button>
         )}
         <button className="ktc-nav-link" onClick={handleSignOut} style={{ flex: '0 0 auto' }}>
-          Sign out
+          {t('Sign out')}
         </button>
       </nav>
 
@@ -98,9 +102,9 @@ export default function Shell({ children }: { children: ReactNode }) {
       )}
 
       <footer style={{ marginTop: 44, paddingTop: 18, borderTop: '1px solid var(--glass-brd)', textAlign: 'center', fontSize: 12, color: 'hsl(var(--ink-2))' }}>
-        <Link to="/manual" className="ktc-link" style={{ fontSize: 12 }}>User Manual</Link>
+        <Link to="/manual" className="ktc-link" style={{ fontSize: 12 }}>{t('User Manual')}</Link>
         <span aria-hidden style={{ margin: '0 8px', opacity: 0.5 }}>·</span>
-        <Link to="/agreement" className="ktc-link" style={{ fontSize: 12 }}>Customer Agreement (Terms &amp; Conditions)</Link>
+        <Link to="/agreement" className="ktc-link" style={{ fontSize: 12 }}>{t('Customer Agreement (Terms & Conditions)')}</Link>
         <div style={{ marginTop: 6, opacity: 0.75 }}>
           KTC Online Portal {VERSION_LABEL} · © {new Date().getFullYear()} KTC Container Terminal Corp.
         </div>

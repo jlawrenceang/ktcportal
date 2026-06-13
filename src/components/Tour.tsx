@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useT } from '../lib/i18n'
 
 // Guided walkthrough: each step can navigate to a page (`to`) and spotlight an
 // element (`target`, a CSS selector — usually a nav link). It returns to `home`
@@ -20,6 +21,7 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
   const [step, setStep] = useState(0)
   const [rect, setRect] = useState<DOMRect | null>(null)
   const navigate = useNavigate()
+  const { t } = useT()
   const s = steps[step]
   const last = step === steps.length - 1
 
@@ -93,8 +95,8 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
         }}
       >
         <div aria-hidden style={{ fontSize: 34, lineHeight: 1 }}>{s.icon}</div>
-        <h2 style={{ margin: '12px 0 0', fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{s.title}</h2>
-        <p className="ktc-label" style={{ marginTop: 9, fontSize: 13.5, lineHeight: 1.6 }}>{s.body}</p>
+        <h2 style={{ margin: '12px 0 0', fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{t(s.title)}</h2>
+        <p className="ktc-label" style={{ marginTop: 9, fontSize: 13.5, lineHeight: 1.6 }}>{t(s.body)}</p>
 
         <div style={{ display: 'flex', gap: 6, justifyContent: 'center', margin: '16px 0' }} aria-hidden>
           {steps.map((_, i) => (
@@ -107,15 +109,15 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
 
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {step > 0 && (
-            <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => setStep(step - 1)}>← Back</button>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => setStep(step - 1)}>{t('← Back')}</button>
           )}
           <button type="button" className="ktc-btn" style={{ flex: 1 }} onClick={() => (last ? finish() : setStep(step + 1))}>
-            {last ? 'Done 🚀' : 'Next →'}
+            {last ? t('Done 🚀') : t('Next →')}
           </button>
         </div>
         {!last && (
           <button type="button" className="ktc-link" onClick={finish} style={{ fontSize: 12.5, display: 'block', margin: '10px auto 0' }}>
-            Skip the tour
+            {t('Skip the tour')}
           </button>
         )}
       </div>
