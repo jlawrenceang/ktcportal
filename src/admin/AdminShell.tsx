@@ -6,7 +6,8 @@ import { purgeExpiredIds } from '../lib/idPurge'
 import { useIdleLogout } from '../lib/useIdleLogout'
 import { useSessionGuard } from '../lib/useSessionGuard'
 import IdleWarning from '../components/IdleWarning'
-import { staffTourRole, staffTourSeen, markStaffTourSeen, staffSteps, staffTourHome } from './AdminTour'
+import { staffTourRole, staffSteps, staffTourHome } from './AdminTour'
+import { tourShownThisSession, markTourSeen } from '../lib/tourSeen'
 import { useTour } from '../components/TourProvider'
 import { VERSION_LABEL } from '../version'
 
@@ -105,11 +106,11 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
   const tourRole = staffTourRole(broker)
   const { startTour, active } = useTour()
   function openTour() {
-    if (tourRole) startTour({ steps: staffSteps[tourRole], home: staffTourHome(tourRole), label: `${tourRole} tour`, onDone: () => markStaffTourSeen(tourRole) })
+    if (tourRole) startTour({ steps: staffSteps[tourRole], home: staffTourHome(tourRole), label: `${tourRole} tour` })
   }
   useEffect(() => {
-    if (tourRole && !staffTourSeen(tourRole) && !active) { markStaffTourSeen(tourRole); openTour() }
-  }, [tourRole]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (tourRole && broker && !broker.tour_seen && !tourShownThisSession() && !active) { markTourSeen(); openTour() }
+  }, [tourRole, broker]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSignOut() {
     await signOut()
@@ -154,8 +155,8 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
         </span>
         <AdminNav can={can} />
         {tourRole && (
-          <button className="ktc-nav-link" onClick={openTour} style={{ flex: '0 0 auto' }} title="Replay the quick tour">
-            ✨
+          <button className="ktc-nav-link" onClick={openTour} style={{ flex: '0 0 auto', fontWeight: 700 }} title="Replay the walkthrough" aria-label="Replay the walkthrough">
+            ?
           </button>
         )}
         <button className="ktc-nav-link" onClick={handleSignOut} style={{ flex: '0 0 auto' }}>

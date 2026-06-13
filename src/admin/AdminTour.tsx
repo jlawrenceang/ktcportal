@@ -22,14 +22,6 @@ export function staffTourHome(role: StaffTourRole): string {
   return '/admin'
 }
 
-const keyFor = (role: StaffTourRole) => `ktc_tour_done_${role}`
-export function staffTourSeen(role: StaffTourRole): boolean {
-  try { return localStorage.getItem(keyFor(role)) === '1' } catch { return true }
-}
-export function markStaffTourSeen(role: StaffTourRole) {
-  try { localStorage.setItem(keyFor(role), '1') } catch { /* ignore */ }
-}
-
 const ADMIN_STEPS: TourStep[] = [
   {
     icon: '🧭', title: 'Welcome to the KTC admin portal',

@@ -1,16 +1,8 @@
 import { type TourStep } from './Tour'
 
-// Customer walkthrough steps (launched via useTour().startTour from Home).
-// Each step navigates to the page and spotlights its nav link; returns Home.
-
-const TOUR_KEY = 'ktc_tour_done'
-
-export function tourSeen(): boolean {
-  try { return localStorage.getItem(TOUR_KEY) === '1' } catch { return true }
-}
-export function markTourSeen() {
-  try { localStorage.setItem(TOUR_KEY, '1') } catch { /* ignore */ }
-}
+// Customer walkthrough steps (launched via useTour().startTour from Home / the
+// help icon). Each step navigates to the page and spotlights its element;
+// returns Home. The "seen once per account" gate lives in lib/tourSeen.
 
 export const customerSteps: TourStep[] = [
   {

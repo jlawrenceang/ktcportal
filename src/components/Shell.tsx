@@ -10,6 +10,8 @@ import { VERSION_LABEL } from '../version'
 import PendingPanel from './PendingPanel'
 import BrokerStatusBanner from './BrokerStatusBanner'
 import IdleWarning from './IdleWarning'
+import { useTour } from './TourProvider'
+import { customerSteps } from './WelcomeTour'
 
 const IDLE_LOGOUT_MS = 15 * 60 * 1000 // auto sign-out after 15 min of inactivity (warning at 14)
 
@@ -28,6 +30,7 @@ export default function Shell({ children }: { children: ReactNode }) {
   const { signOut } = useAuth()
   const { broker, refresh } = useBroker()
   const navigate = useNavigate()
+  const { startTour } = useTour()
 
   // Locked out entirely: rejected / suspended (non-admin) brokers get a message only.
   const locked = !!broker && !hasAdminAccess(broker) && (broker.status === 'rejected' || broker.status === 'suspended')
@@ -72,6 +75,10 @@ export default function Shell({ children }: { children: ReactNode }) {
             </NavLink>
           ))}
         </div>
+        <button className="ktc-nav-link" onClick={() => startTour({ steps: customerSteps, home: '/', label: 'customer tour' })}
+          style={{ flex: '0 0 auto', fontWeight: 700 }} title="Replay the walkthrough" aria-label="Replay the walkthrough">
+          ?
+        </button>
         <button className="ktc-nav-link" onClick={handleSignOut} style={{ flex: '0 0 auto' }}>
           Sign out
         </button>
