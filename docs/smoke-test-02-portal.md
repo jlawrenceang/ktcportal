@@ -2,10 +2,10 @@
 
 **Smoke Test ID:** ST02
 **Date authored:** 2026-06-12
-**Status:** IN PROGRESS — preflight P1–P8 PASS (P8 cleared after key regen); P9 (rates + payment data entry) pending; manual Lanes 1–8 in progress
+**Status:** IN PROGRESS — preflight P1–P8 PASS (re-run 2026-06-13 post-wave, no regressions); P9 data setup pending; manual Lanes 1–11 not yet walked
 **Target:** https://portal.ktcterminal.com (live, pre-public)
-**Covers:** migrations `0011`–`0055` / sessions 4–10r — order lifecycle loops, serving numbers, per-service completion, checker station, payments + invoice, roles & gates, admin file-on-behalf, Logs, observability, MFA, auto-suspend, demo tour, pricing lock + statutory VAT, service catalogue management, ID retention (24h guaranteed / 3-day purge).
-**Refreshed:** 2026-06-12 after sessions 10k–10q (Agreement v2, pricing lock `0050`, catalogue `0051`, ID retention `0052`/`0053`, prod wiped clean for go-live — first real order will be `JO-000001`).
+**Covers:** migrations `0011`–`0064` / sessions 4–11 — order lifecycle loops, serving numbers, per-service completion, checker station, payments + invoice, roles & gates, Logs, observability, MFA, ID retention, **plus the Operations & JO-Modernization wave (Lanes 9–11): the operations role, vessel schedule + free-days + CSV import + calendar + Viber snapshot, the vessel/voyage dropdown on filing, RPS assessment + per-move billing, and the two-payment running balance + Cleared-for-release badge**.
+**Refreshed:** 2026-06-13 — added Lanes 9–11 for the operations / vessel-schedule / RPS-billing wave (migrations 0056–0064).
 
 ## Result codes
 
@@ -19,6 +19,7 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | Admin (fallback) | `jla.ktcport@gmail.com` | plain admin since 2026-06-12 |
 | Test customer | a throwaway email you control | created in Lane 1 |
 | Cashier / Checker | created in Lane 6 via Settings | e.g. `st02cash` / `st02check` |
+| Operations | created in Lane 9 via Settings | e.g. `st02ops` (assess RPS, confirm X-ray, vessels) |
 
 > Emails consume the Resend free tier (100/day) — the email checks below send ~5 total.
 > Lanes assume **service rates are configured** (Settings → Service rates & fees) — set non-zero X-ray rate + admin/print fees first or Lane 5 shows ₱0.
@@ -36,10 +37,10 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | P5 Turnstile site key inlined | present | ✅ PASS (2026-06-13) |
 | P6 SPA rewrite (deep link `/admin/job-orders`) | `200` | ✅ PASS (2026-06-13) |
 | P7 CAPTCHA server-enforced (tokenless password grant) | `captcha_failed` | ✅ PASS (2026-06-13) |
-| P8 Playwright Phase 2 (test project) | 16/16 | ✅ PASS (2026-06-13, second run) — keys regenerated to the new `sb_publishable_`/`sb_secret_` format in `.env.local`; **16 passed / 0 failed** against a localhost test-project build (5 skipped = 4 `fixme` mutation stubs + CAPTCHA-mount test, intentionally off on localhost). |
-| P9 Lane-5 pre-reqs: service rates + payment details configured | non-zero rates; bank/GCash/QR filled | ⚠️ **NOT READY** — re-verified 2026-06-13: 0 rates set, 0 fees set, payment details empty. Fill via step **5.0** before Lane 5. |
+| P8 Playwright Phase 2 (test project) | 16/16 | ✅ PASS (re-run 2026-06-13 **after the operations/vessel/RPS wave**) — **16 passed / 0 failed**, no regressions (5 skipped = 4 `fixme` mutation stubs + CAPTCHA-mount, off on localhost). |
+| P9 Data setup for the lanes | rates, payment details, + new-wave config | ⚠️ **DATA SETUP NEEDED** (2026-06-13): X-ray service rates + admin/print fees ARE set (₱2,918 · ₱100 · ₱50). Still to fill: **payment details** (bank/GCash/QR, step 5.0); **a shipping line + free-days** (10.0); **a few vessels** (10.1); **RPS per-move rates** (11.0); and create an **Operations user** (9.1). |
 
-**Preflight (2026-06-13, v1.1.0): GO for manual lanes** — P1–P8 green (P8 cleared 2026-06-13 after key regeneration); P9 is the Lane-5 data entry (step 5.0). Security telemetry at start: 0 security events (7d), 0 client errors (24h), 0 outbound failures (7d).
+**Preflight (2026-06-13, post-wave): GO for manual lanes** — P1–P8 green (Playwright re-run **16/16, no regressions** on the live deploy ref `mdlnfhyylvapzdubhyic`); P9 is data setup (payment details + the new-wave config). Lanes 1–11 ready to walk.
 
 ---
 
@@ -139,4 +140,40 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | 8.3 | BOC mirror | BLOCKED until Google service-account creds are set (`scripts/setup-boc-mirror.mjs`) — expected | |
 | 8.4 | ID retention (`0052`/`0053`): open the test customer's ID in the file viewer <24h after upload, then check again later | <24h: **no 🗑** (storage policy blocks deletion — review window); 24h–3d: 🗑 appears (two-step delete works); 3d: auto-purged (lazy admin-load purge + hourly `purge_expired_ids` cron — cron is a silent no-op until `scripts/setup-id-purge.mjs` puts the service key in Vault) | |
 
-**Teardown:** suspend/reject the throwaway customer, revoke `st02cash`/`st02check`, remove test JOs if desired (or archive). **Go-live note:** prod was wiped (session 10p) so the first *real* order is meant to be `JO-000001` — this run will consume `JO-000001+` and `BR-000001+`, so after teardown delete the test orders/customer and reset `jo_number_seq` / `broker_code_seq` (only safe at zero orders). Test IDs uploaded during the run can't be manually deleted for 24h (`0053` window) — the 3-day purge clears them regardless.
+## Lane 9 — Operations role (NEW wave · migrations 0056/0060/0061)
+
+| # | Step | Expected | Result |
+|---|---|---|---|
+| 9.1 | Owner: Settings → create `st02ops` with the new **Operations** role | appears in staff list with an **Operations** badge | |
+| 9.2 | Sign in as `st02ops` | lands on **X-ray Checker**; nav shows ONLY Job Orders (read-only) · X-ray Checker · Vessels · Manual — no Approvals/Customers/Consignees/New JO/Settings/2FA/Logs | |
+| 9.3 | First sign-in tour + Manual tab | Operations quick tour auto-opens once (✨ replays); Manual shows the **Operations** guide | |
+| 9.4 | Operations opens the Job Orders queue | can **view** orders but has **no** process/hold/reject/complete actions (read-only) | |
+| 9.5 | Owner: Settings → Roles & gates | an **Operations** column shows view_job_orders / confirm_xray / vessel_schedule / assess_rps ticked; money + admin unticked | |
+
+## Lane 10 — Vessel schedule (NEW wave · migrations 0057–0059)
+
+| # | Step | Expected | Result |
+|---|---|---|---|
+| 10.0 | Owner/admin: Settings → **Free storage days per shipping line** → add a line (e.g. `SITC`, import 5, export 7) → Save | persists on reload (admin-only) | |
+| 10.1 | Operations: **Vessels** → add a call (`26TEST01`, vessel, voyage, line SITC, arrival, finish discharging, berth) → Add call | row shows with a **computed Last Free Day** (finish + 5) and a **current** badge | |
+| 10.2 | Operations: ⬇ Template → fill 2–3 rows → ⬆ Import CSV | rows upserted by **vessel-visit**; re-importing the same file updates (no duplicates); unknown lines flagged in the report | |
+| 10.3 | Calendar view toggle | month grid shows each call on its arrival date; ‹ › / Today navigate | |
+| 10.4 | 📸 Snapshot | a branded PNG of **active** vessels downloads (desktop) / opens the share sheet → Viber (mobile) | |
+| 10.5 | Customer: New Job Order → **Vessel & Voyage** dropdown | lists only **current** vessels; "vessel not listed" reveals manual name + voyage | |
+| 10.6 | An expired call (last free day passed) | drops off the customer dropdown automatically; still visible in Vessels under "show past/cancelled" | |
+| 10.7 | Admin: **New JO** (file-on-behalf) → vessel dropdown | same dropdown + escape hatch; the filed order carries the vessel/voyage | |
+
+## Lane 11 — RPS assessment, per-move billing & balance (NEW wave · migrations 0062/0063)
+
+| # | Step | Expected | Result |
+|---|---|---|---|
+| 11.0 | Owner: Settings → **RPS per-move rates** → set Shifting / Trucking / Lift On (+ Stripping/Stuffing) → Save | persists | |
+| 11.1 | Operations: X-ray Checker → a JO card → **Assess RPS** → "No RPS needed" | card shows a **No RPS** chip; the customer total is unchanged | |
+| 11.2 | Operations: another JO → **Assess RPS** → enter moves (e.g. Trucking 6) + optional RPS doc upload → **Save — needs RPS** | **RPS needed** chip; the per-move charge is computed | |
+| 11.3 | Customer: pay page for the RPS JO | shows **Total** (X-ray + RPS), **Balance due = Total**, and separate **X-ray** and **RPS** payment sections | |
+| 11.4 | Customer uploads the **X-ray** slip → admin **Confirm X-ray payment** | **Paid** rises by the X-ray amount; **Balance due** drops to just the RPS | |
+| 11.5 | Customer uploads the **RPS** slip → admin **Confirm RPS payment** | Balance shows **PAID**; both sections confirmed | |
+| 11.6 | Admin queue chips | "RPS payment to review" appears on submit; Confirm/Reject (with note) works for the RPS payment separately | |
+| 11.7 | **Cleared for release**: confirm X-ray done (Checker) **and** balance fully paid | the pay page shows the ✓ **Cleared for release** badge only when **both** are true | |
+
+**Teardown:** suspend/reject the throwaway customer, revoke `st02cash`/`st02check`/`st02ops`, remove test JOs if desired (or archive). **Go-live note:** prod was wiped (session 10p) so the first *real* order is meant to be `JO-000001` — this run will consume `JO-000001+` and `BR-000001+`, so after teardown delete the test orders/customer and reset `jo_number_seq` / `broker_code_seq` (only safe at zero orders). Test IDs uploaded during the run can't be manually deleted for 24h (`0053` window) — the 3-day purge clears them regardless.

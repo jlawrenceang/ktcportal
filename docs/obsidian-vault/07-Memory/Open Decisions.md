@@ -21,7 +21,7 @@ Decisions/questions awaiting the OWNER, grouped by what they unblock. Each has a
 
 - **B1. Assessment universal or exception-triggered?** Rec: **exception-triggered** — pure X-ray flows straight through; only DEA/flagged JOs route to the assessor. Avoids the assessor becoming a chokepoint. *(Owner: ___)*
 - **B2. Assessor — a step in operations, or its own role?** Rec: **a step inside operations**. *(Owner: ___)*
-- **B3. Payment timing.** Rec: **(i) pay base now, RPS settled later** (RPS is rare, don't slow the common case). Alt: (ii) one payment after assessment. *(Owner: ___)*
+- **B3. Payment timing.** ✅ **RESOLVED** (2026-06-13, migrations 0063): **running balance** — Total = X-ray + RPS, pay each separately, Balance due = Total − Paid. **Release = (c)** X-ray done AND balance fully paid → "Cleared for release" badge (derived; cashier/gate stays the authority). *Follow-up: RPS-payment-rejected email not yet wired.*
 - **B4. Combined "X-Ray + DEA" = base ₱2,918 + RPS per-move total?** Rec: **yes**. *(Owner: ___)*
 - **B5. Move-type rates** — confirm Shifting ₱950.86 / Trucking ₱1,000 / Lift On ₱730.83 (from the sample invoice), and give **Stripping / Stuffing** (+ any others). *(Owner: ___)*
 
