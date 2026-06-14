@@ -8,8 +8,14 @@ import { useT } from '../lib/i18n'
 // user can't fire a burst of emails — and gets a friendly countdown instead of
 // Supabase's opaque rate-limit error. The server-side rate limit + CAPTCHA are
 // the real backstops; this is UX. Persisted so a refresh doesn't bypass it.
-const RESEND_COOLDOWN_MS = 60_000
+const RESEND_COOLDOWN_MS = 5 * 60_000 // 5 minutes
 const cdKey = (em: string) => `ktc_reset_cd_${em.trim().toLowerCase()}`
+
+// "4:07" past a minute, "45s" under — readable countdown either way.
+function fmtCountdown(secs: number): string {
+  if (secs < 60) return `${secs}s`
+  return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`
+}
 
 function readCooldown(em: string): number | null {
   if (!em.trim()) return null
@@ -98,11 +104,11 @@ export default function ForgotPassword() {
             <Turnstile key={captchaKey} onVerify={(t) => setCaptchaToken(t)} onExpire={() => setCaptchaToken(null)} />
           )}
           <button className="ktc-btn" type="submit" disabled={busy || cooling || (captchaEnabled && !captchaToken)} style={{ marginTop: 4 }}>
-            {busy ? t('Sending…') : cooling ? t('Resend in {n}s', { n: cooldownSecs }) : t('Send reset link')}
+            {busy ? t('Sending…') : cooling ? t('Resend in {t}', { t: fmtCountdown(cooldownSecs) }) : t('Send reset link')}
           </button>
           {cooling && (
             <p className="ktc-label" style={{ fontSize: 12, textAlign: 'center', marginTop: -4 }}>
-              {t('Didn’t get it? You can resend in {n}s. Check your spam folder too.', { n: cooldownSecs })}
+              {t('Didn’t get it? You can resend in {t}. Check your spam folder too.', { t: fmtCountdown(cooldownSecs) })}
             </p>
           )}
         </form>

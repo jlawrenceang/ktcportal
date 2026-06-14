@@ -60,7 +60,7 @@ migrations). Logged here so the ST02 record is complete.
 | W6 | Language switch on the login page not noticeable | Labeled it **🌐 Language / Wika**, then trimmed to a **globe icon + EN/FIL** | `440241e`, `522d619` |
 | W7 | Registration consent clause too long (Lane 1.1) | Shortened the tick label to "…the **KTC Customer Agreement** — including the Terms & Conditions, and my consent to KTC processing my personal data." (full Terms/NDA/DPA still in the linked Agreement) | `ff1b424` |
 | W8 | Footer showed commit hash + build date | Footer now shows just **v1.1.0**; commit+date moved to a hover tooltip (still traceable) | `f65861b` |
-| W9 | Forgot-password could be requested repeatedly (Lane 7.4 area) | **60s per-email resend cooldown** with a countdown ("Resend in Ns") + spam-folder hint. (Supabase server-side rate-limit + CAPTCHA were already the real backstops; this is UX) | _2026-06-14_ |
+| W9 | Forgot-password could be requested repeatedly (Lane 7.4 area) | **5-min per-email resend cooldown** with a `m:ss` countdown ("Resend in 4:07") + spam-folder hint. (Supabase server-side rate-limit + CAPTCHA were already the real backstops; this is UX) | _2026-06-14_ |
 
 **Still open from this pass (not yet built):**
 - Mobile **wave 2** (registration → wizard; Payment / Verify ID / Account → dense + sticky) and **wave 3** (admin data tables → phone card lists) — owner holding for a device test first.
@@ -149,7 +149,7 @@ migrations). Logged here so the ST02 record is complete.
 | 7.3d | Eviction audit: after 7.3c, owner opens Logs → Security | "Session evicted — account signed in on a new device" entry for the test customer; **no** owner alert email for it (routine event) | |
 | 7.3e | (Advanced, optional) Dead-session cut-off: capture the evicted browser's access token *before* 7.3c, then after eviction replay it against REST (`curl …/rest/v1/job_orders -H "apikey: <anon>" -H "Authorization: Bearer <evicted JWT>"`) | empty result / denied — the deleted session fails `session_alive()` inside every RLS helper, even though the JWT itself is unexpired | |
 | 7.4 | Login lockout: 5 wrong passwords | 60s cooldown message | |
-| 7.4b | Forgot password → send reset link, then immediately try again (W9) | button holds **60s** with a "Resend in Ns" countdown + spam-folder hint; survives a page refresh (per-email, localStorage); Supabase server-side rate-limit + CAPTCHA remain the real backstops | |
+| 7.4b | Forgot password → send reset link, then immediately try again (W9) | button holds **5 min** with a "Resend in 4:07" `m:ss` countdown + spam-folder hint; survives a page refresh (per-email, localStorage); Supabase server-side rate-limit + CAPTCHA remain the real backstops | |
 | 7.5 | (Advanced, optional) As the test customer, send a crafted PATCH to set `is_admin=true` on own row (curl + access token) | change reverted; account **auto-suspended** + sessions revoked; owner gets 🚨 email ≤15 min; Logs → Security shows the attempt. Reinstate the account afterwards. | |
 | 7.6 | Logs tab (owner) | all four views populated from this run (orders / security / errors / emails & sync) | |
 | 7.7 | Settings → System health → Run health check | all 5 cron jobs listed with recent runs; outbound calls show HTTP 200s; this run's emails listed | |
