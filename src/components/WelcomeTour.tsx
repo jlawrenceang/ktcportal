@@ -7,7 +7,7 @@ import { type TourStep } from './Tour'
 export const homeSteps: TourStep[] = [
   {
     icon: '👋', title: 'Welcome to the KTC Online Portal',
-    body: 'File Job Orders for container terminal services from the comfort of your home — or anywhere you can get online. No more queueing at the office. Here\'s a quick look around.',
+    body: 'File Job Orders for container terminal services from anywhere, anytime. No more queueing at the office. Here\'s a quick look around.',
   },
   {
     icon: '🪪', title: 'Get verified once', target: '[data-tour="id-banner"]',
