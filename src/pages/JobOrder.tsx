@@ -45,8 +45,12 @@ export default function JobOrder() {
   const hasId = !!broker?.valid_id_path
 
   // Per-step validation (used to gate Next on mobile; the full re-check still
-  // runs in submit()).
-  function consigneeError() { return !consignee ? t('Select a consignee from the list.') : null }
+  // runs in submit()). Step 1 needs a consignee AND the entry (C-) number.
+  function step1Error() {
+    if (!consignee) return t('Select a consignee from the list.')
+    if (!entryNumber.trim()) return t('Enter the Entry Number (C-…).')
+    return null
+  }
   function vesselError() {
     if (notListed) return (!mVessel.trim() || !mVoyage.trim()) ? t('Enter the vessel name and voyage number.') : null
     return !vessels.find((v) => v.vessel_visit === vesselVisit) ? t('Select the vessel & voyage (or tick “not listed”).') : null
@@ -61,6 +65,10 @@ export default function JobOrder() {
     }
     if (!consignee) {
       setError(t('Select a consignee from the list.'))
+      return
+    }
+    if (!entryNumber.trim()) {
+      setError(t('Enter the Entry Number (C-…).'))
       return
     }
     // Resolve vessel + voyage (required).
@@ -85,7 +93,7 @@ export default function JobOrder() {
       .insert({
         customer_id: broker.id,
         consignee_id: consignee.id,
-        entry_number: entryNumber.trim() || null,
+        entry_number: entryNumber.trim(),
         vessel_visit: vVisit,
         vessel_name: vName,
         voyage_number: vVoyage,
@@ -132,11 +140,11 @@ export default function JobOrder() {
   const wizardSteps: WizardStep[] = [
     {
       title: 'Consignee & entry',
-      validate: consigneeError,
+      validate: step1Error,
       content: (
         <div className="ktc-fields">
           <div data-tour="jo-consignee" style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
-            <label className="ktc-label" htmlFor="consignee">{t('Consignee')}</label>
+            <label className="ktc-label" htmlFor="consignee">{t('Consignee')} *</label>
             <SearchPicker
               inputId="consignee"
               placeholder={t('Search consignee by code or name…')}
@@ -146,10 +154,11 @@ export default function JobOrder() {
             />
           </div>
           <div style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
-            <label className="ktc-label" htmlFor="entry">{t('Entry Number')}</label>
+            <label className="ktc-label" htmlFor="entry">{t('Entry Number')} *</label>
             <input
               id="entry"
               className="ktc-input"
+              required
               placeholder={t('e.g. C-0000012345')}
               value={entryNumber}
               onChange={(e) => setEntryNumber(e.target.value)}
@@ -197,7 +206,7 @@ export default function JobOrder() {
       <div className="ktc-glass ktc-pad-mobile" style={{ padding: 22 }}>
         <h1 className="ktc-title">{t('New Job Order')}</h1>
         <p className="ktc-label" style={{ marginTop: 5, marginBottom: 16 }}>
-          {t('For X-ray / DEA / OOG stripping service orders.')}
+          {t('File for container terminal services.')}
         </p>
 
         <Wizard

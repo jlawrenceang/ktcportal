@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Broker } from '../lib/types'
-import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_TEL } from '../lib/contact'
 import { useT } from '../lib/i18n'
 import Notice from './Notice'
 
@@ -31,48 +30,39 @@ export default function BrokerStatusBanner({ broker, onRefresh, refreshCooling }
 
   const needsId = !broker.valid_id_path
 
+  const refreshBtn = onRefresh ? (
+    <button
+      type="button"
+      className="ktc-link"
+      onClick={onRefresh}
+      disabled={refreshCooling}
+      title={refreshCooling ? t('Just refreshed — try again in a few seconds') : t('Checks automatically every minute')}
+      style={{ fontSize: 12.5, padding: 0, opacity: refreshCooling ? 0.5 : 1 }}
+    >
+      {t('↻ Refresh status')}
+    </button>
+  ) : null
+
+  // Compact one-block banner: short line + inline action.
   return (
-    <Notice
-      tone={needsId ? 'warning' : 'info'}
-      badge={t('PENDING FINAL VERIFICATION')}
-      title={needsId ? t('Upload your valid ID to get verified') : t('Your account is awaiting admin verification')}
-      style={{ marginBottom: 18 }}
-      action={
-        needsId ? (
+    <Notice tone={needsId ? 'warning' : 'info'} style={{ marginBottom: 12, padding: '10px 14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <span style={{ flex: 1, minWidth: 200, fontWeight: 500 }}>
+          {needsId
+            ? t('Upload a valid ID to get verified — you can file now, but orders are held until a KTC admin approves your account.')
+            : t('A KTC admin is verifying your account. Orders stay held until you’re verified.')}
+          {refreshBtn && <> {refreshBtn}</>}
+        </span>
+        {needsId && (
           <Link to="/verify-id" style={{
-            display: 'inline-block', padding: '9px 16px', borderRadius: 10,
+            flex: '0 0 auto', display: 'inline-block', padding: '8px 14px', borderRadius: 10,
             fontWeight: 600, fontSize: 13, textDecoration: 'none', color: '#fff',
             background: 'linear-gradient(135deg, var(--acc), var(--acc-2))',
           }}>
-            {t('Upload your valid ID →')}
+            {t('Upload valid ID →')}
           </Link>
-        ) : undefined
-      }
-    >
-      {needsId ? (
-        t('You can already file job orders — they’re held pending verification. Upload your valid ID to get verified; once approved, your held orders are sent to KTC automatically.')
-      ) : (
-        <>
-          {t('A KTC admin is verifying your account. You can continue filing job orders, but they’re held until you’re verified. For more information, contact customer service at')}{' '}
-          <a href={`mailto:${SUPPORT_EMAIL}`} className="ktc-link">{SUPPORT_EMAIL}</a> ·{' '}
-          <a href={`tel:${SUPPORT_PHONE_TEL}`} className="ktc-link">{SUPPORT_PHONE}</a>.
-        </>
-      )}
-      {onRefresh && (
-        <>
-          {' '}
-          <button
-            type="button"
-            className="ktc-link"
-            onClick={onRefresh}
-            disabled={refreshCooling}
-            title={refreshCooling ? t('Just refreshed — try again in a few seconds') : t('Checks automatically every minute')}
-            style={{ fontSize: 13, padding: 0, opacity: refreshCooling ? 0.5 : 1 }}
-          >
-            {t('↻ Refresh status')}
-          </button>
-        </>
-      )}
+        )}
+      </div>
     </Notice>
   )
 }

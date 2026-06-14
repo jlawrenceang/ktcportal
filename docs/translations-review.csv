@@ -89,6 +89,7 @@ english,filipino,kept_english
 "A call with that Vessel Visit code already exists.","May call na gamit ang Vessel Visit code na iyan.",false
 "A consignee needs","Ang isang consignee ay kailangan ng",false
 "A consignee with that name or code already exists.","May consignee na sa pangalan o code na iyan.",false
+"A KTC admin is verifying your account. Orders stay held until you’re verified.","Vinveverify ng KTC admin ang account mo. Naka-hold ang mga order hanggang ma-verify ka.",false
 "A KTC admin is verifying your account. You can continue filing job orders, but they’re held until you’re verified. For more information, contact customer service at","May KTC admin na nagve-verify ng iyong account. Pwede kang magpatuloy sa pag-file ng job orders, pero naka-hold sila hanggang ma-verify ka. Para sa karagdagang impormasyon, makipag-ugnayan sa customer service sa",false
 "A valid ID is required before you can approve","Kailangan ng valid ID bago mo ma-approve",false
 "Account approvals","Account approvals",true
@@ -299,6 +300,7 @@ english,filipino,kept_english
 "English","English",true
 "Enter container counts to see the breakdown.","Ilagay ang bilang ng container para makita ang breakdown.",false
 "Enter the 6-digit code from your authenticator app to finish signing in.","Ilagay ang 6-digit code mula sa iyong authenticator app para matapos mag-sign in.",false
+"Enter the Entry Number (C-…).","Ilagay ang Entry Number (C-…).",false
 "Enter the new email address.","Ilagay ang bagong email address.",false
 "Enter the service name first.","I-type muna ang pangalan ng service.",false
 "Enter the shipping line name first.","I-type muna ang pangalan ng shipping line.",false
@@ -313,7 +315,7 @@ english,filipino,kept_english
 "ERP control no. (OR-INV / BI-INV)","ERP control no. (OR-INV / BI-INV)",true
 "Estimate","Tantya",false
 "Estimate charges","I-estimate ang charges",false
-"Estimate charges before you file","Tantiyahin ang singil bago mag-file",false
+"Estimate charges before you file","I-estimate ang charges bago mag-file",false
 "Estimate your charges before filing — enter how many containers need each service. The official amount is confirmed on the Service Invoice at the KTC office.","Tantyahin ang iyong charges bago mag-file — ilagay kung ilang container ang kailangan ng bawat service. Ang opisyal na halaga ay kinukumpirma sa Service Invoice sa KTC office.",false
 "Estimated total","Tinatayang kabuuan",false
 "Every order you file shows here with its live status and serving number. Open one to ""View charges & pay"" (upload your deposit slip) and to Print the A6 slip once it's approved. The ""Now serving"" board up top helps you time your trip to the terminal.","Lahat ng order na ifa-file mo ay lalabas dito kasama ang live na status at serving number nito. Buksan ang isa para ""View charges & pay"" (i-upload ang iyong deposit slip) at para i-Print ang A6 slip kapag aprubado na. Ang ""Now serving"" board sa itaas ang tutulong sa iyong tantyahin ang pagpunta mo sa terminal.",false
@@ -324,6 +326,7 @@ english,filipino,kept_english
 "File a new Job Order. We'll walk you through the form the first time you open it.","Mag-file ng bagong Job Order. I-guiguide ka namin sa job order form sa unang pagbukas mo nito.",false
 "File another","Mag-file ng isa pa",false
 "File for a Customer","Mag-file para sa Customer",false
+"File for container terminal services.","Mag-file para sa mga container terminal service.",false
 "File for X-ray, DEA or OOG stripping services","Mag-file para sa X-ray, DEA o OOG stripping na serbisyo",false
 "File JO on behalf of a customer (walk-ins / in-house)","Mag-file ng JO para sa isang customer (walk-ins / in-house)",false
 "File Job Order","I-file ang Job Order",false
@@ -338,7 +341,6 @@ english,filipino,kept_english
 "fix & resubmit","ayusin at i-resubmit",false
 "Fix & resubmit","Ayusin at i-submit ulit",false
 "for","para kay",false
-"For X-ray / DEA / OOG stripping service orders.","Para sa X-ray / DEA / OOG stripping service orders.",false
 "Forgot password?","Nakalimutan ang password?",false
 "Forgot your password? Reset it by email →","Nakalimutan ang password? I-reset ito via email →",false
 "Free storage days per shipping line","Free storage days kada shipping line",false
@@ -547,8 +549,8 @@ english,filipino,kept_english
 "QR code image (bank / GCash)","QR code image (bank / GCash)",true
 "Queue","Queue",true
 "Queue is clear. 🎉","Wala nang naka-queue. 🎉",false
-"Quick tour ▸","Mabilis na gabay ▸",false
-"Rate Calculator","Kalkulador ng Singil",false
+"Quick tour ▸","Quick tour ▸",true
+"Rate Calculator","Rate Calculator",true
 "rate to be confirmed by KTC","rate na kukumpirmahin ng KTC",false
 "Rates","Mga Singil",false
 "Re-assess RPS","I-assess ulit ang RPS",false
@@ -735,6 +737,8 @@ english,filipino,kept_english
 "Updating…","Ina-update…",false
 "Upload a clear photo or PDF of the deposit / transfer / GCash receipt.","I-upload ang malinaw na photo o PDF ng deposit / transfer / GCash receipt.",false
 "Upload a valid government ID and a KTC admin will review your account. You can file Job Orders while you wait — but they're held until a KTC admin reviews and approves your account.","I-upload ang valid government ID at ire-review ng isang KTC admin ang iyong account. Pwede ka nang mag-file ng Job Orders habang naghihintay — pero naka-hold ang mga ito hanggang ma-review at ma-approve ng isang KTC admin ang account mo.",false
+"Upload a valid ID to get verified — you can file now, but orders are held until a KTC admin approves your account.","I-upload ang valid ID para ma-verify — pwede ka nang mag-file ngayon, pero naka-hold ang mga order hanggang ma-approve ng KTC admin ang account mo.",false
+"Upload valid ID →","I-upload ang valid ID →",false
 "Upload your valid ID","I-upload ang iyong valid ID",false
 "Upload your valid ID →","I-upload ang iyong valid ID →",false
 "Upload your valid ID for final verification (banner above); once a KTC admin approves you, your held orders are sent automatically.","I-upload ang valid ID mo para sa final verification (banner sa itaas); kapag inaprubahan ka na ng KTC admin, automatic nang ipapadala ang held orders mo.",false
@@ -760,7 +764,7 @@ english,filipino,kept_english
 "Vessel Name*","Vessel Name*",true
 "Vessel not listed — enter manually","Wala sa listahan ang vessel — i-type nang manual",false
 "Vessel schedule","Iskedyul ng mga barko",false
-"Vessel Schedule","Iskedyul ng mga Barko",false
+"Vessel Schedule","Vessel Schedule",true
 "Vessel Visit, Vessel Name and Voyage Number are required.","Kailangan ang Vessel Visit, Vessel Name at Voyage Number.",false
 "Vessel Visit*","Vessel Visit*",true
 "Vessels","Mga Barko",false

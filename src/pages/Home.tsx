@@ -46,16 +46,9 @@ export default function Home() {
   return (
     <Shell>
       <div style={{ margin: '18px 4px 26px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, letterSpacing: '-0.028em', lineHeight: 1.15 }}>
-            {firstName ? t('Welcome, {name}', { name: firstName }) : t('Welcome')}
-          </h1>
-          {broker?.customer_code && (
-            <span className="ktc-mono" style={{ fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)', color: 'hsl(var(--ink-2))' }}>
-              {broker.customer_code}
-            </span>
-          )}
-        </div>
+        <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, letterSpacing: '-0.028em', lineHeight: 1.15 }}>
+          {firstName ? t('Welcome, {name}', { name: firstName }) : t('Welcome')}
+        </h1>
         <p className="ktc-sub" style={{ maxWidth: 480 }}>
           {t('File job orders for terminal services and track them through processing.')}{' '}
           <button type="button" className="ktc-link" style={{ fontSize: 'inherit' }} onClick={replayPageTour}>

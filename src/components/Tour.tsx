@@ -30,20 +30,26 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
     if (s.to) navigate(s.to)
   }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Spotlight this step's target once the page has rendered; keep it in sync.
+  // Spotlight this step's target: bring the featured element up near the top of
+  // the screen (so it's the hero), then keep the spotlight ring in sync. The
+  // helper card sits at the bottom (see cardPos). The scroll happens ONCE per
+  // step; the listeners only re-measure the ring (no re-scroll loop).
   useEffect(() => {
     setRect(null)
     if (!s.target) return
+    const sel = s.target
     let cancelled = false
     const measure = () => {
       if (cancelled) return
-      const el = document.querySelector(s.target!) as HTMLElement | null
-      if (el) {
-        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-        setRect(el.getBoundingClientRect())
-      }
+      const el = document.querySelector(sel) as HTMLElement | null
+      if (el) setRect(el.getBoundingClientRect())
     }
-    const t = setTimeout(measure, 260)
+    const el = document.querySelector(sel) as HTMLElement | null
+    if (el) {
+      const y = window.scrollY + el.getBoundingClientRect().top - 96 // clear the sticky nav
+      window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' })
+    }
+    const t = setTimeout(measure, 380)
     window.addEventListener('resize', measure)
     window.addEventListener('scroll', measure, true)
     return () => {
@@ -60,12 +66,10 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
   }
 
   const pad = 6
-  // Anchor the card near the spotlight (below if there's room, else above);
-  // centered when there's no target.
+  // Featured element rides at the top; the helper card sits at the bottom of the
+  // screen. With no target (welcome step) the card is centered.
   const cardPos: Record<string, number | string> = rect
-    ? (rect.bottom + 250 < window.innerHeight
-        ? { top: rect.bottom + 14 }
-        : { bottom: Math.max(16, window.innerHeight - rect.top + 14) })
+    ? { bottom: 24 }
     : { top: '50%', marginTop: -150 }
 
   return (
