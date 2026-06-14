@@ -1,0 +1,830 @@
+english,filipino,kept_english
+" — re-upload to replace"," — i-upload ulit para palitan",false
+" Note: their valid ID could not be deleted — see the warning on the page."," Note: hindi ma-delete ang valid ID nila — tingnan ang warning sa page.",false
+" Their valid ID was removed from storage."," Tinanggal sa storage ang valid ID nila.",false
+"— a stolen password alone can't reach any staff function.","— hindi sapat ang ninakaw na password lang para makapasok sa anumang staff function.",false
+"— including the Terms & Conditions, and my consent to KTC processing my personal data.","— kasama ang Terms & Conditions, at ang aking pahintulot sa KTC na iproseso ang aking personal na data.",false
+"— replace current","— palitan ang kasalukuyan",false
+"‹ Prev","‹ Nakaraan",false
+"""{n}"" added — set its free-days and Save.","Nadagdag ang ""{n}"" — i-set ang free-days nito at i-Save.",false
+"""{name}"" added — set its rate and Save pricing.","Nadagdag ang ""{name}"" — i-set ang rate nito at i-Save ang pricing.",false
+"""{name}"" deleted.","Na-delete ang ""{name}"".",false
+"""{name}"" removed.","Naalis ang ""{name}"".",false
+"(customer can’t resubmit)","(hindi puwedeng i-resubmit ng customer)",false
+"(finish discharging + import days). Set per line, for import and export.","(tapos mag-discharge + import days). I-set kada line, para sa import at export.",false
+"(sent {when})","(naipadala {when})",false
+"(serving number assigned now).","(naka-assign na ang serving number).",false
+"{count} {scope} call(s)","{count} na {scope} na barko",false
+"{count} container(s)","{count} container(s)",true
+"{count} current call(s)","{count} na current call",false
+"{count} total call(s)","{count} na call lahat",false
+"{from}–{to} of {total}","{from}–{to} ng {total}",false
+"{label} line","{label} line",true
+"{line} done","Tapos na ang {line}",false
+"{n} event(s)","{n} na event",false
+"{n} order(s).","{n} na order.",false
+"{n} recent failure(s)","{n} kamakailang failure",false
+"{service} containers","{service} na container",false
+"{total} order(s)","{total} order(s)",true
+"/ container","/ container",true
+"/ move","/ move",true
+"← Back","← Bumalik",false
+"← Back to sign in","← Bumalik sa sign in",false
+"← Prev","← Nakaraan",false
+"↓ Please scroll to the end of the agreement to enable the consent checkboxes.","↓ Pakil-scroll hanggang dulo ng agreement para ma-enable ang mga consent checkbox.",false
+"↓ Please scroll to the end to enable the consent checkboxes.","↓ Pakil-scroll hanggang dulo para ma-enable ang mga consent checkbox.",false
+"↻ Re-check","↻ I-check ulit",false
+"↻ Refresh","↻ I-refresh",false
+"↻ Refresh status","↻ I-refresh ang status",false
+"+ Add container","+ Magdagdag ng container",false
+"+ Add line","+ Magdagdag ng line",false
+"+ Add service","+ Magdagdag ng service",false
+"+ VAT","+ VAT",true
+"⚠ Agreement not accepted","⚠ Hindi tinanggap ang Agreement",false
+"⚠ Email not confirmed","⚠ Hindi pa na-confirm ang email",false
+"⚠ needs address/TIN/2303","⚠ kailangan ng address/TIN/2303",false
+"⚠ No valid ID","⚠ Walang valid ID",false
+"✓ A confirmation link was sent to {next}. Click it to finish the change — your current email stays active until you confirm.","✓ May confirmation link na ipinadala sa {next}. I-click ito para matapos ang pagbabago — mananatiling active ang kasalukuyang email mo hanggang ma-confirm mo.",false
+"✓ Account created! We’ve emailed a confirmation link to your address. Please confirm your email, then log in again here to continue.","✓ Nagawa na ang account! Nag-email kami ng confirmation link sa iyong address. I-confirm ang iyong email, tapos mag-log in ulit dito para magpatuloy.",false
+"✓ Archived {n} paid & completed order(s).","✓ Na-archive ang {n} bayad at tapos nang order.",false
+"✓ Billed · view charges","✓ Na-bill · tingnan ang charges",false
+"✓ Confirm X-ray done","✓ I-confirm na tapos na ang X-ray",false
+"✓ Confirmation email resent — check your inbox (and spam folder) for the link.","✓ Na-resend na ang confirmation email — i-check ang iyong inbox (at spam folder) para sa link.",false
+"✓ Copied","✓ Nakopya",false
+"✓ Email confirmed {date}","✓ Na-confirm ang email {date}",false
+"✓ Free-days saved.","✓ Na-save ang free-days.",false
+"✓ Gates saved. Staff see the change on their next page load.","✓ Na-save ang gates. Makikita ng staff ang pagbabago sa susunod nilang page load.",false
+"✓ ID verified","✓ Na-verify ang ID",false
+"✓ If that email is registered, a password-reset link is on its way. Check your inbox (and spam folder).","✓ Kung naka-register ang email na iyon, paparating na ang password-reset link. I-check ang iyong inbox (at spam folder).",false
+"✓ Move rates saved.","✓ Na-save ang move rates.",false
+"✓ Paid · view charges","✓ Bayad na · tingnan ang charges",false
+"✓ Payment details saved.","✓ Na-save ang payment details.",false
+"✓ Pricing saved.","✓ Na-save ang pricing.",false
+"✓ Terms & DPA {date}","✓ Terms & DPA {date}",true
+"✓ Thanks for reading — you can now tick the consent boxes below.","✓ Salamat sa pagbabasa — pwede mo nang i-tick ang mga consent box sa ibaba.",false
+"✓ Two-factor authentication is ON. From now on, signing in asks for a code from your app.","✓ Naka-ON ang two-factor authentication. Mula ngayon, hihingian ka ng code mula sa iyong app tuwing mag-sign in.",false
+"✓ Valid ID on file","✓ May valid ID na naka-file",false
+"✓ Yes — X-ray done","✓ Oo — tapos na ang X-ray",false
+"✓ Your details were saved.","✓ Na-save ang iyong details.",false
+"✓ Your email is confirmed — please sign in to continue.","✓ Confirmed na ang iyong email — mag-sign in para magpatuloy.",false
+"✓ Your password has been updated — please sign in with your new password.","✓ Na-update na ang iyong password — mag-sign in gamit ang bago mong password.",false
+"✓ Your password was updated.","✓ Na-update na ang password mo.",false
+"⧉ Bulk paste","⧉ Bulk paste",true
+"⬆ Import CSV","⬆ I-import ang CSV",false
+"⬇ Template","⬇ Template",true
+"📸 Snapshot","📸 Snapshot",true
+"🔐 Set up two-factor authentication","🔐 I-set up ang two-factor authentication",false
+"🔒 Locked — unlock to edit","🔒 Naka-lock — i-unlock para mag-edit",false
+"🔓 Editing · tap to lock","🔓 Nag-e-edit · i-tap para i-lock",false
+"🗄 Archive paid & completed","🗄 I-archive ang bayad at tapos na",false
+"🚨 Blocked privilege-escalation attempt","🚨 Na-block na privilege-escalation attempt",false
+"₱{rate}/move","₱{rate}/move",true
+"1 · Scan this QR code with your authenticator app","1 · I-scan ang QR code na ito gamit ang iyong authenticator app",false
+"2 · Enter the 6-digit code it shows","2 · I-type ang 6-digit code na ipinapakita nito",false
+"2303","2303",true
+"2303 — {name}","2303 — {name}",true
+"2303 (replace)","2303 (palitan)",false
+"2303 document","2303 document",true
+"2FA","2FA",true
+"A call with that Vessel Visit code already exists.","May call na gamit ang Vessel Visit code na iyan.",false
+"A consignee needs","Ang isang consignee ay kailangan ng",false
+"A consignee with that name or code already exists.","May consignee na sa pangalan o code na iyan.",false
+"A KTC admin is verifying your account. You can continue filing job orders, but they’re held until you’re verified. For more information, contact customer service at","May KTC admin na nagve-verify ng iyong account. Pwede kang magpatuloy sa pag-file ng job orders, pero naka-hold sila hanggang ma-verify ka. Para sa karagdagang impormasyon, makipag-ugnayan sa customer service sa",false
+"A valid ID is required before you can approve","Kailangan ng valid ID bago mo ma-approve",false
+"Account approvals","Account approvals",true
+"Account approvals + dashboard","Account approvals + dashboard",true
+"Account approved","Aprubado ang account",false
+"Account name:","Account name:",true
+"Account no.:","Account no.:",true
+"Account suspended","Naka-suspend ang account",false
+"Accounts awaiting approval","Mga account na naghihintay ng approval",false
+"Action needed","May kailangang gawin",false
+"ACTION NEEDED","MAY KAILANGANG GAWIN",false
+"active","aktibo",false
+"Active","Active",true
+"Activity Log","Activity Log",true
+"actor {id}…","actor {id}…",true
+"Actual Arrival","Actual Arrival",true
+"Add at least one container.","Magdagdag ng kahit isang container.",false
+"Add call","Magdagdag ng call",false
+"Add consignee","Magdagdag ng consignee",false
+"Add each container number and the service it needs — or Bulk paste a whole list at once. Then submit; you'll get a serving number per service line.","Idagdag ang bawat container number at ang service na kailangan nito — o Bulk paste ang buong listahan nang sabay-sabay. Tapos i-submit; makakakuha ka ng serving number kada service line.",false
+"Add to list","Idagdag sa listahan",false
+"Add your containers","Idagdag ang iyong mga container",false
+"Added {code} – {name} (pending approval).","Naidagdag ang {code} – {name} (naghihintay ng approval).",false
+"Added {n} container(s), skipped {d} duplicate(s).","Nadagdag ang {n} container, ni-skip ang {d} duplicate.",false
+"Added {n} container(s).","Nadagdag ang {n} container.",false
+"Added consignees are","Ang mga naidagdag na consignee ay",false
+"Address","Address",true
+"address, TIN, and an attached 2303","address, TIN, at naka-attach na 2303",false
+"Adds a 6-digit code from an authenticator app (Google Authenticator, Authy, 1Password…) to your sign-in. Once enabled it's enforced","Nagdaragdag ng 6-digit code mula sa authenticator app (Google Authenticator, Authy, 1Password…) sa iyong pag-sign in. Kapag naka-enable, ipinapatupad ito",false
+"admin","admin",true
+"Admin","Admin",true
+"Admin / service fee","Admin / service fee",true
+"Admin access granted to {target}.","Naibigay na ang admin access kay {target}.",false
+"After you file, follow every order here — live status, your serving number, View charges & pay, and Print slip once approved.","Pagkatapos mag-file, sundan ang bawat order dito — live na status, ang serving number mo, charges, payment at print slip kapag ma-approve na.",false
+"All","Lahat",false
+"All registered customer accounts and their status. Approve/reject pending ones under Approvals; suspend or reactivate approved accounts here.","Lahat ng registered na customer accounts at ang status nila. I-approve/i-reject ang mga naghihintay sa ilalim ng Approvals; i-suspend o i-reactivate ang mga aprubadong account dito.",false
+"Allow the customer to","Payagan ang customer na",false
+"Already have an account? ","May account ka na? ",false
+"and consent to KTC collecting and processing my valid ID for verification under the Data Privacy Act (R.A. 10173).","at pumapayag akong kolektahin at iproseso ng KTC ang aking valid ID para sa verification sa ilalim ng Data Privacy Act (R.A. 10173).",false
+"and you’ll re-upload a valid ID for a KTC admin to re-verify. Job orders you file in the meantime are held until you’re re-approved.","at mag-uupload ka uli ng valid ID para i-re-verify ng KTC admin. Ang mga Job Order na ifa-file mo sa panahong iyon ay naka-hold muna hanggang ma-approve ka uli.",false
+"Approvals","Approvals",true
+"Approve","I-approve",false
+"Approve & process","I-approve at iproseso",false
+"Approved","Aprubado",false
+"Approved · processing","Aprubado · pinoproseso",false
+"Archived","Naka-archive",false
+"archives completed + paid orders (Mon 00:30 PH)","ina-archive ang mga completed + paid na order (Lun 00:30 PH)",false
+"Archives every completed order that has a Service Invoice number (= paid). Also runs automatically every Monday.","Ina-archive ang lahat ng tapos nang order na may Service Invoice number (= bayad na). Awtomatiko rin itong tumatakbo tuwing Lunes.",false
+"Archiving…","Ina-archive…",false
+"Are you still there?","Nandiyan ka pa ba?",false
+"Arrival","Pagdating",false
+"ARRIVAL","ARRIVAL",true
+"As of {date} · {count} vessel(s)","Sa {date} · {count} na vessel",false
+"Assess RPS","I-assess ang RPS",false
+"Assess RPS (confirm X-ray / port-services moves)","I-assess ang RPS (i-confirm ang X-ray / port-services moves)",false
+"Assess RPS (operations)","I-assess ang RPS (operations)",false
+"assessed by operations — payable separately below.","tinasa ng operations — hiwalay na babayaran sa ibaba.",false
+"auto","auto",true
+"Back","Bumalik",false
+"Back to Customers","Bumalik sa Customers",false
+"Back to My Job Orders","Bumalik sa My Job Orders",false
+"Background jobs, outgoing emails / BOC mirror calls, and client errors. The hourly watchdog emails the owner on failures.","Background jobs, outgoing emails / BOC mirror calls, at client errors. Ang hourly watchdog ay nag-e-email sa owner kapag may failure.",false
+"Balance","Balance",true
+"Balance due","Balance na babayaran",false
+"Bank / GCash details + QR shown when a customer pays online. Leave fields blank to hide them.","Bank / GCash details + QR na ipinapakita kapag nagbayad online ang customer. Iwang blangko ang mga field para itago ang mga ito.",false
+"Bank:","Bank:",true
+"before it can be approved; only approved consignees are visible to customers.","bago ito ma-approve; ang aprubadong consignee lang ang nakikita ng mga customer.",false
+"before trying again.","bago subukan ulit.",false
+"Berth","Berth",true
+"BERTH","BERTH",true
+"BILLED","BILLED",true
+"Billed on account — Billing Invoice No. {no}.","Naka-bill on account — Billing Invoice No. {no}.",false
+"billed on credit","naka-bill sa credit",false
+"Bulk import CSV (name, optional code)","Bulk import CSV (name, optional na code)",false
+"Bulk paste container numbers","Bulk paste ng mga container number",false
+"by {name}","ni {name}",false
+"Calendar","Kalendaryo",false
+"Call added.","Naidagdag ang call.",false
+"Call updated.","Na-update ang call.",false
+"Calls available for customers to file against.","Mga call na pwedeng pag-file-an ng mga customer.",false
+"can’t be processed until you pass final verification","hindi mapoproseso hangga't hindi ka pumasa sa final verification",false
+"Can’t be processed until you pass final verification — upload your valid ID, then a KTC admin verifies your account and it’s sent automatically.","Hindi maipoproseso hangga't di ka pumasa sa final verification — i-upload ang iyong valid ID, tapos ive-verify ng KTC admin ang account mo at awtomatiko itong masusumite.",false
+"Can't scan? Enter this key manually:","Hindi ma-scan? I-type ang key na ito nang manual:",false
+"Cancel","I-cancel",false
+"Cancel edit","I-cancel ang edit",false
+"Cancel this order","I-cancel ang order na ito",false
+"Cancel this order? This can’t be undone.","I-cancel ang order na ito? Hindi na ito mababawi.",false
+"cancelled","kanselado",false
+"Cancelled","Kanselado",false
+"Cancelling…","Kina-cancel…",false
+"Cannot approve — no valid ID on file yet. Ask the customer to upload one first.","Hindi ma-approve — wala pang valid ID na naka-file. Pakiusapan muna ang customer na mag-upload.",false
+"carry-overs to the front of the new week (Mon 00:15 PH)","inililipat ang mga carry-over sa unahan ng bagong linggo (Lun 00:15 PH)",false
+"cashier","cashier",true
+"Cashier","Cashier",true
+"Change","Palitan",false
+"Change name & re-verify","Palitan ang pangalan at mag-re-verify",false
+"Changing your name needs re-verification","Kailangan ng re-verification kapag binago ang pangalan",false
+"Charged per move when operations assesses a JO as needing RPS (VATable, added on top of the base). Amounts in ₱.","Sinisingil kada move kapag na-assess ng operations na kailangan ng RPS ang isang JO (VATable, idinaragdag sa base). Nasa ₱ ang halaga.",false
+"Charges","Mga Singil",false
+"Check a container / van or JO number","Mag-check ng container / van o JO number",false
+"checker","checker",true
+"Checker","Checker",true
+"Checking…","Sinusuri…",false
+"Checks automatically every minute","Awtomatikong nagche-check kada minuto",false
+"Choose a clear photo or PDF — you can review it before submitting.","Pumili ng malinaw na larawan o PDF — pwede mong i-review bago i-submit.",false
+"Choose a new password for your account.","Pumili ng bagong password para sa iyong account.",false
+"Choose an outcome (the customer is told why):","Pumili ng outcome (sasabihin sa customer kung bakit):",false
+"Choose the vessel & voyage from the current schedule. Not listed yet? Tick ""vessel not listed"" and type it — operations will match it to the call.","Piliin ang vessel at voyage mula sa kasalukuyang schedule. Wala pa sa listahan? I-tick ang ""vessel not listed"" at i-type ito — ima-match ito ng operations sa call.",false
+"CLEARED","CLEARED",true
+"Cleared for release","Cleared for release",true
+"Client errors","Client errors",true
+"Client errors — {n} in 24h","Mga client error — {n} sa 24h",false
+"Close","Isara",false
+"Code","Code",true
+"Code (optional)","Code (optional)",true
+"Code cannot be empty.","Hindi pwedeng walang laman ang code.",false
+"Completed","Tapos na",false
+"Compose a status message for Viber / SMS / Messenger","Gumawa ng status message para sa Viber / SMS / Messenger",false
+"Confirm completed X-rays · look up a van's clearance before release.","I-confirm ang mga tapos na X-ray · tingnan ang clearance ng van bago i-release.",false
+"Confirm new password","I-confirm ang bagong password",false
+"Confirm RPS payment","I-confirm ang RPS payment",false
+"Confirm suspension","I-confirm ang suspension",false
+"Confirm X-ray done","I-confirm na tapos na ang X-ray",false
+"Confirm X-ray done (checker station)","I-confirm na tapos na ang X-ray (checker station)",false
+"Confirm X-ray done now ({time})?","I-confirm na tapos na ang X-ray ngayon ({time})?",false
+"Confirm X-ray payment","I-confirm ang X-ray payment",false
+"Confirmed by KTC.","Na-confirm ng KTC.",false
+"Consignee","Consignee",true
+"Consignee & entry","Consignee at entry",false
+"Consignee name *","Pangalan ng consignee *",false
+"Consignees","Consignees",true
+"Consignees added but not yet approved. Tap to review and approve them so they're selectable when customers file.","Mga consignee na naidagdag pero hindi pa aprubado. I-tap para i-review at i-approve sila para mapili kapag nag-file ang mga customer.",false
+"Consignees pending","Mga consignee na naghihintay",false
+"Contact number","Contact number",true
+"Contact number can’t be empty.","Hindi pwedeng walang laman ang contact number.",false
+"Contact:","Contact:",true
+"Container Details","Container Details",true
+"Container number (e.g. ABCD1234567)","Container number (hal. ABCD1234567)",false
+"Containers","Mga Container",false
+"Containers per service","Container kada service",false
+"Copies the message and opens Viber's forward screen — pick the customer's chat (paste if the text doesn't carry over)","Kinokopya ang message at binubuksan ang forward screen ng Viber — piliin ang chat ng customer (i-paste kung hindi nadala ang text)",false
+"Copy message","Kopyahin ang message",false
+"Corrected entry number (optional — currently {entry})","Itinamang entry number (opsyonal — kasalukuyang {entry})",false
+"Corrected entry number (optional)","Itinamang entry number (opsyonal)",false
+"Could not create job order.","Hindi ma-create ang Job Order.",false
+"Could not generate the snapshot.","Hindi ma-generate ang snapshot.",false
+"Could not load the file. Please try again.","Hindi ma-load ang file. Subukan ulit.",false
+"Could not open the file.","Hindi mabuksan ang file.",false
+"Could not start enrollment.","Hindi masimulan ang enrollment.",false
+"Could not start the check.","Hindi masimulan ang check.",false
+"Could not start the verification.","Hindi masimulan ang verification.",false
+"Create account","Gumawa ng account",false
+"Create one","Gumawa ng isa",false
+"Create one on the","Gumawa ng isa sa",false
+"Create staff","Gumawa ng staff",false
+"Create staff account","Gumawa ng staff account",false
+"current","kasalukuyan",false
+"Current calls, berths & last free day","Mga kasalukuyang barko, berth at huling free day",false
+"Current staff","Kasalukuyang staff",false
+"Current vessel calls at KTC. Last free day is the last day of free storage (finish discharging + the line's free-days); after it, storage charges apply. Schedule is maintained by KTC operations — for reference only.","Mga kasalukuyang barko sa KTC. Ang huling free day ang huling araw ng libreng storage (tapos mag-discharge + ang free-days ng line); pagkatapos nito, may storage charges na. Pinapanatili ng KTC operations ang iskedyul — para sa rep-erensya lamang.",false
+"Current:","Kasalukuyan:",false
+"customer","customer",true
+"Customer","Customer",true
+"Customer Agreement (Terms & Conditions)","Kasunduan ng Customer (Mga Tuntunin at Kundisyon)",false
+"Customer not found.","Hindi nahanap ang customer.",false
+"Customer profile not found.","Hindi nahanap ang customer profile.",false
+"Customer reply:","Sagot ng customer:",false
+"Customer service:","Customer service:",true
+"Customers","Customers",true
+"Dashboard","Dashboard",true
+"Dates must be YYYY-MM-DD or M/D/YYYY.","Ang mga petsa ay dapat YYYY-MM-DD o M/D/YYYY.",false
+"Days since completion without a Service Invoice on file","Mga araw mula nang matapos na walang naka-file na Service Invoice",false
+"Decided:","Napagdesisyunan:",false
+"Delete","I-delete",false
+"Delete (only possible while unused by any order)","I-delete (posible lang habang hindi pa nagagamit ng kahit anong order)",false
+"Delete {code} – {name}?","I-delete ang {code} – {name}?",false
+"Delete {service}","I-delete ang {service}",false
+"Delete permanently?","I-delete nang permanente?",false
+"delete?","i-delete?",false
+"Deleted {code}.","Na-delete ang {code}.",false
+"Deleting…","Dinidelete…",false
+"Didn’t get it? You can resend in {t}. Check your spam folder too.","Hindi natanggap? Pwede mong i-resend sa {t}. Tingnan din ang spam folder mo.",false
+"Don't have an account? ","Wala kang account? ",false
+"Done","Tapos na",false
+"Done 🚀","Tapos 🚀",false
+"Draft","Draft",true
+"Draft (no number yet)","Draft (wala pang number)",false
+"Drag to reorder","I-drag para baguhin ang pagkakasunod",false
+"Drives the vessel schedule's","Nagtatakda ng vessel schedule's",false
+"e.g. 0917 123 4567","hal. 0917 123 4567",false
+"e.g. C-0000012345","hal. C-0000012345",false
+"e.g. Corrected the entry number — see below.","hal. Inayos ang entry number — tingnan sa ibaba.",false
+"e.g. Duplicate of JO-000123.","hal. Duplicate ng JO-000123.",false
+"e.g. Pending document re-verification.","hal. Naghihintay ng document re-verification.",false
+"e.g. Please confirm the entry number — it doesn’t match the consignee.","hal. Paki-confirm ang entry number — hindi ito tugma sa consignee.",false
+"e.g. Re-checked the container numbers with the shipping line.","hal. Na-recheck ko ang container numbers sa shipping line.",false
+"e.g. TCLU1234567 or JO-000123","hal. TCLU1234567 o JO-000123",false
+"Each line becomes a container row with the selected service — you can change any row's service afterward. Duplicates are skipped.","Bawat linya ay magiging container row na may napiling service — pwede mong palitan ang service ng kahit anong row pagkatapos. Ini-skip ang mga duplicate.",false
+"Edit","I-edit",false
+"Edit or update your personal details anytime. Changing your legal name needs re-verification by a KTC admin (since it's matched to your ID).","I-edit o i-update ang iyong personal details. Ang pagpapalit ng inyong legal name ay kailangan ng re-verification ng KTC admin.",false
+"Email","Email",true
+"Email address","Email address",true
+"Email confirmed","Confirmed na ang email",false
+"Email of a signed-up user","Email ng isang naka-sign up na user",false
+"Email or username","Email o username",false
+"Email:","Email:",true
+"Emails & sync","Emails at sync",false
+"English","English",true
+"Enter container counts to see the breakdown.","Ilagay ang bilang ng container para makita ang breakdown.",false
+"Enter the 6-digit code from your authenticator app to finish signing in.","Ilagay ang 6-digit code mula sa iyong authenticator app para matapos mag-sign in.",false
+"Enter the new email address.","Ilagay ang bagong email address.",false
+"Enter the service name first.","I-type muna ang pangalan ng service.",false
+"Enter the shipping line name first.","I-type muna ang pangalan ng shipping line.",false
+"Enter the vessel name and voyage number.","Ilagay ang vessel name at voyage number.",false
+"Enter your account email and we’ll send you a link to set a new password.","Ilagay ang email ng iyong account at padpadalhan ka namin ng link para magtakda ng bagong password.",false
+"Enter your email above first, then resend.","Ilagay muna ang iyong email sa itaas, tapos i-resend.",false
+"Entry","Entry",true
+"Entry {entry}","Entry {entry}",true
+"Entry {n}","Entry {n}",true
+"Entry Number","Entry Number",true
+"ERP","ERP",true
+"ERP control no. (OR-INV / BI-INV)","ERP control no. (OR-INV / BI-INV)",true
+"Estimate","Tantya",false
+"Estimate charges","I-estimate ang charges",false
+"Estimate charges before you file","Tantiyahin ang singil bago mag-file",false
+"Estimate your charges before filing — enter how many containers need each service. The official amount is confirmed on the Service Invoice at the KTC office.","Tantyahin ang iyong charges bago mag-file — ilagay kung ilang container ang kailangan ng bawat service. Ang opisyal na halaga ay kinukumpirma sa Service Invoice sa KTC office.",false
+"Estimated total","Tinatayang kabuuan",false
+"Every order you file shows here with its live status and serving number. Open one to ""View charges & pay"" (upload your deposit slip) and to Print the A6 slip once it's approved. The ""Now serving"" board up top helps you time your trip to the terminal.","Lahat ng order na ifa-file mo ay lalabas dito kasama ang live na status at serving number nito. Buksan ang isa para ""View charges & pay"" (i-upload ang iyong deposit slip) at para i-Print ang A6 slip kapag aprubado na. Ang ""Now serving"" board sa itaas ang tutulong sa iyong tantyahin ang pagpunta mo sa terminal.",false
+"Everything the portal records — who did what, and when.","Lahat ng naitatala ng portal — kung sino ang gumawa, at kailan.",false
+"Export days","Export days",true
+"File a Job Order","Mag-file ng Job Order",false
+"file a new job order","mag-file ng bagong job order",false
+"File a new Job Order. We'll walk you through the form the first time you open it.","Mag-file ng bagong Job Order. I-guiguide ka namin sa job order form sa unang pagbukas mo nito.",false
+"File another","Mag-file ng isa pa",false
+"File for a Customer","Mag-file para sa Customer",false
+"File for X-ray, DEA or OOG stripping services","Mag-file para sa X-ray, DEA o OOG stripping na serbisyo",false
+"File JO on behalf of a customer (walk-ins / in-house)","Mag-file ng JO para sa isang customer (walk-ins / in-house)",false
+"File Job Order","I-file ang Job Order",false
+"File Job Orders for container terminal services from anywhere, anytime. No more queueing at the office. Here's a quick look around.","Mag-file ng Job Orders para sa mga container terminal service online. Wala nang pila sa opisina. Heto ang quick tour natin.",false
+"File job orders for terminal services and track them through processing.","Mag-file ng mga Job Order para sa mga serbisyo ng terminal at i-track ang mga ito habang pinoproseso.",false
+"Filed","Naisumite",false
+"filed {date}","isinumite {date}",false
+"Filing…","Fina-file…",false
+"Filipino","Filipino",true
+"Finish Disch.","Tapos Disch.",false
+"Finish Discharging","Finish Discharging",true
+"fix & resubmit","ayusin at i-resubmit",false
+"Fix & resubmit","Ayusin at i-submit ulit",false
+"for","para kay",false
+"For X-ray / DEA / OOG stripping service orders.","Para sa X-ray / DEA / OOG stripping service orders.",false
+"Forgot password?","Nakalimutan ang password?",false
+"Forgot your password? Reset it by email →","Nakalimutan ang password? I-reset ito via email →",false
+"Free storage days per shipping line","Free storage days kada shipping line",false
+"Full name","Buong pangalan",false
+"Full name can’t be empty.","Hindi pwedeng walang laman ang full name.",false
+"Gate","Gate",true
+"GCash:","GCash:",true
+"Get verified","Mag-verify",false
+"Go to start page","Pumunta sa start page",false
+"Grant access","Magbigay ng access",false
+"has been approved and notified by email.","ay na-approve na at na-notify sa email.",false
+"held and can’t be processed until your account is verified","naka-hold at hindi mapoproseso hangga't hindi na-verify ang iyong account",false
+"Hide bulk paste","Itago ang bulk paste",false
+"History","History",true
+"Hold for info","I-hold para sa info",false
+"Hold for information","I-hold para sa impormasyon",false
+"Home","Home",true
+"How to pay","Paano magbayad",false
+"HTTP {status}","HTTP {status}",true
+"I have read and agree to the","Nabasa ko na at sumasang-ayon ako sa",false
+"I’m still here — keep me signed in","Nandito pa ako — panatilihing naka-sign in",false
+"ID unreadable — ask to re-upload","Hindi mabasa ang ID — pakiusap na i-upload ulit",false
+"If an order needs port-services moves (DEA / inspection), use Assess RPS on its card to record the moves — they bill per move on top of the base. Most orders need none.","Kung may kailangang port-services moves ang isang order (DEA / inspection), gamitin ang Assess RPS sa card nito para i-record ang mga move — sinisingil ang mga ito kada move bukod sa base. Karamihan ng order ay walang kailangan.",false
+"Import days","Import days",true
+"Imported {count} call(s).","Na-import ang {count} na call.",false
+"Imported {n} row(s) (pending; add address/TIN/2303 to approve).","Na-import ang {n} row(s) (naghihintay; idagdag ang address/TIN/2303 para ma-approve).",false
+"inactive","hindi aktibo",false
+"Inactivity warning","Babala sa inactivity",false
+"Includes","Kasama",false
+"Information needed:","Kailangang impormasyon:",false
+"Internal KTC staff with admin access. Managed separately from brokers.","Internal na KTC staff na may admin access. Hiwalay na pinamamahalaan mula sa mga broker.",false
+"Invoice no. (e.g. 001323)","Invoice no. (hal. 001323)",false
+"is computed (finish discharging + the line's import free-days); a call drops off once its last free day passes. Free-days per line are set by admin in Settings.","ay kinukwenta (tapos ng discharging + import free-days ng line); mawawala ang isang call kapag lumampas na ang huling free day nito. Ang free-days kada line ay ise-set ng admin sa Settings.",false
+"Job order history","History ng Job Order",false
+"Job order not found.","Hindi nahanap ang Job Order.",false
+"Job orders","Job Orders",false
+"Job Orders","Job Orders",true
+"Just refreshed — try again in a few seconds","Kaka-refresh lang — subukan ulit sa ilang segundo",false
+"Keep it","Huwag na lang",false
+"Keep it on","Panatilihing naka-on",false
+"KTC — Active Vessels","KTC — Active Vessels",true
+"KTC Active Vessels","KTC Active Vessels",true
+"KTC Container Terminal Corp","KTC Container Terminal Corp",true
+"KTC Customer Agreement","KTC Customer Agreement",true
+"KTC Customer Agreement ({version})","KTC Customer Agreement ({version})",true
+"KTC Customer Agreement (Terms & Conditions)","KTC Customer Agreement (Terms & Conditions)",true
+"KTC Online Portal","KTC Online Portal",true
+"KTC Online Portal — Container Terminal Services","KTC Online Portal — Container Terminal Services",true
+"Language","Wika",false
+"Last free day","Huling free day",false
+"Last Free Day","Huling Free Day",false
+"LAST FREE DAY","LAST FREE DAY",true
+"Last free day & sharing","Last free day at pag-share",false
+"Last Free Day computes itself (finish discharging + the line's free-days), and past calls drop off automatically. Tap 📸 Snapshot to share the active vessels straight to your Viber group, and switch to the Calendar view for arrivals by month.","Awtomatikong kinukwenta ang Last Free Day (tapos ang discharging + ang free-days ng line), at awtomatikong nawawala ang mga lumipas na call. I-tap ang 📸 Snapshot para i-share ang mga aktibong vessel diretso sa iyong Viber group, at mag-switch sa Calendar view para sa mga arrival kada buwan.",false
+"Line","Line",true
+"Loading history…","Nilo-load ang history…",false
+"Loading job orders","Niloload ang mga job order",false
+"Loading…","Naglo-load…",false
+"Lock editing again","I-lock ulit ang pag-edit",false
+"Locked against accidental edits.","Naka-lock laban sa di-sinasadyang pagbabago.",false
+"Logs","Logs",true
+"Look up a container","Maghanap ng container",false
+"Lost your authenticator? The owner can remove the factor from the server so you can sign in and re-enroll.","Nawala ang iyong authenticator? Pwedeng alisin ng owner ang factor sa server para makapag-sign in ka at makapag-enroll ulit.",false
+"Madayaw! Welcome to the KTC Online Portal","Madayaw! Welcome to the KTC Online Portal",true
+"Manage consignees","I-manage ang consignees",false
+"Manage customers","I-manage ang customers",false
+"Manual","Gabay",false
+"Mark completed","Markahang tapos na",false
+"Marks the {line} service done — the order completes when every service is done","Mamarkahan ang {line} service na tapos na — matatapos ang order kapag tapos na lahat ng service",false
+"Message","Message",true
+"Messenger doesn’t allow pre-filled messages — use Copy, then paste into the chat. Viber/SMS buttons work on devices with those apps installed.","Hindi pinapayagan ng Messenger ang pre-filled na message — gamitin ang Copy, tapos i-paste sa chat. Gumagana ang Viber/SMS buttons sa mga device na may naka-install na apps na iyon.",false
+"Missing required columns. Download the template for the exact headers.","May kulang na required columns. I-download ang template para sa eksaktong headers.",false
+"My Account","Aking Account",false
+"My Job Orders","Mga Job Order Ko",false
+"My vessel isn’t listed — enter it manually (operations will match it)","Wala sa listahan ang vessel ko — ilagay nang manual (ima-match ito ng operations)",false
+"Name","Pangalan",false
+"Name must be at least {n} characters.","Ang pangalan ay dapat hindi bababa sa {n} characters.",false
+"Names containing “X-Ray”, “DEA”, or “OOG” join those serving-number queues; anything else queues under “Other”. Drag ⠿ to arrange the display order. Deactivate to retire a service (past orders keep their pricing); ✕ delete is only possible while no order has ever used it.","Ang mga pangalang may “X-Ray”, “DEA”, o “OOG” ay sumasali sa mga serving-number queue na iyon; ang iba ay napupunta sa “Other”. I-drag ang ⠿ para ayusin ang display order. I-deactivate para itigil ang isang service (panatilihin ng mga lumang order ang kanilang pricing); ang ✕ delete ay posible lang habang wala pang order na gumamit nito.",false
+"Needs action","May kailangang gawin",false
+"Needs updated info — ask to resubmit","Kailangan ng updated na info — pakiusap na i-resubmit",false
+"never","hindi pa",false
+"New customers who confirmed their email and need verifying. A ring/dot means work is waiting — tap to open Approvals, view their ID, and approve or reject.","Mga bagong customer na na-confirm ang email at kailangang i-verify. Ang ring/dot ay ibig sabihin may naghihintay na trabaho — i-tap para buksan ang Approvals, tingnan ang kanilang ID, at i-approve o i-reject.",false
+"New email address","Bagong email address",false
+"New JO","Bagong JO",false
+"New Job Order","Bagong Job Order",false
+"New lines not yet configured (set free-days in Settings): {lines}","May mga bagong line na hindi pa naka-configure (i-set ang free-days sa Settings): {lines}",false
+"New password","Bagong password",false
+"New service name (can't be renamed later)","Bagong service name (hindi na mapapalitan ang pangalan mamaya)",false
+"New shipping line (e.g. SITC)","Bagong shipping line (hal. SITC)",false
+"Next","Susunod",false
+"Next ›","Susunod ›",false
+"Next →","Susunod →",false
+"no","hindi",false
+"No","Hindi",false
+"No account found for ""{target}"". Ask them to sign up first, then grant access here.","Walang account na nahanap para sa ""{target}"". Pasabihan silang mag-sign up muna, tapos bigyan ng access dito.",false
+"No accounts pending. 🎉","Walang naghihintay na account. 🎉",false
+"No active orders right now.","Walang active orders ngayon.",false
+"No authenticator found on this account.","Walang authenticator na nakita sa account na ito.",false
+"No calls. Add one above or import the template.","Walang call. Magdagdag sa itaas o i-import ang template.",false
+"No client errors recorded. 🎉","Walang naitalang client error. 🎉",false
+"No completed orders yet.","Wala pang tapos na orders.",false
+"no consignee","walang consignee",false
+"No consignee","Walang consignee",false
+"No consignees yet.","Wala pang consignee.",false
+"no contact number on file","walang contact number na naka-file",false
+"No containers on this order.","Walang container sa order na ito.",false
+"No current calls. Add one above or import the template.","Walang current na call. Magdagdag sa itaas o i-import ang template.",false
+"No current vessel calls right now.","Walang kasalukuyang barko sa ngayon.",false
+"No customer accounts yet.","Wala pang customer accounts.",false
+"No email needed — hand them the username + password. They sign in at the login page with the username.","Hindi kailangan ng email — ibigay sa kanila ang username + password. Mag-si-sign in sila sa login page gamit ang username.",false
+"no failures this week 🎉","walang failure ngayong linggo 🎉",false
+"No job order found for “{query}”. No X-ray request on file.","Walang nahanap na Job Order para sa “{query}”. Walang X-ray request na naka-file.",false
+"No job orders in this view.","Walang Job Order sa view na ito.",false
+"No job orders yet.","Wala pang Job Orders.",false
+"No lines yet — add your shipping lines below.","Wala pang lines — idagdag ang iyong shipping lines sa ibaba.",false
+"No matches.","Walang tumugma.",false
+"No move types configured.","Walang naka-configure na move types.",false
+"No rejected or cancelled orders.","Walang tinanggihan o kanseladong orders.",false
+"No results","Walang resulta",false
+"No RPS","Walang RPS",false
+"No RPS needed","Walang kailangang RPS",false
+"no runs yet","wala pang run",false
+"No security events. 🎉","Walang security event. 🎉",false
+"No staff yet.","Wala pang staff.",false
+"No valid rows found. Expected a name column (and optional code).","Walang valid na rows na nahanap. Kailangan ng name column (at optional na code).",false
+"No valid rows to import.","Walang valid na rows na i-import.",false
+"No vessel calls right now.","Walang barko sa ngayon.",false
+"None recorded. 🎉","Wala pang naitala. 🎉",false
+"NOT CLEARED · X-ray pending","HINDI PA CLEARED · X-ray pending",false
+"Note to customer:","Note sa customer:",false
+"Nothing here yet.","Wala pa dito.",false
+"Nothing needs your action. 🎉","Walang kailangang gawin. 🎉",false
+"Nothing to save — no changes.","Walang ise-save — walang binago.",false
+"Nothing waiting for payment — every completed order has an invoice. 🎉","Walang naghihintay ng bayad — may invoice na lahat ng tapos nang order. 🎉",false
+"now serving","now serving",true
+"of #{last} this week","ng #{last} ngayong linggo",false
+"Official Receipt No. {no} recorded at the KTC office.","Official Receipt No. {no} naitala sa KTC office.",false
+"ON","ON",true
+"On hold · info needed","Naka-hold · may kailangang info",false
+"One container number per line (commas or spaces also work)\n\nABCD1234567\nEFGH7654321","Isang container number kada linya (pwede rin ang commas o spaces)\n\nABCD1234567\nEFGH7654321",false
+"Only the owner can add or change staff access.","Ang owner lang ang puwedeng magdagdag o magbago ng staff access.",false
+"Only the owner can change access.","Ang owner lang ang puwedeng magbago ng access.",false
+"Open","Bukas",false
+"Open job orders","Mga bukas na Job Order",false
+"Opens your SMS app with the message pre-filled (mobile)","Binubuksan ang SMS app mo na nakalagay na ang message (mobile)",false
+"operations","operations",true
+"Operations","Operations",true
+"Optional note to append (e.g. which field to fix)…","Optional na note na idaragdag (hal. aling field ang aayusin)…",false
+"Or grant admin to an existing account","O magbigay ng admin sa isang existing na account",false
+"Outgoing calls — {n} in 24h","Mga outgoing call — {n} sa 24h",false
+"Overview of the KTC Online Portal.","Overview ng KTC Online Portal.",false
+"Owner","Owner",true
+"page.","page.",true
+"Paid","Bayad na",false
+"PAID","BAYAD NA",false
+"Password","Password",true
+"Password reset for ""{username}"" — hand them the new password.","Na-reset ang password para sa ""{username}"" — ibigay sa kanila ang bagong password.",false
+"Passwords don’t match.","Hindi magkatugma ang passwords.",false
+"past","nakaraan",false
+"Paste at least one container number first.","Mag-paste muna ng kahit isang container number.",false
+"Payment","Payment",true
+"Payment details (customer payment page)","Payment details (customer payment page)",true
+"Payment details will be posted here soon — or pay directly at the KTC cashier.","Ipo-post dito ang payment details sa lalong madaling panahon — o magbayad nang diretso sa KTC cashier.",false
+"Payment doesn’t block processing — the official Service Invoice is issued at the KTC office.","Hindi hahadlang ang payment sa pagpoproseso — ang official Service Invoice ay ibibigay sa KTC office.",false
+"Payment issue — fix","May problema sa payment — ayusin",false
+"Payment QR code","Payment QR code",true
+"Payment under review","Sinusuri ang payment",false
+"pending","naghihintay",false
+"Pending","Naghihintay",false
+"Pending approval","Naghihintay ng approval",false
+"Pending approval (held)","Naghihintay ng approval (naka-hold)",false
+"PENDING FINAL VERIFICATION","NAGHIHINTAY NG FINAL VERIFICATION",false
+"Pending verification","Naghihintay ng verification",false
+"Permanently delete this file from storage (DPA cleanup)","I-delete nang permanente ang file na ito mula sa storage (DPA cleanup)",false
+"Personal details","Personal details",true
+"Philippine statutory VAT — changeable only server-side if the law changes","Philippine statutory VAT — mababago lang sa server-side kapag nagbago ang batas",false
+"Pick the customer this order is for.","Piliin ang customer na para sa order na ito.",false
+"Pick your consignee","Piliin ang iyong consignee",false
+"Please accept the KTC Customer Agreement (Terms & Data Privacy consent) to continue.","Tanggapin ang KTC Customer Agreement (Terms at Data Privacy consent) para magpatuloy.",false
+"Please add a note for the customer.","Maglagay ng note para sa customer.",false
+"Please attach your valid ID.","I-attach ang iyong valid ID.",false
+"Please complete the CAPTCHA.","Kumpletuhin ang CAPTCHA.",false
+"Please confirm your email first — check your inbox (and spam folder) for the confirmation link.","Pakikumpirma muna ang iyong email — tingnan ang iyong inbox (at spam folder) para sa confirmation link.",false
+"Please describe what you updated or clarified.","Pakilarawan kung ano ang in-update o nilinaw mo.",false
+"Please enter your contact number.","Ilagay ang iyong contact number.",false
+"Please enter your full name.","Ilagay ang iyong buong pangalan.",false
+"Please re-upload a corrected slip.","Pakiulit i-upload ang naitamang slip.",false
+"Please tick the consent box before submitting your ID.","Pakitsek muna ang consent box bago i-submit ang iyong ID.",false
+"Please wait a second for the CAPTCHA to refresh, then tap Resend again.","Maghintay ng isang segundo para mag-refresh ang CAPTCHA, tapos i-tap ulit ang Resend.",false
+"Please wait…","Sandali lang…",false
+"port-services (RPS)","port-services (RPS)",true
+"Port-services (RPS) charges","Port-services (RPS) charges",true
+"Preparing…","Inihahanda…",false
+"Prev","Nakaraan",false
+"Prices are locked against accidental edits — unlock to change them","Naka-lock ang mga presyo laban sa di-sinasadyang pagbabago — i-unlock para mabago",false
+"Print","I-print",false
+"Print fee","Print fee",true
+"Print slip","I-print ang slip",false
+"Print slip ↗","I-print ang slip ↗",false
+"Print this guide","I-print ang guide na ito",false
+"printed invoice no.","printed invoice no.",true
+"Process job orders (approve / hold / reject / complete)","I-proseso ang job orders (approve / hold / reject / complete)",false
+"Processing","Pinoproseso",false
+"Profile, email & password","Profile, email at password",false
+"Put on hold","I-hold",false
+"QR code image (bank / GCash)","QR code image (bank / GCash)",true
+"Queue","Queue",true
+"Queue is clear. 🎉","Wala nang naka-queue. 🎉",false
+"Quick tour ▸","Mabilis na gabay ▸",false
+"Rate Calculator","Kalkulador ng Singil",false
+"rate to be confirmed by KTC","rate na kukumpirmahin ng KTC",false
+"Rates","Mga Singil",false
+"Re-assess RPS","I-assess ulit ang RPS",false
+"Reactivate","I-reactivate",false
+"Reason for suspension (shown to the customer)","Dahilan ng suspension (ipapakita sa customer)",false
+"Reason:","Dahilan:",false
+"Record BOTH numbers: the ERP control no. (OR-INV-… cash / BI-INV-… credit) and the printed invoice serial — an invoice on file releases the order","I-record ang DALAWANG number: ang ERP control no. (OR-INV-… cash / BI-INV-… credit) at ang naka-print na invoice serial — magre-release ng order kapag may invoice na naka-file",false
+"Record invoice #","I-record ang invoice #",false
+"Record Service Invoice no. (= PAID)","I-record ang Service Invoice no. (= PAID)",false
+"Refresh","I-refresh",false
+"Refresh statuses (auto-refreshes every minute)","I-refresh ang mga status (auto-refresh kada minuto)",false
+"Reject","I-reject",false
+"Reject job order","I-reject ang Job Order",false
+"Reject order","Tanggihan ang order",false
+"Reject proof","I-reject ang proof",false
+"Rejected","Tinanggihan",false
+"Rejected / cancelled","Tinanggihan / kanselado",false
+"Rejected:","Tinanggihan:",false
+"rejects pending accounts with no ID after 48h","tinatanggihan ang mga pending account na walang ID pagkatapos ng 48h",false
+"Remarks","Remarks",true
+"Remove","Alisin",false
+"Remove {name}","Alisin si {name}",false
+"Remove 2FA and go back to password-only?","Alisin ang 2FA at bumalik sa password-only?",false
+"Remove row","Alisin ang row",false
+"Remove two-factor authentication","Alisin ang two-factor authentication",false
+"Removing…","Inaalis…",false
+"Resend confirmation email","Ipadala ulit ang confirmation email",false
+"Resend in {t}","I-resend sa {t}",false
+"Resending…","Ipinapadala ulit…",false
+"Reset password","I-reset ang password",false
+"Respond & resubmit","Sumagot at i-submit ulit",false
+"Restore","I-restore",false
+"Restore {line} #{no}","Ibalik ang {line} #{no}",false
+"Resubmit for review","I-resubmit para sa review",false
+"Resubmit to KTC","I-submit ulit sa KTC",false
+"Resubmit your details to continue","I-resubmit ang iyong mga detalye para magpatuloy",false
+"Resubmitting…","Sini-submit ulit…",false
+"Review and process job orders from verified customers.","I-review at iproseso ang mga Job Order mula sa mga verified na customer.",false
+"Review payment proofs (confirm / reject)","I-review ang payment proofs (confirm / reject)",false
+"Review the customer's valid ID and confirm they accepted the Agreement (Terms + Data Privacy consent) before approving.","I-review ang valid ID ng customer at i-confirm na tinanggap nila ang Agreement (Terms + Data Privacy consent) bago mag-approve.",false
+"Revoke access","I-revoke ang access",false
+"Role","Role",true
+"Role gate changed","Nabago ang role gate",false
+"Roles & gates","Roles at gates",false
+"Row {row} ({visit}): bad date — use YYYY-MM-DD","Row {row} ({visit}): maling petsa — gamitin ang YYYY-MM-DD",false
+"Row {row}: missing vessel_visit / vessel_name / voyage_number","Row {row}: kulang ang vessel_visit / vessel_name / voyage_number",false
+"RPS / port-services moves for this JO","RPS / port-services moves para sa JO na ito",false
+"RPS document (optional)","RPS document (optional)",true
+"RPS needed","Kailangan ng RPS",false
+"RPS payment slip","RPS payment slip",true
+"RPS payment to review","RPS payment na ire-review",false
+"RPS per-move rates","RPS per-move rates",true
+"Run health check","Mag-run ng health check",false
+"Save","I-save",false
+"Save — needs RPS","I-save — kailangan ng RPS",false
+"Save changes","I-save ang mga binago",false
+"Save free-days","I-save ang free-days",false
+"Save gates","I-save ang gates",false
+"Save invoice","I-save ang invoice",false
+"Save move rates","I-save ang move rates",false
+"Save payment details","I-save ang payment details",false
+"Save pricing","I-save ang pricing",false
+"Saved.","Na-save.",false
+"Saving…","Sine-save…",false
+"Scan to pay","I-scan para magbayad",false
+"Scheduled jobs","Mga scheduled job",false
+"Search by name, customer code, or email…","Maghanap sa pangalan, customer code, o email…",false
+"Search code or name…","Maghanap sa code o pangalan…",false
+"Search consignee by code or name…","Maghanap ng consignee sa code o pangalan…",false
+"Searching…","Naghahanap…",false
+"Security","Security",true
+"Security events","Mga security event",false
+"Select a consignee from the list.","Pumili ng consignee mula sa listahan.",false
+"Select a vessel…","Pumili ng vessel…",false
+"Select the vessel & voyage (or tick “not listed”).","Piliin ang vessel & voyage (o i-tick ang “not listed”).",false
+"Send confirmation link","Ipadala ang confirmation link",false
+"Send reset link","Ipadala ang reset link",false
+"Send via Viber","I-send sa Viber",false
+"Sending…","Ipinapadala…",false
+"server-side","server-side",true
+"Service for all:","Service para sa lahat:",false
+"Service rates & fees","Mga service rate at fee",false
+"Serving numbers are assigned — the slip can be printed now.","Naka-assign na ang serving numbers — pwede nang i-print ang slip.",false
+"Set a new password","Magtakda ng bagong password",false
+"set line","set line",true
+"Settings","Settings",true
+"Settings · rates & fees","Settings · rates at fees",false
+"Share a snapshot of active vessels to your Viber group","I-share ang snapshot ng active na vessels sa iyong Viber group",false
+"Shipping line","Shipping line",true
+"Shipping Line","Shipping Line",true
+"Show all orders","Ipakita lahat ng order",false
+"Show past/cancelled","Ipakita ang nakaraan/kanselado",false
+"Show this page's walkthrough","Ipakita ang gabay sa pahinang ito",false
+"Showing {from}–{to} of {total}","Ipinapakita ang {from}–{to} ng {total}",false
+"Sign in","Mag-sign in",false
+"Sign in to continue","Mag-sign in para magpatuloy",false
+"Sign out","Mag-sign out",false
+"Sign up","Mag-sign up",false
+"Skip for now — continue to the portal →","I-skip muna — magpatuloy sa portal →",false
+"Skip the tour","Laktawan ang gabay",false
+"Skipped {count}:","Nilaktawan ang {count}:",false
+"SMS","SMS",true
+"Snapshot downloaded — attach it in your Viber group.","Na-download ang snapshot — i-attach ito sa inyong Viber group.",false
+"snapshots job orders to the BOC Google Sheet","kumukuha ng snapshot ng mga Job Order papunta sa BOC Google Sheet",false
+"Some rates aren’t configured yet — “—” lines aren’t included in the total.","May mga rate na hindi pa naka-configure — ang mga “—” na linya ay hindi kasama sa total.",false
+"Some rates aren’t configured yet — the total below may be incomplete. KTC will confirm the final amount.","May mga rate na hindi pa naka-configure — baka kulang pa ang total sa ibaba. Iko-confirm ng KTC ang final na halaga.",false
+"Something went wrong.","May nangyaring mali.",false
+"Staff & access","Staff at access",false
+"Staff access revoked from {email}.","Inalis ang staff access kay {email}.",false
+"Staff account created ({suRole}). They sign in with username ""{u}"" and the password you set.","Nagawa na ang staff account ({suRole}). Mag-si-sign in sila gamit ang username na ""{u}"" at ang password na itinakda mo.",false
+"Status message","Status message",true
+"statutory · fixed","statutory · fixed",true
+"Step {n} of {total}","Hakbang {n} ng {total}",false
+"Submit Job Order","I-submit ang Job Order",false
+"Submit to KTC","I-submit sa KTC",false
+"Submit valid ID for verification","I-submit ang valid ID para sa verification",false
+"submitted","naisumite",false
+"Submitted","Naisumite",false
+"Submitting…","Sini-submit…",false
+"Suspend","I-suspend",false
+"Suspend account (contact admin)","I-suspend ang account (contact admin)",false
+"Suspended","Suspended",true
+"Switch between a table and a month calendar (vessels shown on their arrival date). Tick ""Show past/cancelled"" to see the full history. View only — KTC keeps the schedule up to date.","Magpalit sa pagitan ng talahanayan at buwanang kalendaryo (ipinapakita ang mga barko sa petsa ng pagdating). I-tsek ang ""Ipakita ang nakaraan/kanselado"" para makita ang buong kasaysayan. Tingnan lang — KTC ang nag-a-update ng iskedyul.",false
+"system","system",true
+"System","System",true
+"System health","System health",true
+"Table","Talahanayan",false
+"Table or calendar","Talahanayan o kalendaryo",false
+"Tap an order to see its containers and services.","I-tap ang order para makita ang mga container at serbisyo nito.",false
+"Tell the customer what information or update you need. They’ll see this note on the order.","Sabihin sa customer kung anong impormasyon o update ang kailangan mo. Makikita nila ang note na ito sa order.",false
+"Tell the customer why this order is being rejected. They’ll see this note on the order.","Sabihin sa customer kung bakit nire-reject ang order na ito. Makikita nila ang note na ito sa order.",false
+"terminal","terminal",true
+"Thanks — your email address is verified. Please sign in with your password to continue and upload your valid ID.","Salamat — verified na ang iyong email address. Mag-sign in gamit ang iyong password para magpatuloy at i-upload ang iyong valid ID.",false
+"Thanks for confirming your email. To get your account verified, attach a clear photo or PDF of a valid government-issued ID and submit it — a KTC admin will review it. You don’t have to do it now: you can head straight to the portal and prepare job orders, but they’ll be","Salamat sa pag-confirm ng iyong email. Para ma-verify ang iyong account, i-attach ang malinaw na photo o PDF ng valid government-issued ID at i-submit ito — irereview ito ng KTC admin. Hindi mo kailangang gawin ngayon: puwede kang diretso sa portal at maghanda ng job orders, pero ito'y mananatiling",false
+"That code didn't match — check your authenticator app and try again.","Hindi tumugma ang code na iyon — tingnan ang iyong authenticator app at subukan ulit.",false
+"That code didn't match — scan the QR again or re-type the code.","Hindi tugma ang code — i-scan ulit ang QR o i-type ulit ang code.",false
+"That file has no data rows.","Walang data rows ang file na iyan.",false
+"That line already exists.","Existing na ang line na iyon.",false
+"That service already exists — reactivate it instead.","Existing na ang service na iyon — i-reactivate na lang ito.",false
+"That’s already your email.","Iyan na ang email mo.",false
+"The calls customers file against. Add one with the form, or bulk-update from your sheet with ⬇ Template then ⬆ Import (matched by vessel-visit, so re-importing updates rather than duplicates).","Ang mga call na pinag-fa-file-an ng mga customer. Magdagdag gamit ang form, o mag-bulk-update mula sa iyong sheet gamit ang ⬇ Template tapos ⬆ Import (naka-match sa vessel-visit, kaya kapag in-import ulit ay nag-u-update sa halip na mag-duplicate).",false
+"The current vessel calls at KTC, maintained by operations. Check your vessel & voyage before filing, and watch the Last Free Day — the last day of free storage before charges start.","Ang mga kasalukuyang barko sa KTC, pinapanatili ng operations. Tingnan ang iyong barko at voyage bago mag-file, at bantayan ang Huling Free Day — ang huling araw ng libreng storage bago magsimula ang singil.",false
+"The customer","Ang customer",false
+"The Dashboard is your live overview. Each tile is a live count that links straight to where the work happens — here's what they mean.","Ang Dashboard ang live na overview mo. Bawat tile ay live na bilang na diretsong nagli-link sa kung saan nangyayari ang trabaho — eto ang ibig sabihin ng mga ito.",false
+"The ERP record ID — OR-INV-… for cash, BI-INV-… for credit","Ang ERP record ID — OR-INV-… para sa cash, BI-INV-… para sa credit",false
+"The full consignee master list customers pick from. Tap to add, edit, or bulk-import.","Ang buong consignee master list na pinipilian ng mga customer. I-tap para mag-add, mag-edit, o mag-bulk-import.",false
+"The live queue — submitted, processing, and on-hold orders. Tap to open the working queue. Most of the day-to-day lives there: process orders, confirm payments, record invoices.","Ang live na queue — mga order na naisumite, pinoproseso, at naka-hold. I-tap para buksan ang working queue. Karamihan ng araw-araw na trabaho ay nandoon: i-process ang mga order, i-confirm ang mga payment, i-record ang mga invoice.",false
+"The printed OR / Billing Invoice serial from the pad","Ang naka-print na OR / Billing Invoice serial mula sa pad",false
+"The Rate Calculator estimates your fees — pick services and container counts to see the estimated total, inclusive of VAT and fees.","I-estimate ng Rate Calculator ang iyong fees — pumili ng services para makita ang estimated total, kasama na ang VAT at fees.",false
+"This is the legal name verified against your ID. Changing it requires re-verification (you’ll re-upload an ID for an admin to review).","Ito ang legal na pangalan na na-verify base sa iyong ID. Kapag binago ito, kailangan ng re-verification (mag-uupload ka uli ng ID para suriin ng admin).",false
+"this monitor — emails the owner on failures","itong monitor — nag-e-email sa owner kapag may failure",false
+"this order (untick to close it permanently — they’d have to file a new one)","ang order na ito (alisin ang check para isara ito nang permanente — kailangan nilang mag-file ng bago)",false
+"This order is closed. If needed, please","Sarado na ang order na ito. Kung kailangan, paki-",false
+"This order was resubmitted and went to the back of the line — restore its original number","Na-resubmit ang order na ito at napunta sa dulo ng linya — ibalik ang orihinal nitong number",false
+"This reset link is invalid or has expired. Please request a new one.","Invalid na o expired na ang reset link na ito. Humiling ng bago.",false
+"This week's {line} line number","Line number ng {line} ngayong linggo",false
+"Tick the consent box above to submit.","I-tick ang consent box sa itaas para makapag-submit.",false
+"Tick to offer this service again","Lagyan ng tsek para ibalik ang serbisyong ito",false
+"TIN","TIN",true
+"To","Para kay",false
+"Too many failed sign-in attempts. Please wait","Masyadong maraming failed na sign-in attempts. Pakihintay nang",false
+"total","kabuuan",false
+"Total","Total",true
+"TOTP enrollment QR code","TOTP enrollment QR code",true
+"Track statuses, pay, and print approved slips","I-track ang status, magbayad, at i-print ang mga aprubadong slip",false
+"Track your orders","I-track ang iyong mga order",false
+"Try again in {secs}s","Subukan ulit sa {secs}s",false
+"Turn on 2FA","I-on ang 2FA",false
+"Two-factor authentication","Two-factor authentication",true
+"Two-factor authentication is active on this account.","Aktibo ang two-factor authentication sa account na ito.",false
+"Two-factor authentication is currently available for admin and owner accounts only.","Sa ngayon, available lang ang two-factor authentication para sa admin at owner accounts.",false
+"Two-factor authentication removed. Your account is back to password-only — consider re-enrolling.","Naalis ang two-factor authentication. Bumalik sa password-only ang iyong account — mabuting mag-enroll ulit.",false
+"Type a container or JO number to check a box: NOT CLEARED · X-ray pending means it's waiting; CLEARED shows when it passed. Use it when a trucker asks.","Mag-type ng container o JO number para i-check ang isang box: NOT CLEARED · X-ray pending ay ibig sabihin naghihintay pa; CLEARED ang lalabas kapag pumasa na. Gamitin ito kapag may nagtatanong na trucker.",false
+"Type at least {minChars} characters to search.","Mag-type ng kahit {minChars} characters para maghanap.",false
+"Type to search the consignee master list and pick yours.","Mag-type para maghanap sa consignee master list at piliin ang sa iyo.",false
+"Unknown","Hindi alam",false
+"Unknown customer","Di kilalang customer",false
+"Unlock editing first","I-unlock muna ang pag-edit",false
+"Unpaid · completed","Hindi pa bayad · tapos na",false
+"unpaid {d}d","hindi bayad {d}d",false
+"Untick to remove from the New Job Order form and calculator (existing orders unaffected)","Alisan ng tsek para tanggalin sa New Job Order form at calculator (hindi maaapektuhan ang mga existing na order)",false
+"Update call","I-update ang call",false
+"Update password","I-update ang password",false
+"Updating…","Ina-update…",false
+"Upload a clear photo or PDF of the deposit / transfer / GCash receipt.","I-upload ang malinaw na photo o PDF ng deposit / transfer / GCash receipt.",false
+"Upload a valid government ID and a KTC admin will review your account. You can file Job Orders while you wait — but they're held until a KTC admin reviews and approves your account.","I-upload ang valid government ID at ire-review ng isang KTC admin ang iyong account. Pwede ka nang mag-file ng Job Orders habang naghihintay — pero naka-hold ang mga ito hanggang ma-review at ma-approve ng isang KTC admin ang account mo.",false
+"Upload your valid ID","I-upload ang iyong valid ID",false
+"Upload your valid ID →","I-upload ang iyong valid ID →",false
+"Upload your valid ID for final verification (banner above); once a KTC admin approves you, your held orders are sent automatically.","I-upload ang valid ID mo para sa final verification (banner sa itaas); kapag inaprubahan ka na ng KTC admin, automatic nang ipapadala ang held orders mo.",false
+"Upload your valid ID to get verified","I-upload ang iyong valid ID para ma-verify",false
+"Used for the online-payment computation (the official Service Invoice + receipt come from the ERP). Amounts in ₱.","Ginagamit para sa online-payment computation (ang official na Service Invoice + receipt ay galing sa ERP). Mga halaga sa ₱.",false
+"User Manual","Gabay sa Paggamit",false
+"Username","Username",true
+"Valid ID — {name}","Valid ID — {name}",true
+"Valid ID (image or PDF)","Valid ID (image o PDF)",false
+"Valid ID preview","Preview ng valid ID",false
+"Valid ID:","Valid ID:",true
+"VAT ({pct}% of vatable services)","VAT ({pct}% ng vatable services)",false
+"VAT ({pct}%)","VAT ({pct}%)",true
+"VAT rate","VAT rate",true
+"VATable","May VAT",false
+"Verified","Na-verify na",false
+"Verify","I-verify",false
+"Vessel","Barko",false
+"VESSEL","VESSEL",true
+"Vessel & voyage","Vessel at voyage",false
+"Vessel & Voyage","Vessel & Voyage",true
+"Vessel name","Vessel name",true
+"Vessel Name*","Vessel Name*",true
+"Vessel not listed — enter manually","Wala sa listahan ang vessel — i-type nang manual",false
+"Vessel schedule","Iskedyul ng mga barko",false
+"Vessel Schedule","Iskedyul ng mga Barko",false
+"Vessel Visit, Vessel Name and Voyage Number are required.","Kailangan ang Vessel Visit, Vessel Name at Voyage Number.",false
+"Vessel Visit*","Vessel Visit*",true
+"Vessels","Mga Barko",false
+"View","Tingnan",false
+"View charges & pay","Tingnan ang charges at magbayad",false
+"View current 2303","Tingnan ang kasalukuyang 2303",false
+"View full ↗","Tingnan ang buo ↗",false
+"View ID","Tingnan ang ID",false
+"View job orders","Tingnan ang job orders",false
+"View queue →","Tingnan ang queue →",false
+"View RPS payment","Tingnan ang RPS payment",false
+"View valid ID","Tingnan ang valid ID",false
+"View X-ray payment","Tingnan ang X-ray payment",false
+"Visit","Visit",true
+"VISIT","VISIT",true
+"Voyage","Voyage",true
+"VOYAGE","VOYAGE",true
+"Voyage number","Voyage number",true
+"Voyage Number*","Voyage Number*",true
+"Walk-ins and in-house ops — the order is filed under the customer's account and enters the line as","Walk-ins at in-house ops — naka-file ang order sa account ng customer at pumapasok sa linya bilang",false
+"We just need a quick update to finish verifying your account. Please review the note below, update your details, and resubmit — a KTC admin will review it again.","Kailangan lang namin ng mabilis na update para matapos i-verify ang iyong account. Pakitingnan ang note sa ibaba, i-update ang iyong mga detalye, at i-resubmit — susuriin itong muli ng KTC admin.",false
+"We’ll email a confirmation link to the new address. The change only takes effect once you click it.","Magpapadala kami ng confirmation link sa bagong address via email. Magkakabisa lang ang pagbabago kapag na-click mo na ito.",false
+"Welcome","Maligayang pagdating",false
+"Welcome to the KTC admin portal","Maligayang pagdating sa KTC admin portal",false
+"Welcome, {name}","Maligayang pagdating, {name}",false
+"What did you fix? (optional note to KTC)","Ano ang inayos mo? (optional na note sa KTC)",false
+"What each staff role may do. Owner-only — enforced server-side (RLS + RPCs), the UI just mirrors it.","Kung ano ang pwedeng gawin ng bawat staff role. Owner-only — naka-enforce sa server-side (RLS + RPCs), ang UI ay sumasalamin lang dito.",false
+"What to update:","Ano ang i-uupdate:",false
+"When a container passes the X-ray, hit Confirm on its card — it stamps the date/time and the order leaves your queue (completing once its other services are done).","Kapag pumasa ang container sa X-ray, i-Confirm sa card nito — ita-stamp nito ang date/time at aalis ang order sa queue mo (matatapos kapag tapos na ang ibang services nito).",false
+"Who did what, when","Sino ang gumawa, ano, at kailan",false
+"Why? (shown to the customer)","Bakit? (makikita ng customer)",false
+"Working…","Ginagawa…",false
+"X-ray charges","X-ray charges",true
+"X-ray Checker","X-ray Checker",true
+"X-ray Checker station","X-ray Checker station",true
+"X-ray done","Tapos na ang X-ray",false
+"X-ray done and balance fully paid. Collect your gate pass / official Service Invoice at the KTC office.","Tapos na ang X-ray at bayad na nang buo ang balance. Kunin ang iyong gate pass / official Service Invoice sa KTC office.",false
+"X-ray line — {count} waiting","X-ray line — {count} naghihintay",false
+"X-ray payment confirmed","Na-confirm na ang X-ray payment",false
+"X-ray payment slip","X-ray payment slip",true
+"X-ray payment to review","X-ray payment na ire-review",false
+"Yes","Oo",false
+"Yes, cancel it","Oo, i-cancel",false
+"Yes, remove it","Oo, alisin ito",false
+"You can already file job orders — they’re held pending verification. Upload your valid ID to get verified; once approved, your held orders are sent to KTC automatically.","Pwede ka nang mag-file ng job orders — naka-hold lang sila habang hinihintay ang verification. I-upload ang iyong valid ID para ma-verify; pag aprubado na, awtomatikong ipapadala sa KTC ang iyong mga naka-hold na order.",false
+"You can file job orders now, but they","Pwede ka nang mag-file ng Job Orders ngayon, pero",false
+"You can upload your ID later from the banner.","Pwede mong i-upload ang iyong ID mamaya mula sa banner.",false
+"You were signed out after {mins} minutes of inactivity. Please sign in again.","Na-sign out ka pagkatapos ng {mins} na minutong walang aktibidad. Mag-sign in ulit.",false
+"You were signed out because this account signed in on another device or browser. If that wasn’t you, change your password now.","Na-sign out ka dahil nag-sign in ang account na ito sa ibang device o browser. Kung hindi ikaw iyon, palitan mo ang iyong password ngayon.",false
+"You’ll see the result here.","Makikita mo ang resulta dito.",false
+"You’ve been inactive for a while — you’ll be signed out in about a minute.","Matagal ka nang hindi aktibo — mag-si-sign out ka sa loob ng mga isang minuto.",false
+"you@example.com","you@example.com",true
+"Your account","Ang iyong account",false
+"your account goes back to","babalik ang account mo sa",false
+"Your account has been suspended. Please contact KTC customer service for assistance.","Na-suspend ang iyong account. Mangyaring i-contact ang KTC customer service para sa tulong.",false
+"Your account is awaiting admin verification","Naghihintay ng admin verification ang iyong account",false
+"Your accredited customers. Tap to search, open a customer's detail, or suspend / reinstate an account.","Ang iyong mga accredited na customer. I-tap para maghanap, buksan ang detalye ng customer, o i-suspend / i-reinstate ang isang account.",false
+"Your job orders live here","Nandito ang iyong mga job order",false
+"Your legal name was verified against your ID. To change it to","Na-verify ang legal mong pangalan base sa iyong ID. Para palitan ito ng",false
+"Your note to KTC:","Iyong note sa KTC:",false
+"Your number in this week's {line} line","Ang number mo sa {line} line ngayong linggo",false
+"Your proof is with KTC for review","Nasa KTC ang iyong proof para i-review",false
+"Your proof wasn’t accepted","Hindi tinanggap ang iyong proof",false
+"Your queue of orders waiting for X-ray, sorted by line number, with the ""Now serving"" strip on top.","Ang queue mo ng mga order na naghihintay ng X-ray, naka-sort ayon sa line number, kasama ang ""Now serving"" strip sa itaas.",false
+"Your reply to KTC (what did you update or clarify?)","Sagot mo sa KTC (ano ang in-update o nilinaw mo?)",false
+"Your role doesn't have permission to file job orders on behalf of customers.","Walang permission ang iyong role para mag-file ng Job Order para sa mga customer.",false
+"Your valid ID is on file — a KTC admin is verifying your account. Once approved, your held orders are sent to KTC automatically.","Nasa file na ang valid ID mo — vinveverify ng KTC admin ang account mo. Kapag aprubado na, automatic na ipapadala sa KTC ang held orders mo.",false
