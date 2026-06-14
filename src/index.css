@@ -414,6 +414,12 @@
       border-radius: 14px;
     }
     .ktc-nav-link { padding: 8px 11px; font-size: 13px; }
+    /* Phone: collapse the inline links + utility buttons into the hamburger
+       drawer. Two-class selectors so these win over the base rules regardless
+       of source order. */
+    .ktc-nav .ktc-nav-links { display: none; }
+    .ktc-nav .ktc-nav-util { display: none; }
+    .ktc-nav .ktc-burger { display: inline-flex; }
 
     .ktc-title { font-size: 20px; }
     .ktc-sub { font-size: 13px; }
@@ -441,6 +447,60 @@
       box-shadow: var(--shadow-lg), var(--edge);
     }
   }
+
+  /* ---- Mobile navigation drawer ---- */
+  .ktc-burger { display: none; } /* desktop: hidden; shown in the mobile layer */
+  /* Utility cluster (help/sign-out) — inline on desktop, folded into the drawer on phones. */
+  .ktc-nav-util { display: contents; }
+  .ktc-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(15, 18, 30, 0.45);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    animation: ktc-fade-in var(--dur-fast) ease;
+  }
+  .ktc-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: min(82vw, 320px);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.98);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+    border-left: 1px solid var(--glass-brd);
+    box-shadow: var(--shadow-lg);
+    animation: ktc-slide-in var(--dur) var(--ease-spring);
+  }
+  @keyframes ktc-slide-in { from { transform: translateX(100%); } }
+  @media (prefers-reduced-motion: reduce) { .ktc-drawer { animation: none; } }
+  .ktc-drawer-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 13px 14px;
+    border-radius: 12px;
+    font-size: 15.5px;
+    font-weight: 550;
+    text-align: left;
+    color: hsl(var(--ink));
+    text-decoration: none;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .ktc-drawer-link.is-active { background: rgb(var(--acc-rgb) / 0.12); color: var(--acc-2); font-weight: 650; }
+  .ktc-drawer-link:active { background: rgba(0, 0, 0, 0.05); }
+  .ktc-drawer-sep { height: 1px; background: var(--glass-brd); margin: 6px 4px; }
+  .ktc-drawer-label { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: hsl(var(--ink-2)); padding: 10px 14px 4px; }
 
   /* Skeleton shimmer — frosted placeholder while content loads */
   .ktc-skeleton {

@@ -8,6 +8,7 @@ import { useSessionGuard } from '../lib/useSessionGuard'
 import IdleWarning from '../components/IdleWarning'
 import { useTour } from '../components/TourProvider'
 import LangToggle from '../components/LangToggle'
+import NavDrawer from '../components/NavDrawer'
 import { useT } from '../lib/i18n'
 import { VERSION_LABEL, VERSION_FULL } from '../version'
 
@@ -151,14 +152,53 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
         </span>
         <AdminNav can={can} />
         <LangToggle />
-        {hasPageTour && (
-          <button className="ktc-nav-link" onClick={replayPageTour} style={{ flex: '0 0 auto', fontWeight: 700 }} title={t("Show this page's walkthrough")} aria-label={t("Show this page's walkthrough")}>
-            ?
+        <span className="ktc-nav-util">
+          {hasPageTour && (
+            <button className="ktc-nav-link" onClick={replayPageTour} style={{ flex: '0 0 auto', fontWeight: 700 }} title={t("Show this page's walkthrough")} aria-label={t("Show this page's walkthrough")}>
+              ?
+            </button>
+          )}
+          <button className="ktc-nav-link" onClick={handleSignOut} style={{ flex: '0 0 auto' }}>
+            {t('Sign out')}
           </button>
-        )}
-        <button className="ktc-nav-link" onClick={handleSignOut} style={{ flex: '0 0 auto' }}>
-          {t('Sign out')}
-        </button>
+        </span>
+        <NavDrawer>
+          {(close) => (
+            <>
+              {NAV.map((node) => {
+                if ('items' in node) {
+                  const items = node.items.filter((i) => !i.perm || can(i.perm))
+                  if (items.length === 0) return null
+                  return (
+                    <div key={node.label}>
+                      <div className="ktc-drawer-label">{t(node.label)}</div>
+                      {items.map((i) => (
+                        <NavLink key={i.to} to={i.to} onClick={close}
+                          className={({ isActive }) => `ktc-drawer-link${isActive ? ' is-active' : ''}`}>
+                          {t(i.label)}
+                        </NavLink>
+                      ))}
+                    </div>
+                  )
+                }
+                if (node.perm && !can(node.perm)) return null
+                return (
+                  <NavLink key={node.to} to={node.to} end={node.end} onClick={close}
+                    className={({ isActive }) => `ktc-drawer-link${isActive ? ' is-active' : ''}`}>
+                    {t(node.label)}
+                  </NavLink>
+                )
+              })}
+              <div className="ktc-drawer-sep" />
+              {hasPageTour && (
+                <button type="button" className="ktc-drawer-link" onClick={() => { close(); replayPageTour() }}>
+                  {t("Show this page's walkthrough")}
+                </button>
+              )}
+              <button type="button" className="ktc-drawer-link" onClick={handleSignOut}>{t('Sign out')}</button>
+            </>
+          )}
+        </NavDrawer>
       </nav>
 
       <div className="ktc-stagger">{children}</div>

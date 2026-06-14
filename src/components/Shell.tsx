@@ -13,6 +13,7 @@ import IdleWarning from './IdleWarning'
 import { useTour } from './TourProvider'
 import { useT } from '../lib/i18n'
 import LangToggle from './LangToggle'
+import NavDrawer from './NavDrawer'
 
 const IDLE_LOGOUT_MS = 15 * 60 * 1000 // auto sign-out after 15 min of inactivity (warning at 14)
 
@@ -79,15 +80,36 @@ export default function Shell({ children }: { children: ReactNode }) {
           ))}
         </div>
         <LangToggle />
-        {hasPageTour && (
-          <button className="ktc-nav-link" onClick={replayPageTour}
-            style={{ flex: '0 0 auto', fontWeight: 700 }} title={t("Show this page's walkthrough")} aria-label={t("Show this page's walkthrough")}>
-            ?
+        <span className="ktc-nav-util">
+          {hasPageTour && (
+            <button className="ktc-nav-link" onClick={replayPageTour}
+              style={{ flex: '0 0 auto', fontWeight: 700 }} title={t("Show this page's walkthrough")} aria-label={t("Show this page's walkthrough")}>
+              ?
+            </button>
+          )}
+          <button className="ktc-nav-link" onClick={handleSignOut} style={{ flex: '0 0 auto' }}>
+            {t('Sign out')}
           </button>
-        )}
-        <button className="ktc-nav-link" onClick={handleSignOut} style={{ flex: '0 0 auto' }}>
-          {t('Sign out')}
-        </button>
+        </span>
+        <NavDrawer>
+          {(close) => (
+            <>
+              {NAV.map((n) => (
+                <NavLink key={n.to} to={n.to} end={n.end} onClick={close}
+                  className={({ isActive }) => `ktc-drawer-link${isActive ? ' is-active' : ''}`}>
+                  {t(n.label)}
+                </NavLink>
+              ))}
+              <div className="ktc-drawer-sep" />
+              {hasPageTour && (
+                <button type="button" className="ktc-drawer-link" onClick={() => { close(); replayPageTour() }}>
+                  {t("Show this page's walkthrough")}
+                </button>
+              )}
+              <button type="button" className="ktc-drawer-link" onClick={handleSignOut}>{t('Sign out')}</button>
+            </>
+          )}
+        </NavDrawer>
       </nav>
 
       {locked ? (
