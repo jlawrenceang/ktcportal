@@ -347,7 +347,7 @@ export default function Login() {
                   required
                 />
                 <span className="ktc-label" style={{ fontSize: 13 }}>
-                  {t('I have read and agree to the')} <b>{t('KTC Customer Agreement')}</b> {t('— including the Terms & Conditions, confidentiality / non-disclosure obligations, and my consent to KTC processing my personal data (including the valid ID I upload) under the Data Privacy Act of 2012.')}
+                  {t('I have read and agree to the')} <b>{t('KTC Customer Agreement')}</b> {t('— including the Terms & Conditions, and my consent to KTC processing my personal data.')}
                 </span>
               </label>
             </div>

@@ -18,7 +18,7 @@ export const tl: Record<string, string> = {
   " Note: their valid ID could not be deleted — see the warning on the page.": " Note: hindi ma-delete ang valid ID nila — tingnan ang warning sa page.",
   " Their valid ID was removed from storage.": " Tinanggal sa storage ang valid ID nila.",
   "— a stolen password alone can't reach any staff function.": "— hindi sapat ang ninakaw na password lang para makapasok sa anumang staff function.",
-  "— including the Terms & Conditions, confidentiality / non-disclosure obligations, and my consent to KTC processing my personal data (including the valid ID I upload) under the Data Privacy Act of 2012.": "— kasama ang Terms & Conditions, mga obligasyon sa confidentiality / non-disclosure, at ang aking pahintulot sa KTC na iproseso ang aking personal na data (kasama ang valid ID na i-upload ko) sa ilalim ng Data Privacy Act of 2012.",
+  "— including the Terms & Conditions, and my consent to KTC processing my personal data.": "— kasama ang Terms & Conditions, at ang aking pahintulot sa KTC na iproseso ang aking personal na data.",
   "— replace current": "— palitan ang kasalukuyan",
   "‹ Prev": "‹ Nakaraan",
   "\"{n}\" added — set its free-days and Save.": "Nadagdag ang \"{n}\" — i-set ang free-days nito at i-Save.",
