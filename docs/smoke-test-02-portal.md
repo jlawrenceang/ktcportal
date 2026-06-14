@@ -2,7 +2,7 @@
 
 **Smoke Test ID:** ST02
 **Date authored:** 2026-06-12
-**Status:** IN PROGRESS — preflight P1–P8 PASS (re-run 2026-06-13 post-wave, no regressions); P9 data setup pending; manual Lanes 1–11 not yet walked
+**Status:** IN PROGRESS — preflight P1–P8 PASS (re-run 2026-06-13 post-wave, no regressions); P9 data setup pending; manual Lanes 1–11 being walked. **2026-06-14 manual pass underway** — owner walking the live portal "blind"; UX findings + fixes logged below ("ST02 walkthrough — UX findings & fixes (2026-06-14)"), all shipped to prod.
 **Target:** https://portal.ktcterminal.com (live, pre-public)
 **Covers:** migrations `0011`–`0064` / sessions 4–11 — order lifecycle loops, serving numbers, per-service completion, checker station, payments + invoice, roles & gates, Logs, observability, MFA, ID retention, **plus the Operations & JO-Modernization wave (Lanes 9–11): the operations role, vessel schedule + free-days + CSV import + calendar + Viber snapshot, the vessel/voyage dropdown on filing, RPS assessment + per-move billing, and the two-payment running balance + Cleared-for-release badge**.
 **Refreshed:** 2026-06-13 — added Lanes 9–11 for the operations / vessel-schedule / RPS-billing wave (migrations 0056–0064).
@@ -44,13 +44,38 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 
 ---
 
+## ST02 walkthrough — UX findings & fixes (2026-06-14)
+
+Owner walked the live portal manually ("blind") and raised UX findings as they
+went. Each was fixed and shipped to prod the same day (frontend-only — no DB
+migrations). Logged here so the ST02 record is complete.
+
+| # | Finding / request (where) | Change shipped | Commit |
+|---|---|---|---|
+| W1 | Customers had no way to see the vessel schedule (Lane 10 is ops-only) | **Read-only Vessel Schedule for customers** — table + month calendar, current-only default, `/vessels` + nav + Home tile (writes still ops/admin only) | `4643f3c` |
+| W2 | Portal English-only; brokers/staff want Filipino | **Tagalog i18n** — `t()` across all UI, EN/FIL toggle (nav + login), per-browser, English fallback; **tours + all 5 manuals** localized too (Agreement + emails stay English by decision) | `ab7629e`, `6e33020` |
+| W3 | The demo flashed in English before any language choice (Lane 1.3) | **First-run language chooser** modal after sign-in, **before** the tour; the demo then runs in the chosen language. Nav toggle / login choice also satisfies it | `1591b8a` |
+| W4 | UI not optimized for mobile/tablet; forms need scrolling (esp. filing) | **Mobile pass wave 1** — responsive `.ktc-page`, sticky action bar, `Wizard` (desktop = 1 form, phone = steps); **New Job Order → 3-step wizard on phones** | `b8460c7` |
+| W5 | Desktop too tall; should fit one screen | **Desktop compaction** — global density (nav/title/input/btn) + `.ktc-fields` 2-column layout; New Job Order pairs fields to fit one screen | `3bc84a6` |
+| W6 | Language switch on the login page not noticeable | Labeled it **🌐 Language / Wika**, then trimmed to a **globe icon + EN/FIL** | `440241e`, `522d619` |
+| W7 | Registration consent clause too long (Lane 1.1) | Shortened the tick label to "…the **KTC Customer Agreement** — including the Terms & Conditions, and my consent to KTC processing my personal data." (full Terms/NDA/DPA still in the linked Agreement) | `ff1b424` |
+| W8 | Footer showed commit hash + build date | Footer now shows just **v1.1.0**; commit+date moved to a hover tooltip (still traceable) | `f65861b` |
+| W9 | Forgot-password could be requested repeatedly (Lane 7.4 area) | **60s per-email resend cooldown** with a countdown ("Resend in Ns") + spam-folder hint. (Supabase server-side rate-limit + CAPTCHA were already the real backstops; this is UX) | _2026-06-14_ |
+
+**Still open from this pass (not yet built):**
+- Mobile **wave 2** (registration → wizard; Payment / Verify ID / Account → dense + sticky) and **wave 3** (admin data tables → phone card lists) — owner holding for a device test first.
+- Roll the desktop **2-column "use width"** treatment across the remaining forms (Login, Account, Payment, admin Settings/forms) — pattern proven on New Job Order.
+
+---
+
 ## Lane 1 — Onboarding + demo tour
 
 | # | Step | Expected | Result |
 |---|---|---|---|
-| 1.1 | Register a throwaway customer (name, contact, email, pw, scroll-agree + ticks, CAPTCHA) | confirmation email arrives (branded) | |
+| 1.0 | (Optional) pick **🌐 EN / FIL** on the login card before signing in | the whole app + the upcoming demo switch language; choice persists per browser | |
+| 1.1 | Register a throwaway customer (name, contact, email, pw, scroll-agree + **shortened** consent tick, CAPTCHA) | confirmation email arrives (branded); tick reads "…KTC Customer Agreement — including the Terms & Conditions, and my consent to KTC processing my personal data." (W7) | |
 | 1.2 | Confirm email → sign in | lands on `/verify-id` (DPA tick + ID upload, or Skip) | |
-| 1.3 | Skip to portal → Home | **Quick tour auto-opens** (6 steps, dots, Skip); closing it and reloading does NOT reopen; "Quick tour ▸" link reopens it | |
+| 1.3 | Skip to portal → Home — **first-run language chooser** appears (if not already chosen) | "Choose your language / Pumili ng wika" → pick EN/FIL → **Quick tour auto-opens in that language** (6 steps, dots, Skip); closing + reloading does NOT reopen; "Quick tour ▸" replays. On a phone the home tour walks the tiles per-page (W3, W4) | |
 | 1.4 | File a JO while pending | saved as **held** ("Draft (no number yet)"), notice says verify to process | |
 | 1.5 | Upload valid ID (banner) | admin Approvals shows the account with ID + consent badges | |
 | 1.6 | Footer → **User Manual** | customer guide renders (`/manual`); "Print this guide" opens the print dialog | |
@@ -124,6 +149,7 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | 7.3d | Eviction audit: after 7.3c, owner opens Logs → Security | "Session evicted — account signed in on a new device" entry for the test customer; **no** owner alert email for it (routine event) | |
 | 7.3e | (Advanced, optional) Dead-session cut-off: capture the evicted browser's access token *before* 7.3c, then after eviction replay it against REST (`curl …/rest/v1/job_orders -H "apikey: <anon>" -H "Authorization: Bearer <evicted JWT>"`) | empty result / denied — the deleted session fails `session_alive()` inside every RLS helper, even though the JWT itself is unexpired | |
 | 7.4 | Login lockout: 5 wrong passwords | 60s cooldown message | |
+| 7.4b | Forgot password → send reset link, then immediately try again (W9) | button holds **60s** with a "Resend in Ns" countdown + spam-folder hint; survives a page refresh (per-email, localStorage); Supabase server-side rate-limit + CAPTCHA remain the real backstops | |
 | 7.5 | (Advanced, optional) As the test customer, send a crafted PATCH to set `is_admin=true` on own row (curl + access token) | change reverted; account **auto-suspended** + sessions revoked; owner gets 🚨 email ≤15 min; Logs → Security shows the attempt. Reinstate the account afterwards. | |
 | 7.6 | Logs tab (owner) | all four views populated from this run (orders / security / errors / emails & sync) | |
 | 7.7 | Settings → System health → Run health check | all 5 cron jobs listed with recent runs; outbound calls show HTTP 200s; this run's emails listed | |

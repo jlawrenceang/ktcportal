@@ -1,8 +1,23 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
 import { useT } from '../lib/i18n'
+
+// After a reset email is sent, hold the button for this long (per email) so a
+// user can't fire a burst of emails — and gets a friendly countdown instead of
+// Supabase's opaque rate-limit error. The server-side rate limit + CAPTCHA are
+// the real backstops; this is UX. Persisted so a refresh doesn't bypass it.
+const RESEND_COOLDOWN_MS = 60_000
+const cdKey = (em: string) => `ktc_reset_cd_${em.trim().toLowerCase()}`
+
+function readCooldown(em: string): number | null {
+  if (!em.trim()) return null
+  try {
+    const v = Number(localStorage.getItem(cdKey(em)))
+    return v && v > Date.now() ? v : null
+  } catch { return null }
+}
 
 // Request a password-reset email. Supabase sends the reset link (same Resend SMTP);
 // it lands on /reset-password where the user sets a new password.
@@ -14,9 +29,29 @@ export default function ForgotPassword() {
   const [notice, setNotice] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [captchaKey, setCaptchaKey] = useState(0)
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null)
+  const [nowTs, setNowTs] = useState(() => Date.now())
+
+  // Re-check the cooldown whenever the typed email changes.
+  useEffect(() => { setCooldownUntil(readCooldown(email)) }, [email])
+
+  // Tick the countdown while a cooldown is active.
+  useEffect(() => {
+    if (!cooldownUntil) return
+    const id = setInterval(() => {
+      const now = Date.now()
+      setNowTs(now)
+      if (now >= cooldownUntil) setCooldownUntil(null)
+    }, 500)
+    return () => clearInterval(id)
+  }, [cooldownUntil])
+
+  const cooldownSecs = cooldownUntil ? Math.max(0, Math.ceil((cooldownUntil - nowTs) / 1000)) : 0
+  const cooling = cooldownSecs > 0
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
+    if (cooling) return
     if (captchaEnabled && !captchaToken) { setError(t('Please complete the CAPTCHA.')); return }
     setBusy(true); setError(null); setNotice(null)
     const { error: rErr } = await supabase.auth.resetPasswordForEmail(email.trim(), {
@@ -26,6 +61,10 @@ export default function ForgotPassword() {
     setBusy(false)
     setCaptchaToken(null); setCaptchaKey((k) => k + 1) // token is single-use
     if (rErr) { setError(rErr.message); return }
+    // Start the per-email cooldown so repeated sends are throttled.
+    const until = Date.now() + RESEND_COOLDOWN_MS
+    try { localStorage.setItem(cdKey(email), String(until)) } catch { /* ignore */ }
+    setCooldownUntil(until)
     setNotice(t('✓ If that email is registered, a password-reset link is on its way. Check your inbox (and spam folder).'))
   }
 
@@ -58,9 +97,14 @@ export default function ForgotPassword() {
           {captchaEnabled && (
             <Turnstile key={captchaKey} onVerify={(t) => setCaptchaToken(t)} onExpire={() => setCaptchaToken(null)} />
           )}
-          <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken)} style={{ marginTop: 4 }}>
-            {busy ? t('Sending…') : t('Send reset link')}
+          <button className="ktc-btn" type="submit" disabled={busy || cooling || (captchaEnabled && !captchaToken)} style={{ marginTop: 4 }}>
+            {busy ? t('Sending…') : cooling ? t('Resend in {n}s', { n: cooldownSecs }) : t('Send reset link')}
           </button>
+          {cooling && (
+            <p className="ktc-label" style={{ fontSize: 12, textAlign: 'center', marginTop: -4 }}>
+              {t('Didn’t get it? You can resend in {n}s. Check your spam folder too.', { n: cooldownSecs })}
+            </p>
+          )}
         </form>
 
         <p className="ktc-label" style={{ marginTop: 18, fontSize: 13 }}>
