@@ -228,7 +228,15 @@ export default function Login() {
   return (
     <div style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24 }}>
       <div className="ktc-glass ktc-rise" style={{ width: '100%', maxWidth: 440, padding: '36px 36px 32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}><LangToggle /></div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginBottom: 10 }}>
+          <span className="ktc-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+            Language / Wika
+          </span>
+          <LangToggle />
+        </div>
         <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 64, marginBottom: 20 }} />
         {notice && <Notice tone="success" style={{ marginBottom: 14 }}>{notice}</Notice>}
         {isLocked && (
