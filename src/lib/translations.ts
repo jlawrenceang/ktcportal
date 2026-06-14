@@ -424,7 +424,7 @@ export const tl: Record<string, string> = {
   "Missing required columns. Download the template for the exact headers.": "May kulang na required columns. I-download ang template para sa eksaktong headers.",
   "My Account": "Aking Account",
   "My Job Orders": "Mga Job Order Ko",
-  "After you file, follow every order here — live status, your serving number, View charges & pay, and Print slip once approved.": "Pagkatapos mag-file, sundan ang bawat order dito — live na status, ang serving number mo, View charges & pay, at Print slip kapag aprubado na.",
+  "After you file, follow every order here — live status, your serving number, View charges & pay, and Print slip once approved.": "Pagkatapos mag-file, sundan ang bawat order dito — live na status, ang serving number mo, charges, payment at print slip kapag ma-approve na.",
   "My vessel isn’t listed — enter it manually (operations will match it)": "Wala sa listahan ang vessel ko — ilagay nang manual (ima-match ito ng operations)",
   "Name": "Pangalan",
   "Name must be at least {n} characters.": "Ang pangalan ay dapat hindi bababa sa {n} characters.",
