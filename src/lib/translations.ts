@@ -834,7 +834,7 @@ export const tl: Record<string, string> = {
   "Your accredited customers. Tap to search, open a customer's detail, or suspend / reinstate an account.": "Ang iyong mga accredited na customer. I-tap para maghanap, buksan ang detalye ng customer, o i-suspend / i-reinstate ang isang account.",
   "Your job orders live here": "Nandito ang iyong mga job order",
   "Your legal name was verified against your ID. To change it to": "Na-verify ang legal mong pangalan base sa iyong ID. Para palitan ito ng",
-  "File a new Job Order. We'll walk you through the form the first time you open it.": "Mag-file ng bagong Job Order. Gagabayan ka namin sa form sa unang pagbukas mo nito.",
+  "File a new Job Order. We'll walk you through the form the first time you open it.": "Mag-file ng bagong Job Order. I-guiguide ka namin sa job order form sa unang pagbukas mo nito.",
   "Your note to KTC:": "Iyong note sa KTC:",
   "Your number in this week's {line} line": "Ang number mo sa {line} line ngayong linggo",
   "Your proof is with KTC for review": "Nasa KTC ang iyong proof para i-review",
