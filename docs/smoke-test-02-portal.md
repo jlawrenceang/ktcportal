@@ -61,7 +61,15 @@ migrations). Logged here so the ST02 record is complete.
 | W7 | Registration consent clause too long (Lane 1.1) | Shortened the tick label to "…the **KTC Customer Agreement** — including the Terms & Conditions, and my consent to KTC processing my personal data." (full Terms/NDA/DPA still in the linked Agreement) | `ff1b424` |
 | W8 | Footer showed commit hash + build date | Footer now shows just **v1.1.0**; commit+date moved to a hover tooltip (still traceable) | `f65861b` |
 | W9 | Forgot-password could be requested repeatedly (Lane 7.4 area) | **5-min per-email resend cooldown** with a `m:ss` countdown ("Resend in 4:07") + spam-folder hint. (Supabase server-side rate-limit + CAPTCHA were already the real backstops; this is UX) | _2026-06-14_ |
-| W10 | Home demo-tour copy (Lane 1.3) — reword for clarity | Rewrote all 6 home-tour steps (EN + FIL): "container terminal services from the comfort of your home", clearer verify/held wording, dropped "Your main action", "Track your orders", simpler account step | _2026-06-14_ |
+| W10 | Home demo-tour copy (Lane 1.3) — reword for clarity | Rewrote all 6 home-tour steps (EN + FIL): "container terminal services from the comfort of your home", clearer verify/held wording, dropped "Your main action", "Track your orders", simpler account step. Later: "Madayaw!" greeting (EN+FIL), "Get verified", and per-step FIL tweaks | _2026-06-14_ |
+| W11 | Translation review hard to do in a CSV | Built `scripts/export-translations.mjs` → `docs/translations-review.{md,csv}` (829 strings); switched to an in-app blind walkthrough for review | _2026-06-14_ |
+| W12 | Tour: featured tile sat at the bottom | Tour scrolls the featured element to the **top** (hero) and pins the helper card to the **bottom** | _2026-06-14_ |
+| W13 | Mobile top bar doesn't scale (Lane chrome) | **Hamburger → slide-in drawer** on phones (both shells); desktop top bar unchanged. Portaled to body to fix a backdrop-filter containing-block bug | _2026-06-14_ |
+| W14 | "Select valid ID" banner too big | BrokerStatusBanner compacted to a single line + inline "Upload valid ID →" | _2026-06-14_ |
+| W15 | Home welcome showed the BR-id; "Quick tour" FIL | Removed the BR-id chip from Home (stays on profile); "Quick tour ▸" FIL = English | _2026-06-14_ |
+| W16 | New Job Order wording / vessel / rates FIL | Subtitle → "File for container terminal services." (EN+FIL); "Vessel Schedule" + "Rate Calculator" FIL = English; tile desc → "I-estimate ang charges bago mag-file" | _2026-06-14_ |
+| W17 | **Entry (C-) number must be required** (Lane 4) | Entry Number now **required** — gates Next on the wizard + submit; Consignee + Entry marked `*` | _2026-06-14_ |
+| W18 | CSV review edits applied | 16 Filipino-only + 2 English-key edits from the owner's CSV pass wired through source + dict | _2026-06-14_ |
 
 **Still open from this pass (not yet built):**
 - Mobile **wave 2** (registration → wizard; Payment / Verify ID / Account → dense + sticky) and **wave 3** (admin data tables → phone card lists) — owner holding for a device test first.
