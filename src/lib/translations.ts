@@ -325,7 +325,7 @@ export const tl: Record<string, string> = {
   "ERP": "ERP",
   "ERP control no. (OR-INV / BI-INV)": "ERP control no. (OR-INV / BI-INV)",
   "Estimate": "Tantya",
-  "Estimate charges": "I-estima ang charges",
+  "Estimate charges": "I-estimate ang charges",
   "Estimate charges before you file": "Tantiyahin ang singil bago mag-file",
   "Estimate your charges before filing — enter how many containers need each service. The official amount is confirmed on the Service Invoice at the KTC office.": "Tantyahin ang iyong charges bago mag-file — ilagay kung ilang container ang kailangan ng bawat service. Ang opisyal na halaga ay kinukumpirma sa Service Invoice sa KTC office.",
   "Estimated total": "Tinatayang kabuuan",
