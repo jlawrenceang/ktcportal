@@ -7,6 +7,10 @@ import type { Broker } from '../lib/types'
 import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
 import { useT } from '../lib/i18n'
 
+// Terminal tariff dimensions (migration 0073): service × trade × origin × size.
+const TERM_SERVICES: [string, string][] = [['arrastre', 'Arrastre'], ['lolo', 'LoLo'], ['storage', 'Storage (per day)']]
+const TERM_COMBOS: [string, string][] = [['import', 'domestic'], ['import', 'foreign'], ['export', 'domestic'], ['export', 'foreign']]
+
 export default function Settings() {
   const { t } = useT()
   const { broker: me } = useBroker()
@@ -222,6 +226,26 @@ export default function Settings() {
     if (e1 || e2) { setPricingMsg((e1 || e2)!.message); return }
     setPricingMsg(t('✓ Pricing saved.'))
     setPricingLocked(true)
+  }
+
+  // Terminal tariff (arrastre / LoLo / storage), keyed by trade × origin × size (0073).
+  type TermRate = { id: string; service: string; trade: string; origin: string; size: string; rate: number }
+  const [termRates, setTermRates] = useState<TermRate[]>([])
+  const [termBusy, setTermBusy] = useState(false)
+  const [termMsg, setTermMsg] = useState<string | null>(null)
+  useEffect(() => {
+    void supabase.from('terminal_rates').select('id, service, trade, origin, size, rate')
+      .then(({ data }) => setTermRates(((data ?? []) as TermRate[]).map((x) => ({ ...x, rate: Number(x.rate) }))))
+  }, [])
+  function setTermVal(id: string, rate: number) {
+    setTermRates((rs) => rs.map((x) => (x.id === id ? { ...x, rate } : x)))
+  }
+  async function saveTerm() {
+    setTermBusy(true); setTermMsg(null)
+    const { error } = await supabase.from('terminal_rates')
+      .upsert(termRates.map((x) => ({ id: x.id, service: x.service, trade: x.trade, origin: x.origin, size: x.size, rate: x.rate })), { onConflict: 'id' })
+    setTermBusy(false)
+    setTermMsg(error ? error.message : t('✓ Terminal rates saved.'))
   }
 
   async function createStaff(e: FormEvent) {
@@ -459,6 +483,49 @@ export default function Settings() {
           </button>
           {pricingLocked && !pricingMsg && <span className="ktc-label" style={{ fontSize: 12.5 }}>{t('Locked against accidental edits.')}</span>}
           {pricingMsg && <span className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600 }}>{pricingMsg}</span>}
+        </div>
+      </div>
+
+      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Terminal tariff (arrastre · LoLo · storage)')}</h2>
+        <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
+          {t('Per-container rates the Rate Calculator looks up by the customer’s combination — trade (import/export), origin (domestic/foreign) and container size. Storage is per container, per day past the Last Free Day. Amounts in ₱, VAT-exclusive (12% VAT is added on the subtotal).')}
+        </p>
+        <div style={{ display: 'grid', gap: 16 }}>
+          {TERM_SERVICES.map(([svc, svcLabel]) => (
+            <div key={svc} style={{ display: 'grid', gap: 6 }}>
+              <span style={{ fontSize: 13.5, fontWeight: 700 }}>{t(svcLabel)}</span>
+              <div className="ktc-label" style={{ display: 'flex', gap: 10, fontSize: 11.5, paddingLeft: 2 }}>
+                <span style={{ flex: '1 1 150px' }}>{t('Trade · origin')}</span>
+                <span style={{ width: 120, textAlign: 'center' }}>{t('20ft')}</span>
+                <span style={{ width: 120, textAlign: 'center' }}>{t('40ft')}</span>
+              </div>
+              {TERM_COMBOS.map(([trade, origin]) => {
+                const r20 = termRates.find((x) => x.service === svc && x.trade === trade && x.origin === origin && x.size === '20')
+                const r40 = termRates.find((x) => x.service === svc && x.trade === trade && x.origin === origin && x.size === '40')
+                return (
+                  <div key={`${trade}-${origin}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                    <span style={{ flex: '1 1 150px', fontSize: 12.5, fontWeight: 600, textTransform: 'capitalize' }}>{t(trade)} · {t(origin)}</span>
+                    {[r20, r40].map((row, idx) => (
+                      <span key={idx} style={{ width: 120, display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}>
+                        <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
+                        <input className="ktc-input" type="number" step="0.01" min="0" value={row?.rate ?? 0}
+                          disabled={!row}
+                          onChange={(e) => row && setTermVal(row.id, Number(e.target.value))}
+                          style={{ width: 92, padding: '7px 10px' }} />
+                      </span>
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
+          <button className="ktc-btn" type="button" disabled={termBusy} onClick={() => void saveTerm()} style={{ width: 'auto', padding: '10px 20px' }}>
+            {termBusy ? t('Saving…') : t('Save terminal rates')}
+          </button>
+          {termMsg && <span className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600 }}>{termMsg}</span>}
         </div>
       </div>
 
