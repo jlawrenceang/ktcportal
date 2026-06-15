@@ -1,7 +1,15 @@
+import { Fragment, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Shell from '../components/Shell'
 import ProtectedDoc from '../components/ProtectedDoc'
 import { useT } from '../lib/i18n'
+
+// Boxes per row in the snake flow — fewer on phones, more on wide screens.
+function snakeCols(): number {
+  if (typeof window === 'undefined') return 4
+  const w = window.innerWidth
+  return w < 460 ? 2 : w < 760 ? 3 : 4
+}
 
 // Customer Guide — the customer's journey as a numbered flow (overview) with a
 // detailed description of each step underneath. View-only (ProtectedDoc). The
@@ -20,6 +28,20 @@ const STEPS: { title: string; body: string }[] = [
 export default function Manual() {
   const { t } = useT()
   const navigate = useNavigate()
+
+  // Lay the steps out as a snake: chunk into rows; even rows run right-to-left.
+  const [cols, setCols] = useState(snakeCols())
+  useEffect(() => {
+    const onResize = () => setCols(snakeCols())
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  const rows: { title: string; n: number }[][] = []
+  STEPS.forEach((s, i) => {
+    const r = Math.floor(i / cols)
+    ;(rows[r] ??= []).push({ title: s.title, n: i + 1 })
+  })
+
   return (
     <Shell>
       <button className="ktc-link" onClick={() => navigate(-1)} style={{ margin: '14px 4px 6px', fontSize: 13, fontWeight: 600 }}>← {t('Back')}</button>
@@ -30,17 +52,32 @@ export default function Manual() {
             {t('How the KTC Online Portal works — from sign-up to claiming your service, step by step.')}
           </p>
 
-          {/* Flow overview — top-down box diagram */}
-          <div className="ktc-chart" aria-hidden>
-            {STEPS.map((s, i) => (
-              <div className="ktc-chart-step" key={i}>
-                <div className="ktc-chart-box">
-                  <span className="ktc-chart-num">{i + 1}</span>
-                  <span className="ktc-chart-text">{t(s.title)}</span>
-                </div>
-                {i < STEPS.length - 1 && <span className="ktc-chart-arrow">↓</span>}
-              </div>
-            ))}
+          {/* Flow overview — serpentine (snake) box diagram */}
+          <div className="ktc-snake" aria-hidden>
+            {rows.map((row, r) => {
+              const reversed = r % 2 === 1
+              const cells = reversed ? [...row].reverse() : row
+              return (
+                <Fragment key={r}>
+                  <div className="ktc-snake-row">
+                    {cells.map((c, j) => (
+                      <Fragment key={c.n}>
+                        <div className="ktc-snake-box">
+                          <span className="ktc-chart-num">{c.n}</span>
+                          <span className="ktc-snake-label">{t(c.title)}</span>
+                        </div>
+                        {j < cells.length - 1 && <span className="ktc-snake-arrow">{reversed ? '←' : '→'}</span>}
+                      </Fragment>
+                    ))}
+                  </div>
+                  {r < rows.length - 1 && (
+                    <div className="ktc-snake-turn" style={{ justifyContent: reversed ? 'flex-start' : 'flex-end' }}>
+                      <span className="ktc-snake-down">↓</span>
+                    </div>
+                  )}
+                </Fragment>
+              )
+            })}
           </div>
 
           {/* Detailed steps */}
