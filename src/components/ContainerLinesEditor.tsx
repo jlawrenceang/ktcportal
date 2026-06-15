@@ -84,17 +84,38 @@ export default function ContainerLinesEditor({
     )
   }
 
+  // How many rows actually carry a container number (the count that gets filed).
+  const filledCount = lines.filter((l) => l.container_number.trim()).length
+  // Past a handful of rows, contain the list in its own scroll area so a big
+  // paste (a C-entry can run 150–200 vans) doesn't bury the Add / Bulk / submit
+  // controls under an endless page scroll.
+  const scrolls = lines.length > 6
+
   return (
     <div style={{ display: 'grid', gap: 10 }}>
-      <span className="ktc-label">{t('Container Details')}</span>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+        <span className="ktc-label">{t('Container Details')}</span>
+        {filledCount > 0 && (
+          <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600, opacity: 0.8 }}>
+            {t('{n} container(s)', { n: filledCount })}
+          </span>
+        )}
+      </div>
+      <div
+        style={
+          scrolls
+            ? { display: 'grid', gap: 10, maxHeight: '46vh', overflowY: 'auto', paddingRight: 4, margin: '0 -2px' }
+            : { display: 'grid', gap: 10 }
+        }
+      >
       {lines.map((line, i) => (
         <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
-            className="ktc-input"
-            style={{ flex: '1 1 45%' }}
+            className="ktc-input ktc-mono"
+            style={{ flex: '1 1 45%', textTransform: 'uppercase' }}
             placeholder={t('Container number (e.g. ABCD1234567)')}
             value={line.container_number}
-            onChange={(e) => updateLine(i, { container_number: e.target.value })}
+            onChange={(e) => updateLine(i, { container_number: e.target.value.toUpperCase() })}
           />
           <select
             className="ktc-input"
@@ -117,6 +138,7 @@ export default function ContainerLinesEditor({
           </button>
         </div>
       ))}
+      </div>
       <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
         <button type="button" className="ktc-link" onClick={addLine}>{t('+ Add container')}</button>
         <button type="button" className="ktc-link" onClick={() => { setShowBulk((v) => !v); setBulkNote(null) }}>

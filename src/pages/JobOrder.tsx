@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
@@ -15,7 +15,15 @@ export default function JobOrder() {
   const { t } = useT()
   const { broker } = useBroker()
   const navigate = useNavigate()
-  usePageTour('job-order', jobOrderSteps)
+  // Mobile renders this form as a paginated wizard (one step on screen). Lift
+  // the step so the demo tour can WALK it — each tour step reveals its fields —
+  // and so it resets to the first step when the demo finishes.
+  const [wizStep, setWizStep] = useState(0)
+  const tourSteps = useMemo(
+    () => jobOrderSteps.map((s, idx) => ({ ...s, onEnter: () => setWizStep(idx) })),
+    [],
+  )
+  usePageTour('job-order', tourSteps, () => setWizStep(0))
 
   // Consignee picker — searchable typeahead over the full master list.
   // (No per-broker accreditation gate: any registered broker can pick any consignee.)
@@ -71,15 +79,16 @@ export default function JobOrder() {
       setError(t('Enter the Entry Number (C-…).'))
       return
     }
-    // Resolve vessel + voyage (required).
+    // Resolve vessel + voyage (required). Entry, vessel, voyage and container
+    // numbers are all stored UPPERCASE — shipping identifiers are canonically caps.
     let vVisit: string | null = null, vName = '', vVoyage = ''
     if (notListed) {
-      vName = mVessel.trim(); vVoyage = mVoyage.trim()
+      vName = mVessel.trim().toUpperCase(); vVoyage = mVoyage.trim().toUpperCase()
       if (!vName || !vVoyage) { setError(t('Enter the vessel name and voyage number.')); return }
     } else {
       const sel = vessels.find((v) => v.vessel_visit === vesselVisit)
       if (!sel) { setError(t('Select the vessel & voyage (or tick “not listed”).')); return }
-      vVisit = sel.vessel_visit; vName = sel.vessel_name; vVoyage = sel.voyage_number
+      vVisit = sel.vessel_visit; vName = sel.vessel_name.toUpperCase(); vVoyage = sel.voyage_number.toUpperCase()
     }
     const filled = lines.filter((l) => l.container_number.trim())
     if (filled.length === 0) {
@@ -93,7 +102,7 @@ export default function JobOrder() {
       .insert({
         customer_id: broker.id,
         consignee_id: consignee.id,
-        entry_number: entryNumber.trim(),
+        entry_number: entryNumber.trim().toUpperCase(),
         vessel_visit: vVisit,
         vessel_name: vName,
         voyage_number: vVoyage,
@@ -113,7 +122,7 @@ export default function JobOrder() {
     const { error: lineErr } = await supabase.from('job_order_lines').insert(
       filled.map((l) => ({
         job_order_id: (jo as { id: string }).id,
-        container_number: l.container_number.trim(),
+        container_number: l.container_number.trim().toUpperCase(),
         service_request: l.service_request,
       })),
     )
@@ -142,8 +151,8 @@ export default function JobOrder() {
       title: 'Consignee & entry',
       validate: step1Error,
       content: (
-        <div className="ktc-fields">
-          <div data-tour="jo-consignee" style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
+        <div className="ktc-fields" data-tour="jo-consignee">
+          <div style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
             <label className="ktc-label" htmlFor="consignee">{t('Consignee')} *</label>
             <SearchPicker
               inputId="consignee"
@@ -161,7 +170,8 @@ export default function JobOrder() {
               required
               placeholder={t('e.g. C-0000012345')}
               value={entryNumber}
-              onChange={(e) => setEntryNumber(e.target.value)}
+              onChange={(e) => setEntryNumber(e.target.value.toUpperCase())}
+              style={{ textTransform: 'uppercase' }}
             />
           </div>
         </div>
@@ -177,13 +187,13 @@ export default function JobOrder() {
             <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
               <option value="">{t('Select a vessel…')}</option>
               {vessels.map((v) => (
-                <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name} — {v.voyage_number}</option>
+                <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name.toUpperCase()} — {v.voyage_number.toUpperCase()}</option>
               ))}
             </select>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <input className="ktc-input" placeholder={t('Vessel name')} value={mVessel} onChange={(e) => setMVessel(e.target.value)} />
-              <input className="ktc-input" placeholder={t('Voyage number')} value={mVoyage} onChange={(e) => setMVoyage(e.target.value)} />
+              <input className="ktc-input" style={{ textTransform: 'uppercase' }} placeholder={t('Vessel name')} value={mVessel} onChange={(e) => setMVessel(e.target.value.toUpperCase())} />
+              <input className="ktc-input" style={{ textTransform: 'uppercase' }} placeholder={t('Voyage number')} value={mVoyage} onChange={(e) => setMVoyage(e.target.value.toUpperCase())} />
             </div>
           )}
           <label className="ktc-label" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -211,6 +221,8 @@ export default function JobOrder() {
 
         <Wizard
           steps={wizardSteps}
+          step={wizStep}
+          onStepChange={setWizStep}
           onSubmit={submit}
           busy={busy}
           error={error}

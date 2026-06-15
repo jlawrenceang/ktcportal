@@ -33,8 +33,8 @@ export const homeSteps: TourStep[] = [
 
 export const jobOrderSteps: TourStep[] = [
   {
-    icon: '🏷️', title: 'Pick your consignee', target: '[data-tour="jo-consignee"]',
-    body: 'Type to search the consignee master list and pick yours.',
+    icon: '🏷️', title: 'Consignee & entry number', target: '[data-tour="jo-consignee"]',
+    body: 'Start here: type to search the consignee master list and pick yours, then enter the Entry Number (C-…) from your customs entry.',
   },
   {
     icon: '🚢', title: 'Vessel & voyage', target: '[data-tour="jo-vessel"]',

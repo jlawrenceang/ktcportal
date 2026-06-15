@@ -13,6 +13,10 @@ export interface TourStep {
   body: string
   to?: string      // navigate here for this step
   target?: string  // CSS selector to spotlight (e.g. `a[href="/admin/approvals"]`)
+  // Side-effect to run when this step becomes active — e.g. advance a multi-step
+  // form so the element this step spotlights is actually mounted (the New Job
+  // Order wizard paginates on mobile, so the tour drives it step by step).
+  onEnter?: () => void
 }
 
 export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
@@ -36,25 +40,32 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
   // step; the listeners only re-measure the ring (no re-scroll loop).
   useEffect(() => {
     setRect(null)
+    // Let this step drive any external UI first (e.g. advance the wizard so the
+    // spotlighted field is mounted), THEN find + spotlight the target.
+    s.onEnter?.()
     if (!s.target) return
     const sel = s.target
     let cancelled = false
+    let scrolled = false
     const measure = () => {
       if (cancelled) return
       const el = document.querySelector(sel) as HTMLElement | null
-      if (el) setRect(el.getBoundingClientRect())
+      if (!el) return
+      if (!scrolled) {
+        scrolled = true
+        const y = window.scrollY + el.getBoundingClientRect().top - 96 // clear the sticky nav
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' })
+      }
+      setRect(el.getBoundingClientRect())
     }
-    const el = document.querySelector(sel) as HTMLElement | null
-    if (el) {
-      const y = window.scrollY + el.getBoundingClientRect().top - 96 // clear the sticky nav
-      window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' })
-    }
-    const t = setTimeout(measure, 380)
+    // Retry a few times: a target revealed by onEnter (wizard step change) mounts
+    // a frame or two later, so a single measure could miss it.
+    const timers = [80, 240, 420, 700].map((d) => setTimeout(measure, d))
     window.addEventListener('resize', measure)
     window.addEventListener('scroll', measure, true)
     return () => {
       cancelled = true
-      clearTimeout(t)
+      timers.forEach(clearTimeout)
       window.removeEventListener('resize', measure)
       window.removeEventListener('scroll', measure, true)
     }

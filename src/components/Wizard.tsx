@@ -17,7 +17,7 @@ export interface WizardStep {
 // sticky action bar — so each screen fits without scrolling and the primary
 // button is always reachable. Same children either way.
 export default function Wizard({
-  steps, onSubmit, submitLabel, busy = false, error, footer,
+  steps, onSubmit, submitLabel, busy = false, error, footer, step, onStepChange,
 }: {
   steps: WizardStep[]
   onSubmit: () => void
@@ -25,10 +25,19 @@ export default function Wizard({
   busy?: boolean
   error?: string | null
   footer?: ReactNode // extra content above the action bar (e.g. notices, switch-mode link)
+  // Optional controlled step (e.g. the New Job Order tour drives the wizard so
+  // the demo can walk every step). When provided, the parent owns the index.
+  step?: number
+  onStepChange?: (i: number) => void
 }) {
   const isMobile = useIsMobile()
   const { t } = useT()
-  const [i, setI] = useState(0)
+  const [iInternal, setIInternal] = useState(0)
+  const i = step ?? iInternal
+  const setI = (next: number) => {
+    onStepChange?.(next)
+    if (step == null) setIInternal(next)
+  }
   const [stepErr, setStepErr] = useState<string | null>(null)
   const last = i === steps.length - 1
 
@@ -55,9 +64,9 @@ export default function Wizard({
     const e = s.validate?.()
     if (e) { setStepErr(e); return }
     setStepErr(null)
-    setI((v) => Math.min(v + 1, steps.length - 1))
+    setI(Math.min(i + 1, steps.length - 1))
   }
-  function back() { setStepErr(null); setI((v) => Math.max(v - 1, 0)) }
+  function back() { setStepErr(null); setI(Math.max(i - 1, 0)) }
 
   return (
     <div>
