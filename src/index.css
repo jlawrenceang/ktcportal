@@ -447,26 +447,8 @@
     .ktc-nav .ktc-nav-spacer { display: block; flex: 1 1 auto; }
     .ktc-nav .ktc-burger { display: inline-flex; }
 
-    /* Customer home: tighter greeting + 2-up square tiles, all in one view. */
-    .ktc-home-head { margin: 10px 2px 14px; }
-    .ktc-home-greet { font-size: 23px; }
-    .ktc-home-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .ktc-home-tile { min-height: 0; aspect-ratio: 1 / 1; gap: 8px; padding: 14px 12px; }
-    .ktc-home-tile-icon { width: 40px; height: 40px; }
-    .ktc-home-tile-title { font-size: 13.5px; }
-    .ktc-home-tile-desc { display: none; } /* keep tiles square + fully in view */
-
-    /* Job-order rows stack into two lines on phones (id+priority / count+date). */
-    .ktc-jo-head { display: none; }
-    .ktc-jo-row {
-      grid-template-columns: 1fr auto;
-      grid-template-areas: "id prio" "cont date";
-      gap: 6px 10px;
-    }
-    .ktc-jo-id { grid-area: id; }
-    .ktc-jo-prio { grid-area: prio; justify-self: end; align-self: start; }
-    .ktc-jo-cont { grid-area: cont; text-align: left; }
-    .ktc-jo-date { grid-area: date; justify-self: end; }
+    /* (Home-tile + job-order-row mobile rules moved to the end of the file so
+       they win over their base rules — see the unlayered @media block there.) */
 
     .ktc-title { font-size: 20px; }
     .ktc-sub { font-size: 13px; }
@@ -595,11 +577,14 @@
   /* ---- Customer home: greeting + service tiles ---- */
   .ktc-home-head { margin: 16px 4px 22px; }
   .ktc-home-greet { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.028em; line-height: 1.15; }
-  /* Desktop: 3 tiles per row (5 tiles → 3 + 2). Phones drop to 2-up below. */
+  /* Auto-scaling: fit as many ~150px tiles as the width allows — 2 on phones,
+     3 on desktop (the max-width caps it there so they don't sprawl). No fixed
+     per-device column counts. */
   .ktc-home-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 14px;
+    max-width: 560px;
   }
   /* Centered launcher tiles — consistent on desktop and mobile (mobile just
      tightens them into 2-up squares in the media layer below). */
@@ -737,3 +722,29 @@
   transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 .ktc-theme-toggle:hover { color: hsl(var(--ink)); background: rgb(var(--acc-rgb) / 0.12); }
+
+/* ============================================================
+   Phone refinements — unlayered so they win over the @layer-component base
+   rules (whose later source order would otherwise override an in-layer @media).
+   Column COUNT auto-scales via the auto-fit grid; these only tune the tile
+   shape and stack the job-order rows.
+   ============================================================ */
+@media (max-width: 640px) {
+  .ktc-home-head { margin: 10px 2px 14px; }
+  .ktc-home-greet { font-size: 23px; }
+  .ktc-home-tile { min-height: 0; aspect-ratio: 1 / 1; gap: 8px; padding: 14px 12px; }
+  .ktc-home-tile-icon { width: 40px; height: 40px; }
+  .ktc-home-tile-title { font-size: 13.5px; }
+  .ktc-home-tile-desc { display: none; }
+
+  .ktc-jo-head { display: none; }
+  .ktc-jo-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "id prio" "cont date";
+    gap: 6px 10px;
+  }
+  .ktc-jo-id { grid-area: id; }
+  .ktc-jo-prio { grid-area: prio; justify-self: end; align-self: start; }
+  .ktc-jo-cont { grid-area: cont; text-align: left; }
+  .ktc-jo-date { grid-area: date; justify-self: end; }
+}
