@@ -120,6 +120,9 @@ export default function Login() {
     } else if (sessionStorage.getItem('ktc_email_confirmed')) {
       setNotice(t('✓ Your email is confirmed — please sign in to continue.'))
       sessionStorage.removeItem('ktc_email_confirmed')
+    } else if (sessionStorage.getItem('ktc_reset_sent')) {
+      setNotice(t('✓ If that email is registered, a password-reset link is on its way. Check your inbox (and spam folder).'))
+      sessionStorage.removeItem('ktc_reset_sent')
     } else if (sessionStorage.getItem('ktc_session_superseded')) {
       setNotice(t('You were signed out because this account signed in on another device or browser. If that wasn’t you, change your password now.'))
       sessionStorage.removeItem('ktc_session_superseded')

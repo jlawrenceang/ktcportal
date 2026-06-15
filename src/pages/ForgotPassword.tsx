@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
 import { useT } from '../lib/i18n'
@@ -29,6 +29,7 @@ function readCooldown(em: string): number | null {
 // it lands on /reset-password where the user sets a new password.
 export default function ForgotPassword() {
   const { t } = useT()
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -67,11 +68,13 @@ export default function ForgotPassword() {
     setBusy(false)
     setCaptchaToken(null); setCaptchaKey((k) => k + 1) // token is single-use
     if (rErr) { setError(rErr.message); return }
-    // Start the per-email cooldown so repeated sends are throttled.
+    // Persist the per-email cooldown so a quick return here is still throttled,
+    // then hand off to the login page with a notice instead of parking the user
+    // on a resend timer.
     const until = Date.now() + RESEND_COOLDOWN_MS
     try { localStorage.setItem(cdKey(email), String(until)) } catch { /* ignore */ }
-    setCooldownUntil(until)
-    setNotice(t('✓ If that email is registered, a password-reset link is on its way. Check your inbox (and spam folder).'))
+    sessionStorage.setItem('ktc_reset_sent', '1')
+    navigate('/login', { replace: true })
   }
 
   return (
