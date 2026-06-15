@@ -5,6 +5,7 @@ import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { homeSteps } from '../components/WelcomeTour'
 import { usePageTour } from '../components/TourProvider'
+import NotificationBar from '../components/NotificationBar'
 import { useT } from '../lib/i18n'
 
 const iconProps = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
@@ -43,6 +44,7 @@ export default function Home() {
 
   return (
     <Shell>
+      <NotificationBar />
       <div className="ktc-home-head">
         <h1 className="ktc-home-greet">
           {firstName ? t('Welcome, {name}', { name: firstName }) : t('Welcome')}
