@@ -23,6 +23,7 @@ export default function NavDrawer({ children }: { children: (close: () => void) 
       <button
         type="button"
         className="ktc-nav-link ktc-burger"
+        data-tour="nav-menu"
         aria-label="Menu"
         aria-expanded={open}
         onClick={() => setOpen(true)}

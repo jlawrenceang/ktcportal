@@ -65,7 +65,7 @@ export default function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="ktc-page">
-      <nav className="ktc-nav" aria-label="Primary">
+      <nav className="ktc-nav ktc-nav--app" aria-label="Primary">
         <Link to="/" aria-label="Go to Home" style={{ display: 'inline-flex', flex: '0 0 auto', padding: '0 6px' }}>
           <img className="ktc-nav-logo" src="/ktc-logo.png" alt="KTC Container Terminal Corp" />
         </Link>
@@ -86,18 +86,6 @@ export default function Shell({ children }: { children: ReactNode }) {
         <span className="ktc-nav-spacer" aria-hidden />
         <span className="ktc-nav-lang"><LangToggle /><ThemeToggle /></span>
         <NotificationBell />
-        {hasPageTour && (
-          <button className="ktc-nav-help" onClick={replayPageTour}
-            title={t('Quick tour')} aria-label={t('Quick tour')}>
-            <span aria-hidden className="ktc-nav-help-q">?</span>
-            <span className="ktc-nav-help-text">{t('Quick tour')}</span>
-          </button>
-        )}
-        <span className="ktc-nav-util">
-          <button className="ktc-nav-link" onClick={handleSignOut} style={{ flex: '0 0 auto' }}>
-            {t('Sign out')}
-          </button>
-        </span>
         <NavDrawer>
           {(close) => (
             <>
@@ -112,10 +100,11 @@ export default function Shell({ children }: { children: ReactNode }) {
                 className={({ isActive }) => `ktc-drawer-link${isActive ? ' is-active' : ''}`}>
                 {t('User Manual')}
               </NavLink>
-
-              <div className="ktc-drawer-sep" />
-              <span className="ktc-drawer-label">{t('Account')}</span>
-              <button type="button" className="ktc-drawer-link" onClick={handleSignOut}>{t('Sign out')}</button>
+              {hasPageTour && (
+                <button type="button" className="ktc-drawer-link" onClick={() => { replayPageTour(); close() }}>
+                  ✨ {t('Quick tour')}
+                </button>
+              )}
 
               <div className="ktc-drawer-sep" />
               <span className="ktc-drawer-label">{t('Language & theme')}</span>
@@ -123,6 +112,9 @@ export default function Shell({ children }: { children: ReactNode }) {
                 <LangToggle />
                 <ThemeToggle />
               </div>
+
+              <div className="ktc-drawer-sep" />
+              <button type="button" className="ktc-drawer-link" onClick={handleSignOut}>{t('Sign out')}</button>
             </>
           )}
         </NavDrawer>

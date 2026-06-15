@@ -127,6 +127,15 @@
   .ktc-nav-logo { height: 40px; display: block; }
   /* Mobile-only flex spacer (desktop uses .ktc-nav-links flex:1 instead). */
   .ktc-nav-spacer { display: none; }
+  /* Unified app nav (customer shell): one navigation — the hamburger drawer —
+     on ALL widths, so desktop matches mobile exactly. The top rail keeps just
+     logo + 🔔 bell + ☰ Menu. Scoped to .ktc-nav--app so the admin rail (plain
+     .ktc-nav) is unaffected. */
+  .ktc-nav--app .ktc-nav-links,
+  .ktc-nav--app .ktc-nav-lang,
+  .ktc-nav--app .ktc-nav-util { display: none; }
+  .ktc-nav--app .ktc-nav-spacer { display: block; flex: 1 1 auto; }
+  .ktc-nav--app .ktc-burger { display: inline-flex; }
   .ktc-nav-lang { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
   /* Per-page "replay the walkthrough" button — a labelled pill (? + Quick tour),
      kept visible on phones. */

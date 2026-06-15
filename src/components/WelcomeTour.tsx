@@ -34,8 +34,8 @@ export const homeSteps: TourStep[] = [
     body: 'Edit or update your personal details anytime. Changing your legal name needs re-verification by a KTC admin (since it\'s matched to your ID).',
   },
   {
-    icon: '🔄', title: 'Replay anytime',
-    body: 'That\'s the quick tour! To watch it again, tap the ? button in the top bar.',
+    icon: '🔄', title: 'Replay anytime', target: '[data-tour="nav-menu"]',
+    body: 'That\'s the quick tour! To watch it again anytime, open the ☰ Menu (top-right) and tap "Quick tour".',
   },
 ]
 
