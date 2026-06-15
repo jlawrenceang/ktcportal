@@ -271,13 +271,13 @@ export default function VesselSchedule() {
 
   return (
     <AdminShell>
-      <h1 className="ktc-h1">{t('Vessel Schedule')}</h1>
-      <p className="ktc-label" style={{ marginTop: -4, marginBottom: 16 }}>
+      <h1 className="ktc-title">{t('Vessel Schedule')}</h1>
+      <p className="ktc-sub" style={{ marginTop: 4, marginBottom: 16 }}>
         {t('Calls available for customers to file against.')} <strong>{t('Last free day')}</strong> {t("is computed (finish discharging + the line's import free-days); a call drops off once its last free day passes. Free-days per line are set by admin in Settings.")}
       </p>
 
       {/* Add / edit */}
-      <form onSubmit={save} className="ktc-glass" style={{ padding: 16, marginBottom: 16 }}>
+      <form onSubmit={save} className="ktc-glass ktc-glass--flat" style={{ padding: 20, marginBottom: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
           <label className="ktc-label">{t('Vessel Visit*')}
             <input className="ktc-input" value={form.vessel_visit} disabled={!!editing}
@@ -375,7 +375,7 @@ export default function VesselSchedule() {
       </div>
 
       {loading ? <p className="ktc-label">{t('Loading…')}</p> : view === 'calendar' ? <MonthCalendar rows={rows.filter((r) => !r.cancelled)} /> : (
-        <div className="ktc-glass" style={{ padding: 0, overflowX: 'auto' }}>
+        <div className="ktc-glass ktc-glass--flat" style={{ padding: 0, overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: 'hsl(var(--ink-2))' }}>

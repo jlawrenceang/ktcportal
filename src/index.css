@@ -255,6 +255,9 @@
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg), var(--edge);
   }
+  /* Flatter card variant for dense/admin surfaces — less rounded than the 30px
+     --radius-xl glass. Two-class so it overrides .ktc-glass's radius. */
+  .ktc-glass.ktc-glass--flat { border-radius: 14px; }
   .ktc-label {
     color: hsl(var(--ink-2));
     font-weight: 500;
@@ -850,7 +853,7 @@
   .ktc-stat-num { font-size: 30px; font-weight: 750; letter-spacing: -0.03em; line-height: 1.1; }
   .ktc-stat-label { font-size: 12.5px; font-weight: 550; color: hsl(var(--ink-2)); }
   .ktc-stat--alert .ktc-stat-num { color: var(--acc-2); }
-  .ktc-bulletin { padding: 20px 22px; }
+  .ktc-bulletin { padding: 18px 18px; border-radius: 16px; }
   .ktc-bulletin-title { margin: 0 0 10px; font-size: 14.5px; font-weight: 700; }
   .ktc-bulletin-list { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13px; line-height: 1.5; color: hsl(var(--ink-2)); }
   .ktc-bulletin-links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
