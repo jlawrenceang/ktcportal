@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import Shell from '../components/Shell'
 import ProtectedDoc from '../components/ProtectedDoc'
 import { useT } from '../lib/i18n'
@@ -18,8 +19,10 @@ const STEPS: { title: string; body: string }[] = [
 
 export default function Manual() {
   const { t } = useT()
+  const navigate = useNavigate()
   return (
     <Shell>
+      <button className="ktc-link" onClick={() => navigate(-1)} style={{ margin: '14px 4px 6px', fontSize: 13, fontWeight: 600 }}>← {t('Back')}</button>
       <ProtectedDoc>
         <div className="ktc-glass" style={{ padding: '28px 30px' }}>
           <h1 style={{ margin: '0 0 4px', fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em' }}>{t('KTC Customer Guide')}</h1>
@@ -27,15 +30,15 @@ export default function Manual() {
             {t('How the KTC Online Portal works — from sign-up to claiming your service, step by step.')}
           </p>
 
-          {/* Flow overview — numbered */}
-          <div className="ktc-flow" aria-hidden>
+          {/* Flow overview — top-down box diagram */}
+          <div className="ktc-chart" aria-hidden>
             {STEPS.map((s, i) => (
-              <div className="ktc-flow-item" key={i}>
-                <div className="ktc-flow-node">
-                  <span className="ktc-flow-num">{i + 1}</span>
-                  <span className="ktc-flow-label">{t(s.title)}</span>
+              <div className="ktc-chart-step" key={i}>
+                <div className="ktc-chart-box">
+                  <span className="ktc-chart-num">{i + 1}</span>
+                  <span className="ktc-chart-text">{t(s.title)}</span>
                 </div>
-                {i < STEPS.length - 1 && <span className="ktc-flow-arrow">→</span>}
+                {i < STEPS.length - 1 && <span className="ktc-chart-arrow">↓</span>}
               </div>
             ))}
           </div>

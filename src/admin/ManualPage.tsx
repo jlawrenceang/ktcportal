@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import AdminShell from './AdminShell'
 import { MarkdownBody } from '../components/MarkdownDoc'
+import ProtectedDoc from '../components/ProtectedDoc'
 import { usePermissions } from '../lib/usePermissions'
 import { useT } from '../lib/i18n'
 import adminBody from '../content/manual-admin.md?raw'
@@ -49,11 +50,15 @@ export default function ManualPage() {
           </button>
         ))}
         <span style={{ flex: 1 }} />
-        <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => window.print()}>🖨️ {t('Print this guide')}</button>
+        {broker?.is_owner && (
+          <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => window.print()}>🖨️ {t('Print this guide')}</button>
+        )}
       </div>
-      <div className="ktc-glass" style={{ padding: '30px 32px' }}>
-        <MarkdownBody body={lang === 'tl' ? guide.tl : guide.en} />
-      </div>
+      <ProtectedDoc>
+        <div className="ktc-glass" style={{ padding: '30px 32px' }}>
+          <MarkdownBody body={lang === 'tl' ? guide.tl : guide.en} />
+        </div>
+      </ProtectedDoc>
     </AdminShell>
   )
 }

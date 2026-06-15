@@ -13,6 +13,7 @@ function fmtDate(iso: string): string {
 export default function BulletinBoard() {
   const { t } = useT()
   const [posts, setPosts] = useState<Post[]>([])
+  const [readIds, setReadIds] = useState<Set<string>>(new Set())
   const [open, setOpen] = useState<Post | null>(null)
 
   useEffect(() => {
@@ -22,7 +23,17 @@ export default function BulletinBoard() {
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false })
       .then(({ data }) => setPosts((data ?? []) as Post[]))
+    void supabase.from('bulletin_reads').select('post_id')
+      .then(({ data }) => setReadIds(new Set(((data ?? []) as { post_id: string }[]).map((r) => r.post_id))))
   }, [])
+
+  function openPost(p: Post) {
+    setOpen(p)
+    if (!readIds.has(p.id)) {
+      setReadIds((prev) => new Set(prev).add(p.id))
+      void supabase.rpc('mark_bulletin_read', { p_post: p.id }).then(() => undefined, () => undefined)
+    }
+  }
 
   if (posts.length === 0) return null
 
@@ -31,10 +42,11 @@ export default function BulletinBoard() {
       <h2 className="ktc-bulletin-title">📌 {t('Bulletin board')}</h2>
       <div className="ktc-board-list">
         {posts.map((p) => (
-          <button key={p.id} type="button" className="ktc-board-item" onClick={() => setOpen(p)}>
+          <button key={p.id} type="button" className="ktc-board-item" onClick={() => openPost(p)}>
+            {!readIds.has(p.id) && <span aria-hidden className="ktc-board-unread" title={t('New')} />}
             <span className="ktc-board-item-main">
               {p.pinned && <span className="ktc-chip ktc-chip--accent" style={{ fontSize: 10 }}>{t('Pinned')}</span>}
-              <span className="ktc-board-item-title">{p.title}</span>
+              <span className="ktc-board-item-title" style={{ fontWeight: readIds.has(p.id) ? 500 : 700 }}>{p.title}</span>
             </span>
             <span className="ktc-board-item-date ktc-label">{fmtDate(p.created_at)}</span>
             <span aria-hidden className="ktc-board-item-chev">›</span>
