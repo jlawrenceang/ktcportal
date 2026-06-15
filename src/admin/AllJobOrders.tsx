@@ -4,9 +4,9 @@ import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { usePermissions } from '../lib/usePermissions'
 import { useFileViewer } from '../components/FileViewerModal'
-import JoSupport from '../components/JoSupport'
-import { SERVICE_LINE_LABEL, serviceLineOf, type JobOrder, type JobOrderEvent, type ServiceLine, type ServingNumber } from '../lib/types'
-import { isCreditInvoice, joEventLabel } from '../lib/eventLabels'
+import JoTimeline from '../components/JoTimeline'
+import { SERVICE_LINE_LABEL, serviceLineOf, type JobOrder, type ServiceLine, type ServingNumber } from '../lib/types'
+import { isCreditInvoice } from '../lib/eventLabels'
 import { useT } from '../lib/i18n'
 
 interface AdminJobOrder extends JobOrder {
@@ -142,9 +142,8 @@ export default function AllJobOrders() {
   const [total, setTotal] = useState(0)
   const [archiving, setArchiving] = useState(false)
   const [archiveMsg, setArchiveMsg] = useState<string | null>(null)
-  // Audit trail (G6): expanded order id + its events (+ actor display names).
+  // Timeline (events + docs + comments) expander — the JO whose timeline is open.
   const [historyId, setHistoryId] = useState<string | null>(null)
-  const [history, setHistory] = useState<(JobOrderEvent & { actorName?: string })[]>([])
 
   function load(f: Filter = filter, p: number = page) {
     let q = supabase
@@ -217,22 +216,8 @@ export default function AllJobOrders() {
     setNote('')
   }
 
-  async function toggleHistory(id: string) {
-    if (historyId === id) { setHistoryId(null); return }
-    setHistoryId(id); setHistory([])
-    const { data } = await supabase
-      .from('job_order_events')
-      .select('id, event, detail, actor, created_at')
-      .eq('job_order_id', id)
-      .order('created_at', { ascending: true })
-    const events = (data ?? []) as JobOrderEvent[]
-    const actorIds = Array.from(new Set(events.map((e) => e.actor).filter(Boolean))) as string[]
-    let names = new Map<string, string>()
-    if (actorIds.length) {
-      const { data: people } = await supabase.from('customers').select('user_id, full_name, email').in('user_id', actorIds)
-      names = new Map((people ?? []).map((p) => [p.user_id as string, (p.full_name || p.email || '') as string]))
-    }
-    setHistory(events.map((e) => ({ ...e, actorName: e.actor ? names.get(e.actor) || 'staff' : 'system' })))
+  function toggleHistory(id: string) {
+    setHistoryId(historyId === id ? null : id)
   }
 
   async function markServiceDone(id: string, line: ServiceLine) {
@@ -395,8 +380,6 @@ export default function AllJobOrders() {
                       <b>{t('Customer reply:')}</b> {o.customer_note}
                     </div>
                   )}
-                  {/* Customer-attached supporting info/documents (read-only; shows only when present). */}
-                  <JoSupport orderId={o.id} userId="" active={false} hideWhenEmpty />
 
                   {/* Actions — gated by the owner-tweakable role permissions */}
                   <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -500,29 +483,13 @@ export default function AllJobOrders() {
                     <button style={btn('ghost')} onClick={() => { setMsgOrder(o); setCopied(false) }} title={t('Compose a status message for Viber / SMS / Messenger')}>
                       💬 {t('Message')}
                     </button>
-                    <button style={btn('ghost')} onClick={() => void toggleHistory(o.id)} title={t('Who did what, when')}>
-                      🕘 {t('History')}
+                    <button style={btn('ghost')} onClick={() => toggleHistory(o.id)} title={t('Timeline, documents & comments')}>
+                      🕘 {t('Timeline')}
                     </button>
                   </div>
 
                   {historyId === o.id && (
-                    <div style={{ marginTop: 10, padding: '10px 14px', borderRadius: 10, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)', fontSize: 12.5 }}>
-                      {history.length === 0 ? (
-                        <span className="ktc-label">{t('Loading history…')}</span>
-                      ) : (
-                        <div style={{ display: 'grid', gap: 5 }}>
-                          {history.map((e) => (
-                            <div key={e.id} style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
-                              <span className="ktc-mono ktc-label" style={{ fontSize: 11, whiteSpace: 'nowrap' }}>
-                                {new Date(e.created_at).toLocaleString()}
-                              </span>
-                              <span style={{ fontWeight: 550 }}>{joEventLabel(e)}</span>
-                              <span className="ktc-label" style={{ fontSize: 11.5 }}>{t('by {name}', { name: e.actorName ?? '' })}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <JoTimeline orderId={o.id} userId="" canComment canAttach={false} />
                   )}
                 </div>
               )

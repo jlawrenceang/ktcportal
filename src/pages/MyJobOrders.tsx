@@ -8,7 +8,7 @@ import { SERVICE_LINE_LABEL, type JobOrder } from '../lib/types'
 import { usePageTour } from '../components/TourProvider'
 import { myJobOrdersSteps } from '../components/WelcomeTour'
 import { useBroker } from '../lib/useBroker'
-import JoSupport from '../components/JoSupport'
+import JoTimeline from '../components/JoTimeline'
 import { useT } from '../lib/i18n'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -441,11 +441,12 @@ export default function MyJobOrders() {
                     )}
                   </div>
 
-                  {/* Supporting info & documents (note and/or file). */}
-                  <JoSupport
+                  {/* Timeline: lifecycle + supporting docs + two-way comments. */}
+                  <JoTimeline
                     orderId={o.id}
                     userId={broker?.user_id ?? ''}
-                    active={['held', 'submitted', 'processing', 'on_hold'].includes(o.status)}
+                    canComment
+                    canAttach={['held', 'submitted', 'processing', 'on_hold'].includes(o.status)}
                   />
 
                   {/* Cancel — only before processing starts (held/submitted/on_hold). */}
