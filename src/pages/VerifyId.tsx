@@ -91,16 +91,19 @@ export default function VerifyId() {
           {t('PENDING FINAL VERIFICATION')}
         </span>
         <h1 style={{ margin: '12px 0 0', fontSize: 23, fontWeight: 600, letterSpacing: '-0.02em' }}>{t('Upload your valid ID')}</h1>
-        <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6 }}>
-          {t('Thanks for confirming your email. To get your account verified, attach a clear photo or PDF of a valid government-issued ID and submit it — a KTC admin will review it. You don’t have to do it now: you can head straight to the portal and prepare job orders, but they’ll be')}{' '}<b>{t('held and can’t be processed until your account is verified')}</b>.
+        <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6, textAlign: 'left' }}>
+          {t('To activate your account and pass final verification, attach a clear photo or PDF of a valid government-issued ID and submit it for KTC admin approval.')}
+        </p>
+        <p className="ktc-label" style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.55, opacity: 0.85, textAlign: 'left' }}>
+          {t('You can continue to the portal first and prepare job orders — they’ll be held until your account is verified.')}
         </p>
 
-        <label style={{ marginTop: 18, display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', fontSize: 13, lineHeight: 1.55 }}>
-          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} style={{ marginTop: 3 }} />
-          <span className="ktc-label" style={{ fontSize: 13 }}>
+        <label style={{ marginTop: 18, display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', textAlign: 'left' }}>
+          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} style={{ marginTop: 3, flex: '0 0 auto' }} />
+          <span className="ktc-label" style={{ fontSize: 13, lineHeight: 1.55, textAlign: 'left' }}>
             {t('I have read and agree to the')}{' '}
             <button type="button" className="ktc-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAgreement(true) }}
-              style={{ border: 0, background: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}>{t('KTC Customer Agreement (Terms & Conditions)')}</button>
+              style={{ display: 'inline', border: 0, background: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}>{t('KTC Customer Agreement (Terms & Conditions)')}</button>
             {' '}{t('and consent to KTC collecting and processing my valid ID for verification under the Data Privacy Act (R.A. 10173).')}
           </span>
         </label>

@@ -65,7 +65,7 @@ export default function Shell({ children }: { children: ReactNode }) {
     <div className="ktc-page">
       <nav className="ktc-nav" aria-label="Primary">
         <Link to="/" aria-label="Go to Home" style={{ display: 'inline-flex', flex: '0 0 auto', padding: '0 6px' }}>
-          <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 34 }} />
+          <img className="ktc-nav-logo" src="/ktc-logo.png" alt="KTC Container Terminal Corp" />
         </Link>
         <div className="ktc-nav-links">
           {NAV.map((n) => (
@@ -79,14 +79,17 @@ export default function Shell({ children }: { children: ReactNode }) {
             </NavLink>
           ))}
         </div>
-        <LangToggle />
+        {/* Mobile-only flex spacer: pushes the help + menu cluster to the right
+            (the desktop links above carry flex:1, but they're hidden on phones). */}
+        <span className="ktc-nav-spacer" aria-hidden />
+        <span className="ktc-nav-lang"><LangToggle /></span>
+        {hasPageTour && (
+          <button className="ktc-nav-help" onClick={replayPageTour}
+            title={t("Show this page's walkthrough")} aria-label={t("Show this page's walkthrough")}>
+            ?
+          </button>
+        )}
         <span className="ktc-nav-util">
-          {hasPageTour && (
-            <button className="ktc-nav-link" onClick={replayPageTour}
-              style={{ flex: '0 0 auto', fontWeight: 700 }} title={t("Show this page's walkthrough")} aria-label={t("Show this page's walkthrough")}>
-              ?
-            </button>
-          )}
           <button className="ktc-nav-link" onClick={handleSignOut} style={{ flex: '0 0 auto' }}>
             {t('Sign out')}
           </button>
@@ -94,6 +97,11 @@ export default function Shell({ children }: { children: ReactNode }) {
         <NavDrawer>
           {(close) => (
             <>
+              <div className="ktc-drawer-lang">
+                <span className="ktc-drawer-label" style={{ padding: '0 0 8px' }}>{t('Language')}</span>
+                <LangToggle />
+              </div>
+              <div className="ktc-drawer-sep" />
               {NAV.map((n) => (
                 <NavLink key={n.to} to={n.to} end={n.end} onClick={close}
                   className={({ isActive }) => `ktc-drawer-link${isActive ? ' is-active' : ''}`}>
@@ -123,12 +131,15 @@ export default function Shell({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <footer style={{ marginTop: 44, paddingTop: 18, borderTop: '1px solid var(--glass-brd)', textAlign: 'center', fontSize: 12, color: 'hsl(var(--ink-2))' }}>
-        <Link to="/manual" className="ktc-link" style={{ fontSize: 12 }}>{t('User Manual')}</Link>
-        <span aria-hidden style={{ margin: '0 8px', opacity: 0.5 }}>·</span>
-        <Link to="/agreement" className="ktc-link" style={{ fontSize: 12 }}>{t('Customer Agreement (Terms & Conditions)')}</Link>
-        <div style={{ marginTop: 6, opacity: 0.75 }}>
-          KTC Online Portal <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.
+      <footer className="ktc-foot">
+        <div className="ktc-foot-links">
+          <Link to="/manual" className="ktc-foot-link">{t('User Manual')}</Link>
+          <span aria-hidden className="ktc-foot-dot">·</span>
+          <Link to="/agreement" className="ktc-foot-link">{t('Customer Agreement')}</Link>
+        </div>
+        <div className="ktc-foot-meta">
+          <img src="/ktc-logo.png" alt="" aria-hidden className="ktc-foot-logo" />
+          <span>KTC Online Portal <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.</span>
         </div>
       </footer>
 

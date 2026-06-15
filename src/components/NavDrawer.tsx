@@ -28,9 +28,10 @@ export default function NavDrawer({ children }: { children: (close: () => void) 
         onClick={() => setOpen(true)}
         style={{ flex: '0 0 auto' }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
           <path d="M3 6h18M3 12h18M3 18h18" />
         </svg>
+        <span className="ktc-burger-label">Menu</span>
       </button>
       {open && createPortal(
         // Portal to <body> so the overlay's position:fixed is relative to the

@@ -114,7 +114,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 7px 10px;
+    padding: 9px 12px;
     margin-bottom: 18px;
     background: var(--glass);
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
@@ -123,6 +123,29 @@
     border-radius: 18px;
     box-shadow: var(--shadow-md), var(--edge);
   }
+  /* Brand mark in the rail — larger/more prominent than before. */
+  .ktc-nav-logo { height: 40px; display: block; }
+  /* Mobile-only flex spacer (desktop uses .ktc-nav-links flex:1 instead). */
+  .ktc-nav-spacer { display: none; }
+  .ktc-nav-lang { display: inline-flex; flex: 0 0 auto; }
+  /* Per-page "replay the walkthrough" help button — kept visible on phones. */
+  .ktc-nav-help {
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 1px solid var(--glass-brd);
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--acc-2);
+    font-weight: 800;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background var(--dur-fast) ease;
+  }
+  .ktc-nav-help:hover { background: rgb(var(--acc-rgb) / 0.12); }
+  .ktc-burger-label { font-size: 13px; font-weight: 650; }
   .ktc-nav-links {
     display: flex;
     align-items: center;
@@ -408,18 +431,30 @@
 
     .ktc-nav {
       top: 6px;
-      gap: 4px;
-      padding: 6px 8px;
+      gap: 6px;
+      padding: 8px 10px;
       margin-bottom: 16px;
       border-radius: 14px;
     }
+    .ktc-nav-logo { height: 34px; }
     .ktc-nav-link { padding: 8px 11px; font-size: 13px; }
-    /* Phone: collapse the inline links + utility buttons into the hamburger
-       drawer. Two-class selectors so these win over the base rules regardless
-       of source order. */
+    /* Phone: collapse the inline links, language pills + utility buttons into
+       the hamburger drawer; a flex spacer pushes help + menu to the right.
+       Two-class selectors so these win over the base rules regardless of order. */
     .ktc-nav .ktc-nav-links { display: none; }
+    .ktc-nav .ktc-nav-lang { display: none; }
     .ktc-nav .ktc-nav-util { display: none; }
+    .ktc-nav .ktc-nav-spacer { display: block; flex: 1 1 auto; }
     .ktc-nav .ktc-burger { display: inline-flex; }
+
+    /* Customer home: tighter greeting + 2-up square tiles, all in one view. */
+    .ktc-home-head { margin: 10px 2px 14px; }
+    .ktc-home-greet { font-size: 23px; }
+    .ktc-home-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .ktc-home-tile { min-height: 0; aspect-ratio: 1 / 1; gap: 8px; padding: 14px 12px; }
+    .ktc-home-tile-icon { width: 40px; height: 40px; }
+    .ktc-home-tile-title { font-size: 13.5px; }
+    .ktc-home-tile-desc { display: none; } /* keep tiles square + fully in view */
 
     .ktc-title { font-size: 20px; }
     .ktc-sub { font-size: 13px; }
@@ -449,7 +484,17 @@
   }
 
   /* ---- Mobile navigation drawer ---- */
-  .ktc-burger { display: none; } /* desktop: hidden; shown in the mobile layer */
+  /* desktop: hidden; shown in the mobile layer. Bordered pill + "Menu" label so
+     it's unmistakably the menu. */
+  .ktc-burger {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--glass-brd);
+    background: rgba(255, 255, 255, 0.55);
+    border-radius: 11px;
+  }
+  .ktc-drawer-lang { padding: 4px 10px 2px; }
   /* Utility cluster (help/sign-out) — inline on desktop, folded into the drawer on phones. */
   .ktc-nav-util { display: contents; }
   .ktc-drawer-backdrop {
@@ -501,6 +546,74 @@
   .ktc-drawer-link:active { background: rgba(0, 0, 0, 0.05); }
   .ktc-drawer-sep { height: 1px; background: var(--glass-brd); margin: 6px 4px; }
   .ktc-drawer-label { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: hsl(var(--ink-2)); padding: 10px 14px 4px; }
+
+  /* ---- Page footer (customer shell) ---- */
+  .ktc-foot {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid var(--glass-brd);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+  }
+  .ktc-foot-links { display: inline-flex; align-items: center; gap: 2px; flex-wrap: wrap; justify-content: center; }
+  .ktc-foot-link {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: hsl(var(--ink-2));
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 9px;
+    transition: color var(--dur-fast) ease, background var(--dur-fast) ease;
+  }
+  .ktc-foot-link:hover { color: var(--acc-2); background: rgb(var(--acc-rgb) / 0.08); }
+  .ktc-foot-dot { opacity: 0.35; }
+  .ktc-foot-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    color: hsl(var(--ink-2));
+    opacity: 0.85;
+  }
+  .ktc-foot-logo { height: 15px; opacity: 0.7; }
+
+  /* ---- Customer home: greeting + service tiles ---- */
+  .ktc-home-head { margin: 16px 4px 22px; }
+  .ktc-home-greet { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.028em; line-height: 1.15; }
+  .ktc-home-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  /* Centered launcher tiles — consistent on desktop and mobile (mobile just
+     tightens them into 2-up squares in the media layer below). */
+  .ktc-home-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px 18px;
+    border-radius: 20px;
+    text-decoration: none;
+    color: inherit;
+    min-height: 150px;
+    text-align: center;
+  }
+  .ktc-home-tile-icon {
+    width: 46px; height: 46px;
+    border-radius: 14px;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, rgb(var(--acc-rgb) / 0.16), rgb(var(--acc-rgb) / 0.07));
+    color: var(--acc);
+  }
+  .ktc-home-tile-body { margin-top: 0; }
+  .ktc-home-tile-title { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 15.5px; font-weight: 650; letter-spacing: -0.01em; }
+  .ktc-home-tile-chev { display: none; } /* clean launcher look — the whole tile is the affordance */
+  .ktc-home-tile-desc { display: block; font-size: 12.5px; margin-top: 5px; line-height: 1.45; max-width: 24ch; }
 
   /* Skeleton shimmer — frosted placeholder while content loads */
   .ktc-skeleton {

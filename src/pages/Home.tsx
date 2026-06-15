@@ -45,8 +45,8 @@ export default function Home() {
 
   return (
     <Shell>
-      <div style={{ margin: '18px 4px 26px' }}>
-        <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, letterSpacing: '-0.028em', lineHeight: 1.15 }}>
+      <div className="ktc-home-head">
+        <h1 className="ktc-home-greet">
           {firstName ? t('Welcome, {name}', { name: firstName }) : t('Welcome')}
         </h1>
         <p className="ktc-sub" style={{ maxWidth: 480 }}>
@@ -57,24 +57,23 @@ export default function Home() {
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
+      <div className="ktc-home-grid">
         {cards.map((c) => (
           <Link
             key={c.to}
             to={c.to}
             data-tour={`home-${c.to.slice(1)}`}
-            className="ktc-glass ktc-card"
-            style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '20px 20px 18px', borderRadius: 20, textDecoration: 'none', color: 'inherit', minHeight: 130 }}
+            className="ktc-glass ktc-card ktc-home-tile"
           >
-            <span style={{ width: 44, height: 44, borderRadius: 13, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, rgb(var(--acc-rgb) / 0.16), rgb(var(--acc-rgb) / 0.07))', color: 'var(--acc)' }}>
+            <span className="ktc-home-tile-icon">
               {c.icon}
             </span>
-            <span style={{ marginTop: 'auto' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15.5, fontWeight: 650, letterSpacing: '-0.01em' }}>
+            <span className="ktc-home-tile-body">
+              <span className="ktc-home-tile-title">
                 {t(c.title)}
-                <span aria-hidden style={{ color: 'hsl(var(--ink-3))', fontSize: 17, lineHeight: 1, transition: 'transform 0.2s' }}>›</span>
+                <span aria-hidden className="ktc-home-tile-chev">›</span>
               </span>
-              <span className="ktc-label" style={{ display: 'block', fontSize: 12.5, marginTop: 4, lineHeight: 1.45 }}>{t(c.desc)}</span>
+              <span className="ktc-label ktc-home-tile-desc">{t(c.desc)}</span>
             </span>
           </Link>
         ))}

@@ -212,3 +212,24 @@ migrations). Logged here so the ST02 record is complete.
 | 11.7 | **Cleared for release**: confirm X-ray done (Checker) **and** balance fully paid | the pay page shows the ✓ **Cleared for release** badge only when **both** are true | |
 
 **Teardown:** suspend/reject the throwaway customer, revoke `st02cash`/`st02check`/`st02ops`, remove test JOs if desired (or archive). **Go-live note:** prod was wiped (session 10p) so the first *real* order is meant to be `JO-000001` — this run will consume `JO-000001+` and `BR-000001+`, so after teardown delete the test orders/customer and reset `jo_number_seq` / `broker_code_seq` (only safe at zero orders). Test IDs uploaded during the run can't be manually deleted for 24h (`0053` window) — the 3-day purge clears them regardless.
+
+## Lane 12 — Mobile blind walkthrough (2026-06-15)
+
+Findings (W19–W30) from an on-device mobile blind test, with the fix made the same session. **All fixed locally — pending a deploy (`git push` → Vercel) to verify on `portal.ktcterminal.com`.** DB migrations `0067`/`0068` already applied to prod.
+
+| # | Finding | Fix | Status |
+|---|---|---|---|
+| W19 | Demo tour re-fired on every login | `mark_tour_seen` was `void supabase.rpc(...)` — supabase-js builders are lazy, so it never sent. Added `.then()`. Same bug fixed in `errorReporting.ts` + `Account.tsx`. | ✅ fixed |
+| W20 | Single-session "no kick" — logging in on a 2nd device didn't sign the first out | Server-side eviction *was* working (≤60s poll). Built the requested device-conflict UX: new-login **Terminate/Cancel** prompt (`ProtectedRoute` gate + `has_other_live_session`, migration `0067`), instant **realtime** kick + in-session "signed out elsewhere" overlay on the old device. | ✅ built |
+| W21 | New Job Order demo only spotlighted step 1 (mobile wizard paginates) | Tour now **drives the wizard** through all 3 steps; step 1 covers consignee **+** entry with updated copy; resets to step 1 when done. | ✅ fixed |
+| W22 | Entry / vessel / voyage / container not uppercase | Forced UPPERCASE on input **and** save (print slip + lists too). | ✅ fixed |
+| W23 | Bulk editor "limited to 32" vans | No cap exists (a 41-line JO already exists; `container_number` unbounded). Added a live count + a scroll area so 150–200 vans render cleanly. **Re-verify on device** post-deploy. | ✅ no cap + UX |
+| W24 | "Vessel not listed" — unclear what happens | Built **pending-vessel request workflow** (migration `0068`): every unlisted filing auto-raises a request → ops review panel on Vessel Schedule (**Approve & link** all waiting JOs / **Reject** with note). | ✅ built |
+| W25 | `/verify-id` upload copy too long; consent note misaligned on mobile | Shortened to one clear sentence + a small caveat line; consent row forced left-aligned. | ✅ fixed |
+| W26 | Hamburger not clearly on the right / not obviously a menu | Pushed right (mobile flex spacer) + bordered pill with a **"Menu"** label. | ✅ fixed |
+| W27 | EN/FIL pills too prominent on mobile | Moved into the drawer (under a "Language" heading); hidden from the mobile bar. | ✅ fixed |
+| W28 | Lost the per-page tour-replay button on mobile | Added a visible **?** quick-tour button in the rail (kept on phones). | ✅ fixed |
+| W29 | Logo/top rail too small; dashboard 5 tiles needed scrolling | Larger logo (40px) + taller rail; home tiles are **2-up square tiles** on mobile (icon+title, desc hidden) so all fit one view. | ✅ fixed |
+| W30 | "Welcome, {name}" + footer "didn't look nice" | Tighter responsive greeting; revamped footer (pill links + branded meta line). | ✅ revamped (iterate w/ screenshot if needed) |
+
+**Open follow-ups:** customer-side "vessel pending review" badge (MyJobOrders doesn't show the vessel yet); uppercase the admin file-on-behalf entry/vessel inputs; W25 alignment + W30 footer/greeting are best-guess polish — confirm against a device screenshot.
