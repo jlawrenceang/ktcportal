@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { useTour } from './TourProvider'
 import { useT } from '../lib/i18n'
@@ -42,8 +43,17 @@ export default function BottomNav() {
   const loc = useLocation()
   const { replayPageTour, hasPageTour } = useTour()
   const [sheet, setSheet] = useState<null | 'orders' | 'menu'>(null)
+  const [attention, setAttention] = useState(0)
 
   const ordersActive = loc.pathname.startsWith('/job-order') // /job-order, /job-orders, detail routes
+
+  // Orders needing the customer's action (on hold / fixable rejection / payment
+  // issue) → a badge on the Orders tab. Refetched on navigation so it stays fresh.
+  useEffect(() => {
+    void supabase.from('job_orders').select('id', { count: 'exact', head: true })
+      .or('status.eq.on_hold,and(status.eq.rejected,rejected_recoverable.eq.true),and(payment_status.eq.rejected,status.in.(submitted,processing,completed))')
+      .then(({ count }) => setAttention(count ?? 0))
+  }, [loc.pathname])
 
   async function handleSignOut() {
     setSheet(null)
@@ -60,7 +70,10 @@ export default function BottomNav() {
         </NavLink>
         <button type="button" className={`ktc-tab${ordersActive || sheet === 'orders' ? ' is-active' : ''}`}
           data-tour="tab-orders" aria-expanded={sheet === 'orders'} onClick={() => setSheet(sheet === 'orders' ? null : 'orders')}>
-          <span className="ktc-tab-icon"><OrdersIcon /></span>
+          <span className="ktc-tab-icon">
+            <OrdersIcon />
+            {attention > 0 && <span aria-hidden className="ktc-tab-badge">{attention > 9 ? '9+' : attention}</span>}
+          </span>
           <span className="ktc-tab-label">{t('Orders')}</span>
         </button>
         <NavLink to="/vessels" data-tour="tab-vessels" className={({ isActive }) => `ktc-tab${isActive ? ' is-active' : ''}`}>

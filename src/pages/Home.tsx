@@ -1,17 +1,15 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import Shell from '../components/Shell'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { homeSteps } from '../components/WelcomeTour'
 import { usePageTour } from '../components/TourProvider'
 import NotificationBar from '../components/NotificationBar'
+import BulletinBoard from '../components/BulletinBoard'
 import { useT } from '../lib/i18n'
 
-// Home is an at-a-glance OVERVIEW (not a launcher — navigation lives in the
-// bottom bar). Shows order counts, notifications, and a small bulletin. The ⊞
-// Menu in the bottom bar carries the full launcher grid.
+// Home is an at-a-glance OVERVIEW: KTC's bulletin board + your unread
+// notifications. Navigation lives in the bottom bar; order counts surface as a
+// badge on the Orders tab.
 export default function Home() {
   const { session } = useAuth()
   const { broker } = useBroker()
@@ -20,28 +18,6 @@ export default function Home() {
 
   // First visit to Home auto-opens its tour; replay from the ⊞ Menu.
   usePageTour('home', homeSteps)
-
-  const [active, setActive] = useState<number | null>(null)
-  const [attention, setAttention] = useState<number | null>(null)
-  const [completed, setCompleted] = useState<number | null>(null)
-
-  // One round-trip: pull the few status columns for the customer's own orders
-  // (RLS-scoped) and tally the three counts client-side, instead of 3 queries.
-  useEffect(() => {
-    void supabase.from('job_orders').select('status, payment_status, rejected_recoverable')
-      .then(({ data }) => {
-        const rows = (data ?? []) as { status: string; payment_status: string | null; rejected_recoverable: boolean | null }[]
-        setActive(rows.filter((r) => ['held', 'submitted', 'processing', 'on_hold'].includes(r.status)).length)
-        setCompleted(rows.filter((r) => r.status === 'completed').length)
-        setAttention(rows.filter((r) =>
-          r.status === 'on_hold' ||
-          (r.status === 'rejected' && !!r.rejected_recoverable) ||
-          (r.payment_status === 'rejected' && ['submitted', 'processing', 'completed'].includes(r.status)),
-        ).length)
-      })
-  }, [])
-
-  const stat = (n: number | null) => (n === null ? '—' : String(n))
 
   return (
     <Shell>
@@ -55,35 +31,8 @@ export default function Home() {
         </p>
       </div>
 
+      <BulletinBoard />
       <NotificationBar />
-
-      <div className="ktc-stat-grid" data-tour="home-stats">
-        <Link to="/job-orders" className="ktc-glass ktc-stat">
-          <span className="ktc-stat-num">{stat(active)}</span>
-          <span className="ktc-stat-label">{t('Active orders')}</span>
-        </Link>
-        <Link to="/job-orders" className={`ktc-glass ktc-stat${attention ? ' ktc-stat--alert' : ''}`}>
-          <span className="ktc-stat-num">{stat(attention)}</span>
-          <span className="ktc-stat-label">{t('Needs your attention')}</span>
-        </Link>
-        <Link to="/job-orders" className="ktc-glass ktc-stat">
-          <span className="ktc-stat-num">{stat(completed)}</span>
-          <span className="ktc-stat-label">{t('Completed')}</span>
-        </Link>
-      </div>
-
-      <div className="ktc-glass ktc-bulletin" data-tour="home-bulletin">
-        <h2 className="ktc-bulletin-title">📌 {t('Good to know')}</h2>
-        <ul className="ktc-bulletin-list">
-          <li>{t('Vessel schedules can change (delays / advances) — check before you file.')}</li>
-          <li>{t('Estimate your charges with the Rate Calculator before filing.')}</li>
-          <li>{t('Pay online and upload your slip to speed up processing.')}</li>
-        </ul>
-        <div className="ktc-bulletin-links">
-          <Link to="/vessels" className="ktc-btn-secondary ktc-btn--sm" style={{ textDecoration: 'none' }}>{t('Vessel Schedule')}</Link>
-          <Link to="/calculator" className="ktc-btn-secondary ktc-btn--sm" style={{ textDecoration: 'none' }}>{t('Rate Calculator')}</Link>
-        </div>
-      </div>
     </Shell>
   )
 }

@@ -741,8 +741,23 @@
   }
   .ktc-tab:hover { background: rgb(var(--acc-rgb) / 0.08); }
   .ktc-tab.is-active { color: var(--acc-2); background: rgb(var(--acc-rgb) / 0.12); }
-  .ktc-tab-icon { display: grid; place-items: center; }
+  .ktc-tab-icon { display: grid; place-items: center; position: relative; }
   .ktc-tab-label { font-size: 10.5px; font-weight: 650; letter-spacing: -0.01em; white-space: nowrap; }
+  .ktc-tab-badge {
+    position: absolute;
+    top: -6px;
+    right: -10px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--acc-2);
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 800;
+    line-height: 15px;
+    text-align: center;
+  }
 
   .ktc-menusheet-backdrop {
     position: fixed;
@@ -817,6 +832,19 @@
   .ktc-bulletin-title { margin: 0 0 10px; font-size: 14.5px; font-weight: 700; }
   .ktc-bulletin-list { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13px; line-height: 1.5; color: hsl(var(--ink-2)); }
   .ktc-bulletin-links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  /* Bulletin board: topic rows → modal popup */
+  .ktc-board-list { display: grid; gap: 8px; margin-top: 4px; }
+  .ktc-board-item {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    padding: 11px 14px; border-radius: 12px; cursor: pointer; font: inherit;
+    background: var(--c-w55); border: 1px solid var(--glass-brd); color: hsl(var(--ink));
+    transition: background var(--dur-fast) ease;
+  }
+  .ktc-board-item:hover { background: rgb(var(--acc-rgb) / 0.08); }
+  .ktc-board-item-main { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; }
+  .ktc-board-item-title { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ktc-board-item-date { font-size: 11.5px; flex: 0 0 auto; }
+  .ktc-board-item-chev { color: hsl(var(--ink-3)); font-size: 16px; flex: 0 0 auto; }
 
   /* ---- Read-only / confidential document (Customer Guide, Agreement) ---- */
   .ktc-protected-doc { -webkit-user-select: none; user-select: none; }

@@ -14,8 +14,8 @@ export const homeSteps: TourStep[] = [
     body: 'Upload a valid government ID and a KTC admin will review your account. You can file Job Orders while you wait — but they\'re held until a KTC admin reviews and approves your account.',
   },
   {
-    icon: '📊', title: 'Your dashboard', target: '[data-tour="home-stats"]',
-    body: 'See your active orders and anything that needs your attention at a glance — tap a tile to jump straight to those orders.',
+    icon: '📌', title: 'Bulletin board', target: '[data-tour="home-bulletin"]',
+    body: 'KTC posts announcements here — tap any topic to read the full message. Anything needing your action shows as a badge on the Orders tab.',
   },
   {
     icon: '📦', title: 'File & track orders', target: '[data-tour="tab-orders"]',
