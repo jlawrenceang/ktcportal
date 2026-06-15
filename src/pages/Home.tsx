@@ -46,10 +46,11 @@ export default function Home() {
     <Shell>
       <NotificationBar />
       <div className="ktc-home-head">
+        <span className="ktc-home-eyebrow">{t('Dashboard')}</span>
         <h1 className="ktc-home-greet">
           {firstName ? t('Welcome, {name}', { name: firstName }) : t('Welcome')}
         </h1>
-        <p className="ktc-sub" style={{ maxWidth: 460 }}>
+        <p className="ktc-sub" style={{ maxWidth: 460, marginBottom: 0 }}>
           {t('Manage and track your KTC terminal services — anytime, anywhere.')}
         </p>
       </div>

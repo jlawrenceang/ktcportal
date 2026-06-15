@@ -24,6 +24,15 @@ function fmtWhen(iso: string): string {
   return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
+// Outline notification bell (matches the dashboard's line-icon style).
+const BellIcon = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+  </svg>
+)
+
 export default function NotificationBell() {
   const { t } = useT()
   const navigate = useNavigate()
@@ -88,7 +97,7 @@ export default function NotificationBell() {
         title={t('Notifications')}
         onClick={() => setOpen((v) => !v)}
       >
-        <span aria-hidden style={{ fontSize: 17, lineHeight: 1 }}>🔔</span>
+        <BellIcon size={20} />
         {unread > 0 && <span aria-hidden className="ktc-nav-bell-badge">{unread > 99 ? '99+' : unread}</span>}
       </button>
 
@@ -99,7 +108,9 @@ export default function NotificationBell() {
           aria-label={t('Notifications')}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderBottom: '1px solid var(--glass-brd)' }}>
-            <span style={{ fontSize: 13.5, fontWeight: 700 }}>🔔 {t('Notifications')}</span>
+            <span style={{ fontSize: 13.5, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+              <BellIcon size={15} /> {t('Notifications')}
+            </span>
             {unread > 0 && (
               <button type="button" className="ktc-link" style={{ fontSize: 12, marginLeft: 'auto' }} onClick={() => void markAll()}>
                 {t('Mark all read')}
