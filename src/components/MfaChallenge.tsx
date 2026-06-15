@@ -44,11 +44,11 @@ export default function MfaChallenge({ onVerified }: { onVerified: () => void })
       setCode('')
       return
     }
-    // Now fully authenticated (aal2): claim the single allowed session for
-    // this account, evicting any other device (0054). The aal1 claim in
-    // signIn was a no-op for MFA-enrolled accounts precisely so that a
-    // password alone can never kick the real session.
-    await supabase.rpc('claim_session').then(() => undefined, () => undefined)
+    // Now fully authenticated (aal2). The single-session claim (and the
+    // device-conflict Terminate/Cancel prompt) runs in the ProtectedRoute
+    // gate once onVerified flips this account to aal2 — claim_session is
+    // aal2-gated server-side, so a password alone still can't evict the
+    // real session.
     setBusy(false)
     onVerified()
   }

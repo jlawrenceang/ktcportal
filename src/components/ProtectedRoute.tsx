@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import MfaChallenge from './MfaChallenge'
+import SessionConflictModal from './SessionConflictModal'
 
 function AwaitingEmailConfirmation({ email }: { email: string | undefined }) {
   const { signOut } = useAuth()
@@ -54,7 +55,7 @@ function AwaitingEmailConfirmation({ email }: { email: string | undefined }) {
 }
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { session, loading } = useAuth()
+  const { session, loading, sessionClaim, runSessionClaim } = useAuth()
 
   // MFA gate: an account with a verified TOTP factor must pass the challenge
   // (aal2) before the portal renders. Backend-enforced too — is_admin() /
@@ -68,6 +69,18 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
     })
     return () => { active = false }
   }, [session])
+
+  // Single-session gate: once the session is fully authenticated (past the
+  // email + MFA gates), run the claim check exactly once. It either claims
+  // silently (no other device) or holds at 'conflict' for Terminate/Cancel.
+  const sessionUser = session?.user
+  const isStaffEarly = !!sessionUser?.email?.endsWith('@ktc-staff.local')
+  const emailOk = !!(sessionUser?.email_confirmed_at || sessionUser?.confirmed_at)
+  const aalReady = !!aal && !(aal.next === 'aal2' && aal.current !== 'aal2')
+  const fullyAuthed = !!session && (isStaffEarly || emailOk) && aalReady
+  useEffect(() => {
+    if (fullyAuthed) runSessionClaim()
+  }, [fullyAuthed, runSessionClaim])
 
   if (loading) {
     return (
@@ -98,6 +111,18 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   }
   if (aal.next === 'aal2' && aal.current !== 'aal2') {
     return <MfaChallenge onVerified={() => setAal({ current: 'aal2', next: 'aal2' })} />
+  }
+
+  // Single-session gate: another device is live → ask before evicting.
+  if (sessionClaim === 'conflict') return <SessionConflictModal />
+  // 'idle' / 'checking' → the claim check is in flight; hold the portal back a
+  // beat so it can't flash before a possible conflict prompt.
+  if (sessionClaim !== 'resolved') {
+    return (
+      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+        <span className="ktc-label">Loading…</span>
+      </div>
+    )
   }
 
   return <>{children}</>
