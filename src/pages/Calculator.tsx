@@ -31,7 +31,7 @@ export default function Calculator() {
   const [count20, setCount20] = useState(0)
   const [count40, setCount40] = useState(0)
   const [vesselVisit, setVesselVisit] = useState('')
-  const [storageDays, setStorageDays] = useState(0)
+  const [pickupDate, setPickupDate] = useState('')
   const [xrayVans, setXrayVans] = useState(0)
   const [reeferVans, setReeferVans] = useState(0)
   const [plugIn, setPlugIn] = useState('')
@@ -64,7 +64,14 @@ export default function Calculator() {
     const sized = (service: string) => rateOf(service, '20') * count20 + rateOf(service, '40') * count40
     const arrastre = sized('arrastre')
     const lolo = sized('lolo')
-    const storage = sized('storage') * Math.max(0, storageDays)
+    // Storage days = calendar days from the Last Free Day to the planned pickup
+    // (0 while still within the free period). Needs a vessel for the LFD.
+    let storageDays = 0
+    if (lfd && pickupDate) {
+      const ms = new Date(pickupDate).getTime() - new Date(lfd).getTime()
+      storageDays = ms > 0 ? Math.round(ms / 86_400_000) : 0
+    }
+    const storage = sized('storage') * storageDays
     const xray = xrayRate * Math.max(0, xrayVans)
     // Reefer: per van per hour, plug-in → plug-out (rounded up to whole hours).
     let reeferHours = 0
@@ -76,8 +83,8 @@ export default function Calculator() {
     const vatable = arrastre + lolo + storage + xray + reefer
     const vat = vatable * settings.vat
     const total = vatable + vat + settings.admin + settings.print
-    return { arrastre, lolo, storage, xray, reefer, reeferHours, vatable, vat, total }
-  }, [rateOf, count20, count40, storageDays, xrayRate, xrayVans, settings, reeferVans, plugIn, plugOut])
+    return { arrastre, lolo, storage, storageDays, xray, reefer, reeferHours, vatable, vat, total }
+  }, [rateOf, count20, count40, lfd, pickupDate, xrayRate, xrayVans, settings, reeferVans, plugIn, plugOut])
 
   const anyInput = count20 > 0 || count40 > 0 || xrayVans > 0 || reeferVans > 0
 
@@ -139,9 +146,19 @@ export default function Calculator() {
                 </select>
                 {lfd && <span className="ktc-label" style={{ fontSize: 12 }}>{t('Last Free Day:')} <b>{new Date(lfd).toLocaleDateString()}</b> — {t('storage applies after this date.')}</span>}
               </div>
-              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                <span className="ktc-label">{t('Storage days (beyond free)')}</span>{numInput(storageDays, setStorageDays, t('Storage days'))}
-              </label>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                  <span className="ktc-label">{t('Planned pickup date')}</span>
+                  <input className="ktc-input" type="date" value={pickupDate} onChange={(e) => setPickupDate(e.target.value)} style={{ width: 170 }} />
+                </label>
+                {!lfd ? (
+                  <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>{t('Select a vessel above to estimate storage from the Last Free Day.')}</span>
+                ) : pickupDate ? (
+                  calc.storageDays > 0
+                    ? <span className="ktc-label" style={{ fontSize: 12 }}>{t('{n} day(s) of storage past the Last Free Day.', { n: calc.storageDays })}</span>
+                    : <span className="ktc-label" style={{ fontSize: 12 }}>{t('Within the free period — no storage charge.')}</span>
+                ) : null}
+              </div>
             </div>
           </div>
 
@@ -179,7 +196,7 @@ export default function Calculator() {
               <tbody>
                 <Row label={t('Arrastre')} value={peso(calc.arrastre)} />
                 <Row label={t('LoLo')} value={peso(calc.lolo)} />
-                <Row label={t('Storage')} value={peso(calc.storage)} hint={storageDays > 0 ? `× ${storageDays} ${t('day(s)')}` : ''} />
+                <Row label={t('Storage')} value={peso(calc.storage)} hint={calc.storageDays > 0 ? `× ${calc.storageDays} ${t('day(s)')}` : ''} />
                 {calc.xray > 0 && <Row label={t('X-ray')} value={peso(calc.xray)} hint={`× ${xrayVans}`} />}
                 {calc.reefer > 0 && <Row label={t('Reefer / electrical')} value={peso(calc.reefer)} hint={`${reeferVans} × ${calc.reeferHours}h`} />}
                 <Row label={t('VAT ({pct}%)', { pct: (settings.vat * 100).toFixed(0) })} value={peso(calc.vat)} />
