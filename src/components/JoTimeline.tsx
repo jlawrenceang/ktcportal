@@ -12,6 +12,8 @@ import { useT } from '../lib/i18n'
 // note) via add_jo_comment / add_jo_support. Used in the customer modal and the
 // admin queue.
 type Row = {
+  row_id: string
+  source: string
   kind: 'event' | 'comment' | 'document'
   event_name: string | null
   detail: Record<string, unknown> | null
@@ -19,6 +21,7 @@ type Row = {
   body: string | null
   doc_path: string | null
   doc_filename: string | null
+  deletable: boolean
   at: string
 }
 
@@ -63,6 +66,13 @@ export default function JoTimeline({ orderId, userId, canComment, canAttach }: {
     void load()
   }
 
+  async function remove(r: Row) {
+    if (!window.confirm(t('Delete this entry? This can’t be undone.'))) return
+    const { error } = await supabase.rpc('delete_jo_entry', { p_source: r.source, p_id: r.row_id })
+    if (error) { setErr(error.message); return }
+    void load()
+  }
+
   function lineFor(r: Row): { label: string; tone: string } {
     if (r.kind === 'event') {
       const label = joEventLabel({ event: r.event_name ?? '', detail: r.detail ?? {}, actor: null, created_at: r.at, id: '' } as JobOrderEvent)
@@ -93,6 +103,13 @@ export default function JoTimeline({ orderId, userId, canComment, canAttach }: {
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 12.5, fontWeight: 600 }}>{r.who}</span>
                     <span className="ktc-label" style={{ fontSize: 11, opacity: 0.7 }}>{fmtWhen(r.at)}</span>
+                    {r.deletable && (
+                      <button type="button" className="ktc-link" title={t('Delete')} aria-label={t('Delete')}
+                        onClick={() => void remove(r)}
+                        style={{ fontSize: 11.5, marginLeft: 'auto', color: 'var(--acc-2)', opacity: 0.8 }}>
+                        {t('Delete')}
+                      </button>
+                    )}
                   </div>
                   <div style={{ fontSize: 13, lineHeight: 1.45, marginTop: 2, color: tone === 'event' ? 'hsl(var(--ink-2))' : 'hsl(var(--ink))', fontStyle: tone === 'event' ? 'italic' : 'normal', wordBreak: 'break-word' }}>
                     {label}
