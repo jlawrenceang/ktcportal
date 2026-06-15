@@ -233,3 +233,15 @@ Findings (W19–W30) from an on-device mobile blind test, with the fix made the 
 | W30 | "Welcome, {name}" + footer "didn't look nice" | Tighter responsive greeting; revamped footer (pill links + branded meta line). | ✅ revamped (iterate w/ screenshot if needed) |
 
 **Open follow-ups:** customer-side "vessel pending review" badge (MyJobOrders doesn't show the vessel yet); uppercase the admin file-on-behalf entry/vessel inputs; W25 alignment + W30 footer/greeting are best-guess polish — confirm against a device screenshot.
+
+### Password reset + email deliverability (W31–W33)
+
+| # | Finding | Fix | Status |
+|---|---|---|---|
+| W31 | Forgot-password parked the user on a resend timer | On success, redirect to **/login** with a "check inbox/spam" notice (`ktc_reset_sent`); per-email resend throttle still kept in localStorage. ResetPassword already returned to login. | ✅ pushed |
+| W32 | No admin-side reset when a customer can't self-reset | **Admin/owner** can mint a one-time **copyable set-password link** on `/admin/customers/:id` (no email — sendable via Viber/SMS, spam-proof). Edge Function `admin-reset-link` (owner/admin-gated; refuses the owner account; uses auto-injected `SUPABASE_URL`/`SERVICE_ROLE_KEY`) **deployed to prod**. Two reset paths now: self-service email + admin link. | ✅ deployed |
+| W33 | Auth emails flagged as spam | Confirmed sending via **Resend** (From `@ktcterminal.com`); DKIM/DMARC/SPF all present and DMARC passes → it's **new-domain reputation**, not a config break. Levers (no code): mark "Not spam" + add to contacts; add DMARC `rua` reporting (`v=DMARC1; p=none; rua=mailto:dmarc@ktcterminal.com; fo=1`); optional root SPF `v=spf1 include:amazonses.com ~all`. | ⏳ user action (DNS/inbox) |
+
+**Reset-link expiry:** Supabase recovery links are **single-use** and expire (**default ~1h**); a newer link invalidates the old. Configurable in Auth → Email → OTP Expiration.
+
+**Ops note (creds):** the old `.env.local` `SUPABASE_ACCESS_TOKEN` was expired (401) and briefly leaked in-session — confirmed **revoked/dead** and replaced with a fresh `sbp_…` PAT (which also un-blocks `set-auth-email-template.mjs` / `set-vault-secrets.mjs`). Edge-function deploys need the CLI authed in **PowerShell** (`supabase login`) or a valid PAT in `.env.local` + `--use-api` (no Docker); the Git Bash tool can't read the PowerShell keyring login.
