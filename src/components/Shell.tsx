@@ -83,8 +83,7 @@ export default function Shell({ children }: { children: ReactNode }) {
         {/* Mobile-only flex spacer: pushes the help + menu cluster to the right
             (the desktop links above carry flex:1, but they're hidden on phones). */}
         <span className="ktc-nav-spacer" aria-hidden />
-        <span className="ktc-nav-lang"><LangToggle /></span>
-        <ThemeToggle />
+        <span className="ktc-nav-lang"><LangToggle /><ThemeToggle /></span>
         {hasPageTour && (
           <button className="ktc-nav-help" onClick={replayPageTour}
             title={t('Quick tour')} aria-label={t('Quick tour')}>
@@ -101,8 +100,11 @@ export default function Shell({ children }: { children: ReactNode }) {
           {(close) => (
             <>
               <div className="ktc-drawer-lang">
-                <span className="ktc-drawer-label" style={{ padding: '0 0 8px' }}>{t('Language')}</span>
-                <LangToggle />
+                <span className="ktc-drawer-label" style={{ padding: '0 0 8px' }}>{t('Language & theme')}</span>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <LangToggle />
+                  <ThemeToggle />
+                </div>
               </div>
               <div className="ktc-drawer-sep" />
               {NAV.map((n) => (

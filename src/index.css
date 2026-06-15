@@ -127,7 +127,7 @@
   .ktc-nav-logo { height: 40px; display: block; }
   /* Mobile-only flex spacer (desktop uses .ktc-nav-links flex:1 instead). */
   .ktc-nav-spacer { display: none; }
-  .ktc-nav-lang { display: inline-flex; flex: 0 0 auto; }
+  .ktc-nav-lang { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
   /* Per-page "replay the walkthrough" button — a labelled pill (? + Quick tour),
      kept visible on phones. */
   .ktc-nav-help {
