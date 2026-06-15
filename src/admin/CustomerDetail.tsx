@@ -28,6 +28,30 @@ export default function CustomerDetail() {
   const [orders, setOrders] = useState<JobOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Admin password-reset: mint a one-time set-password link to hand the customer
+  // directly (spam-proof). No email is sent from here.
+  const [resetLink, setResetLink] = useState<string | null>(null)
+  const [resetBusy, setResetBusy] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  async function generateResetLink() {
+    if (!cust) return
+    setResetBusy(true); setError(null); setResetLink(null); setCopied(false)
+    const { data, error: fErr } = await supabase.functions.invoke('admin-reset-link', {
+      body: { customer_id: cust.id, redirect_to: `${window.location.origin}/reset-password` },
+    })
+    setResetBusy(false)
+    if (fErr || (data as { error?: string })?.error) {
+      setError((data as { error?: string })?.error ?? fErr?.message ?? t('Could not generate the link.'))
+      return
+    }
+    setResetLink((data as { link: string }).link)
+  }
+
+  async function copyResetLink() {
+    if (!resetLink) return
+    try { await navigator.clipboard.writeText(resetLink); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch { /* clipboard blocked — user can select manually */ }
+  }
 
   useEffect(() => {
     if (!id) return
@@ -82,6 +106,29 @@ export default function CustomerDetail() {
           {cust.decision_reason && <div>{t('Note to customer:')} {cust.decision_reason}</div>}
         </div>
         <BrokerReview b={cust} />
+
+        {cust.email && !cust.is_owner && (
+          <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--glass-brd)' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 600 }}>{t('Reset password')}</div>
+            <p className="ktc-label" style={{ fontSize: 12.5, marginTop: 4, lineHeight: 1.5, maxWidth: 560 }}>
+              {t('Generate a one-time link the customer can open to set a new password — copy it and send it to them directly (e.g. Viber/SMS). No email is sent. The link is single-use and expires in about an hour.')}
+            </p>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 10 }}>
+              <button className="ktc-btn ktc-btn--sm" type="button" disabled={resetBusy} onClick={() => void generateResetLink()}>
+                {resetBusy ? t('Generating…') : resetLink ? t('Regenerate link') : t('Generate set-password link')}
+              </button>
+            </div>
+            {resetLink && (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 10 }}>
+                <input className="ktc-input ktc-mono" readOnly value={resetLink} onFocus={(e) => e.currentTarget.select()}
+                  style={{ flex: '1 1 320px', minWidth: 0, fontSize: 12 }} />
+                <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" onClick={() => void copyResetLink()}>
+                  {copied ? t('✓ Copied') : t('Copy link')}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="ktc-glass" style={{ padding: 28 }}>
