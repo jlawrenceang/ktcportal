@@ -63,7 +63,11 @@ export default function BottomNav() {
 
   return (
     <>
-      <nav className="ktc-tabbar" aria-label={t('Sections')}>
+      {/* Portaled to <body> so `position: fixed` is relative to the viewport and
+          can't be trapped by an ancestor's transform/filter/backdrop-filter —
+          that's what made the bar scroll away instead of staying stuck. */}
+      {createPortal(
+        <nav className="ktc-tabbar" aria-label={t('Sections')}>
         <NavLink to="/" end data-tour="tab-home" className={({ isActive }) => `ktc-tab${isActive ? ' is-active' : ''}`}>
           <span className="ktc-tab-icon"><HomeIcon /></span>
           <span className="ktc-tab-label">{t('Home')}</span>
@@ -89,7 +93,9 @@ export default function BottomNav() {
           <span className="ktc-tab-icon"><MenuIcon /></span>
           <span className="ktc-tab-label">{t('Menu')}</span>
         </button>
-      </nav>
+        </nav>,
+        document.body,
+      )}
 
       {sheet === 'orders' && createPortal(
         <div className="ktc-menusheet-backdrop" onClick={() => setSheet(null)}>

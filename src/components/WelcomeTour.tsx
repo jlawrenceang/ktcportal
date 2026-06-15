@@ -78,12 +78,12 @@ export const vesselsCustomerSteps: TourStep[] = [
 
 export const calculatorSteps: TourStep[] = [
   {
-    icon: '🧮', title: 'Estimate your charges', target: '[data-tour="calc-inputs"]',
-    body: 'Enter how many containers need each service — the estimate updates as you type. Rates are set by KTC.',
+    icon: '🧮', title: 'Build your estimate', target: '[data-tour="calc-inputs"]',
+    body: 'Go step by step: pick your shipping line & vessel, choose the shipment (import or export), then enter your 20ft and 40ft container counts. Add any ancillary services (X-ray, electrical, storage). Rates are set by KTC.',
   },
   {
-    icon: '🧾', title: 'See the breakdown', target: '[data-tour="calc-estimate"]',
-    body: 'Your running estimate — service charges + VAT + fees. This is a guide only; the official amount is confirmed on the Service Invoice at the KTC office.',
+    icon: '🧾', title: 'Generate the breakdown', target: '[data-tour="calc-estimate"]',
+    body: 'Tap Generate estimate to see the charges — terminal fees + VAT + service fees. This is a guide only; the official amount is confirmed on the Service Invoice at the KTC office.',
   },
 ]
 

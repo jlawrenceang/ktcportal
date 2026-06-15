@@ -88,6 +88,11 @@ export default function EditJobOrderForm({ order, onDone, onError, onCancel }: {
       <div style={{ fontSize: 12.5, lineHeight: 1.5, padding: '9px 12px', borderRadius: 9, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
         {t('Editing this order. You can change it while it’s still waiting — once KTC accepts it, it locks.')}
       </div>
+      {order.status === 'submitted' && (
+        <div style={{ fontSize: 12.5, lineHeight: 1.5, padding: '9px 12px', borderRadius: 9, background: 'var(--tone-warning-bg)', color: 'var(--tone-warning-ink)', border: '1px solid var(--glass-brd)' }}>
+          {t('Heads up: saving changes sends this filed order to the back of the queue so KTC can re-review it — your serving number will be reissued.')}
+        </div>
+      )}
 
       <div style={{ display: 'grid', gap: 6 }}>
         <label className="ktc-label" htmlFor="edit-consignee">{t('Consignee')} *</label>

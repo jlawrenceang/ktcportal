@@ -147,6 +147,7 @@ export default function Payment() {
                 {t('Some rates aren’t configured yet — the total below may be incomplete. KTC will confirm the final amount.')}
               </p>
             )}
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 12, fontSize: 13.5 }}>
               <tbody>
                 {charges.lines.map((l) => (
@@ -178,6 +179,7 @@ export default function Payment() {
                 </tr>
               </tbody>
             </table>
+            </div>
             {rpsDue && (
               <p className="ktc-label" style={{ fontSize: 12, marginTop: 10 }}>
                 {t('Includes')} <b>{t('port-services (RPS)')}</b> {t('assessed by operations — payable separately below.')}
@@ -191,7 +193,7 @@ export default function Payment() {
         <>
           {/* How to pay (shared) */}
           <div className="ktc-glass" style={{ padding: 26, marginBottom: 16, display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            <div style={{ flex: '1 1 240px', minWidth: 0 }}>
+            <div style={{ flex: '1 1 200px', minWidth: 0 }}>
               <h2 style={{ margin: 0, fontSize: 16.5, fontWeight: 650 }}>{t('How to pay')}</h2>
               <div style={{ display: 'grid', gap: 6, marginTop: 12, fontSize: 13.5 }}>
                 {info.get('bank_name') && <div><span className="ktc-label">{t('Bank:')}</span> <b>{info.get('bank_name')}</b></div>}

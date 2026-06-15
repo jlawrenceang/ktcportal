@@ -241,7 +241,7 @@ export default function MyJobOrders() {
             className="ktc-input"
             value={filter}
             onChange={(e) => changeFilter(e.target.value as Filter)}
-            style={{ width: 'auto', minWidth: 180, padding: '8px 12px', fontSize: 13 }}
+            style={{ width: 'auto', minWidth: 0, padding: '8px 12px', fontSize: 13 }}
             aria-label={t('Filter job orders')}
           >
             {FILTERS.map((f) => (
@@ -360,7 +360,7 @@ export default function MyJobOrders() {
                 ) : (
                 <>
                 {/* Meta */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', fontSize: 13 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '12px 16px', fontSize: 13 }}>
                   <Meta label={t('Consignee')} value={o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : '—'} span2 />
                   <Meta label={t('Entry Number')} value={o.entry_number ?? '—'} />
                   <Meta label={t('Vessel & Voyage')} value={o.vessel_name ? `${o.vessel_name}${o.voyage_number ? ' · ' + o.voyage_number : ''}` : '—'} />

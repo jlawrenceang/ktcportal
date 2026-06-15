@@ -77,7 +77,7 @@ function AdminNav({ can }: { can: (p: Permission) => boolean }) {
                 {t(node.label)} <span aria-hidden style={{ fontSize: 9, marginLeft: 2, opacity: 0.7 }}>▾</span>
               </button>
               {isOpen && (
-                <div className="ktc-glass" role="menu" style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, minWidth: 170, padding: 6, display: 'grid', gap: 2, zIndex: 50, background: 'var(--c-w97)' }}>
+                <div className="ktc-glass" role="menu" style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, minWidth: 170, maxWidth: 'calc(100vw - 24px)', padding: 6, display: 'grid', gap: 2, zIndex: 50, background: 'var(--c-w97)' }}>
                   {items.map((i) => (
                     <NavLink key={i.to} to={i.to} role="menuitem" className={linkClass} style={{ textAlign: 'left' }}>{t(i.label)}</NavLink>
                   ))}

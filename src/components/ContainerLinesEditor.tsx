@@ -112,14 +112,14 @@ export default function ContainerLinesEditor({
         <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
             className="ktc-input ktc-mono"
-            style={{ flex: '1 1 45%', textTransform: 'uppercase' }}
+            style={{ flex: '1 1 160px', textTransform: 'uppercase' }}
             placeholder={t('Container number (e.g. ABCD1234567)')}
             value={line.container_number}
             onChange={(e) => updateLine(i, { container_number: e.target.value.toUpperCase() })}
           />
           <select
             className="ktc-input"
-            style={{ flex: '1 1 45%' }}
+            style={{ flex: '1 1 160px' }}
             value={line.service_request}
             onChange={(e) => updateLine(i, { service_request: e.target.value })}
           >
@@ -159,7 +159,7 @@ export default function ContainerLinesEditor({
           />
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <label className="ktc-label" htmlFor="bulkSvc" style={{ fontSize: 12 }}>{t('Service for all:')}</label>
-            <select id="bulkSvc" className="ktc-input" style={{ width: 'auto', minWidth: 160, flex: '0 1 auto' }} value={bulkService} onChange={(e) => setBulkService(e.target.value)}>
+            <select id="bulkSvc" className="ktc-input" style={{ width: 'auto', minWidth: 0, flex: '0 1 auto' }} value={bulkService} onChange={(e) => setBulkService(e.target.value)}>
               {optionsFor(bulkService).map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
             <button type="button" className="ktc-btn" onClick={addBulk} style={{ width: 'auto', padding: '9px 18px' }}>{t('Add to list')}</button>

@@ -8,7 +8,7 @@ import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
 import { useT } from '../lib/i18n'
 
 // Terminal tariff dimensions (migration 0073): service × trade × origin × size.
-const TERM_SERVICES: [string, string][] = [['arrastre', 'Arrastre'], ['lolo', 'LoLo'], ['storage', 'Storage (per day)']]
+const TERM_SERVICES: [string, string][] = [['arrastre', 'Arrastre'], ['wharfage', 'Wharfage'], ['lolo', 'LoLo'], ['weighing', 'Weighing scale (export)'], ['storage', 'Storage (per day)']]
 const TERM_COMBOS: [string, string][] = [['import', 'domestic'], ['import', 'foreign'], ['export', 'domestic'], ['export', 'foreign']]
 
 export default function Settings() {
@@ -599,9 +599,9 @@ export default function Settings() {
       </div>
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
-        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Terminal tariff (arrastre · LoLo · storage)')}</h2>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Terminal tariff (arrastre · wharfage · LoLo · weighing · storage)')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
-          {t('Per-container rates the Rate Calculator looks up by the customer’s combination — trade (import/export), origin (domestic/foreign) and container size. Storage is per container, per day past the Last Free Day. Amounts in ₱, VAT-exclusive (12% VAT is added on the subtotal).')}
+          {t('Per-container rates the Rate Calculator looks up by the customer’s combination — trade (import/export), origin (domestic/foreign) and container size. Import bills arrastre + wharfage + LoLo; export adds weighing. Weighing applies to export only; on export, Maersk/MCC waive LoLo (the line shoulders it). Storage is per container, per day past the Last Free Day. Amounts in ₱, VAT-exclusive (12% VAT is added on the subtotal).')}
         </p>
         <div style={{ display: 'grid', gap: 16 }}>
           {TERM_SERVICES.map(([svc, svcLabel]) => (

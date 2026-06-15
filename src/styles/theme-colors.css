@@ -83,6 +83,7 @@
   --c-w92: rgba(255,255,255,0.92);
   --c-w96: rgba(255,255,255,0.96);
   --c-w97: rgba(255,255,255,0.97);
+  --c-solid: #ffffff;        /* fully opaque surface — modals, dropdowns */
 }
 
 :root[data-theme="dark"] {
@@ -166,4 +167,5 @@
   --c-w92: rgba(34,38,48,0.95);
   --c-w96: rgba(34,38,48,0.95);
   --c-w97: rgba(34,38,48,0.95);
+  --c-solid: #1c2029;        /* fully opaque surface — modals, dropdowns */
 }

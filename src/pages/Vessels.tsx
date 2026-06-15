@@ -56,6 +56,7 @@ export default function Vessels() {
 
       {loading ? <p className="ktc-label">{t('Loading…')}</p> : view === 'calendar' ? <MonthCalendar rows={rows.filter((r) => !r.cancelled)} /> : (
         <div className="ktc-glass" style={{ padding: 0, overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: 'hsl(var(--ink-2))' }}>
@@ -91,6 +92,7 @@ export default function Vessels() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </Shell>

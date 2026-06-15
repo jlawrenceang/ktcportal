@@ -210,6 +210,9 @@
     box-shadow: 0 12px 40px rgb(0 0 0 / 0.18);
     overflow: hidden;
   }
+  /* Opaque surface (two-class so it beats .ktc-glass regardless of source order)
+     — the dropdown list must be fully readable, not see-through. */
+  .ktc-glass.ktc-notif-panel { background: var(--c-solid); }
   .ktc-burger-label { font-size: 13px; font-weight: 650; }
   .ktc-nav-links {
     display: flex;
@@ -423,6 +426,9 @@
   .ktc-modal-panel {
     animation: ktc-pop-in var(--dur) var(--ease-spring);
   }
+  /* Modal cards use a fully OPAQUE surface so the content is always readable
+     over the blurred backdrop (two-class so it beats .ktc-glass). */
+  .ktc-glass.ktc-modal-panel { background: var(--c-solid); }
   @keyframes ktc-fade-in {
     from { opacity: 0; }
   }
@@ -440,11 +446,16 @@
     max-width: 880px;
     margin: 0 auto;
     padding: 14px 20px 60px;
+    /* A stray over-wide child (table, long token) never forces page-wide
+       horizontal scroll. `clip` (not `hidden`) keeps position:sticky working
+       and creates no scroll container. Wide tables get their own scroll box. */
+    overflow-x: clip;
   }
   .ktc-page--wide { max-width: 1040px; }
   /* Clear the floating bottom tab bar (customer shell). Two-class selector so it
-     wins over the base + mobile .ktc-page padding regardless of source order. */
-  .ktc-page.ktc-page--tabbar { padding-bottom: 104px; }
+     wins over the base + mobile .ktc-page padding regardless of source order.
+     Adds the iOS home-indicator safe-area so content never hides under it. */
+  .ktc-page.ktc-page--tabbar { padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)); }
 
   /* ---- Responsive field grid ----
      Two columns on desktop so forms use the width and stay short (one screen);
@@ -704,7 +715,7 @@
   /* ---- Bottom tab bar (single nav, all widths) + ⊞ Menu grid popup ---- */
   .ktc-tabbar {
     position: fixed;
-    bottom: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%);
     z-index: 45;
@@ -777,7 +788,7 @@
     max-width: 460px;
     padding: 16px;
     border-radius: 20px;
-    background: var(--c-w96);
+    background: var(--c-solid);
     border: 1px solid var(--glass-brd);
     box-shadow: var(--shadow-lg), var(--edge);
     animation: ktc-rise var(--dur) var(--ease-spring);
@@ -846,17 +857,21 @@
   /* Bulletin board: topic rows → modal popup */
   .ktc-board-list { display: grid; gap: 8px; margin-top: 4px; }
   .ktc-board-item {
-    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left;
     padding: 12px 14px; border-radius: 12px; cursor: pointer; font: inherit;
-    background: var(--c-w96); border: 1px solid var(--glass-brd); color: hsl(var(--ink));
+    background: var(--c-solid); border: 1px solid var(--glass-brd); color: hsl(var(--ink));
     transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
   }
   .ktc-board-item:hover { border-color: var(--glass-brd-strong); box-shadow: var(--shadow-sm, 0 1px 4px rgb(0 0 0 / 0.08)); }
-  .ktc-board-item-main { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; }
-  .ktc-board-item-title { font-size: 13.5px; font-weight: 600; color: hsl(var(--ink)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ktc-board-item-date { font-size: 11.5px; flex: 0 0 auto; }
-  .ktc-board-unread { width: 8px; height: 8px; border-radius: 999px; background: var(--acc-2); flex: 0 0 auto; }
-  .ktc-board-item-chev { color: hsl(var(--ink-3)); font-size: 16px; flex: 0 0 auto; }
+  .ktc-board-item-main { display: flex; align-items: baseline; gap: 8px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
+  /* Title wraps (up to 2 lines) instead of truncating — readable on phones. */
+  .ktc-board-item-title {
+    font-size: 13.5px; font-weight: 600; color: hsl(var(--ink)); line-height: 1.35;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .ktc-board-item-date { font-size: 11.5px; flex: 0 0 auto; margin-top: 2px; }
+  .ktc-board-unread { width: 8px; height: 8px; border-radius: 999px; background: var(--acc-2); flex: 0 0 auto; margin-top: 5px; }
+  .ktc-board-item-chev { color: hsl(var(--ink-3)); font-size: 16px; flex: 0 0 auto; margin-top: 1px; }
 
   /* ---- Read-only / confidential document (Customer Guide, Agreement) ---- */
   .ktc-protected-doc { -webkit-user-select: none; user-select: none; position: relative; }

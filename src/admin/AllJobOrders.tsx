@@ -417,7 +417,7 @@ export default function AllJobOrders() {
                     {can('review_payments') && o.payment_status === 'submitted' && (
                       payReject?.id === o.id && payRejectKind === 'base' ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <input className="ktc-input" value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder={t('Why? (shown to the customer)')} autoFocus style={{ width: 230, padding: '7px 11px', fontSize: 13 }} />
+                          <input className="ktc-input" value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder={t('Why? (shown to the customer)')} autoFocus style={{ maxWidth: 230, width: '100%', padding: '7px 11px', fontSize: 13 }} />
                           <button style={btn('danger')} disabled={isBusy || !payNote.trim()} onClick={() => void reviewPayment(o.id, false, payNote.trim(), 'base')}>{t('Reject proof')}</button>
                           <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setPayReject(null); setPayNote('') }}>{t('Cancel')}</button>
                         </span>
@@ -434,7 +434,7 @@ export default function AllJobOrders() {
                     {can('review_payments') && o.rps_payment_status === 'submitted' && (
                       payReject?.id === o.id && payRejectKind === 'rps' ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <input className="ktc-input" value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder={t('Why? (shown to the customer)')} autoFocus style={{ width: 230, padding: '7px 11px', fontSize: 13 }} />
+                          <input className="ktc-input" value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder={t('Why? (shown to the customer)')} autoFocus style={{ maxWidth: 230, width: '100%', padding: '7px 11px', fontSize: 13 }} />
                           <button style={btn('danger')} disabled={isBusy || !payNote.trim()} onClick={() => void reviewPayment(o.id, false, payNote.trim(), 'rps')}>{t('Reject proof')}</button>
                           <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setPayReject(null); setPayNote('') }}>{t('Cancel')}</button>
                         </span>
@@ -458,7 +458,7 @@ export default function AllJobOrders() {
                             placeholder={t('ERP control no. (OR-INV / BI-INV)')}
                             title={t('The ERP record ID — OR-INV-… for cash, BI-INV-… for credit')}
                             autoFocus
-                            style={{ width: 215, padding: '7px 11px', fontSize: 13 }}
+                            style={{ maxWidth: 215, width: '100%', padding: '7px 11px', fontSize: 13 }}
                           />
                           <input
                             className="ktc-input ktc-mono"
@@ -466,7 +466,7 @@ export default function AllJobOrders() {
                             onChange={(e) => setInvoicePad(e.target.value)}
                             placeholder={t('Invoice no. (e.g. 001323)')}
                             title={t('The printed OR / Billing Invoice serial from the pad')}
-                            style={{ width: 170, padding: '7px 11px', fontSize: 13 }}
+                            style={{ maxWidth: 170, width: '100%', padding: '7px 11px', fontSize: 13 }}
                           />
                           <button style={btn('solid')} disabled={isBusy || !invoiceNo.trim() || !invoicePad.trim()} onClick={() => void recordInvoice()}>{t('Save invoice')}</button>
                           <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setInvoiceId(null); setInvoiceNo(''); setInvoicePad('') }}>{t('Cancel')}</button>

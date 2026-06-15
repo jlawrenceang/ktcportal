@@ -256,7 +256,7 @@ export default function Consignees() {
             <option value="approved">{t('Approved')}</option>
             <option value="rejected">{t('Rejected')}</option>
           </select>
-          <input className="ktc-input" placeholder={t('Search code or name…')} value={query} onChange={(e) => changeQuery(e.target.value)} style={{ width: 240 }} />
+          <input className="ktc-input" placeholder={t('Search code or name…')} value={query} onChange={(e) => changeQuery(e.target.value)} style={{ maxWidth: 240, width: '100%' }} />
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -317,7 +317,7 @@ export default function Consignees() {
 
 function Field({ label, w, children }: { label: string; w: number; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'grid', gap: 6, width: w }}>
+    <div style={{ display: 'grid', gap: 6, maxWidth: w, width: '100%', flexBasis: w, flexGrow: 1 }}>
       <label className="ktc-label">{label}</label>
       {children}
     </div>
