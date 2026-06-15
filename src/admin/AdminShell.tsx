@@ -156,7 +156,7 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
         <ThemeToggle />
         <span className="ktc-nav-util">
           {hasPageTour && (
-            <button className="ktc-nav-link" onClick={replayPageTour} style={{ flex: '0 0 auto', fontWeight: 700 }} title={t("Show this page's walkthrough")} aria-label={t("Show this page's walkthrough")}>
+            <button className="ktc-nav-link" onClick={replayPageTour} style={{ flex: '0 0 auto', fontWeight: 700 }} title={t('Quick tour')} aria-label={t('Quick tour')}>
               ?
             </button>
           )}

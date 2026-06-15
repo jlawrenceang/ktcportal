@@ -87,7 +87,7 @@ export default function Shell({ children }: { children: ReactNode }) {
         <ThemeToggle />
         {hasPageTour && (
           <button className="ktc-nav-help" onClick={replayPageTour}
-            title={t("Show this page's walkthrough")} aria-label={t("Show this page's walkthrough")}>
+            title={t('Quick tour')} aria-label={t('Quick tour')}>
             ?
           </button>
         )}

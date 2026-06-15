@@ -22,12 +22,20 @@ export const homeSteps: TourStep[] = [
     body: 'After you file, follow every order here — live status, your serving number, View charges & pay, and Print slip once approved.',
   },
   {
+    icon: '🚢', title: 'Vessel schedule', target: '[data-tour="home-vessels"]',
+    body: 'Check the current vessel calls, berths, and Last Free Day before you file — so you know your free-storage deadline.',
+  },
+  {
     icon: '🧮', title: 'Estimate charges', target: '[data-tour="home-calculator"]',
     body: 'The Rate Calculator estimates your fees — pick services and container counts to see the estimated total, inclusive of VAT and fees.',
   },
   {
     icon: '👤', title: 'Your account', target: '[data-tour="home-account"]',
     body: 'Edit or update your personal details anytime. Changing your legal name needs re-verification by a KTC admin (since it\'s matched to your ID).',
+  },
+  {
+    icon: '🔄', title: 'Replay anytime',
+    body: 'That\'s the quick tour! To watch it again, tap the ? button in the top bar.',
   },
 ]
 
