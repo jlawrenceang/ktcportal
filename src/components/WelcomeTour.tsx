@@ -18,12 +18,8 @@ export const homeSteps: TourStep[] = [
     body: 'See your active orders and anything that needs your attention at a glance — tap a tile to jump straight to those orders.',
   },
   {
-    icon: '📝', title: 'File a Job Order', target: '[data-tour="tab-new"]',
-    body: 'Tap New on the bar at the bottom to file a Job Order — from any screen. We\'ll walk you through the form the first time.',
-  },
-  {
-    icon: '📦', title: 'Track your orders', target: '[data-tour="tab-orders"]',
-    body: 'Open Orders to follow every job — live status, your serving number, View charges & pay, and Print slip once approved.',
+    icon: '📦', title: 'File & track orders', target: '[data-tour="tab-orders"]',
+    body: 'Tap Orders to file a new Job Order or follow your existing ones — live status, your serving number, View charges & pay, and Print slip once approved.',
   },
   {
     icon: '🧭', title: 'Explore the app', target: '[data-tour="tab-menu"]',

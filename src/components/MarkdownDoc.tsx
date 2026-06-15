@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import ProtectedDoc from './ProtectedDoc'
 
 // Render a small, fixed subset of Markdown (headings, bullets, bold, italic,
 // rules, paragraphs) — enough for the legal docs, with no external dependency.
@@ -96,9 +97,11 @@ export default function MarkdownDoc({ body }: { body: string }) {
         <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 48 }} />
         <button className="ktc-link" onClick={() => navigate(-1)}>← Back</button>
       </header>
-      <div className="ktc-glass" style={{ padding: '32px 34px' }}>
-        <MarkdownBody body={body} />
-      </div>
+      <ProtectedDoc>
+        <div className="ktc-glass" style={{ padding: '32px 34px' }}>
+          <MarkdownBody body={body} />
+        </div>
+      </ProtectedDoc>
     </div>
   )
 }
