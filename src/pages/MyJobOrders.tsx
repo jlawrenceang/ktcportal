@@ -9,6 +9,7 @@ import { usePageTour } from '../components/TourProvider'
 import { myJobOrdersSteps } from '../components/WelcomeTour'
 import { useBroker } from '../lib/useBroker'
 import JoTimeline from '../components/JoTimeline'
+import EditJobOrderForm from '../components/EditJobOrderForm'
 import { useT } from '../lib/i18n'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -130,6 +131,7 @@ export default function MyJobOrders() {
   const [selected, setSelected] = useState<JobOrder | null>(null) // order shown in the detail modal
   const [error, setError] = useState<string | null>(null)
   const [respondingId, setRespondingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null) // order being edited inline
   const [cancelId, setCancelId] = useState<string | null>(null) // order pending cancel confirmation
   const [busyId, setBusyId] = useState<string | null>(null)
   const [filter, setFilter] = useState<Filter>('active')
@@ -149,7 +151,7 @@ export default function MyJobOrders() {
     let q = supabase
       .from('job_orders')
       .select(
-        'id, jo_number, entry_number, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, rejected_recoverable, payment_status, service_invoice_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)',
+        'id, jo_number, entry_number, consignee_id, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, rejected_recoverable, payment_status, service_invoice_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)',
         { count: 'exact' },
       )
     if (f === 'active') q = q.in('status', ['held', 'submitted', 'processing', 'on_hold'])
@@ -330,7 +332,7 @@ export default function MyJobOrders() {
         const o = selected
         const count = o.lines?.length ?? 0
         const serving = (o.serving ?? []).filter((s) => !s.vacated_at)
-        const close = () => { setSelected(null); setRespondingId(null); setCancelId(null) }
+        const close = () => { setSelected(null); setRespondingId(null); setCancelId(null); setEditingId(null) }
         return (
           <div className="ktc-modal-backdrop" onClick={close}>
             <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()}
@@ -351,6 +353,12 @@ export default function MyJobOrders() {
                   </div>
                 )}
 
+                {editingId === o.id ? (
+                  <EditJobOrderForm order={o} onError={setError}
+                    onCancel={() => { setEditingId(null); setError(null) }}
+                    onDone={() => { setEditingId(null); setError(null); void load() }} />
+                ) : (
+                <>
                 {/* Meta */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', fontSize: 13 }}>
                   <Meta label={t('Consignee')} value={o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : '—'} span2 />
@@ -413,6 +421,12 @@ export default function MyJobOrders() {
                   )}
 
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {['held', 'submitted'].includes(o.status) && (
+                      <button type="button" className="ktc-btn-secondary ktc-btn--sm" style={{ display: 'inline-flex' }}
+                        onClick={() => { setEditingId(o.id); setError(null) }}>
+                        {t('Edit order')}
+                      </button>
+                    )}
                     {(o.status === 'processing' || o.status === 'completed') && (
                       <Link to={`/job-order/${o.id}/print`} target="_blank" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-flex', textDecoration: 'none' }}>
                         {t('Print slip')} ↗
@@ -470,6 +484,8 @@ export default function MyJobOrders() {
                     </div>
                   )}
                 </div>
+                </>
+                )}
               </div>
             </div>
           </div>

@@ -9,6 +9,7 @@ export function joEventLabel(e: JobOrderEvent): string {
   const d = e.detail as { from?: string; to?: string; line?: string; si?: string; pad?: string; note?: string }
   switch (e.event) {
     case 'filed': return 'Filed'
+    case 'edited': return 'Order details edited'
     case 'status_changed': return `Status: ${d.from} → ${d.to}${d.note ? ` — “${d.note}”` : ''}`
     case 'service_done': return `${SERVICE_LINE_LABEL[(d.line as ServiceLine) ?? 'other']} done`
     case 'payment_submitted': return 'Payment proof submitted'
