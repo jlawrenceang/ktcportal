@@ -790,7 +790,8 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 16px 8px;
+    aspect-ratio: 1 / 1;
+    padding: 8px 6px;
     border-radius: 14px;
     text-decoration: none;
     color: inherit;
@@ -799,6 +800,8 @@
     transition: background var(--dur-fast) ease;
   }
   .ktc-menu-tile:hover { background: rgb(var(--acc-rgb) / 0.10); }
+  /* The 2-up Orders popup keeps shorter tiles (square would be oversized). */
+  .ktc-menu-grid--orders .ktc-menu-tile { aspect-ratio: auto; min-height: 92px; padding: 16px 8px; }
   .ktc-menu-tile-icon {
     width: 42px; height: 42px;
     border-radius: 12px;

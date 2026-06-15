@@ -99,7 +99,7 @@ export default function BottomNav() {
               <button type="button" aria-label={t('Close')} onClick={() => setSheet(null)}
                 style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))' }}>✕</button>
             </div>
-            <div className="ktc-menu-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+            <div className="ktc-menu-grid ktc-menu-grid--orders" style={{ gridTemplateColumns: '1fr 1fr' }}>
               {ORDER_LINKS.map((g) => (
                 <Link key={g.to} to={g.to} className="ktc-menu-tile" onClick={() => setSheet(null)}>
                   <span className="ktc-menu-tile-icon">{g.icon}</span>
