@@ -270,7 +270,7 @@ export default function AllJobOrders() {
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28 }}>
         <h1 className="ktc-title">{t('Job Orders')}</h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 14 }}>{t('Review and process job orders from verified customers.')}</p>
+        <p className="ktc-sub" style={{ marginBottom: 14 }}>{t('Review and process job orders from verified customers.')}</p>
 
         {/* Views + archive */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 18 }}>

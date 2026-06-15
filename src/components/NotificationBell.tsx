@@ -18,6 +18,10 @@ const ICON: Record<string, string> = {
   completed: '🎉',
   payment_rejected: '💳',
   payment_confirmed: '💳',
+  account_approved: '🎉',
+  rps: '🧾',
+  announcement: '📢',
+  support_reply: '💬',
 }
 
 function fmtWhen(iso: string): string {
@@ -77,8 +81,11 @@ export default function NotificationBell() {
       setUnread((u) => Math.max(0, u - 1))
       void supabase.rpc('mark_notifications_read', { p_ids: [n.id] }).then(() => undefined, () => undefined)
     }
-    if (n.job_order_id) sessionStorage.setItem('ktc_jo_filed_id', n.job_order_id) // auto-opens it if in view
-    navigate('/job-orders')
+    // Route by kind: support replies → the ticket page; order events → the
+    // orders list (auto-opening that order); account/announcement → Home.
+    if (n.kind === 'support_reply') { navigate('/support'); return }
+    if (n.job_order_id) { sessionStorage.setItem('ktc_jo_filed_id', n.job_order_id); navigate('/job-orders'); return }
+    navigate('/')
   }
 
   async function markAll() {

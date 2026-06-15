@@ -26,6 +26,7 @@ const JobOrderPrint = lazy(() => import('./pages/JobOrderPrint'))
 const Payment = lazy(() => import('./pages/Payment'))
 const Calculator = lazy(() => import('./pages/Calculator'))
 const Vessels = lazy(() => import('./pages/Vessels'))
+const SupportTickets = lazy(() => import('./pages/SupportTickets'))
 const Manual = lazy(() => import('./pages/Manual'))
 const AdminManual = lazy(() => import('./admin/ManualPage'))
 const Dashboard = lazy(() => import('./admin/Dashboard'))
@@ -40,6 +41,7 @@ const Checker = lazy(() => import('./admin/Checker'))
 const VesselSchedule = lazy(() => import('./admin/VesselSchedule'))
 const Logs = lazy(() => import('./admin/Logs'))
 const Security = lazy(() => import('./admin/Security'))
+const SupportInbox = lazy(() => import('./admin/SupportInbox'))
 
 function Protected({ children }: { children: ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>
@@ -108,6 +110,7 @@ export default function App() {
           {/* /accreditation removed 2026-06-11 (page deleted; consignee accreditation
               disabled per ADR-0007) — old links fall through to the catch-all → / */}
           <Route path="/job-orders" element={<Protected><MyJobOrders /></Protected>} />
+          <Route path="/support" element={<Protected><SupportTickets /></Protected>} />
           <Route path="/manual" element={<Protected><Manual /></Protected>} />
 
           {/* Admin portal */}
@@ -123,6 +126,7 @@ export default function App() {
           <Route path="/admin/logs" element={<Admin><Logs /></Admin>} />
           <Route path="/admin/security" element={<Admin><Security /></Admin>} />
           <Route path="/admin/settings" element={<Admin><Settings /></Admin>} />
+          <Route path="/admin/support" element={<Admin><SupportInbox /></Admin>} />
           <Route path="/admin/manual" element={<Admin><AdminManual /></Admin>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />

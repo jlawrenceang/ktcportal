@@ -293,6 +293,28 @@ export default function Settings() {
     return `${svc} · ${tr} · ${act}`
   }
 
+  // Support contact channels (0083) — deep-link targets for the customer's
+  // "talk to an agent" hand-off. Admin-editable, all-read.
+  type SC = { key: string; value: string }
+  const SC_FIELDS: [string, string][] = [['phone', 'Phone (call)'], ['sms', 'SMS number'], ['viber', 'Viber number'], ['email', 'Email'], ['hours', 'Support hours']]
+  const [support, setSupport] = useState<SC[]>([])
+  const [supportBusy, setSupportBusy] = useState(false)
+  const [supportMsg, setSupportMsg] = useState<string | null>(null)
+  useEffect(() => {
+    void supabase.from('support_contact').select('key, value').then(({ data }) => setSupport((data ?? []) as SC[]))
+  }, [])
+  function supportVal(key: string) { return support.find((x) => x.key === key)?.value ?? '' }
+  function setSupportVal(key: string, value: string) {
+    setSupport((xs) => (xs.some((x) => x.key === key) ? xs.map((x) => (x.key === key ? { ...x, value } : x)) : [...xs, { key, value }]))
+  }
+  async function saveSupport() {
+    setSupportBusy(true); setSupportMsg(null)
+    const rows = SC_FIELDS.map(([k]) => ({ key: k, value: supportVal(k) }))
+    const { error } = await supabase.from('support_contact').upsert(rows, { onConflict: 'key' })
+    setSupportBusy(false)
+    setSupportMsg(error ? error.message : t('✓ Support contacts saved.'))
+  }
+
   // Owner switch: customer notification emails on/off (0074). Default OFF.
   const [emailsOn, setEmailsOn] = useState<boolean | null>(null)
   const [emailBusy, setEmailBusy] = useState(false)
@@ -410,7 +432,7 @@ export default function Settings() {
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
         <h1 className="ktc-title">{t('Staff & access')}</h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>
+        <p className="ktc-sub" style={{ marginBottom: 20 }}>
           {t('Internal KTC staff with admin access. Managed separately from brokers.')}
           {isOwner ? '' : ' ' + t('Only the owner can change access.')}
         </p>
@@ -737,6 +759,28 @@ export default function Settings() {
           })}
         </div>
         {ruleMsg && <p className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600, marginTop: 12 }}>{ruleMsg}</p>}
+      </div>
+
+      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Support contact channels')}</h2>
+        <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
+          {t('Shown on the customer Help & Support page as “talk to an agent” deep links (call / SMS / Viber / email) with a prefilled message + ticket number. Leave a field blank to hide that channel.')}
+        </p>
+        <div style={{ display: 'grid', gap: 8, maxWidth: 460 }}>
+          {SC_FIELDS.map(([k, label]) => (
+            <div key={k} style={{ display: 'grid', gap: 5 }}>
+              <label className="ktc-label" htmlFor={`sc-${k}`} style={{ fontSize: 12 }}>{t(label)}</label>
+              <input id={`sc-${k}`} className="ktc-input" value={supportVal(k)} onChange={(e) => setSupportVal(k, e.target.value)}
+                placeholder={k === 'hours' ? t('e.g. Mon–Sat, 8am–5pm') : ''} />
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
+          <button className="ktc-btn" type="button" disabled={supportBusy} onClick={() => void saveSupport()} style={{ width: 'auto', padding: '10px 20px' }}>
+            {supportBusy ? t('Saving…') : t('Save support contacts')}
+          </button>
+          {supportMsg && <span className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600 }}>{supportMsg}</span>}
+        </div>
       </div>
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>

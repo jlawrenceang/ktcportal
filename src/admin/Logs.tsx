@@ -130,7 +130,7 @@ export default function Logs() {
     <AdminShell>
       <div style={{ margin: '14px 4px 20px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, letterSpacing: '-0.026em' }}>{t('Activity Log')}</h1>
+          <h1 className="ktc-title">{t('Activity Log')}</h1>
           <p className="ktc-sub">{t('Everything the portal records — who did what, and when.')}</p>
         </div>
         <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={refresh} disabled={cooling}>{t('↻ Refresh')}</button>

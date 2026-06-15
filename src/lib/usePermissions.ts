@@ -15,6 +15,7 @@ export type Permission =
   | 'manage_pricing'
   | 'manage_vessel_schedule'
   | 'assess_rps'
+  | 'manage_support'
 
 /**
  * UI mirror of the owner-tweakable role gates (role_permissions, migration

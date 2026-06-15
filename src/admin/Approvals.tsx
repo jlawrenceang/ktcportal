@@ -105,7 +105,7 @@ export default function Approvals() {
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
         <h1 className="ktc-title">{t('Account approvals')}</h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>{t("Review the customer's valid ID and confirm they accepted the Agreement (Terms + Data Privacy consent) before approving.")}</p>
+        <p className="ktc-sub" style={{ marginBottom: 20 }}>{t("Review the customer's valid ID and confirm they accepted the Agreement (Terms + Data Privacy consent) before approving.")}</p>
         {loading ? <span className="ktc-label">{t('Loading…')}</span> : brokers.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>{t('No accounts pending. 🎉')}</div>
         ) : (

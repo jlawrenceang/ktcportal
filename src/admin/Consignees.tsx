@@ -225,7 +225,7 @@ export default function Consignees() {
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
         <h1 className="ktc-title">{t('Consignees')}</h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>
+        <p className="ktc-sub" style={{ marginBottom: 20 }}>
           {t('Added consignees are')} <b>{t('pending')}</b>. {t('A consignee needs')} <b>{t('address, TIN, and an attached 2303')}</b> {t('before it can be approved; only approved consignees are visible to customers.')}
         </p>
 

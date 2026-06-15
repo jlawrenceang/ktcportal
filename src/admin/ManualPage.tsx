@@ -39,6 +39,10 @@ export default function ManualPage() {
 
   return (
     <AdminShell>
+      <div style={{ margin: '14px 4px 10px' }}>
+        <h1 className="ktc-title">{t('Staff manual')}</h1>
+        <p className="ktc-sub">{t('Step-by-step guides for each role — how to run the portal day to day.')}</p>
+      </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', margin: '14px 4px 10px' }}>
         {!floorGuide && GUIDES.map((g) => (
           <button

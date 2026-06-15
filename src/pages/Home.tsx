@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Shell from '../components/Shell'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { homeSteps } from '../components/WelcomeTour'
@@ -16,6 +19,19 @@ export default function Home() {
   const { t } = useT()
   const firstName = (broker?.full_name || session?.user.email || '').split(' ')[0]
 
+  // Light at-a-glance counts (own orders via RLS): in-progress + needing action.
+  const [stats, setStats] = useState({ active: 0, attention: 0 })
+  useEffect(() => {
+    void (async () => {
+      const [{ count: active }, { count: attention }] = await Promise.all([
+        supabase.from('job_orders').select('id', { count: 'exact', head: true }).in('status', ['held', 'submitted', 'processing', 'on_hold']),
+        supabase.from('job_orders').select('id', { count: 'exact', head: true })
+          .or('status.eq.on_hold,and(status.eq.rejected,rejected_recoverable.eq.true),and(payment_status.eq.rejected,status.in.(submitted,processing,completed))'),
+      ])
+      setStats({ active: active ?? 0, attention: attention ?? 0 })
+    })()
+  }, [])
+
   // First visit to Home auto-opens its tour; replay from the ⊞ Menu.
   usePageTour('home', homeSteps)
 
@@ -29,6 +45,17 @@ export default function Home() {
         <p className="ktc-sub" style={{ maxWidth: 460, marginBottom: 0 }}>
           {t('Here’s what’s happening with your KTC terminal services.')}
         </p>
+      </div>
+
+      <div className="ktc-stat-grid" style={{ marginBottom: 16 }}>
+        <Link to="/job-orders" className="ktc-glass ktc-stat">
+          <span className="ktc-stat-num">{stats.active}</span>
+          <span className="ktc-stat-label">{t('Active orders')}</span>
+        </Link>
+        <Link to="/job-orders" className={`ktc-glass ktc-stat${stats.attention > 0 ? ' ktc-stat--alert' : ''}`}>
+          <span className="ktc-stat-num">{stats.attention}</span>
+          <span className="ktc-stat-label">{t('Need your attention')}</span>
+        </Link>
       </div>
 
       <BulletinBoard />

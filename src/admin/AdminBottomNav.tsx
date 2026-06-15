@@ -28,6 +28,7 @@ const GearIcon = () => (<svg {...ip}><circle cx="12" cy="12" r="3" /><path d="M1
 const LogsIcon = () => (<svg {...ip}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" /></svg>)
 const ShieldIcon = () => (<svg {...ip}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>)
 const ManualIcon = () => (<svg {...ip}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>)
+const SupportIcon = () => (<svg {...ip}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>)
 const DashIcon = GridIcon
 
 type Dest = { to: string; label: string; perm?: Permission; icon: ReactNode; end?: boolean }
@@ -44,6 +45,7 @@ const GRID: Dest[] = [
   { to: '/admin/vessel-schedule', label: 'Vessels', perm: 'manage_vessel_schedule', icon: <VesselIcon /> },
   { to: '/admin/settings', label: 'Settings', perm: 'manage_pricing', icon: <GearIcon /> },
   { to: '/admin/logs', label: 'Logs', perm: 'manage_approvals', icon: <LogsIcon /> },
+  { to: '/admin/support', label: 'Support', perm: 'manage_support', icon: <SupportIcon /> },
   { to: '/admin/security', label: '2FA', perm: 'manage_approvals', icon: <ShieldIcon /> },
   { to: '/admin/manual', label: 'Manual', icon: <ManualIcon /> },
 ]
