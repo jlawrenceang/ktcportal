@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import Tour, { type TourStep } from './Tour'
+import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { useT } from '../lib/i18n'
 import { pageTourShownThisSession, markPageTourSeen } from '../lib/tourSeen'
@@ -23,9 +24,19 @@ const Ctx = createContext<TourCtx>({
 export function useTour() { return useContext(Ctx) }
 
 export default function TourProvider({ children }: { children: ReactNode }) {
+  const { session } = useAuth()
   const [config, setConfig] = useState<TourConfig | null>(null)
   const pageTourRef = useRef<{ key: string; steps: TourStep[]; onDone?: () => void } | null>(null)
   const [hasPageTour, setHasPageTour] = useState(false)
+
+  // A tour is only ever for a signed-in portal user. The moment the session
+  // ends (sign-out, single-session eviction, or the /confirmed page signing the
+  // user back out after email verification), drop any active tour — otherwise
+  // its overlay lingers on top of the login page, since TourProvider sits ABOVE
+  // the routes and survives the route change a normal page would not.
+  useEffect(() => {
+    if (!session) setConfig(null)
+  }, [session])
 
   const startTour = useCallback((c: TourConfig) => setConfig(c), [])
   const registerPageTour = useCallback((key: string | null, steps: TourStep[], onDone?: () => void) => {
@@ -45,7 +56,7 @@ export default function TourProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{ startTour, active: !!config, registerPageTour, replayPageTour, hasPageTour }}>
       {children}
-      {config && <Tour steps={config.steps} home={config.home} label={config.label} onClose={end} />}
+      {config && session && <Tour steps={config.steps} home={config.home} label={config.label} onClose={end} />}
     </Ctx.Provider>
   )
 }
