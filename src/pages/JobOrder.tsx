@@ -111,39 +111,21 @@ export default function JobOrder() {
     }
     submittingRef.current = true
     setBusy(true)
-    const { data: jo, error: joErr } = await supabase
-      .from('job_orders')
-      .insert({
-        customer_id: broker.id,
-        consignee_id: consignee.id,
-        entry_number: entryNumber.trim().toUpperCase(),
-        vessel_visit: vVisit,
-        vessel_name: vName,
-        voyage_number: vVoyage,
-        // Pending brokers file as 'held' (released to the admin queue on approval);
-        // approved brokers go straight to 'submitted'. Enforced by RLS either way.
-        status: approved ? 'submitted' : 'held',
-      })
-      .select('id, jo_number')
-      .single()
-
-    if (joErr || !jo) {
-      submittingRef.current = false
-      setBusy(false)
-      setError(joErr?.message ?? t('Could not create job order.'))
-      return
-    }
-    const { error: lineErr } = await supabase.from('job_order_lines').insert(
-      filled.map((l) => ({
-        job_order_id: (jo as { id: string }).id,
-        container_number: l.container_number.trim().toUpperCase(),
-        service_request: l.service_request,
-      })),
-    )
+    // Atomic: the order + its lines are inserted in one transaction server-side
+    // (0098), so a failure can't leave an orphan line-less order. Pending vs
+    // approved (held/submitted) is decided in the RPC.
+    const { error: fileErr } = await supabase.rpc('file_job_order', {
+      p_consignee: consignee.id,
+      p_entry_number: entryNumber.trim().toUpperCase(),
+      p_vessel_visit: vVisit,
+      p_vessel_name: vName,
+      p_voyage_number: vVoyage,
+      p_lines: filled.map((l) => ({ container_number: l.container_number.trim().toUpperCase(), service_request: l.service_request })),
+    })
     setBusy(false)
-    if (lineErr) {
+    if (fileErr) {
       submittingRef.current = false
-      setError(lineErr.message)
+      setError(fileErr.message)
       return
     }
     // Redirect to the orders list (no auto-open — the new order shows at the top).
