@@ -97,8 +97,11 @@ Deno.serve(async (req) => {
     // Header row = first row carrying a "vessel_name" cell (so the sheet can have
     // a logo / title / friendly labels above the hidden canonical schema row).
     const norm = (c: unknown) => String(c ?? '').trim().toLowerCase().replace(/\s+/g, '_')
-    const hi = rows.findIndex((row) => row.some((c) => norm(c) === 'vessel_name'))
-    if (hi < 0) return json({ ok: false, error: 'no header row found — add the canonical headers (vessel_name, voyage_number, …)' }, 400)
+    // Key on voyage_number — the visible friendly labels ("Vessel Name", "Berth"…)
+    // normalize to several canonical names, but "Voyage" -> "voyage" never matches
+    // "voyage_number", so this reliably lands on the HIDDEN canonical schema row.
+    const hi = rows.findIndex((row) => row.some((c) => norm(c) === 'voyage_number'))
+    if (hi < 0) return json({ ok: false, error: 'no header row found — add the canonical headers (voyage_number, vessel_name, …)' }, 400)
     const header = rows[hi].map(norm)
     const col = (n: string) => header.indexOf(n)
     const ci = {
@@ -119,6 +122,7 @@ Deno.serve(async (req) => {
     for (const row of rows.slice(hi + 1)) {
       const name = clean(row[ci.name]), voy = clean(row[ci.voy])
       if (!name || !voy) { skipped++; continue }
+      if (norm(name) === 'vessel_name' || norm(voy) === 'voyage_number') { skipped++; continue } // header echo
       const visit = deriveVisit(name, voy)
       if (seen.has(visit)) { skipped++; continue }
       seen.add(visit)

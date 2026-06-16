@@ -72,16 +72,25 @@ const existingProtections = (sheet0meta.protectedRanges ?? []).map((p) => p.prot
 const norm = (c) => String(c ?? '').trim().toLowerCase().replace(/\s+/g, '_')
 const cur = await (await api(`/values/A1:Z100000`)).json()
 const curRows = cur.values ?? []
-const ehi = curRows.findIndex((r) => r.some((c) => norm(c) === 'vessel_name'))
+// Key on voyage_number — the visible friendly labels normalize to several
+// canonical names, but "Voyage" never matches "voyage_number", so this lands on
+// the HIDDEN canonical schema row, not the friendly row above it.
+const HDR_TOKENS = ['shipping_line', 'vessel_name', 'voyage_number', 'vessel_visit']
+const ehi = curRows.findIndex((r) => r.some((c) => norm(c) === 'voyage_number'))
 const oldHeader = ehi >= 0 ? curRows[ehi].map(norm) : []
 const oldIdx = (h) => { let j = oldHeader.indexOf(h); if (j < 0) { const a = Object.keys(ALIAS).find((k) => ALIAS[k] === h); if (a) j = oldHeader.indexOf(a) } return j }
-const existingData = ehi >= 0 ? curRows.slice(ehi + 1).filter((r) => r.some((c) => String(c ?? '').trim())) : []
+// Keep only real data rows: non-empty AND not a stray header/echo row.
+const existingData = ehi >= 0
+  ? curRows.slice(ehi + 1).filter((r) => r.some((c) => String(c ?? '').trim()) && !r.some((c) => HDR_TOKENS.includes(norm(c))))
+  : []
 // Realign preserved rows to the NEW column order BY NAME (+ old->new aliases), so
-// a re-format never shifts values when columns are inserted/renamed.
-const dataRows = existingData.length
+// a re-format never shifts values when columns are inserted/renamed. Pass --fresh
+// to discard existing rows and write the clean sample set instead.
+const FRESH = process.argv.includes('--fresh')
+const dataRows = (!FRESH && existingData.length)
   ? existingData.map((r) => HEADERS.map((h) => { const j = oldIdx(h); return j >= 0 ? (r[j] ?? '') : '' }))
   : SAMPLE
-console.log(`preserving ${existingData.length} existing data row(s)` + (existingData.length ? '' : ' (none — adding 2 samples)'))
+console.log(FRESH ? `--fresh: wrote ${SAMPLE.length} clean sample row(s)` : `preserving ${existingData.length} existing data row(s)` + (existingData.length ? '' : ' (none — adding 2 samples)'))
 
 // 2) layout: row1 logo banner · row2 title (under the logo) · row3 note ·
 //    row4 friendly header (visible) · row5 schema header (hidden) · row6+ data
@@ -96,7 +105,9 @@ const grid = [
   ...dataRows.map((r) => HEADERS.map((_, i) => r[i] ?? '')), // row6+ — data
 ]
 await api(`/values/A1:Z100000:clear`, { method: 'POST' })
-const wr = await api(`/values/A1?valueInputOption=USER_ENTERED`, { method: 'PUT', body: JSON.stringify({ values: grid }) })
+// RAW (not USER_ENTERED): keep dates/voyages as literal text so Sheets doesn't
+// convert "06/15/26" to a date serial before the TEXT format lands.
+const wr = await api(`/values/A1?valueInputOption=RAW`, { method: 'PUT', body: JSON.stringify({ values: grid }) })
 if (!wr.ok) { console.error(`write failed: ${wr.status} ${await wr.text()}`); process.exit(1) }
 
 // 3) formatting

@@ -56,8 +56,11 @@ create policy "read vessel schedule" on public.vessel_schedule
 
 -- 6) Read view: expose departure, the clock-times, week, and the line's internal
 --    flag. last_free_day is unchanged (finish_discharging + the line's import
---    free-days); is_current follows it.
-create or replace view public.vessel_schedule_v
+--    free-days); is_current follows it. DROP first — the column set is reordered,
+--    which CREATE OR REPLACE VIEW can't do in place. Nothing in the DB depends on
+--    this view (it's a client read model), so the drop is safe.
+drop view if exists public.vessel_schedule_v;
+create view public.vessel_schedule_v
 with (security_invoker = true) as
 select
   e.*,
