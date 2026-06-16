@@ -229,17 +229,15 @@ export default function JobOrderPrint() {
               <SignLine label="Received by" />
             </div>
 
-            {completed && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
-                <div style={{ background: '#fff', padding: 4, border: `1px solid ${LINE}`, borderRadius: 4, lineHeight: 0 }}>
-                  <QRCodeSVG value={`${window.location.origin}/verify/${order.id}`} size={66} level="M" />
-                </div>
-                <div style={{ fontSize: 7.5, color: '#5a6678', lineHeight: 1.45 }}>
-                  <div style={{ fontWeight: 800, fontSize: 9, color: '#15233a', letterSpacing: '0.05em' }}>SCAN TO VERIFY</div>
-                  Confirm this Job Order is genuine and completed, live in the KTC system.
-                </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+              <div style={{ background: '#fff', padding: 4, border: `1px solid ${LINE}`, borderRadius: 4, lineHeight: 0 }}>
+                <QRCodeSVG value={`${window.location.origin}/verify/${order.id}`} size={66} level="M" />
               </div>
-            )}
+              <div style={{ fontSize: 7.5, color: '#5a6678', lineHeight: 1.45 }}>
+                <div style={{ fontWeight: 800, fontSize: 9, color: '#15233a', letterSpacing: '0.05em' }}>SCAN TO VERIFY</div>
+                Always scan to confirm this slip’s live status (paid / completed) — the print is only a copy.
+              </div>
+            </div>
 
             <div style={{ marginTop: 9, fontSize: 6.5, fontStyle: 'italic', color: '#8893a4', lineHeight: 1.4 }}>
               Please notify KTC within 5 days of any discrepancy; otherwise this job order is considered final and correct.
