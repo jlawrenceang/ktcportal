@@ -1,5 +1,5 @@
 -- ============================================================
--- 0104 — Comment visibility (staff-only internal notes) + escalation flag
+-- 0102 — Comment visibility (staff-only internal notes) + escalation flag
 --         (owner, 2026-06-16)
 --
 -- Owner spec: "the customer can file comments but it will be reviewed by the

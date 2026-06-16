@@ -3,8 +3,8 @@
 Every plan, implementation, review, and merge must explicitly pass all six checks. Any failure blocks release.
 
 ## 1. Security and authority enforcement
-- Privileged actions and critical transitions must be backend-enforced (RPC/RLS), not frontend-only.
-- The owner failsafe (`is_owner`) and invite-only staff model must never be weakened.
+- Privileged actions and critical transitions must be backend-enforced (RPC/RLS), not frontend-only. Staff status transitions go through `staff_transition_order` and the permission gates — never a direct client UPDATE on `job_orders`.
+- The owner failsafe (`is_owner`) and invite-only staff model must never be weakened. Owner-grant changes are **root-owner-only** (`is_root_owner` → `set_owner_access()`); secondary owners cannot mint or revoke owners.
 - CAPTCHA enforcement must stay server-side (Supabase Auth), not just the widget.
 - Any unresolved auth/role state must block mutation paths (fail closed).
 
@@ -14,8 +14,9 @@ Every plan, implementation, review, and merge must explicitly pass all six check
 - Protect transactional consistency so partial updates cannot commit (e.g. `create_staff` creates the auth user AND promotes the broker, or neither).
 
 ## 3. Contract and terminology consistency
-- Use the canonical role model (`is_owner` / `is_admin` / broker `status`) and the `SERVICE_REQUESTS` / accreditation-status enums from `src/lib/types.ts`.
-- Do not introduce ad-hoc status/role strings in UI, SQL, or RPCs.
+- Use the canonical role model: `is_owner` / `is_root_owner` / `is_admin`, the staff `staff_role` set (**admin / operations / cashier / checker / csr**, gated by `role_permissions` + `has_permission`), and customer `status`. Plus the `SERVICE_REQUESTS` / accreditation-status / JO-status enums from `src/lib/types.ts`.
+- JO statuses are exactly: `held` · `submitted` · `processing` · `on_hold` · `completed` · `rejected` · `cancelled`. Do not introduce ad-hoc status/role/permission strings in UI, SQL, or RPCs.
+- Completion is **two-gated**: an order may reach `completed` only when all services are done AND base payment is confirmed AND (RPS not needed or paid) AND every supplement is paid (`jo_ready_to_complete()`). Do not bypass it.
 - Update types, UI, and SQL together when a contract term changes.
 
 ## 4. Code quality and change hygiene

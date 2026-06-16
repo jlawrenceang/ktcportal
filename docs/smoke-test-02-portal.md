@@ -2,7 +2,7 @@
 
 **Smoke Test ID:** ST02
 **Date authored:** 2026-06-12
-**Status:** IN PROGRESS — preflight P1–P8 PASS (re-run 2026-06-13 post-wave, no regressions); P9 data setup pending; manual Lanes 1–11 being walked. **2026-06-14 manual pass underway** — owner walking the live portal "blind"; UX findings + fixes logged below ("ST02 walkthrough — UX findings & fixes (2026-06-14)"), all shipped to prod.
+**Status:** **CLOSED — 2026-06-16** (superseded by ST03). Preflight P1–P8 PASS (re-run 2026-06-13 post-wave, no regressions); P9 was data setup only. The manual contract lanes (1–11) were never executed as a single signed run — they were overtaken by three later build waves (Tagalog/mobile, the staff-role + per-van X-ray + two-gate completion overhaul, and the SOON clusters), so the order/payment/role lanes no longer match the shipped product. ST02's value was the **UX-findings backlog** (W1–W33, all shipped to prod). The unexecuted contract lanes **roll into ST03** as the pre-launch blind walkthrough. See the **Closeout** section at the bottom. Do not re-run Lanes 1–11 here.
 **Target:** https://portal.ktcterminal.com (live, pre-public)
 **Covers:** migrations `0011`–`0064` / sessions 4–11 — order lifecycle loops, serving numbers, per-service completion, checker station, payments + invoice, roles & gates, Logs, observability, MFA, ID retention, **plus the Operations & JO-Modernization wave (Lanes 9–11): the operations role, vessel schedule + free-days + CSV import + calendar + Viber snapshot, the vessel/voyage dropdown on filing, RPS assessment + per-move billing, and the two-payment running balance + Cleared-for-release badge**.
 **Refreshed:** 2026-06-13 — added Lanes 9–11 for the operations / vessel-schedule / RPS-billing wave (migrations 0056–0064).
@@ -245,3 +245,59 @@ Findings (W19–W30) from an on-device mobile blind test, with the fix made the 
 **Reset-link expiry:** Supabase recovery links are **single-use** and expire (**default ~1h**); a newer link invalidates the old. Configurable in Auth → Email → OTP Expiration.
 
 **Ops note (creds):** the old `.env.local` `SUPABASE_ACCESS_TOKEN` was expired (401) and briefly leaked in-session — confirmed **revoked/dead** and replaced with a fresh `sbp_…` PAT (which also un-blocks `set-auth-email-template.mjs` / `set-vault-secrets.mjs`). Edge-function deploys need the CLI authed in **PowerShell** (`supabase login`) or a valid PAT in `.env.local` + `--use-api` (no Docker); the Git Bash tool can't read the PowerShell keyring login.
+
+---
+
+## Closeout (2026-06-16)
+
+**Final status:** CLOSED — superseded by **ST03** (`docs/smoke-test-03-portal.md`).
+**Environment of record:** live `https://portal.ktcterminal.com`, DB migrations through **0104**, Vercel commit **1b2e824**.
+
+### What ST02 was for
+ST02 was authored (2026-06-12) and refreshed (2026-06-13) to verify everything built since ST01 across migrations `0011`–`0064` / sessions 4–11: the order-lifecycle loops, weekly serving numbers, per-service completion, the checker station, payments + invoice recording, roles & gates, Logs/observability, MFA, ID retention, and the operations / vessel-schedule / RPS-billing wave.
+
+### Why it is being closed rather than run to green
+The automated preflight (P1–P8) passed and stayed green on the live deploy, and ST02 successfully drove the **2026-06-14 "blind" UX pass** (W1–W18) plus the **2026-06-15 mobile pass** (W19–W30) and the **password-reset / deliverability** items (W31–W33) — every one of those was fixed and shipped to prod. That backlog is ST02's real deliverable and stands.
+
+The manual **contract Lanes 1–11**, however, were never executed and signed off as one coherent run (Results columns stayed blank; P9 data setup was the gate). Between then and 2026-06-16 the product moved past what those lanes describe — three build waves landed (migrations `0078`–`0104`):
+- **staff-role overhaul** — added the **CSR** role, split `process_job_orders` into `accept_orders` / `hold_reject_orders` / `complete_orders`, and re-routed role landings (csr→`/admin/support`, operations→`/admin/job-orders`);
+- **per-van X-ray (checker-only)** + **two-gate completion** (all services done AND base payment AND RPS-if-needed AND every supplement paid) — replacing ST02's single-`payment_status` "Cleared for release" model;
+- **the SOON clusters** — generalized **one** Priority number per JO (Lane 2's per-service serving chips no longer match), **additional-charge supplements** (`JO-####-A/B/C`) with the under-review re-complete loop, **staff edit details**, **comment escalation**, and **verify-QR** slips with PENDING/COMPLETED watermarks + the public `/verify/:id` cross-check page.
+
+Re-running ST02's lanes as written would test stale flows. Rather than fabricate PASS marks, the lanes are dispositioned below and the live behaviours are carried forward into ST03 against the current build.
+
+### Lane disposition
+
+| Lane | ST02 coverage | Disposition |
+|---|---|---|
+| Preflight P1–P8 | TS / build / deploy health / bundle target / Turnstile / SPA rewrite / CAPTCHA / Playwright | **PASS (2026-06-13)** — last green run; ST03 re-runs its own preflight against commit 1b2e824 |
+| Preflight P9 | lane data setup (rates, payment details, vessels, RPS, ops user) | **N/A** — setup task, not a test; folded into ST03 lane preconditions |
+| UX findings W1–W33 | blind-walkthrough UX backlog (desktop, mobile, reset/deliverability) | **DONE — shipped to prod** (kept as the historical record; W33 DNS/inbox is user action) |
+| 1 — Onboarding + demo tour | register → confirm → verify-id → tour → held JO | **Carried to ST03 Lane A** (re-execute on current build) |
+| 2 — Customer filing & serving numbers | per-service serving chips, bulk paste, filters, cancel | **SUPERSEDED** — one generalized **Priority #N** per JO now (0100); re-spec in **ST03 Lane A** |
+| 3 — Admin processing loops | hold/resubmit, reject/restore, per-service ✓, history, file-on-behalf | **SUPERSEDED** — split accept/hold-reject/complete gates + `staff_transition_order`; re-spec in **ST03 Lanes B / G / H** |
+| 4 — Checker station | container lookup + single X-ray "done" stamp | **SUPERSEDED** — per-van confirm + e-signature, checker-only (0087); re-spec in **ST03 Lane C** |
+| 5 — Payments, calculator, invoice | slip upload, confirm/reject, invoice recording | **Carried (partly superseded)** — base online proof + cashier confirm + walk-in now; re-spec in **ST03 Lanes D / E** |
+| 6 — Roles & gates | cashier/checker create + matrix toggles | **SUPERSEDED** — CSR added, gates split, new landings; re-spec in **ST03 Lane J** |
+| 7 — Security & monitoring | CAPTCHA, idle, single session, MFA, lockout, headers, RLS | **Carried — still current**; condensed into **ST03 Lane K** (full inventory stays here for reference) |
+| 8 — Housekeeping | archive cron, Monday carry-over, BOC mirror, ID retention | **Carried (observe-only)** — unchanged; spot-check in ST03 teardown, not a blind-walk lane |
+| 9 — Operations role | ops user, ops landing, read-only queue, gates column | **SUPERSEDED** — ops now lands `/admin/job-orders`, has accept/complete/hold-reject, lost confirm_xray; re-spec in **ST03 Lanes B / J** |
+| 10 — Vessel schedule | free-days, vessel calls, CSV import, calendar, snapshot, dropdown | **Carried — still current** (not re-walked in ST03's launch set; covered by ST03 Lane A vessel dropdown + left as a standing ops check) |
+| 11 — RPS assessment & balance | assess RPS, per-move billing, two-payment balance, cleared-for-release | **Carried (extended)** — RPS now one input to the **two-gate** release; re-spec in **ST03 Lanes B / E** |
+| 12 — Mobile blind walkthrough | W19–W30 device findings | **DONE — fixed + deployed**; mobile is now the default UX, exercised throughout ST03 |
+
+### Defects tracker (ST02)
+
+| ID | Lane / Route / Action | Severity | Issue Summary | Expected | Actual | Status | Evidence |
+|---|---|---|---|---|---|---|---|
+| (none open) | — | — | All UX findings W1–W33 were fixed + shipped the same session; no contract-lane defects were logged because the lanes were superseded before a signed run. | — | — | CLOSED | commits in the W-tables above |
+
+### Final summary
+
+| Lane | Status | Key Findings | Go / Hold |
+|---|---|---|---|
+| Preflight (P1–P8) | PASS (2026-06-13) | green on the live deploy, no regressions across the operations/vessel/RPS wave | Go |
+| UX backlog W1–W33 | DONE | blind-walkthrough + mobile + reset/deliverability fixes all shipped to prod | Go |
+| Contract Lanes 1–11 | SUPERSEDED → ST03 | overtaken by migrations 0078–0104 (CSR/split gates, per-van X-ray, two-gate, supplements, verify-QR); re-spec'd against the current build in ST03 | Hold → execute in ST03 |
+
+**Overall go / no-go:** **ST02 CLOSED.** Automated health + the UX backlog are GO; functional sign-off for launch is **deferred to ST03**, which is the pre-launch blind walkthrough against the current build (migrations through 0104, commit 1b2e824).

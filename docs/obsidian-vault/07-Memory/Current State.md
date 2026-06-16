@@ -2,12 +2,24 @@
 title: Current State
 tags: [memory, current]
 type: memory
-last_updated: 2026-06-13
+last_updated: 2026-06-16
 ---
 
 # 📌 Current State (Runtime-Aligned)
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
+
+## 2026-06-16 — Staff role matrix, two-gate completion, per-van X-ray, verify-QR
+
+**Migrations through `0104`, all applied to prod (main @ `1b2e824`).** The big build day — see [[2026-06-16 Staff Roles, Supplements, Per-Van X-Ray, Verify]]. In one line each:
+
+- **Staff model** — five staff roles **admin / operations / cashier / checker / csr** (+ owner / **root owner**) on the owner-tunable [[Staff Roles & Gates]] matrix; `process_job_orders` **split** into `accept_orders` / `hold_reject_orders` / `complete_orders` and enforced in `staff_transition_order`; X-ray confirmation is **checker-only**; root-only owner grants ([[Multi-Owner & Root Grants]]) + privilege-grant alerting.
+- **Completion** — hard **[[Two-Gate Completion]]**: all services done AND base payment AND (RPS not needed OR paid) AND every supplement paid; auto-fires from whichever side finishes last; raw-update backstop.
+- **X-ray** — confirmed **per container van** by the checker (BOC performs it), with an immutable name e-signature on the slip.
+- **Payments** — RPS folded into the gate; **walk-in/office payment** at the [[Cashier Station]]; **[[Additional-Charge Supplements]]** (JO-####-A/B/C) with under-review re-completion.
+- **Anti-forgery** — every slip carries a QR → public **[[Verify-QR Anti-Forgery|/verify/:id]]** (PAID + status + consignee/container cross-check).
+- **Queue / comments / edit** — one **generalized priority number per JO** (weekly reset); **[[Comment Visibility & Escalation]]** (staff-only notes + complaint flag); staff JO-header edit (checker excluded).
+- **Earlier same-day** — reworked rate calculator + per-line charge rules, **[[Support Tickets]]**, admin **bottom-tab nav**, **[[Staff Notifications]]** bell, consolidated customer email, atomic JO filing.
 
 ## 2026-06-13 — v1.1.0 trial-run release; ST02 manual lanes underway
 
@@ -66,13 +78,13 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 - **Auth** — customer email/password registration (contact no. + Agreement v2 consents) → confirm email → `/verify-id`; staff username login; owner failsafe; invite-only staff; CAPTCHA, lockout, 2FA (admin/owner), single session, idle timeouts. See [[Authentication]].
 - **Customers** — self-register → `pending` (full portal, held orders) → upload ID → admin approval; 48h TTL; suspend/reject loops. See [[Brokers]].
 - **Consignees** — admin CRUD, search, pagination (2,488 imported), approval, accreditation (address/TIN/2303). See [[Consignees]].
-- **Job Orders** — customer + admin-on-behalf filing, serving numbers, processing loops (hold/respond, recoverable reject, per-service ✓), checker station, printable A6 slip, payments + ERP invoice recording, weekly archive/carry-over. See [[Job Orders]].
+- **Job Orders** — customer + CSR/operations-on-behalf filing, **one priority number per JO** (weekly reset), gated transitions (`staff_transition_order` + split gates), hold/respond + recoverable reject loops, **per-van X-ray** (checker), DEA/OOG service-done, **[[Two-Gate Completion]]**, base + RPS + **supplement** payments, walk-in payment, ERP invoice recording, printable A6 slip + **verify-QR**, timeline comments + staff-only notes/flags, weekly archive/carry-over. See [[Job Orders]], [[Job Order Lifecycle]].
 - **Account** — `/account` self-service (name/contact/email/password; name change → re-verify). See [[Authentication]].
-- **Administration** — approvals, customers, consignees, JO queue, payments review, rates/fees + catalogue config, staff + role gates, Logs, System health, manuals + tours. See [[Administration]].
+- **Administration** — approvals, customers, consignees, JO queue, **stations** (operations / checker / [[Cashier Station|cashier]] / [[Support Tickets|CSR support]]), payments review + walk-in, rates/fees/tariff/charge-rules/RPS-rates config, staff + **[[Staff Roles & Gates|role gates]]** + root-owner grants, **[[Staff Notifications]]** bell, bottom-tab nav, Logs, System health, manuals + tours. See [[Administration]].
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0055_dead_session_hardening`** — **all applied + tracked** in `public._migrations`. RLS + role-permission matrix + `session_alive()` woven into all helpers; 6 pg_cron jobs (see [[System Scale]]). Email (Resend) fully wired.
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0104_open_supplement_flag`** — **all applied + tracked** in `public._migrations`. RLS + role-permission matrix (`has_permission`) + `session_alive()` woven into all helpers; pg_cron jobs (see [[System Scale]]). Email (Resend) fully wired (consolidated nudge, `0099`).
 
 ## In progress / not yet
 

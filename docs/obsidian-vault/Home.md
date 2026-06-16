@@ -2,22 +2,22 @@
 title: Home
 tags: [index]
 type: home
-last_updated: 2026-06-13
+last_updated: 2026-06-16
 ---
 
 # KTC Portal Knowledge Home
 
-KTC Container Terminal Corp. — the **KTC Online Portal** for port / container-terminal operations. Accredited customers (customs brokers) submit Job Orders (X-Ray, DEA exam, OOG stripping) against consignees; KTC staff (owner/admin/cashier/checker) run a separate admin portal.
+KTC Container Terminal Corp. — the **KTC Online Portal** for port / container-terminal operations. Accredited customers (customs brokers) submit Job Orders (X-Ray, DEA exam, OOG stripping) against consignees; KTC staff (owner + admin/operations/cashier/checker/csr) run a separate admin portal on an owner-tunable [[Staff Roles & Gates|permission matrix]].
 
 ## At a glance (update every session)
 
 | Metric | Value |
 |---|---|
-| Version | **v1.1.0** (live on `portal.ktcterminal.com`) |
-| Migrations | **55** (`0001` … `0055`), all applied + tracked |
-| Smoke test | **ST02 in progress** — preflight P1–P8 ✅; manual Lanes 1–8 + P9 underway |
-| Playwright | 16/16 (11 smoke + 5 authenticated; 4 mutation lanes `fixme`) |
-| Go-live gate | ST02 closeout · Agreement v2 counsel sign-off · launch call |
+| Version | live on `portal.ktcterminal.com` (main @ `1b2e824`) |
+| Migrations | **104** (`0001` … `0104`), all applied + tracked |
+| Staff roles | admin · operations · cashier · checker · csr (+ owner / root owner) — gated by `has_permission` |
+| Completion | **two-gate** — all services + base payment + RPS (if needed) + every supplement, all confirmed |
+| Go-live gate | ST02 closeout · Agreement counsel sign-off · launch call |
 | Prod data | wiped 2026-06-12 — first real order = `JO-000001` |
 
 ## Where the rules and memory live
@@ -55,11 +55,11 @@ Rule of thumb: if you are asking *"what is the rule?"* open `docs/agent/*`. If y
 
 ## Key concepts
 
-- [[Owner Failsafe]]
-- [[CAPTCHA Bot Protection]]
-- [[RLS Posture]]
-- [[Broker Agreement]]
-- [[visionOS Design System]]
+- [[Staff Roles & Gates]] · [[Multi-Owner & Root Grants]] · [[Owner Failsafe]]
+- [[Two-Gate Completion]] · [[Additional-Charge Supplements]] · [[Verify-QR Anti-Forgery]]
+- [[Comment Visibility & Escalation]] · [[Cashier Station]] · [[Support Tickets]] · [[Staff Notifications]]
+- [[CAPTCHA Bot Protection]] · [[RLS Posture]] · [[Broker Agreement]] · [[visionOS Design System]]
+- [[Job Order Lifecycle]] — full state machine (source of truth)
 
 ## Documentation governance
 

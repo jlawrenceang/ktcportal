@@ -4,7 +4,7 @@ ADRs in this folder preserve decision history for the KTC broker portal.
 
 ## Reading order
 
-1. `0001` to `0015` in numeric order.
+1. `0001` to `0021` in numeric order.
 2. Then check each ADR for **Current-State Addendum** sections.
 
 ## Log
@@ -26,6 +26,12 @@ ADRs in this folder preserve decision history for the KTC broker portal.
 | [0013](0013-customer-account-self-service-and-reverify-on-name-change.md) | Customer account self-service + re-verify on name change | Accepted | 2026-06-10 | Workflow \| Security |
 | [0014](0014-admin-job-order-processing-and-printable-slip.md) | Admin job-order processing ("approve = start processing") + printable slip | Accepted | 2026-06-10 | Workflow |
 | [0015](0015-modular-terminal-depot-operating-system-north-star.md) | Octopi-class modular terminal + depot operating system as the north star, container/EIR spine first | Accepted | 2026-06-13 | Architecture |
+| [0016](0016-staff-roles-split-gates-two-gate-completion.md) | Split processing into independently-assignable gates + a two-gate completion rule (staff_transition_order) | Accepted | 2026-06-16 | Workflow \| Security |
+| [0017](0017-per-van-xray-checker-esignature.md) | Confirm X-ray per container van, by the Checker only, with an immutable e-signature | Accepted | 2026-06-16 | Workflow \| Security |
+| [0018](0018-additional-charge-supplements-under-review.md) | Post-filing extra charges as JO supplements that gate release + revert completed orders to "under review" | Accepted | 2026-06-16 | Workflow \| Database |
+| [0019](0019-public-verify-qr-anti-forgery.md) | Self-verifying slip: PENDING/COMPLETED watermark + QR to a public verification page | Accepted | 2026-06-16 | Security \| Workflow |
+| [0020](0020-multi-owner-root-only-owner-grants.md) | Multiple owners but only a single root owner grants/revokes owner access | Accepted | 2026-06-16 | Security |
+| [0021](0021-cashier-station-walk-in-payment-consolidated-email.md) | Cashier money desk + walk-in payment recording + one consolidated customer email nudge | Accepted | 2026-06-16 | Workflow \| Integration |
 
 ## Governance
 

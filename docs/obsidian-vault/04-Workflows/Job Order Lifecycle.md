@@ -2,86 +2,111 @@
 title: Job Order Lifecycle
 tags: [workflow, job-orders, lifecycle]
 type: workflow
-status: draft-for-finalization
-last_updated: 2026-06-11
+status: live
+last_updated: 2026-06-16
 ---
 
 # 🔄 Job Order Lifecycle (source of truth)
 
 > Status legend: ✅ built · 🔸 decided, not yet built · ❓ open decision.
-> This is the agreed end-to-end flow to finalize **before** committing to the final build cycle (#10).
+> Reflects migrations through **0104** (all applied to prod). For the staff role
+> model see [[Staff Roles & Gates]]; for the completion rule see [[Two-Gate Completion]].
 
 ## Actors
 
-- **Customer** (customs broker) — files JOs against consignees.
-- **Admin / staff** — process JOs, file in-house JOs, configure rates, review payments. `is_admin()` (incl. Owner).
-- **Owner** — superset of admin; server-only failsafe.
-- ❓ **Employee role** (future) — distinct from admin (currently staff = `is_admin`).
+- **Customer** (customs broker) — files JOs against consignees, pays online, comments.
+- **Staff roles** (one permission-gated matrix, [[Staff Roles & Gates]]):
+  - **operations** — accepts orders, assesses RPS, marks DEA/OOG services done, tags additional charges, monitors X-ray, completes; edits JO header.
+  - **checker** — confirms **X-ray per van** (BOC performs the X-ray; the checker confirms entry to the X-ray division). View only otherwise.
+  - **cashier** — reviews payments (online proof + walk-in), records the ERP invoice, completes once paid; edits JO header.
+  - **csr** — files JOs for customers + works the support inbox; **never** changes order status.
+  - **admin** — the full back office (all gates except X-ray confirmation, dropped in `0095`).
+- **Owner / root owner** — superset of admin; bypasses every gate via `has_permission`; server-only failsafe. See [[Owner Failsafe]], [[Multi-Owner & Root Grants]].
 - **KTC ERP** (external, not linked yet) — produces the official **Service Invoice + BIR receipt**.
 
 ## A. Account lifecycle (prerequisite) ✅
 
-`register` (name + contact + email + password + consent + CAPTCHA) → `confirm email` → sign in **`pending`** → upload valid ID at `/verify-id` → admin **approve** (releases held orders, deletes ID) / **reject** (recoverable: resubmit) / **suspend** (terminal). 48h TTL auto-rejects no-ID pendings. *(ADR-0012, ADR-0013.)*
+`register` (name + contact + email + password + consent + CAPTCHA) → `confirm email` → sign in **`pending`** → upload valid ID at `/verify-id` → admin **approve** (releases held orders, deletes ID) / **reject** (recoverable: resubmit) / **suspend** (terminal). 48h TTL auto-rejects no-ID pendings. Signup refuses an email that already has an account (`0098`-era, 1 email = 1 account). *(ADR-0012, ADR-0013.)*
 
 ## B. Job Order states
 
 | State | Meaning | Notes |
 |---|---|---|
 | `held` ✅ | Filed by a **pending** (unverified) customer | Queue-hidden; ≤10; **no JO number yet** ("Draft") |
-| `submitted` ✅ | Live in the admin queue | JO number assigned; **enters the service serving-line** |
-| `processing` ✅ | Admin **approved** & working it | =approved; printable slip; "ON PROCESS" watermark |
-| `on_hold` ✅ | Admin needs info | Customer-visible `admin_note`; ❓ customer response path |
-| `completed` ✅ | Done | Clean printable slip |
-| `rejected` ✅ | Admin declined | Customer-visible `admin_note`; 🔸 resubmit/refile |
-| `cancelled` ✅ | Customer-cancelled or auto on account suspend/reject | 🔸 customer cancel UI to build |
+| `submitted` ✅ | Live in the admin queue | JO number assigned; **gets a priority number** (one per JO, see §D) |
+| `processing` ✅ | Being worked (accepted, or partially X-rayed) | Printable slip; "ON PROCESS" / PENDING watermark |
+| `on_hold` ✅ | Staff needs info | Customer-visible `admin_note`; customer can respond + resubmit |
+| `completed` ✅ | Done — **passes the two-gate** (all services + all payments) | Clean slip with COMPLETED watermark + verify QR |
+| `rejected` ✅ | Staff declined | Customer-visible `admin_note`; recoverable vs terminal |
+| `cancelled` ✅ | Customer-cancelled or auto on account suspend/reject | |
 
-## C. Transitions (who triggers)
+**Under review** ✅ (`0101`) is not a separate state — it is a `completed` order bounced back to `processing` (with `completed_at` cleared + `has_open_supplement = true`, `0104`) because an additional charge ([[Additional-Charge Supplements]]) was tagged after completion. It auto-re-completes once the charge is paid.
 
-- **File** (customer) → `held` (if pending) or `submitted` (if approved). ✅
-- **File on behalf** (admin/employee, in-house ops) → `submitted`. ✅ (`0041`, `/admin/new-job-order`, `file_job_orders` gate; staff filings bypass the order caps.)
-- **Account approved** (admin) → all that customer's `held` → `submitted` (release trigger). ✅
-- **Approve & process** (admin) → `submitted` / `on_hold` → `processing`. ✅
-- **Mark completed** (admin) → `processing` → `completed`. ✅
-- **Hold for info** (admin, +note) → `submitted` / `processing` → `on_hold`. ✅
-- **Reject** (admin, +note) → `submitted` / `processing` / `on_hold` → `rejected`. ✅ Admin picks **recoverable** (default) vs **terminal** at reject time (`rejected_recoverable`, migration `0034`).
-- **Resubmit after reject** (customer) → `rejected` → `submitted`. ✅ (`resubmit_rejected` RPC; only when recoverable; re-checks the open-order cap; optional customer note.)
-- **Respond to hold** (customer) → `on_hold` → `submitted`. ✅ (`respond_to_hold` RPC; required reply note shown to admin as **Customer reply**; can correct the entry number.)
-- **Edit** (customer) → content change, state unchanged. 🔸 deferred — only the entry-number fix inside respond-to-hold exists; full edit ties to serving numbers (#8).
-- **Cancel** (customer) → `held` / `submitted` / `on_hold` → `cancelled`. ✅ (`cancel_job_order` RPC + confirm UI; not once `processing` — contact admin.)
+## C. Transitions (who triggers — server-enforced)
+
+The explicit staff actions go through **`staff_transition_order(p_id, p_status, p_note, p_recoverable)`** (`0086`/`0097`), which checks the split gate for the target status. The old admin-only direct UPDATE is gone.
+
+- **File** (customer / CSR) → `held` (pending) or `submitted` (approved). ✅ Filing is atomic (`0098` — no orphan orders).
+- **File on behalf** (operations/CSR/admin) → `submitted`. ✅ (`/admin/new-job-order`, `file_job_orders`; staff filings bypass caps.)
+- **Account approved** → that customer's `held` → `submitted` (release trigger). ✅
+- **Accept** → `submitted` / `on_hold` → `processing`. Gate **`accept_orders`** (operations / admin).
+- **Hold for info** (+note) → `submitted` / `processing` / `on_hold` → `on_hold`. Gate **`hold_reject_orders`** (operations / cashier / admin).
+- **Reject** (+note) → open → `rejected`. Gate **`hold_reject_orders`**; staff picks **recoverable** (default) vs **terminal** (`rejected_recoverable`).
+- **Complete** → open → `completed`. Gate **`complete_orders`** (operations / cashier / admin) **AND** the [[Two-Gate Completion]] readiness must hold; otherwise raises. Usually auto-fired (see D/E) rather than clicked.
+- **Resubmit after reject** (customer) → `rejected` → `submitted`. ✅ (recoverable only; re-checks the open-order cap.)
+- **Respond to hold** (customer) → `on_hold` → `submitted`. ✅ (required reply note; can correct the entry number.)
+- **Edit own order** (customer) → content change while `held`/`submitted`. ✅ (`update_job_order`; locks at `processing`+.)
+- **Staff edit header** (`0103`) → consignee / entry / vessel / voyage / vessel-visit on any non-cancelled/-rejected order. Gate `process_job_orders OR review_payments OR manage_support` (operations / cashier / CSR — **checker excluded**, **customers excluded**). `staff_edit_job_order`.
+- **Cancel** (customer) → `held` / `submitted` / `on_hold` → `cancelled`. ✅ (not once `processing`.)
 
 ## D. Numbering & priority
 
-- **JO number `JO-######`** ✅ — **permanent identity**; assigned by `ensure_jo_number` on first live status; global, atomic, never reused; gaps are fine.
-- **Service serving number** ✅ BUILT (migration `0038`, `serving_numbers` table) — "now serving" per service line (`xray`/`dea`/`oog`), **separate** from the JO number.
-  - Grain: **per JO, per service line**. Reset: **weekly** (Monday, Asia/Manila). Assigned on `submitted` (triggers on status + line insert; numbers only written by SECURITY DEFINER functions).
-  - **Respond-to-hold** → keeps its number ✅. **Customer EDIT of a FILED (`submitted`) order** → **back of the line** (vacate + reassign) so KTC re-reviews it (`0079`, owner 2026-06-16 — **reverses** the earlier "edit keeps its number"; a `held` draft has no number yet, so nothing to requeue). **Cancel / reject** → vacated (burned, unique index keeps it unreusable) ✅. **Resubmit after reject** → back of line; admin **"↩ Restore #N"** button on the queue (`restore_serving_number`, same week only) ✅.
-  - Surfaces: **Now-Serving board** (`now_serving()` RPC — My Job Orders + Checker), serving chips on customer/admin cards, checker queue **sorted by line number**, and the number printed on the **A6 slip**.
-  - ❓ Carry-over policy at the weekly reset still open — see [[Process Flow Map]] G2.
+- **JO number `JO-######`** ✅ — **permanent identity**; `ensure_jo_number` on first live status; global, atomic, never reused.
+- **Priority queue number** ✅ — generalized in **`0100`**: **ONE priority number per JO** (`serving_numbers.service_line = 'queue'`), assigned on `submitted`, **weekly reset** (Mon, Asia/Manila). Replaces the old per-line xray/dea/oog serving numbers (re-compartmentalizable later).
+  - **Edit / respond-to-hold** → keeps its number (active number is never reassigned). **Cancel / reject** → vacated (burned, unreusable). **Resubmit after reject** → back of line; admin **"↩ Restore #N"** (same week).
+  - Surfaces: `now_serving()` board (My Job Orders + stations), priority chip on cards, the A6 slip.
 
-## E. Pricing & payment (parallel, **non-gated** — never blocks processing)
+## E. Services & per-van X-ray
 
-- **Rates/fees** ✅ — `service_rates` + `pricing_settings` (admin-editable in Settings, migration `0030`).
-- **Computation** ✅ (`src/lib/pricing.ts`): `Σ rate × containers per service` (VAT-exclusive) + `VAT` on the vatable portion + flat `admin/service fee` + flat `print fee` = Total. Shown on the **payment page** and the standalone **Rate Calculator** (`/calculator`, Home card + nav).
-- **Payment** ✅ (migration `0036`) — `/job-order/:id/pay`: computation + KTC **bank/GCash details + QR** (admin-editable in Settings → "Payment details") + **deposit-slip upload** (`payment-slips` bucket, per-user, auto-compressed) → staff **confirm/reject** on the admin queue (`review_payments` gate; reject requires a customer-visible note; customer re-uploads). `payment_status`: `unpaid → submitted → confirmed | rejected`. No gateway.
-- **Invoice link** ✅ (`0035`) — cashier records `service_invoice_no` = **PAID** (final word; an in-app payment confirmation doesn't replace it). The official **Service Invoice + BIR receipt come from the ERP**, not this app (operational-only, #5).
+- A JO has one or more **service lines** (X-ray / DEA / OOG / other). "All services done" = every distinct service line recorded in `service_completions`.
+- **DEA / OOG / other** → `record_service_done` (gate `process_job_orders` — operations/admin).
+- **X-ray = per van** ✅ (`0087`/`0088`/`0095`): each container line has `xray_done_at/by/by_name`. **`record_van_xray(line_id)`** confirms one van — gate **`confirm_xray` = Checker only** (operations lost it `0087`, admin lost it `0095`; owner still bypasses). The **name is snapshotted immutably** (e-signature on the slip). When the **last** X-ray van is confirmed, the X-ray service line rolls up done (`record_service_done`), which applies the two-gate.
 
-## F. External systems
+## F. Pricing & payment (parallel — never blocks processing, but **gates completion/release**)
 
-- **KTC ERP** — official invoice/receipt; not linked yet (future integration). Cross-ref = `service_invoice_no` on the JO + the JO number written on the ERP invoice.
-- **Google Sheets** — ✅ one-way **app→Sheet mirror for BOC** built (hourly Edge Function + pg_cron, see [[BOC Sheets Mirror]]; awaiting the Google service-account credentials). **No live two-way sync** (Supabase stays source of truth). Internal Sheets data entry replaced by the in-portal Checker station.
-- **Vessel schedules (next phase)** — staff sheet-upload → validated import → schedule board; see [[Vessel Schedule Monitoring]].
+- **Rates/fees** ✅ — `service_rates` + `pricing_settings` (`manage_pricing`); terminal tariff (`terminal_rates`, `0073`/`0078`) + per-line **charge rules** (`shipping_line_charge_rules`, `0080`: waive/discount%/discount₱/surcharge₱); per-move **RPS rates** (`move_rates`, `0062`). Standalone **Rate Calculator** `/calculator` (guided estimate).
+- **Base payment** ✅ — `/job-order/:id/pay`: computation + KTC **bank/GCash + QR** + **deposit-slip upload** (`payment-slips` bucket) → cashier confirm/reject (`review_payments`; reject needs a note). `payment_status`: `unpaid → submitted → confirmed | rejected`.
+- **RPS (port-services)** ✅ (`0062`/`0063`): operations **assesses** (`assess_rps`) whether the JO `needs` RPS, uploads the RPS doc + per-move quantities (`rps_moves`); each move bills at a VATable per-move rate on top of the base. RPS has its **own** payment slip + confirm (`rps_payment_status`).
+- **Walk-in / office payment** ✅ (`0091`): cashier marks base or RPS paid at the window without a proof (`record_office_payment`, `review_payments`) — we still nudge online to skip the line. Supplements have the same walk-in path (`record_supplement_office_payment`).
+- **Additional-charge supplements** ✅ (`0101`) — see [[Additional-Charge Supplements]]: JO-####-A/B/C extra charges, each with its own amount + slip + confirm; the customer pays each as its own section on the pay page; the cashier reviews/collects them in a 4th Cashier-station section.
+- **Invoice link** ✅ — cashier records `service_invoice_no` (ERP) = **PAID** (final word; an in-app confirmation doesn't replace it). The official Service Invoice + BIR receipt come from the ERP.
 
-## G. Open decisions to close before final build (❓)
+## G. Completion gate (two gates + RPS + supplements) ✅
 
-1. ~~`on_hold` → customer response/update path~~ ✅ built (`0034`).
-2. ~~`rejected` recovery: recoverable vs terminal~~ ✅ built (`0034`, admin's call at reject time).
-3. ~~Cancel own order~~ ✅ built; full **edit** still deferred (serving-number effects, #8).
-4. Admin/employee **filing surface + JO-Processing tile** still open. ~~Employee role~~ ✅ built (`0035`): **staff roles** `admin` / `cashier` / `checker` with an **owner-only permission-gate matrix** (`role_permissions`, Settings → "Roles & gates"; enforced via `has_permission()` in RLS + RPCs, restricted roles are NOT `is_admin`). **X-ray Checker station** ✅ (`/admin/checker`, tablet-first): pending-X-ray queue + container/JO **clearance lookup** ("is this van cleared?") + confirm-done → stamps `xray_performed_at` and completes the JO (`record_xray`).
-5. Payment build + bank details/QR values — see [[Payment & Cashier Handoff (proposal)]] (parked for ops audit). ~~`service_invoice_no` + paid state~~ ✅ built (`0035`): cashier (or admin) records the ERP **Service Invoice no.** on a completed JO (`record_service_invoice`) → **PAID** chip; decided flow: ERP invoice carries the JO number for cross-reference.
-6. ~~Notifications~~ ✅ lean set built (`0034`): emails on **`on_hold` + `rejected` only** (action-required; Resend-quota-friendly); completed/processing are in-app (auto-poll). Plus an admin **chat status-message generator** (Copy / Viber / SMS) per JO.
-7. Go-live: finalize Customer Agreement (counsel, bump `AGREEMENT_VERSION`), run **ST02** on live, public-launch hardening.
+See [[Two-Gate Completion]]. An order may reach `completed` **only** when **ALL** of:
+1. every service line is done (incl. all X-ray vans), AND
+2. base `payment_status = 'confirmed'`, AND
+3. RPS is `not_needed` OR `rps_payment_status = 'confirmed'`, AND
+4. **every supplement** is `confirmed`.
+
+Enforced in `jo_ready_to_complete()` + the `complete_on_payment_confirmed` BEFORE-trigger (auto-fires when the **last** payment of base/RPS/supplement lands) + the `enforce_two_gate_complete` raw-update backstop + `staff_transition_order`. Whoever does the last of "services" / "payments" trips the completion.
+
+## H. Anti-forgery verify-QR ✅
+
+Every slip carries a **QR → `/verify/:id`** (public, anon `verify_job_order`). See [[Verify-QR Anti-Forgery]]. Slip watermark = PENDING (open) / COMPLETED. The verify page shows JO number, status, **PAID badge** (reflects base + RPS), completion date, **consignee + container numbers** for a physical cross-check. Foundation for a future guard gate-scan ([[Gate Module (gate-in-out)]]).
+
+## I. Comments & escalation ✅
+
+JO comments live in `job_order_events` (`event = 'comment'`), surfaced only through `jo_timeline`. See [[Comment Visibility & Escalation]]: customer comments are reviewed by CSR; staff can add **`staff_only`** internal notes (never shown to customers) and **flag** a comment as a complaint/escalation. `add_jo_comment` (customer) / `add_jo_staff_note` / `flag_jo_comment`.
+
+## J. External systems
+
+- **KTC ERP** — official invoice/receipt; not linked yet. Cross-ref = `service_invoice_no` + JO number.
+- **Google Sheets** — one-way **app→Sheet BOC mirror** (hourly Edge Function + pg_cron; awaiting service-account creds). No live two-way sync.
+- **Vessel schedules** — staff-managed schedule board (`manage_vessel_schedule`, `/admin/vessel-schedule`).
 
 ## Related
-- [[Job Orders]] · [[Brokers]] · [[Pending Items]] · [[Current State]]
+- [[Job Orders]] · [[Administration]] · [[Brokers]] · [[Pending Items]] · [[Current State]]
+- [[Staff Roles & Gates]] · [[Two-Gate Completion]] · [[Additional-Charge Supplements]] · [[Verify-QR Anti-Forgery]] · [[Comment Visibility & Escalation]]
 - ADR-0012 (held lifecycle) · ADR-0013 (account self-service) · ADR-0014 (processing + slip)
-- Migrations `0016`–`0019` (held/caps), `0028`–`0029` (reverify/processing), `0030` (pricing)
+- Migrations `0062` (RPS), `0086` (CSR + split gates), `0087`/`0088`/`0095` (per-van X-ray), `0089`/`0090` (verify-QR), `0091` (office payment), `0100` (queue), `0101`/`0104` (supplements), `0102` (comments), `0103` (staff edit)

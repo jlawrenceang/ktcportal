@@ -13,7 +13,7 @@ Stable reference for repo-level tooling. Update this file when a tool is added o
 
 ## Database tooling
 
-- `scripts/run-migrations.mjs` — applies `supabase/migrations/*` over `DATABASE_URL`; tracks applied files in `public._migrations` and applies only new ones.
+- `scripts/run-migrations.mjs` — applies `supabase/migrations/*` over `DATABASE_URL`; tracks applied files in `public._migrations` and applies only new ones. **Latest applied = `0104`** (`0104_open_supplement_flag.sql`); all forward-only. Add a new `01xx` file and run it.
 - `scripts/verify-schema.mjs` — read-only schema sanity check against `DATABASE_URL`.
 - `scripts/import-consignees.mjs` — one-off importer (loaded 2,488 consignees from `Customer.csv`).
 - Supabase SQL Editor (KTC project `mdlnfhyylvapzdubhyic`) — manual fallback for applying SQL.

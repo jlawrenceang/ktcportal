@@ -8,20 +8,23 @@ For the *current* snapshot of what is live, read `docs/obsidian-vault/07-Memory/
 
 ## Stable operational boundary
 
-The portal runs four gated chains:
+The portal runs these gated chains:
 
-1. **Access & identity** — broker self-registration → admin approval; owner failsafe; invite-only staff creation.
-2. **Broker onboarding** — register (email + password + full name + valid-ID upload) → `pending` → admin approves → broker gains portal access.
+1. **Access & identity** — customer self-registration → admin approval; owner failsafe + root-owner-only owner grants; invite-only staff creation with role.
+2. **Customer onboarding** — register (email + password + full name + valid-ID upload) → `pending` → admin approves → customer gains portal access.
 3. **Consignee accreditation** — admin adds/edits consignees → accreditation details (name + address + TIN + 2303 doc) → admin approval.
-4. **Job orders** — approved broker submits a job order (service requests: X-ray / DEA / OOG stripping, etc.) by picking any consignee from the master list (per-broker accreditation disabled 2026-06-09; see ADR-0007).
+4. **Job orders** — an approved customer (or a `file_job_orders`-gated staff member filing on behalf) submits a job order (service requests: X-ray / DEA / OOG stripping, etc.) by picking any consignee from the master list (per-broker accreditation disabled 2026-06-09; see ADR-0007). A priority queue number is assigned on `submitted` (weekly reset).
+5. **Processing & completion** — staff advance the order through the split gates (`accept_orders` → `hold_reject_orders` / `complete_orders`) via `staff_transition_order`; per-van X-ray confirmation is Checker-only; the order reaches `completed` only when the **two-gate** condition is met (all services done AND base payment confirmed AND RPS settled AND every supplement paid).
 
 Work outside this boundary is allowed but requires explicit planning and impact analysis first.
 
 ## Access-control invariants (do not regress)
 
-- **Owner failsafe.** `jlawrenceang@gmail.com` has server-only `is_owner`. The owner overrides every gate, sees everything, and **cannot be locked out or revoked**. Staff cannot revoke the owner.
-- **Invite-only staff.** Admin/staff accounts are created only by the owner via `rpc('create_staff', {p_username, p_password, p_full_name})` — username login (no email), mapped to a synthetic `<username>@ktc-staff.local`. There is no self-signup path to admin.
-- **Broker approval gate.** Un-approved, non-admin brokers must not reach broker features — the Shell shows the pending-approval panel. `status` transitions to `approved` only from the admin portal.
+- **Owner failsafe + root owner.** `jlawrenceang@gmail.com` has server-only `is_owner` and is the **root owner** (`is_root_owner`). The owner overrides every gate, sees everything, and **cannot be locked out or revoked**. Multiple owners are allowed for redundancy, but only the root owner may mint/revoke owner access (via `set_owner_access()`); `is_root_owner` is never app-changeable. Staff cannot revoke the owner.
+- **Invite-only staff, with role.** Admin/staff accounts are created only by the owner via `create_staff` (username login, no email, synthetic `<username>@ktc-staff.local`), assigned a `staff_role` ∈ {admin, operations, cashier, checker, csr}. There is no self-signup path to staff. Roles map to capabilities through the owner-tuned `role_permissions` matrix; restricted roles are NOT `is_admin` and act only through `has_permission`-checked SECURITY DEFINER RPCs.
+- **Permission gates are backend-first.** Staff order transitions go through `staff_transition_order` enforcing the split gates `accept_orders` / `hold_reject_orders` / `complete_orders` (no direct client UPDATE on `job_orders`). Per-van X-ray (`record_van_xray`) is `confirm_xray` = Checker-only; supplements/payments are gated by `process_job_orders` / `review_payments`. Never re-derive a capability in the UI alone.
+- **Two-gate completion (do not bypass).** `completed` is reachable only when `jo_ready_to_complete()` holds — all services done AND base payment confirmed AND RPS settled AND every supplement paid. Adding a supplement to a completed order reverts it to `processing` until the supplement clears.
+- **Customer approval gate.** Un-approved, non-staff customers must not reach customer features — the Shell shows the pending-approval panel. `status` transitions to `approved` only from the admin portal.
 - **Consignee approval gate (admin-side).** Consignees and their accreditations require admin approval; accreditation cannot be approved without name + address + TIN + 2303 document. This is admin-side data quality — as of ADR-0007 it no longer gates which consignees a broker can target.
 - **Job-order consignee selection.** Brokers pick any consignee from the master list (searchable). Per-broker accreditation scoping is disabled (ADR-0007) and reversible. Only **approved brokers** can reach the form (the broker-approval gate is unchanged).
 
