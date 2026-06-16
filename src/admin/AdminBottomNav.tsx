@@ -60,7 +60,8 @@ export default function AdminBottomNav() {
   const { replayPageTour, hasPageTour } = useTour()
   const [open, setOpen] = useState(false)
 
-  const home = broker?.staff_role === 'checker' || broker?.staff_role === 'operations' ? '/admin/checker'
+  const home = broker?.staff_role === 'checker' ? '/admin/checker'
+    : broker?.staff_role === 'operations' ? '/admin/job-orders'
     : broker?.staff_role === 'cashier' ? '/admin/cashier'
     : broker?.staff_role === 'csr' ? '/admin/support'
     : '/admin'

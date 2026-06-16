@@ -67,8 +67,10 @@ function RoleLanding() {
       </div>
     )
   }
-  if (broker?.staff_role === 'checker' || broker?.staff_role === 'operations') return <Navigate to="/admin/checker" replace />
+  if (broker?.staff_role === 'checker') return <Navigate to="/admin/checker" replace />
+  if (broker?.staff_role === 'operations') return <Navigate to="/admin/job-orders" replace />
   if (broker?.staff_role === 'cashier') return <Navigate to="/admin/cashier" replace />
+  if (broker?.staff_role === 'csr') return <Navigate to="/admin/support" replace />
   if (hasAdminAccess(broker)) return <Navigate to="/admin" replace />
   return <Home />
 }
