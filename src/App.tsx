@@ -6,6 +6,7 @@ import TourProvider from './components/TourProvider'
 import LanguageGate from './components/LanguageGate'
 import ProtectedRoute from './components/ProtectedRoute'
 import SessionSupersededOverlay from './components/SessionSupersededOverlay'
+import ServerBusyBanner from './components/ServerBusyBanner'
 import { useBroker } from './lib/useBroker'
 import { hasAdminAccess } from './lib/types'
 import Login from './pages/Login'
@@ -83,6 +84,7 @@ export default function App() {
         <TourProvider>
         <LanguageGate />
         <SessionSupersededOverlay />
+        <ServerBusyBanner />
         <Suspense
           fallback={
             <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>

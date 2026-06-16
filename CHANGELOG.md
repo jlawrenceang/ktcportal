@@ -6,6 +6,21 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+## v1.4.0 — 2026-06-16 (vessel monitoring v2 — Google Sheet sync, in-house hiding, busy banner)
+
+### Vessel schedule v2 (migrations `0107`–`0111`, ADR-0023)
+- **Operations maintain the vessel schedule in a Google Sheet that syncs to the app** — matching KTC's real "VESSEL MONITORING" sheet (one running list). The `vessel-sync` Edge Function runs **hourly** (pg_cron→pg_net, `0107`) and on-demand via a **"Sync sheet"** button (`trigger_vessel_sync` RPC, `0109`, permission-gated, secret stays server-side). One run does both directions: **pulls** the sheet into `vessel_schedule` and **pushes** the app-computed **Last Free Day** back into a locked mirror column so ops + cashiers see it without opening the portal. All logic is server-side (Google service account, Editor) — **no Apps Script** in the sheet.
+- **14-column layout** (`0110`): Shipping Line · Vessel · Voyage · Arrival(date + military-time `1653H`) · Last Discharge(date+time) · **Last Free Day (auto)** · Departure(date+time) · Berth · **Week** · Remarks · Cancelled. Dates stay `date` columns (calendar + last-free-day rely on it); the clock time is a companion text field shown beside it. The sheet has a **visible friendly header over a hidden canonical schema row**, Shipping Line + Cancelled **dropdowns**, and a **locked header block + LFD column** (`scripts/format-vessel-sheet.mjs`).
+- **`vessel_visit` is now derived** from vessel name + voyage + a week/arrival discriminator (no longer entered); immutable on in-app edit so a rename can't orphan linked Job Orders.
+- **In-house line hiding (`0110`/`0111`):** `shipping_lines.internal` (Gothong/Philcement/New Asia) — those vessels are hidden from customers (backend-enforced SELECT policy, case-insensitive match) and shown to staff via the hardened `current_is_staff()` (`session_alive()` + `aal_satisfied()`). Toggle per line in **Settings**.
+- Admin **Vessel Schedule** page reworked for the new fields (date+time display, Week, derived key); per-line "in-house" toggle added to Settings.
+
+### Reliability
+- **"Servers are busy" banner:** a wrapped Supabase fetch flags overload (429/502/503/504/network failure) and a debounced global banner shows a friendly notice + a **Refresh** button, instead of a raw error. Reads can retry; a manual reload can't double-submit a filing.
+
+### Verification
+- **Pro-tier load test (prod):** 300 customers + full staff roster → ~136 successful filings/sec at 300 in-flight, p50 856ms / p99 5.2s, **zero integrity failures** (no dup serving numbers / JO numbers, cap enforced exactly). Adversarial review of the v2 work fixed the in-house leak, the derived-key collision, and the staff-gate hardening before release.
+
 ## v1.3.0 — 2026-06-16 (staff model overhaul — roles, gates, payment/verify floor)
 
 ### 2026-06-16 (staff roles, split gates, CSR, multi-owner)

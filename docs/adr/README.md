@@ -4,7 +4,7 @@ ADRs in this folder preserve decision history for the KTC broker portal.
 
 ## Reading order
 
-1. `0001` to `0022` in numeric order.
+1. `0001` to `0023` in numeric order.
 2. Then check each ADR for **Current-State Addendum** sections.
 
 ## Log
@@ -33,6 +33,7 @@ ADRs in this folder preserve decision history for the KTC broker portal.
 | [0020](0020-multi-owner-root-only-owner-grants.md) | Multiple owners but only a single root owner grants/revokes owner access | Accepted | 2026-06-16 | Security |
 | [0021](0021-cashier-station-walk-in-payment-consolidated-email.md) | Cashier money desk + walk-in payment recording + one consolidated customer email nudge | Accepted | 2026-06-16 | Workflow \| Integration |
 | [0022](0022-gate-pass-is-container-eir-not-job-order.md) | Gate pass is a container/EIR-level artifact (not the JO); gate action layer deferred, launch = verify-only | Accepted | 2026-06-16 | Architecture \| Workflow |
+| [0023](0023-vessel-schedule-google-sheet-sync.md) | Vessel schedule via a Google Sheet ↔ app sync (hourly + manual) with a computed Last Free Day mirror + in-house line hiding | Accepted | 2026-06-16 | Integration \| Workflow |
 
 ## Governance
 

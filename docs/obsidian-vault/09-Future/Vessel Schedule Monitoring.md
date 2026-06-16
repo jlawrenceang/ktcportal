@@ -1,13 +1,24 @@
 ---
-title: Vessel Schedule Monitoring (next phase)
-tags: [future, vessels, import]
-type: future
+title: Vessel Schedule Monitoring (BUILT 2026-06-16)
+tags: [vessels, import, built]
+type: built
 requested: 2026-06-11
+built: 2026-06-16
 ---
 
-# 🚢 Vessel Schedule Monitoring — next phase (requested 2026-06-11)
+# 🚢 Vessel Schedule Monitoring — ✅ BUILT (2026-06-16)
 
-**Ask:** a vessel-schedule board in the portal, updated by **uploading a sheet**
+> **Built in v1.4.0 — see [[2026-06-16 Vessel Monitoring v2 + Pro Load Test + Busy Banner]] and ADR-0023.**
+> The shipped design went further than the CSV-upload proposal below: instead of
+> a staff upload, ops keep editing their **live Google Sheet** and a server-side
+> `vessel-sync` Edge Function syncs it hourly (+ a manual "Sync sheet" button),
+> pulling the schedule in and pushing the **computed Last Free Day** back as a
+> mirror. In-house lines are hidden from customers. Migrations `0107`–`0111`.
+> The original proposal is kept below for history.
+
+---
+
+**Ask (original):** a vessel-schedule board in the portal, updated by **uploading a sheet**
 (staff upload CSV/XLSX → vessel schedules update). Feasible — it's the
 "bounded admin import" pattern from decision #11 (validated, idempotent,
 logged; NOT live two-way sync).
