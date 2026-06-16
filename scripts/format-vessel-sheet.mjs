@@ -28,6 +28,11 @@ if (!saEmail || !saKey || !sheetId) { console.error('Need GOOGLE_SA_EMAIL, GOOGL
 const HEADERS  = ['vessel_visit', 'vessel_name', 'voyage_number', 'shipping_line', 'actual_arrival', 'finish_discharging', 'last_free_day', 'berth', 'remarks', 'cancelled']
 const FRIENDLY = ['Vessel Visit ID', 'Vessel Name', 'Voyage #', 'Shipping Line', 'Actual Arrival', 'Finished Discharging', 'Last Free Day (auto)', 'Berth', 'Remarks', 'Cancelled? (TRUE to retire)']
 const LFD = HEADERS.indexOf('last_free_day') // 0-based column index of the mirror
+const LINE = HEADERS.indexOf('shipping_line')
+const CANCEL = HEADERS.indexOf('cancelled')
+// Shipping-line dropdown. For Last Free Day to compute, these names must match
+// the shipping_lines rows configured (with free-days) in admin Settings.
+const LINES = ['Maersk', 'Evergreen', 'SITC', 'MSC', 'CMA', 'MCC', 'Gothong', 'Philcement', 'New Asia']
 const SAMPLE = [
   ['MV-EVERGREEN-001E', 'MV EVER GIVEN', '001E', 'Evergreen', '2026-06-18', '2026-06-19', '', 'Berth 1', '', ''],
   ['MV-MAERSK-204W', 'MAERSK SEMARANG', '204W', 'Maersk', '2026-06-20', '', '', 'Berth 2', 'ETA only — not yet discharged', ''],
@@ -110,6 +115,9 @@ const reqs = [
   { updateDimensionProperties: { range: { sheetId: gid, dimension: 'ROWS', startIndex: 4, endIndex: 5 }, properties: { hiddenByUser: true }, fields: 'hiddenByUser' } },
   // Last Free Day column (auto-filled mirror): gray italic so it reads as read-only
   { repeatCell: { range: { sheetId: gid, startRowIndex: 5, endRowIndex: 1000, startColumnIndex: LFD, endColumnIndex: LFD + 1 }, cell: { userEnteredFormat: { backgroundColor: gray, textFormat: { italic: true, foregroundColor: { red: 0.45, green: 0.45, blue: 0.45 } } } }, fields: 'userEnteredFormat(backgroundColor,textFormat)' } },
+  // data-row dropdowns: Shipping Line (known lines) + Cancelled (TRUE/FALSE only)
+  { setDataValidation: { range: { sheetId: gid, startRowIndex: 5, endRowIndex: 1000, startColumnIndex: LINE, endColumnIndex: LINE + 1 }, rule: { condition: { type: 'ONE_OF_LIST', values: LINES.map((l) => ({ userEnteredValue: l })) }, strict: true, showCustomUi: true } } },
+  { setDataValidation: { range: { sheetId: gid, startRowIndex: 5, endRowIndex: 1000, startColumnIndex: CANCEL, endColumnIndex: CANCEL + 1 }, rule: { condition: { type: 'ONE_OF_LIST', values: [{ userEnteredValue: 'TRUE' }, { userEnteredValue: 'FALSE' }] }, strict: true, showCustomUi: true } } },
   // drop any prior protections (idempotent), then lock (a) the header block rows
   // 1-5 and (b) the auto-filled Last Free Day column. No editors list => only the
   // sheet OWNER + this service account can edit; operations staff are blocked, so
