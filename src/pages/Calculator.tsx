@@ -24,13 +24,15 @@ type VesselOpt = { vessel_visit: string; vessel_name: string; voyage_number: str
 type Size = '20' | '40'
 // A per-line charge rule (0080) layered on the base tariff.
 type Rule = { shipping_line: string; service: string; trade: string | null; action: string; value: number }
+// An ancillary service from the admin catalogue (service_rates).
+type Svc = { service: string; rate: number; unit: string; vatable: boolean }
 
 export default function Calculator() {
   const { t } = useT()
   usePageTour('calculator', calculatorSteps)
 
   const [termRates, setTermRates] = useState<TermRate[]>([])
-  const [xrayRate, setXrayRate] = useState(0)
+  const [services, setServices] = useState<Svc[]>([])
   const [settings, setSettings] = useState({ vat: 0.12, admin: 0, print: 0, reefer: 0, reeferMin: 4, deposit: 10000 })
   const [vessels, setVessels] = useState<VesselOpt[]>([])
   const [rules, setRules] = useState<Rule[]>([])
@@ -43,7 +45,7 @@ export default function Calculator() {
   const [count20, setCount20] = useState(0)
   const [count40, setCount40] = useState(0)
   const [pickupDate, setPickupDate] = useState('')
-  const [xrayVans, setXrayVans] = useState(0)
+  const [svcCounts, setSvcCounts] = useState<Record<string, number>>({})
   const [reeferVans, setReeferVans] = useState(0)
   const [plugIn, setPlugIn] = useState('')
   const [plugOut, setPlugOut] = useState('')
@@ -54,13 +56,14 @@ export default function Calculator() {
     void (async () => {
       const [{ data: tr }, { data: sr }, { data: ps }, { data: v }, { data: cr }] = await Promise.all([
         supabase.from('terminal_rates').select('service, trade, origin, size, rate'),
-        supabase.from('service_rates').select('service, rate').ilike('service', '%x-ray%').limit(1),
+        supabase.from('service_rates').select('service, rate, unit, vatable').eq('active', true).order('sort_order').order('service'),
         supabase.from('pricing_settings').select('key, value'),
         supabase.from('vessel_schedule_v').select('vessel_visit, vessel_name, voyage_number, last_free_day, shipping_line').eq('is_current', true).order('vessel_name'),
         supabase.from('shipping_line_charge_rules').select('shipping_line, service, trade, action, value').eq('active', true),
       ])
       setTermRates(((tr ?? []) as TermRate[]).map((x) => ({ ...x, rate: Number(x.rate) })))
-      setXrayRate(Number((sr?.[0] as { rate?: number })?.rate ?? 0))
+      setServices(((sr ?? []) as { service: string; rate: number | string; unit: string; vatable: boolean }[])
+        .map((x) => ({ service: x.service, rate: Number(x.rate), unit: x.unit, vatable: x.vatable })))
       const m = new Map(((ps ?? []) as { key: string; value: number }[]).map((x) => [x.key, Number(x.value)]))
       setSettings({
         vat: m.get('vat_rate') ?? 0.12, admin: m.get('admin_fee') ?? 0, print: m.get('print_fee') ?? 0,
@@ -72,7 +75,7 @@ export default function Calculator() {
   }, [])
 
   // Any change to the inputs invalidates a shown estimate (press Generate again).
-  useEffect(() => { setGenerated(false) }, [line, vesselVisit, origin, trade, count20, count40, pickupDate, xrayVans, reeferVans, plugIn, plugOut])
+  useEffect(() => { setGenerated(false) }, [line, vesselVisit, origin, trade, count20, count40, pickupDate, svcCounts, reeferVans, plugIn, plugOut])
 
   // Vessels for the chosen line (loose name match); all vessels when no line.
   const lineVessels = useMemo(
@@ -138,7 +141,15 @@ export default function Calculator() {
     const storageR = applyRules('storage', sized('storage') * storageDays)
     const storage = storageR.amount
     const storageTag = storageR.tag
-    const xray = xrayRate * Math.max(0, xrayVans)
+
+    // Ancillary services from the admin catalogue (service_rates) — every active
+    // one is offered; each bills rate × count. VATable ones join the VAT base;
+    // any non-VATable one is added after VAT (like the flat fees).
+    const ancillary = services
+      .map((s) => ({ service: s.service, vatable: s.vatable, count: Math.max(0, svcCounts[s.service] || 0), amount: s.rate * Math.max(0, svcCounts[s.service] || 0) }))
+      .filter((a) => a.count > 0)
+    const ancillaryVatable = ancillary.filter((a) => a.vatable).reduce((sum, a) => sum + a.amount, 0)
+    const ancillaryFlat = ancillary.filter((a) => !a.vatable).reduce((sum, a) => sum + a.amount, 0)
 
     // Electrical/reefer: per van per hour, plug-in → plug-out, with a minimum
     // billed-hours floor. A refundable cash bond applies per van.
@@ -151,11 +162,11 @@ export default function Calculator() {
     const reefer = settings.reefer * Math.max(0, reeferVans) * reeferHours
     const deposit = Math.max(0, reeferVans) * settings.deposit
 
-    const vatable = basicTotal + storage + xray + reefer
+    const vatable = basicTotal + storage + reefer + ancillaryVatable
     const vat = vatable * settings.vat
-    const charges = vatable + vat + settings.admin + settings.print
-    return { basic, storage, storageTag, storageDays, xray, reefer, reeferHours, deposit, vatable, vat, charges, toPrepare: charges + deposit }
-  }, [rateOf, basicServices, count20, count40, lfd, pickupDate, xrayRate, xrayVans, settings, reeferVans, plugIn, plugOut, rules, line, trade, t])
+    const charges = vatable + vat + settings.admin + settings.print + ancillaryFlat
+    return { basic, storage, storageTag, storageDays, ancillary, reefer, reeferHours, deposit, vatable, vat, charges, toPrepare: charges + deposit }
+  }, [rateOf, basicServices, count20, count40, lfd, pickupDate, services, svcCounts, settings, reeferVans, plugIn, plugOut, rules, line, trade, t])
 
   const hasContainers = count20 > 0 || count40 > 0
   // No vessel & voyage → no charges at all (ops rule): the estimate is tied to a
@@ -285,7 +296,13 @@ export default function Calculator() {
           <div className="ktc-calc-section">
             <StepHead n={4} title={t('Ancillary services')} sub={t('Optional — added depending on your order.')} />
             <div style={{ display: 'grid', gap: 11 }}>
-              {fieldRow(t('X-ray — number of vans'), numInput(xrayVans, setXrayVans, t('X-ray vans')))}
+              {services.map((s) => (
+                <div key={s.service}>{fieldRow(
+                  <>{s.service}{s.rate > 0 && <span style={{ opacity: 0.6, fontSize: 11 }}> · {peso(s.rate)}/{t('container')}</span>}</>,
+                  numInput(svcCounts[s.service] || 0, (n) => setSvcCounts((p) => ({ ...p, [s.service]: Math.max(0, n) })), s.service),
+                )}</div>
+              ))}
+              {services.length === 0 && <p className="ktc-label" style={{ fontSize: 12, opacity: 0.8, margin: 0 }}>{t('No ancillary services configured yet.')}</p>}
               {lfd && fieldRow(t('Planned pickup date (storage)'),
                 <input className="ktc-input" type="date" value={pickupDate} onChange={(e) => setPickupDate(e.target.value)} style={{ maxWidth: 180 }} />)}
               {!lfd && (
@@ -330,7 +347,7 @@ export default function Calculator() {
                 <tbody>
                   {calc.basic.map((b) => <Row key={b.key} label={t(b.label)} value={peso(b.amount)} hint={b.tag} />)}
                   {calc.storageDays > 0 && <Row label={t('Storage')} value={peso(calc.storage)} hint={`× ${calc.storageDays} ${t('day(s)')}${calc.storageTag ? ' ' + calc.storageTag : ''}`} />}
-                  {calc.xray > 0 && <Row label={t('X-ray')} value={peso(calc.xray)} hint={`× ${xrayVans}`} />}
+                  {calc.ancillary.map((a) => <Row key={a.service} label={a.service} value={peso(a.amount)} hint={`× ${a.count}`} />)}
                   {calc.reefer > 0 && <Row label={t('Electrical / reefer')} value={peso(calc.reefer)} hint={`${reeferVans} × ${calc.reeferHours}h`} />}
                   <Row label={t('VAT ({pct}%)', { pct: (settings.vat * 100).toFixed(0) })} value={peso(calc.vat)} />
                   <Row label={t('Admin / service fee')} value={peso(settings.admin)} />
