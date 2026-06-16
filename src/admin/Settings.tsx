@@ -17,6 +17,7 @@ export default function Settings() {
   const { t } = useT()
   const { broker: me } = useBroker()
   const isOwner = !!me?.is_owner
+  const isRootOwner = !!me?.is_root_owner
   const [staff, setStaff] = useState<Broker[]>([])
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState('')
@@ -313,6 +314,18 @@ export default function Settings() {
     const { error } = await supabase.from('support_contact').upsert(rows, { onConflict: 'key' })
     setSupportBusy(false)
     setSupportMsg(error ? error.message : t('✓ Support contacts saved.'))
+  }
+
+  // Owner access (root owner only): grant/revoke OWNER on another admin (0093).
+  const [ownerBusy, setOwnerBusy] = useState(false)
+  const [ownerMsg, setOwnerMsg] = useState<string | null>(null)
+  async function setOwner(id: string, grant: boolean) {
+    setOwnerBusy(true); setOwnerMsg(null)
+    const { error } = await supabase.rpc('set_owner_access', { p_target: id, p_grant: grant })
+    setOwnerBusy(false)
+    if (error) { setOwnerMsg(error.message); return }
+    setOwnerMsg(grant ? t('✓ Owner access granted.') : t('✓ Owner access revoked.'))
+    await load()
   }
 
   // Owner switch: customer notification emails on/off (0074). Default OFF.
@@ -665,6 +678,33 @@ export default function Settings() {
           {pricingMsg && <span className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600 }}>{pricingMsg}</span>}
         </div>
       </div>
+
+      {isRootOwner && (
+        <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+          <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Owner access (root owner only)')}</h2>
+          <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13, lineHeight: 1.55 }}>
+            {t('You are the root owner. You can grant or revoke OWNER access for other admin accounts. A secondary owner has every owner power EXCEPT minting owners — only you (root) can create owners. The root owner can’t be changed here.')}
+          </p>
+          <div style={{ display: 'grid', gap: 8 }}>
+            {staff.filter((s) => !s.is_root_owner && (s.is_admin || s.is_owner)).length === 0 ? (
+              <span className="ktc-label" style={{ fontSize: 13 }}>{t('No other admins yet — create an admin first, then grant owner here.')}</span>
+            ) : staff.filter((s) => !s.is_root_owner && (s.is_admin || s.is_owner)).map((s) => (
+              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between', flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                <span style={{ fontSize: 13.5, minWidth: 0 }}>
+                  <b>{s.full_name || s.email}</b>
+                  <span className="ktc-label" style={{ fontSize: 11.5, marginLeft: 8 }}>{s.email}{s.is_owner ? ` · ${t('Owner')}` : ` · ${t('Admin')}`}</span>
+                </span>
+                {s.is_owner ? (
+                  <button type="button" className="ktc-link" style={{ fontSize: 12.5, color: 'var(--c-h0-60-40)' }} disabled={ownerBusy} onClick={() => void setOwner(s.id, false)}>{t('Revoke owner')}</button>
+                ) : (
+                  <button type="button" className="ktc-btn ktc-btn--sm" disabled={ownerBusy} onClick={() => void setOwner(s.id, true)}>{t('Grant owner')}</button>
+                )}
+              </div>
+            ))}
+          </div>
+          {ownerMsg && <p className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600, marginTop: 12 }}>{ownerMsg}</p>}
+        </div>
+      )}
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Terminal tariff (arrastre · wharfage · LoLo · weighing · storage)')}</h2>

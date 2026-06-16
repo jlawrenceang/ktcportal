@@ -28,6 +28,7 @@ export interface Broker {
   email_confirmed_at: string | null
   is_admin: boolean
   is_owner: boolean
+  is_root_owner?: boolean
   /** Staff role ('admin' | 'cashier' | 'checker'); null for customers. */
   staff_role: string | null
   tour_seen?: boolean
