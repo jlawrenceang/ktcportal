@@ -74,8 +74,10 @@ const asTime = (v: unknown): string | null => {
 const asInt = (v: unknown): number | null => { const s = clean(v); if (!s) return null; const n = parseInt(s.replace(/[^0-9]/g, ''), 10); return Number.isFinite(n) ? n : null }
 const truthy = (v: unknown): boolean => /^(1|true|yes|y|cancelled|cancel)$/i.test(String(v ?? '').trim())
 
-// Stable internal key from vessel name + voyage (vessel_visit is no longer entered).
-const deriveVisit = (name: string, voy: string): string => `${name} ${voy}`.trim().toUpperCase().replace(/\s+/g, ' ')
+// Stable internal key from vessel name + voyage + a call discriminator (week, else
+// arrival date). vessel_visit is no longer entered; the discriminator keeps two
+// distinct weekly calls of the same vessel+voyage from collapsing into one row.
+const deriveVisit = (name: string, voy: string, disc: string): string => `${name} ${voy} ${disc}`.trim().toUpperCase().replace(/\s+/g, ' ')
 
 Deno.serve(async (req) => {
   const secret = Deno.env.get('CRON_SECRET')
@@ -116,18 +118,27 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: `missing required header(s); need vessel_name, voyage_number. got: ${header.join(', ')}` }, 400)
     }
 
+    // Derive the visit key for a row (or null if it's blank / a header echo) — shared
+    // by the upsert loop and the LFD mirror so both agree on the key.
+    const visitOf = (row: string[]): string | null => {
+      const name = clean(row[ci.name]), voy = clean(row[ci.voy])
+      if (!name || !voy) return null
+      if (norm(name) === 'vessel_name' || norm(voy) === 'voyage_number') return null // header echo
+      const wk = ci.week >= 0 ? asInt(row[ci.week]) : null
+      const arr = ci.arrD >= 0 ? asDate(row[ci.arrD]) : null
+      return deriveVisit(name, voy, wk != null ? `W${wk}` : (arr ?? ''))
+    }
+
     const upserts: Record<string, unknown>[] = []
     const seen = new Set<string>()
     let skipped = 0
     for (const row of rows.slice(hi + 1)) {
-      const name = clean(row[ci.name]), voy = clean(row[ci.voy])
-      if (!name || !voy) { skipped++; continue }
-      if (norm(name) === 'vessel_name' || norm(voy) === 'voyage_number') { skipped++; continue } // header echo
-      const visit = deriveVisit(name, voy)
+      const visit = visitOf(row)
+      if (!visit) { skipped++; continue }
       if (seen.has(visit)) { skipped++; continue }
       seen.add(visit)
       upserts.push({
-        vessel_visit: visit, vessel_name: name, voyage_number: voy,
+        vessel_visit: visit, vessel_name: clean(row[ci.name]), voyage_number: clean(row[ci.voy]),
         shipping_line: ci.line >= 0 ? clean(row[ci.line]) : null,
         actual_arrival: ci.arrD >= 0 ? asDate(row[ci.arrD]) : null,
         arrival_time: ci.arrT >= 0 ? asTime(row[ci.arrT]) : null,
@@ -163,8 +174,7 @@ Deno.serve(async (req) => {
       const colLetter = String.fromCharCode(65 + ci.lfd)
       const firstDataRow = hi + 2 // 1-indexed sheet row of the first data row
       const cells = rows.slice(hi + 1).map((row) => {
-        const name = clean(row[ci.name]), voy = clean(row[ci.voy])
-        const v = name && voy ? deriveVisit(name, voy) : null
+        const v = visitOf(row)
         return [v && byVisit.has(v) ? byVisit.get(v)! : '']
       })
       if (cells.length) {

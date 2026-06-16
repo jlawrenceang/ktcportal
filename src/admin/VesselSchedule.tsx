@@ -21,8 +21,9 @@ const blankForm = (): Record<Col, string> => ({
 })
 
 // vessel_visit is no longer entered — derive the stable key JOs link on from
-// vessel name + voyage (mirrors the sync's deriveVisit).
-const deriveVisit = (name: string, voy: string) => `${name} ${voy}`.trim().toUpperCase().replace(/\s+/g, ' ')
+// vessel name + voyage + a call discriminator (week, else arrival), mirroring the
+// sync's deriveVisit so distinct weekly calls don't collide.
+const deriveVisit = (name: string, voy: string, disc: string) => `${name} ${voy} ${disc}`.trim().toUpperCase().replace(/\s+/g, ' ')
 
 // Minimal RFC-4180-ish CSV parser (mirrors Consignees.tsx).
 function parseCsv(text: string): string[][] {
@@ -163,8 +164,9 @@ export default function VesselSchedule() {
     if (aa === undefined || fd === undefined || dp === undefined) { setErr(t('Dates must be YYYY-MM-DD or M/D/YYYY.')); return }
     const wkRaw = form.week.trim(); const wk = wkRaw ? parseInt(wkRaw, 10) : null
     setSaving(true)
+    // vessel_visit is set ONLY on insert (immutable thereafter) so a later
+    // name/voyage correction can't re-derive the key and orphan linked JOs.
     const payload = {
-      vessel_visit: deriveVisit(form.vessel_name, form.voyage_number),
       vessel_name: form.vessel_name.trim(), voyage_number: form.voyage_number.trim(),
       shipping_line: form.shipping_line.trim() || null,
       actual_arrival: aa, arrival_time: form.arrival_time.trim() || null,
@@ -173,9 +175,12 @@ export default function VesselSchedule() {
       berth: form.berth.trim() || null, week: wk != null && Number.isFinite(wk) ? wk : null,
       remarks: form.remarks.trim() || null,
     }
+    const disc = wk != null && Number.isFinite(wk) ? `W${wk}` : (aa || '')
     const { error } = editing
       ? await supabase.from('vessel_schedule').update(payload).eq('id', editing)
-      : await supabase.from('vessel_schedule').upsert(payload, { onConflict: 'vessel_visit' })
+      : await supabase.from('vessel_schedule').upsert(
+          { ...payload, vessel_visit: deriveVisit(form.vessel_name, form.voyage_number, disc) },
+          { onConflict: 'vessel_visit' })
     setSaving(false)
     if (error) { setErr(friendly(error)); return }
     setMsg(editing ? t('Call updated.') : t('Call added.'))
@@ -217,8 +222,9 @@ export default function VesselSchedule() {
       const aa = normDate(get('actual_arrival')), fd = normDate(get('finish_discharging')), dp = normDate(get('departure'))
       if (aa === undefined || fd === undefined || dp === undefined) { errors.push(t('Row {row} ({name}): bad date — use YYYY-MM-DD', { row: n + 2, name })); return }
       const wkRaw = get('week'); const wk = wkRaw ? parseInt(wkRaw, 10) : null
+      const disc = wk != null && Number.isFinite(wk) ? `W${wk}` : (aa || '')
       payload.push({
-        vessel_visit: deriveVisit(name, voy), vessel_name: name, voyage_number: voy,
+        vessel_visit: deriveVisit(name, voy, disc), vessel_name: name, voyage_number: voy,
         shipping_line: get('shipping_line') || null,
         actual_arrival: aa, arrival_time: get('arrival_time') || null,
         finish_discharging: fd, discharge_time: get('discharge_time') || null,
