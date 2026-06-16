@@ -239,14 +239,14 @@ export default function Calculator() {
             <div style={{ display: 'grid', gap: 11 }}>
               <div style={{ display: 'grid', gap: 6 }}>
                 <span className="ktc-label">{t('Shipping line')}</span>
-                <select className="ktc-input" value={line} onChange={(e) => chooseLine(e.target.value)}>
+                <select className="ktc-input ktc-input--compact" value={line} onChange={(e) => chooseLine(e.target.value)}>
                   <option value="">{t('Select a shipping line…')}</option>
                   {SHIPPING_LINES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
                 </select>
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
                 <span className="ktc-label">{t('Vessel & voyage')} <span style={{ opacity: 0.7 }}>({t('required for the estimate')})</span></span>
-                <select className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
+                <select className="ktc-input ktc-input--compact" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
                   <option value="">{line && lineVessels.length === 0 ? t('No current vessels for this line') : t('Select a vessel & voyage…')}</option>
                   {lineVessels.map((v) => <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name.toUpperCase()} — {v.voyage_number.toUpperCase()}</option>)}
                 </select>

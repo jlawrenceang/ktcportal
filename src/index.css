@@ -906,6 +906,13 @@
     color: var(--acc-2);
     font-size: 10.5px; font-weight: 700;
   }
+  /* Compact select/input for the calculator — denser than the default field.
+     Two-class selector so it beats the mobile .ktc-input 16px/12px bump (selects
+     don't trigger iOS zoom-on-focus, so a smaller font is safe here). */
+  .ktc-input.ktc-input--compact { padding: 7px 10px; font-size: 13px; border-radius: 10px; }
+  @media (max-width: 640px) {
+    .ktc-input.ktc-input--compact { padding: 9px 11px; font-size: 14px; }
+  }
 
   /* ---- Home overview: stat tiles + bulletin ---- */
   .ktc-stat-grid {
