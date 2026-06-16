@@ -85,7 +85,7 @@ export default function SupportInbox() {
   const { can, loading: permLoading } = usePermissions()
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<Filter>('open')
+  const [filter, setFilter] = useState<Filter>('all')
   const [error, setError] = useState<string | null>(null)
 
   // The open ticket is stored as its own object (not derived from the filtered

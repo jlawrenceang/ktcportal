@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { usePageTour } from '../components/TourProvider'
@@ -9,8 +9,9 @@ import { useT } from '../lib/i18n'
 // ── Vessel schedule (operations) ──────────────────────────────────────────
 // Reads vessel_schedule_v: last_free_day + is_current are computed server-side
 // (finish_discharging + the line's import free-days; current = last_free_day ≥
-// today). Operations add calls one-by-one or via the CSV template import.
-// Free-days per line are set by ADMIN in Settings (decision A1).
+// today). Operations add/edit calls one-by-one; bulk data flows in from the
+// Google Sheet sync (the CSV import + template were removed — the Sheet is the
+// single bulk driver now). Free-days per line are set by ADMIN in Settings.
 
 const COLUMNS = ['shipping_line', 'vessel_name', 'voyage_number', 'actual_arrival', 'arrival_time', 'finish_discharging', 'discharge_time', 'departure', 'departure_time', 'berth', 'week', 'remarks'] as const
 type Col = (typeof COLUMNS)[number]
@@ -24,26 +25,6 @@ const blankForm = (): Record<Col, string> => ({
 // vessel name + voyage + a call discriminator (week, else arrival), mirroring the
 // sync's deriveVisit so distinct weekly calls don't collide.
 const deriveVisit = (name: string, voy: string, disc: string) => `${name} ${voy} ${disc}`.trim().toUpperCase().replace(/\s+/g, ' ')
-
-// Minimal RFC-4180-ish CSV parser (mirrors Consignees.tsx).
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = []
-  let field = '', record: string[] = [], inQuotes = false, i = 0
-  while (i < text.length) {
-    const ch = text[i]
-    if (inQuotes) {
-      if (ch === '"') { if (text[i + 1] === '"') { field += '"'; i += 2; continue } inQuotes = false; i++; continue }
-      field += ch; i++; continue
-    }
-    if (ch === '"') { inQuotes = true; i++; continue }
-    if (ch === ',') { record.push(field); field = ''; i++; continue }
-    if (ch === '\r') { i++; continue }
-    if (ch === '\n') { record.push(field); rows.push(record); record = []; field = ''; i++; continue }
-    field += ch; i++
-  }
-  if (field.length || record.length) { record.push(field); rows.push(record) }
-  return rows
-}
 
 // Accept YYYY-MM-DD or M/D/YYYY → normalize to YYYY-MM-DD (or '' if blank/bad).
 function normDate(s: string): string | null | undefined {
@@ -75,9 +56,7 @@ export default function VesselSchedule() {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
-  const [importReport, setImportReport] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
 
   // Pending vessel requests (unlisted vessels customers/admins filed against).
   type VesselReq = { id: string; vessel_name: string; voyage_number: string; waiting_count: number; created_at: string }
@@ -190,59 +169,6 @@ export default function VesselSchedule() {
   async function toggleCancel(r: VesselRow) {
     const { error } = await supabase.from('vessel_schedule').update({ cancelled: !r.cancelled }).eq('id', r.id)
     if (error) setErr(friendly(error)); else void load()
-  }
-
-  function downloadTemplate() {
-    const header = COLUMNS.join(',')
-    const sample = ['SITC', 'SITC HUSHENG', '2606S', '2026-03-28', '1200H', '2026-03-29', '1800H', '2026-03-30', '0600H', '4', '13', 'optional notes'].join(',')
-    const blob = new Blob([header + '\n' + sample + '\n'], { type: 'text/csv;charset=utf-8' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = 'vessel-schedule-template.csv'
-    a.click()
-    URL.revokeObjectURL(a.href)
-  }
-
-  async function onImport(file: File) {
-    setErr(null); setMsg(null); setImportReport(null)
-    const grid = parseCsv(await file.text())
-    if (grid.length < 2) { setErr(t('That file has no data rows.')); return }
-    const header = grid[0].map((h) => h.trim().toLowerCase().replace(/\s+/g, '_'))
-    const idx = (c: Col) => header.indexOf(c)
-    if (idx('vessel_name') < 0 || idx('voyage_number') < 0) {
-      setErr(t('Missing required columns. Download the template for the exact headers.')); return
-    }
-    const payload: Record<string, unknown>[] = []
-    const errors: string[] = []
-    grid.slice(1).forEach((r, n) => {
-      const get = (c: Col) => (idx(c) >= 0 ? (r[idx(c)] ?? '').trim() : '')
-      const name = get('vessel_name'), voy = get('voyage_number')
-      if (!name && r.every((c) => !c.trim())) return // skip blank lines
-      if (!name || !voy) { errors.push(t('Row {row}: missing vessel_name / voyage_number', { row: n + 2 })); return }
-      const aa = normDate(get('actual_arrival')), fd = normDate(get('finish_discharging')), dp = normDate(get('departure'))
-      if (aa === undefined || fd === undefined || dp === undefined) { errors.push(t('Row {row} ({name}): bad date — use YYYY-MM-DD', { row: n + 2, name })); return }
-      const wkRaw = get('week'); const wk = wkRaw ? parseInt(wkRaw, 10) : null
-      const disc = wk != null && Number.isFinite(wk) ? `W${wk}` : (aa || '')
-      payload.push({
-        vessel_visit: deriveVisit(name, voy, disc), vessel_name: name, voyage_number: voy,
-        shipping_line: get('shipping_line') || null,
-        actual_arrival: aa, arrival_time: get('arrival_time') || null,
-        finish_discharging: fd, discharge_time: get('discharge_time') || null,
-        departure: dp, departure_time: get('departure_time') || null,
-        berth: get('berth') || null, week: wk != null && Number.isFinite(wk) ? wk : null,
-        remarks: get('remarks') || null,
-      })
-    })
-    if (!payload.length) { setErr(t('No valid rows to import.') + '\n' + errors.join('\n')); return }
-    const { error } = await supabase.from('vessel_schedule').upsert(payload, { onConflict: 'vessel_visit' })
-    if (error) { setErr(friendly(error)); return }
-    const unknownLines = [...new Set(payload.map((p) => p.shipping_line as string | null).filter((l): l is string => !!l && !lines.includes(l)))]
-    setImportReport(
-      t('Imported {count} call(s).', { count: payload.length }) +
-      (errors.length ? ' ' + t('Skipped {count}:', { count: errors.length }) + ` \n${errors.join('\n')}` : '') +
-      (unknownLines.length ? '\n\n' + t('New lines not yet configured (set free-days in Settings): {lines}', { lines: unknownLines.join(', ') }) : '')
-    )
-    void load()
   }
 
   // Snapshot of the active vessels as a branded PNG — for Viber group updates.
@@ -358,15 +284,9 @@ export default function VesselSchedule() {
         <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
           <button className="ktc-btn" type="submit" disabled={saving}>{editing ? t('Update call') : t('Add call')}</button>
           {editing && <button className="ktc-btn ktc-btn-ghost" type="button" onClick={resetForm}>{t('Cancel edit')}</button>}
-          <span style={{ flex: 1 }} />
-          <button className="ktc-btn ktc-btn-ghost" type="button" onClick={downloadTemplate}>{t('⬇ Template')}</button>
-          <button className="ktc-btn ktc-btn-ghost" type="button" onClick={() => fileRef.current?.click()}>{t('⬆ Import CSV')}</button>
-          <input ref={fileRef} type="file" accept=".csv,text/csv" hidden
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) void onImport(f); e.target.value = '' }} />
         </div>
         {err && <p className="ktc-error" style={{ whiteSpace: 'pre-wrap', marginTop: 10 }}>{err}</p>}
         {msg && <p style={{ color: 'var(--c-h150-60-30)', marginTop: 10, fontSize: 13 }}>{msg}</p>}
-        {importReport && <p style={{ whiteSpace: 'pre-wrap', marginTop: 10, fontSize: 13, color: 'hsl(var(--ink-2))' }}>{importReport}</p>}
       </form>
 
       {/* Pending vessel requests — unlisted vessels customers filed against. */}
@@ -461,7 +381,7 @@ export default function VesselSchedule() {
               ))}
               {visible.length === 0 && (
                 <tr><td colSpan={11} style={{ padding: 18, textAlign: 'center', color: 'hsl(var(--ink-2))' }}>
-                  {showAll ? t('No calls. Add one above or import the template.') : t('No current calls. Add one above or import the template.')}
+                  {showAll ? t('No calls. Add one above or sync from the Google Sheet.') : t('No current calls. Add one above or sync from the Google Sheet.')}
                 </td></tr>
               )}
             </tbody>
