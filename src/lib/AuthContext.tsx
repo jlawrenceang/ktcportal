@@ -177,6 +177,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
     if (error) return { error: error.message }
 
+    // 1 email = 1 account. Supabase HIDES "email already registered" to prevent
+    // enumeration: for an existing confirmed email it returns a user with an
+    // EMPTY identities array and sends NO confirmation — which looks like a
+    // successful signup. This is a closed broker portal, so surface it plainly
+    // instead of letting someone think they re-registered.
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      return { error: 'This email already has an account. Please sign in instead — or reset your password if you’ve forgotten it.' }
+    }
+
     // With a session (email confirmation off), persist the valid ID + IRR
     // acceptance onto the broker row for admin visibility. Best-effort: the
     // brokers update silently no-ops if the 0011 columns aren't applied yet.
