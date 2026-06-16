@@ -444,9 +444,20 @@
 
   /* ---- Responsive page container ----
      Replaces per-shell inline max-width/padding so the mobile layer below can
-     tighten it. --wide is the admin/operations variant. */
+     tighten it. --wide is the admin/operations variant.
+
+     ONE unified app column at every width: the content reads like a wide
+     phone/tablet column centered on the canvas, NEVER edge-to-edge on a big
+     monitor. The owner blind-tested the mobile build and loved it; desktop &
+     tablet must feel like the same product, so we keep the same card language
+     and a comfortable reading width rather than a sprawling legacy layout.
+       · customer  → 760px  (single-column card stack, app-like)
+       · --wide    → 960px  (admin/ops: room for action rows, still focused)
+     The few surfaces that genuinely benefit from the extra width (calculator,
+     forms) opt in via their own internal 2-column grids — the page frame stays
+     capped so nothing drifts. */
   .ktc-page {
-    max-width: 880px;
+    max-width: 760px;
     margin: 0 auto;
     padding: 14px 20px 60px;
     /* A stray over-wide child (table, long token) never forces page-wide
@@ -454,7 +465,7 @@
        and creates no scroll container. Wide tables get their own scroll box. */
     overflow-x: clip;
   }
-  .ktc-page--wide { max-width: 1040px; }
+  .ktc-page--wide { max-width: 960px; }
   /* Clear the floating bottom tab bar (customer shell). Two-class selector so it
      wins over the base + mobile .ktc-page padding regardless of source order.
      Adds the iOS home-indicator safe-area so content never hides under it. */
@@ -558,6 +569,25 @@
       border: 1px solid var(--glass-brd);
       box-shadow: var(--shadow-lg), var(--edge);
     }
+  }
+
+  /* ---- Tablet / intermediate layer — 641px to the desktop column cap ----
+     Without this, every width above the 640px mobile cutoff fell through to the
+     full desktop layout, so a tablet got desktop spacing with none of the
+     mobile tightening — the single biggest "drift" between the loved mobile
+     build and wider screens. This bridges the gap: the unified card column just
+     breathes a little more than on a phone, and the chrome stays app-like.
+     The page frame already caps the width (760 / 960), so content is centered,
+     never edge-to-edge. The bottom-tab nav is the only navigation here too. */
+  @media (min-width: 641px) and (max-width: 1023px) {
+    /* A touch more side padding than a phone, less than full desktop, so the
+       card column sits as a comfortable centered band. */
+    .ktc-page { padding: 12px 24px 60px; }
+    .ktc-page.ktc-page--tabbar { padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)); }
+    /* On true tablets the unified column shouldn't stretch the full 760/960 —
+       keep it a held-in, readable band centered on the canvas. */
+    .ktc-page { max-width: 680px; }
+    .ktc-page--wide { max-width: 820px; }
   }
 
   /* ---- Mobile navigation drawer ---- */

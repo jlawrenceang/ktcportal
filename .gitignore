@@ -30,3 +30,6 @@ supabase/.temp/
 Thumbs.db
 
 .vercel
+
+# agent worktrees (transient)
+.claude/worktrees/
