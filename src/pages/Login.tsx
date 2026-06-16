@@ -8,7 +8,9 @@ import { VERSION_LABEL, VERSION_FULL } from '../version'
 import { MarkdownBody } from '../components/MarkdownDoc'
 import Notice from '../components/Notice'
 import LangToggle from '../components/LangToggle'
-import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
+import PasswordInput from '../components/PasswordInput'
+import PasswordStrength from '../components/PasswordStrength'
+import { passwordIssue } from '../lib/validation'
 import { useT } from '../lib/i18n'
 
 // Client-side brute-force deterrent: after MAX_FAILS wrong passwords for an
@@ -295,10 +297,10 @@ export default function Login() {
               <label className="ktc-label" htmlFor="password">{t('Password')}</label>
               {!isSignup && <Link to="/forgot-password" className="ktc-link" style={{ fontSize: 12 }}>{t('Forgot password?')}</Link>}
             </div>
-            <input id="password" className="ktc-input" type="password" required minLength={isSignup ? 8 : undefined} value={password}
+            <PasswordInput id="password" required minLength={isSignup ? 8 : undefined} value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={isSignup ? 'new-password' : 'current-password'} />
-            {isSignup && <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>{PASSWORD_HINT}</span>}
+            {isSignup && <PasswordStrength value={password} />}
           </div>
 
           {isSignup && (

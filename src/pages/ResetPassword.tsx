@@ -2,7 +2,9 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
-import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
+import { passwordIssue } from '../lib/validation'
+import PasswordInput from '../components/PasswordInput'
+import PasswordStrength from '../components/PasswordStrength'
 import { useT } from '../lib/i18n'
 
 // Landed here from the password-reset email (the link establishes a recovery
@@ -51,13 +53,13 @@ export default function ResetPassword() {
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 14 }}>
           <div style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="pw">{t('New password')}</label>
-            <input id="pw" className="ktc-input" type="password" required minLength={8} value={pw}
+            <PasswordInput id="pw" required minLength={8} value={pw}
               onChange={(e) => setPw(e.target.value)} autoComplete="new-password" />
-            <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>{PASSWORD_HINT}</span>
+            <PasswordStrength value={pw} />
           </div>
           <div style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="pw2">{t('Confirm new password')}</label>
-            <input id="pw2" className="ktc-input" type="password" required minLength={8} value={pw2}
+            <PasswordInput id="pw2" required minLength={8} value={pw2}
               onChange={(e) => setPw2(e.target.value)} autoComplete="new-password" />
           </div>
           <button className="ktc-btn" type="submit" disabled={busy} style={{ marginTop: 4 }}>

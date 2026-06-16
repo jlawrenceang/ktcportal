@@ -5,7 +5,9 @@ import Notice, { type NoticeTone } from '../components/Notice'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import { useAuth } from '../lib/AuthContext'
-import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
+import { passwordIssue } from '../lib/validation'
+import PasswordInput from '../components/PasswordInput'
+import PasswordStrength from '../components/PasswordStrength'
 import { usePageTour } from '../components/TourProvider'
 import { accountSteps } from '../components/WelcomeTour'
 import { useT } from '../lib/i18n'
@@ -217,12 +219,12 @@ export default function Account() {
           {pwMsg && <Notice tone={pwMsg.tone}>{pwMsg.text}</Notice>}
           <div style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="acPw">{t('New password')}</label>
-            <input id="acPw" className="ktc-input" type="password" minLength={8} value={newPw} onChange={(e) => setNewPw(e.target.value)} autoComplete="new-password" />
-            <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>{PASSWORD_HINT}</span>
+            <PasswordInput id="acPw" minLength={8} value={newPw} onChange={(e) => setNewPw(e.target.value)} autoComplete="new-password" />
+            <PasswordStrength value={newPw} />
           </div>
           <div style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="acPw2">{t('Confirm new password')}</label>
-            <input id="acPw2" className="ktc-input" type="password" minLength={8} value={newPw2} onChange={(e) => setNewPw2(e.target.value)} autoComplete="new-password" />
+            <PasswordInput id="acPw2" minLength={8} value={newPw2} onChange={(e) => setNewPw2(e.target.value)} autoComplete="new-password" />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
             <button className="ktc-btn" type="submit" disabled={savingPw} style={{ width: 'auto', padding: '10px 20px' }}>

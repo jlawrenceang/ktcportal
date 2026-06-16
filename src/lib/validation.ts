@@ -12,6 +12,39 @@ export function passwordIssue(pw: string): string | null {
   return null
 }
 
+// Live criteria for the sign-up strength meter. The first three mirror the
+// server-enforced policy (passwordIssue); the last two are "stronger" bonuses
+// that don't gate submission but reward a longer / mixed password.
+export interface PasswordCriteria {
+  length: boolean // >= 8 (required)
+  letter: boolean // has a letter (required)
+  number: boolean // has a number (required)
+  longer: boolean // >= 12 (bonus)
+  symbol: boolean // has a symbol (bonus)
+}
+
+export function passwordCriteria(pw: string): PasswordCriteria {
+  return {
+    length: pw.length >= 8,
+    letter: /[A-Za-z]/.test(pw),
+    number: /[0-9]/.test(pw),
+    longer: pw.length >= 12,
+    symbol: /[^A-Za-z0-9]/.test(pw),
+  }
+}
+
+// 0 = empty · 1 = below policy (weak) · 2 = meets policy (fair) ·
+// 3 = meets policy + one bonus (good) · 4 = meets policy + both bonuses (strong)
+export function passwordScore(pw: string): 0 | 1 | 2 | 3 | 4 {
+  if (!pw) return 0
+  const c = passwordCriteria(pw)
+  if (!(c.length && c.letter && c.number)) return 1
+  let s = 2
+  if (c.longer) s += 1
+  if (c.symbol) s += 1
+  return Math.min(s, 4) as 2 | 3 | 4
+}
+
 export const MAX_UPLOAD_MB = 5
 const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 const ALLOWED_UPLOAD_TYPES = [

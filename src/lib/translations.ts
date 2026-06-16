@@ -14,6 +14,16 @@
 // edit freely — this is the source of truth for Filipino copy.
 
 export const tl: Record<string, string> = {
+  // Password reveal toggle + sign-up strength meter
+  "Show password": "Ipakita ang password",
+  "Hide password": "Itago ang password",
+  "Weak": "Mahina",
+  "Fair": "Katamtaman",
+  "Good": "Maganda",
+  "Strong": "Malakas",
+  "At least 8 characters": "Hindi bababa sa 8 character",
+  "A letter": "May letra",
+  "A number": "May numero",
   " — re-upload to replace": " — i-upload ulit para palitan",
   " Note: their valid ID could not be deleted — see the warning on the page.": " Note: hindi ma-delete ang valid ID nila — tingnan ang warning sa page.",
   " Their valid ID was removed from storage.": " Tinanggal sa storage ang valid ID nila.",
