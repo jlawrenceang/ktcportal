@@ -4,8 +4,8 @@
 // existing rows, so it's safe to re-run.
 //
 // Usage: DATABASE_URL="postgresql://...:5432/postgres" node scripts/import-consignees.mjs "C:/path/Customer.csv"
-import { readFileSync } from 'node:fs'
 import pg from 'pg'
+import { readGrid } from './sheetGrid.mjs'
 
 function parseCsv(text) {
   const rows = []; let f = '', rec = [], q = false, i = 0
@@ -27,7 +27,7 @@ if (!file) { console.error('Pass a CSV path'); process.exit(1) }
 const url = process.env.DATABASE_URL
 if (!url) { console.error('Set DATABASE_URL'); process.exit(1) }
 
-const grid = parseCsv(readFileSync(file, 'utf8')).filter((r) => r.length > 1)
+const grid = await readGrid(file)
 const header = grid[0].map((h) => h.trim().toLowerCase())
 const nameIdx = header.findIndex((h) => h === 'name' || h === 'consignee' || h.includes('customer name') || h.includes('consignee name'))
 const codeIdx = header.findIndex((h) => h === 'code')

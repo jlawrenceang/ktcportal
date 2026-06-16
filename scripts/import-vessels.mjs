@@ -5,8 +5,8 @@
 // (YYYY-MM-DD), berth, remarks are optional.
 //
 // Usage: DATABASE_URL="postgresql://...:5432/postgres" node scripts/import-vessels.mjs "C:/path/vessels.csv"
-import { readFileSync } from 'node:fs'
 import pg from 'pg'
+import { readGrid } from './sheetGrid.mjs'
 
 function parseCsv(text) {
   const rows = []; let f = '', rec = [], q = false, i = 0
@@ -29,7 +29,7 @@ if (!file) { console.error('Pass a CSV path'); process.exit(1) }
 const url = process.env.DATABASE_URL
 if (!url) { console.error('Set DATABASE_URL'); process.exit(1) }
 
-const grid = parseCsv(readFileSync(file, 'utf8')).filter((r) => r.length > 1)
+const grid = await readGrid(file)
 const header = grid[0].map((h) => h.trim().toLowerCase())
 const col = (name) => header.indexOf(name)
 const need = ['vessel_visit', 'vessel_name', 'voyage_number']
