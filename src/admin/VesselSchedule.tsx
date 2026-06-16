@@ -71,6 +71,7 @@ export default function VesselSchedule() {
   const [msg, setMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [importReport, setImportReport] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   // Pending vessel requests (unlisted vessels customers/admins filed against).
@@ -96,6 +97,19 @@ export default function VesselSchedule() {
     void loadReqs()
   }
   useEffect(() => { void load() }, [])
+
+  // Manual "Sync now" — fire the same Edge Function the hourly cron runs: pulls
+  // the Google Sheet's edits in + pushes the Last Free Day mirror back out. The
+  // secret stays server-side (trigger_vessel_sync RPC, gated on permission);
+  // pg_net is async, so we reload after a short beat.
+  async function syncNow() {
+    setErr(null); setMsg(null); setSyncing(true)
+    const { data, error } = await supabase.rpc('trigger_vessel_sync')
+    if (error) { setSyncing(false); setErr(friendly(error)); return }
+    if (data === 'not_configured') { setSyncing(false); setErr(t('Vessel sync isn’t configured yet — contact the owner.')); return }
+    setMsg(t('Syncing from the Google Sheet… the list refreshes in a few seconds.'))
+    window.setTimeout(() => { setSyncing(false); void load() }, 6000)
+  }
 
   async function approveReq(r: VesselReq) {
     const visit = (reqLink[r.id] ?? '').trim()
@@ -362,6 +376,7 @@ export default function VesselSchedule() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
         <strong style={{ fontSize: 14 }}>{showAll ? t('{count} total call(s)', { count: visible.length }) : t('{count} current call(s)', { count: visible.length })}</strong>
         <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" onClick={() => void snapshot()} title={t('Share a snapshot of active vessels to your Viber group')}>{t('📸 Snapshot')}</button>
+        <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" disabled={syncing} onClick={() => void syncNow()} title={t('Pull the latest edits from the Google Sheet now and refresh the Last Free Day mirror')}>{syncing ? t('Syncing…') : t('🔄 Sync sheet')}</button>
         <div style={{ display: 'inline-flex', gap: 4 }}>
           <button className={`ktc-btn ktc-btn--sm ${view === 'table' ? '' : 'ktc-btn-ghost'}`} type="button" onClick={() => setView('table')}>{t('Table')}</button>
           <button className={`ktc-btn ktc-btn--sm ${view === 'calendar' ? '' : 'ktc-btn-ghost'}`} type="button" onClick={() => setView('calendar')}>{t('Calendar')}</button>
