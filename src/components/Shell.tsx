@@ -13,6 +13,7 @@ import IdleWarning from './IdleWarning'
 import { useT } from '../lib/i18n'
 import NotificationBell from './NotificationBell'
 import BottomNav from './BottomNav'
+import Clock from './Clock'
 
 const IDLE_LOGOUT_MS = 15 * 60 * 1000 // auto sign-out after 15 min of inactivity (warning at 14)
 
@@ -53,6 +54,8 @@ export default function Shell({ children }: { children: ReactNode }) {
         <Link to="/" aria-label="Go to Home" style={{ display: 'inline-flex', flex: '0 0 auto', padding: '0 6px' }}>
           <img className="ktc-nav-logo" src="/ktc-logo.png" alt="KTC Container Terminal Corp" />
         </Link>
+        <span className="ktc-nav-spacer" aria-hidden />
+        <Clock />
         <span className="ktc-nav-spacer" aria-hidden />
         <NotificationBell />
       </nav>

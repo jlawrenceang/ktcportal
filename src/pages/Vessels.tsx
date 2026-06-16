@@ -55,9 +55,9 @@ export default function Vessels() {
       </div>
 
       {loading ? <p className="ktc-label">{t('Loading…')}</p> : view === 'calendar' ? <MonthCalendar rows={rows.filter((r) => !r.cancelled)} /> : (
-        <div className="ktc-glass" style={{ padding: 0, overflowX: 'auto' }}>
-          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div className="ktc-glass ktc-glass--flat" style={{ padding: 8 }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: 8 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 680 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: 'hsl(var(--ink-2))' }}>
                 {['Visit', 'Vessel', 'Voyage', 'Line', 'Arrival', 'Finish Disch.', 'Last Free Day', 'Berth', ''].map((h, i) => (

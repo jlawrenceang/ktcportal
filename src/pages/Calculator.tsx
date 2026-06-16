@@ -213,11 +213,11 @@ export default function Calculator() {
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 16, alignItems: 'start' }}>
-        {/* ---- Inputs column ---- */}
-        <div style={{ display: 'grid', gap: 16 }} data-tour="calc-inputs">
+      <div className="ktc-calc-layout">
+        {/* ---- Inputs: one compact card, sections divided by a hairline ---- */}
+        <div className="ktc-glass" style={{ padding: 0 }} data-tour="calc-inputs">
           {/* 1 — Shipping line + vessel */}
-          <div className="ktc-glass" style={{ padding: 22 }}>
+          <div className="ktc-calc-section">
             <StepHead n={1} title={t('Shipping line & vessel')} sub={t('Sets your trade route and the Last Free Day for storage.')} />
             <div style={{ display: 'grid', gap: 12 }}>
               <div style={{ display: 'grid', gap: 6 }}>
@@ -239,7 +239,7 @@ export default function Calculator() {
           </div>
 
           {/* 2 — Trade route (derived) + 3 — Shipment type */}
-          <div className="ktc-glass" style={{ padding: 22 }}>
+          <div className="ktc-calc-section">
             <StepHead n={2} title={t('Trade route & shipment')} sub={t('The route is set by your shipping line; choose the shipment type.')} />
             <div style={{ display: 'grid', gap: 14 }}>
               {fieldRow(
@@ -256,7 +256,7 @@ export default function Calculator() {
           </div>
 
           {/* 4 — Container counts */}
-          <div className="ktc-glass" style={{ padding: 22 }}>
+          <div className="ktc-calc-section">
             <StepHead n={3} title={t('Containers')} sub={t('How many vans of each size?')} />
             <div style={{ display: 'grid', gap: 14 }}>
               {fieldRow(t('20ft containers'), numInput(count20, setCount20, t('20ft containers')))}
@@ -265,7 +265,7 @@ export default function Calculator() {
           </div>
 
           {/* Ancillary services (optional) */}
-          <div className="ktc-glass" style={{ padding: 22 }}>
+          <div className="ktc-calc-section">
             <StepHead n={4} title={t('Ancillary services')} sub={t('Optional — added depending on your order.')} />
             <div style={{ display: 'grid', gap: 14 }}>
               {fieldRow(t('X-ray — number of vans'), numInput(xrayVans, setXrayVans, t('X-ray vans')))}

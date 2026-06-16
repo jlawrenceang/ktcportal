@@ -136,6 +136,23 @@
   .ktc-nav--app .ktc-nav-util { display: none; }
   .ktc-nav--app .ktc-nav-spacer { display: block; flex: 1 1 auto; }
   .ktc-nav--app .ktc-burger { display: inline-flex; }
+  /* Live date/time in the app rail — centered between the logo and the bell. */
+  .ktc-nav-clock {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    white-space: nowrap;
+    color: hsl(var(--ink-2));
+    line-height: 1;
+    pointer-events: none;
+  }
+  .ktc-nav-clock-time { font-size: 14px; font-weight: 700; color: hsl(var(--ink)); letter-spacing: -0.01em; }
+  .ktc-nav-clock-date { font-size: 12.5px; font-weight: 600; }
+  /* Tight phones: drop the date, keep the time. */
+  @media (max-width: 430px) {
+    .ktc-nav-clock-date { display: none; }
+  }
   .ktc-nav-lang { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
   /* Per-page "replay the walkthrough" button — a labelled pill (? + Quick tour),
      kept visible on phones. */
@@ -810,7 +827,8 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    padding: 0 12px 90px;
+    /* Top gap so the sheet never touches the very top; bottom clears the tabbar. */
+    padding: 16px 12px 90px;
     background: rgba(15, 18, 30, 0.42);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
@@ -819,6 +837,11 @@
   .ktc-menusheet {
     width: 100%;
     max-width: 460px;
+    /* Cap to the available height and scroll inside — otherwise on a short/desktop
+       viewport the flex-end alignment pushes the header + first row off the top. */
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 16px;
     border-radius: 20px;
     background: var(--c-solid);
@@ -863,6 +886,15 @@
     color: hsl(var(--ink)); font-size: 14px; font-weight: 550;
   }
   .ktc-menu-setting:hover { background: rgb(var(--acc-rgb) / 0.08); }
+
+  /* ---- Rate calculator: one compact inputs card (left) + sticky estimate (right) ---- */
+  .ktc-calc-layout { display: grid; gap: 16px; align-items: start; }
+  @media (min-width: 820px) {
+    .ktc-calc-layout { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+  }
+  /* Sections stacked inside the single inputs card, divided by a hairline. */
+  .ktc-calc-section { padding: 16px 18px; }
+  .ktc-calc-section + .ktc-calc-section { border-top: 1px solid var(--glass-brd); }
 
   /* ---- Home overview: stat tiles + bulletin ---- */
   .ktc-stat-grid {
