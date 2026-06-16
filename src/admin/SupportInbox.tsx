@@ -160,7 +160,7 @@ export default function SupportInbox() {
   if (permLoading) {
     return (
       <AdminShell>
-        <div className="ktc-glass" style={{ padding: 28 }}>
+        <div className="ktc-glass" style={{ padding: 18 }}>
           <div className="ktc-label">{t('Loading…')}</div>
         </div>
       </AdminShell>
@@ -170,7 +170,7 @@ export default function SupportInbox() {
   if (!allowed) {
     return (
       <AdminShell>
-        <div className="ktc-glass" style={{ padding: 28 }}>
+        <div className="ktc-glass" style={{ padding: 18 }}>
           <h1 className="ktc-title">{t('Support')}</h1>
           <p className="ktc-label" style={{ fontSize: 14, marginTop: 8 }}>
             {t('You don’t have access to the support inbox.')}
@@ -184,7 +184,7 @@ export default function SupportInbox() {
 
   return (
     <AdminShell>
-      <div className="ktc-glass" style={{ padding: 28 }}>
+      <div className="ktc-glass" style={{ padding: 18 }}>
         <h1 className="ktc-title">{t('Support')}</h1>
         <p className="ktc-sub" style={{ marginBottom: 14 }}>{t('Customer support tickets. Newest activity first.')}</p>
 

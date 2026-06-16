@@ -447,7 +447,7 @@ export default function Settings() {
 
   return (
     <AdminShell>
-      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <h1 className="ktc-title">{t('Staff & access')}</h1>
         <p className="ktc-sub" style={{ marginBottom: 20 }}>
           {t('Internal KTC staff with admin access. Managed separately from brokers.')}
@@ -507,7 +507,7 @@ export default function Settings() {
       </div>
 
       {isOwner && (
-        <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+        <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
             <div style={{ maxWidth: 460 }}>
               <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Customer notification emails')}</h2>
@@ -533,7 +533,7 @@ export default function Settings() {
         </div>
       )}
 
-      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Bulletin board')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t('Announcements shown on every customer’s Home. Each post is a topic customers tap to read in full.')}
@@ -565,7 +565,7 @@ export default function Settings() {
         )}
       </div>
 
-      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div>
             <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Service rates & fees')}</h2>
@@ -684,7 +684,7 @@ export default function Settings() {
       </div>
 
       {isRootOwner && (
-        <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+        <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
           <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Owner access (root owner only)')}</h2>
           <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13, lineHeight: 1.55 }}>
             {t('You are the root owner. You can grant or revoke OWNER access for other admin accounts. A secondary owner has every owner power EXCEPT minting owners — only you (root) can create owners. The root owner can’t be changed here.')}
@@ -710,7 +710,7 @@ export default function Settings() {
         </div>
       )}
 
-      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Terminal tariff (arrastre · wharfage · LoLo · weighing · storage)')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t('Per-container rates the Rate Calculator looks up by the customer’s combination — trade (import/export), origin (domestic/foreign) and container size. Import bills arrastre + wharfage + LoLo; export adds weighing. Weighing applies to export only; on export, Maersk/MCC waive LoLo (the line shoulders it). Storage is per container, per day past the Last Free Day. Amounts in ₱, VAT-exclusive (12% VAT is added on the subtotal).')}
@@ -753,7 +753,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Per-shipping-line charge rules')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t('Layer line-specific rules on top of the tariff: waive a charge, give a discount (% or ₱/container), or add a surcharge. Example: Maersk & MCC waive LoLo on export. Free storage days are set per line in the vessel schedule settings.')}
@@ -806,7 +806,7 @@ export default function Settings() {
         {ruleMsg && <p className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600, marginTop: 12 }}>{ruleMsg}</p>}
       </div>
 
-      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Support contact channels')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t('Shown on the customer Help & Support page as “talk to an agent” deep links (call / SMS / Viber / email) with a prefilled message + ticket number. Leave a field blank to hide that channel.')}
@@ -828,7 +828,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Payment details (customer payment page)')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t('Bank / GCash details + QR shown when a customer pays online. Leave fields blank to hide them.')}
@@ -857,7 +857,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Free storage days per shipping line')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t("Drives the vessel schedule's")} <strong>{t('Last Free Day')}</strong> {t('(finish discharging + import days). Set for import and export.')}
@@ -895,7 +895,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('RPS per-move rates')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t('Charged per move when operations assesses a JO as needing RPS (VATable, added on top of the base). Amounts in ₱.')}
@@ -922,7 +922,7 @@ export default function Settings() {
       </div>
 
       {isOwner && (
-        <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+        <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
           <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Roles & gates')}</h2>
           <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
             {t('What each staff role may do. Owner-only — enforced server-side (RLS + RPCs), the UI just mirrors it.')}
@@ -990,7 +990,7 @@ export default function Settings() {
         </div>
       )}
 
-      <div className="ktc-glass" style={{ padding: 28 }}>
+      <div className="ktc-glass" style={{ padding: 18 }}>
         <h2 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 600 }}>{t('Current staff')}</h2>
         {loading ? <span className="ktc-label">{t('Loading…')}</span> : staff.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>{t('No staff yet.')}</div>

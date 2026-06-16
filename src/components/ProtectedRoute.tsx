@@ -24,7 +24,7 @@ function AwaitingEmailConfirmation({ email }: { email: string | undefined }) {
 
   return (
     <div style={{ maxWidth: 460, margin: '0 auto', padding: '64px 24px' }}>
-      <div className="ktc-glass" style={{ padding: 28 }}>
+      <div className="ktc-glass" style={{ padding: 18 }}>
         <h1 className="ktc-title">Awaiting email confirmation</h1>
         <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6 }}>
           We sent a confirmation link to <b>{email}</b>. Please check your <b>inbox</b> — and your

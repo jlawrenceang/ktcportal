@@ -116,7 +116,7 @@ export default function Payment() {
   if (!order) {
     return (
       <Shell>
-        <div className="ktc-glass" style={{ padding: 28 }}>
+        <div className="ktc-glass" style={{ padding: 18 }}>
           <p className="ktc-label">{t('Job order not found.')} <Link to="/job-orders" className="ktc-link">{t('Back to My Job Orders')}</Link></p>
         </div>
       </Shell>

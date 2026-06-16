@@ -92,7 +92,7 @@ export default function Security() {
   if (!brokerLoading && !hasAdminAccess(broker)) {
     return (
       <AdminShell>
-        <div className="ktc-glass" style={{ padding: 28 }}>
+        <div className="ktc-glass" style={{ padding: 18 }}>
           <p className="ktc-label">{t('Two-factor authentication is currently available for admin and owner accounts only.')}</p>
         </div>
       </AdminShell>
@@ -101,7 +101,7 @@ export default function Security() {
 
   return (
     <AdminShell>
-      <div className="ktc-glass" style={{ padding: 28, maxWidth: 620 }}>
+      <div className="ktc-glass" style={{ padding: 18, maxWidth: 620 }}>
         <h1 className="ktc-title">{t('Two-factor authentication')}</h1>
         <p className="ktc-label" style={{ marginTop: 8, lineHeight: 1.65 }}>
           {t('Adds a 6-digit code from an authenticator app (Google Authenticator, Authy, 1Password…) to your sign-in. Once enabled it\'s enforced')} <b>{t('server-side')}</b> {t('— a stolen password alone can\'t reach any staff function.')}

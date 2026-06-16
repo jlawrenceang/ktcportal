@@ -94,7 +94,7 @@ export default function NewJobOrder() {
   if (!loading && !can('file_job_orders')) {
     return (
       <AdminShell>
-        <div className="ktc-glass" style={{ padding: 28 }}>
+        <div className="ktc-glass" style={{ padding: 18 }}>
           <p className="ktc-label">{t("Your role doesn't have permission to file job orders on behalf of customers.")}</p>
         </div>
       </AdminShell>
@@ -103,7 +103,7 @@ export default function NewJobOrder() {
 
   return (
     <AdminShell>
-      <div className="ktc-glass" style={{ padding: 28, maxWidth: 720 }}>
+      <div className="ktc-glass" style={{ padding: 18, maxWidth: 720 }}>
         <h1 className="ktc-title">{t('File for a Customer')}</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 22 }}>
           {t("Walk-ins and in-house ops — the order is filed under the customer's account and enters the line as")}{' '}<b>{t('submitted')}</b>{' '}{t('(serving number assigned now).')}

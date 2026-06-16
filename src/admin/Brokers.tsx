@@ -59,7 +59,7 @@ export default function Brokers() {
 
   return (
     <AdminShell>
-      <div className="ktc-glass" style={{ padding: 28 }}>
+      <div className="ktc-glass" style={{ padding: 18 }}>
         <h1 className="ktc-title">{t('Customers')}</h1>
         <p className="ktc-sub" style={{ marginBottom: 20 }}>
           {t('All registered customer accounts and their status. Approve/reject pending ones under Approvals; suspend or reactivate approved accounts here.')}

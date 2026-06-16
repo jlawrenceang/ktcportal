@@ -103,7 +103,7 @@ export default function Approvals() {
     <AdminShell>
       {error && <div className="ktc-glass" style={{ padding: 14, marginBottom: 16, color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
 
-      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <h1 className="ktc-title">{t('Account approvals')}</h1>
         <p className="ktc-sub" style={{ marginBottom: 20 }}>{t("Review the customer's valid ID and confirm they accepted the Agreement (Terms + Data Privacy consent) before approving.")}</p>
         {loading ? <span className="ktc-label">{t('Loading…')}</span> : brokers.length === 0 ? (
@@ -134,7 +134,7 @@ export default function Approvals() {
       {approvedName && (
         <div onClick={() => setApprovedName(null)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 24 }}>
-          <div onClick={(e) => e.stopPropagation()} className="ktc-glass" style={{ maxWidth: 380, width: '100%', padding: 28, textAlign: 'center' }}>
+          <div onClick={(e) => e.stopPropagation()} className="ktc-glass" style={{ maxWidth: 380, width: '100%', padding: 18, textAlign: 'center' }}>
             <div style={{ width: 56, height: 56, margin: '0 auto', borderRadius: 999, display: 'grid', placeItems: 'center', fontSize: 30, color: '#fff', background: 'linear-gradient(135deg, var(--c-h150-55-45), var(--c-h150-60-36))' }}>✓</div>
             <h2 style={{ margin: '14px 0 0', fontSize: 19, fontWeight: 600 }}>{t('Account approved')}</h2>
             <p className="ktc-label" style={{ marginTop: 8, lineHeight: 1.6, fontSize: 14 }}>

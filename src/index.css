@@ -914,6 +914,19 @@
     .ktc-input.ktc-input--compact { padding: 9px 11px; font-size: 14px; }
   }
 
+  /* ---- Compact sizing across the whole app — denser shared primitives on every
+     in-app tab. Scoped to .ktc-page (the base class on BOTH the customer shell
+     and AdminShell; auth pages aren't .ktc-page, so they're untouched). Card
+     padding is per-page inline, so that's tightened in the page files; this
+     handles titles/subs/fields. ---- */
+  .ktc-page .ktc-title { font-size: 18px; }
+  .ktc-page .ktc-sub { font-size: 12.5px; }
+  @media (min-width: 641px) {
+    /* Smaller fields on desktop/tablet only — phones keep the 16px anti-zoom
+       size. File inputs keep their own inline padding. */
+    .ktc-page .ktc-input { padding: 7px 10px; font-size: 13.5px; }
+  }
+
   /* ---- Home overview: stat tiles + bulletin ---- */
   .ktc-stat-grid {
     display: grid;

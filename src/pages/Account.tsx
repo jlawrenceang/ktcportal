@@ -155,7 +155,7 @@ export default function Account() {
     <Shell>
       <div style={{ display: 'grid', gap: 16 }}>
         {/* Profile summary */}
-        <div className="ktc-glass" style={{ padding: 28 }}>
+        <div className="ktc-glass" style={{ padding: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
             <div>
               <h1 className="ktc-title">{t('My Account')}</h1>
@@ -173,7 +173,7 @@ export default function Account() {
         </div>
 
         {/* Personal details */}
-        <form onSubmit={onSaveProfile} className="ktc-glass" style={{ padding: 28, display: 'grid', gap: 14 }}>
+        <form onSubmit={onSaveProfile} className="ktc-glass" style={{ padding: 18, display: 'grid', gap: 14 }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{t('Personal details')}</h2>
           {profileMsg && <Notice tone={profileMsg.tone}>{profileMsg.text}</Notice>}
           <div style={{ display: 'grid', gap: 6 }}>
@@ -195,7 +195,7 @@ export default function Account() {
         </form>
 
         {/* Email */}
-        <form onSubmit={onChangeEmail} className="ktc-glass" style={{ padding: 28, display: 'grid', gap: 14 }}>
+        <form onSubmit={onChangeEmail} className="ktc-glass" style={{ padding: 18, display: 'grid', gap: 14 }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{t('Email address')}</h2>
           <p className="ktc-label" style={{ margin: 0, fontSize: 13 }}>
             {t('Current:')} <b style={{ color: 'hsl(var(--ink))' }}>{email}</b>
@@ -214,7 +214,7 @@ export default function Account() {
         </form>
 
         {/* Password */}
-        <form onSubmit={onChangePassword} className="ktc-glass" style={{ padding: 28, display: 'grid', gap: 14 }}>
+        <form onSubmit={onChangePassword} className="ktc-glass" style={{ padding: 18, display: 'grid', gap: 14 }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{t('Password')}</h2>
           {pwMsg && <Notice tone={pwMsg.tone}>{pwMsg.text}</Notice>}
           <div style={{ display: 'grid', gap: 6 }}>
@@ -240,7 +240,7 @@ export default function Account() {
       {/* Re-verification confirm */}
       {showReverify && (
         <div onClick={() => setShowReverify(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 24 }}>
-          <div onClick={(e) => e.stopPropagation()} className="ktc-glass" style={{ maxWidth: 460, width: '100%', padding: 28 }}>
+          <div onClick={(e) => e.stopPropagation()} className="ktc-glass" style={{ maxWidth: 460, width: '100%', padding: 18 }}>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('Changing your name needs re-verification')}</h2>
             <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6, fontSize: 13.5 }}>
               {t('Your legal name was verified against your ID. To change it to')} <b style={{ color: 'hsl(var(--ink))' }}>{fullName.trim()}</b>,{' '}

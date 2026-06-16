@@ -44,7 +44,7 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
 
   if (suspended) {
     return (
-      <div className="ktc-glass" style={{ padding: 28 }}>
+      <div className="ktc-glass" style={{ padding: 18 }}>
         <h1 className="ktc-title">{t('Account suspended')}</h1>
         <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6 }}>
           {t('Your account has been suspended. Please contact KTC customer service for assistance.')}
@@ -64,7 +64,7 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
 
   // rejected → resubmit
   return (
-    <div className="ktc-glass" style={{ padding: 28 }}>
+    <div className="ktc-glass" style={{ padding: 18 }}>
       <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--c-h35-90-90)', color: 'var(--c-h30-80-35)', letterSpacing: '0.02em' }}>
         {t('ACTION NEEDED')}
       </span>

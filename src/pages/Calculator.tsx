@@ -235,7 +235,7 @@ export default function Calculator() {
   return (
     <Shell>
       <div style={{ margin: '10px 4px 14px' }}>
-        <h1 style={{ margin: 0, fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>{t('Rate Calculator')}</h1>
+        <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{t('Rate Calculator')}</h1>
         <p className="ktc-sub" style={{ maxWidth: 560, fontSize: 12.5 }}>
           {t('Build your estimate step by step, then tap Generate. This is a guide — the official amount is confirmed on the Service Invoice at the KTC office.')}
         </p>

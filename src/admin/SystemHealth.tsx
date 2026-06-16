@@ -53,7 +53,7 @@ export default function SystemHealth() {
   }
 
   return (
-    <div className="ktc-glass" style={{ padding: 28, marginTop: 18 }}>
+    <div className="ktc-glass" style={{ padding: 18, marginTop: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
           <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('System health')}</h2>

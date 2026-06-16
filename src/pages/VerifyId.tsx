@@ -86,7 +86,7 @@ export default function VerifyId() {
         <button className="ktc-link" onClick={handleSignOut}>{t('Sign out')}</button>
       </header>
 
-      <div className="ktc-glass" style={{ padding: 28 }}>
+      <div className="ktc-glass" style={{ padding: 18 }}>
         <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--c-h35-90-90)', color: 'var(--c-h30-80-35)', letterSpacing: '0.02em' }}>
           {t('PENDING FINAL VERIFICATION')}
         </span>

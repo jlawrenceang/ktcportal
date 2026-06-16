@@ -208,7 +208,7 @@ export default function MyJobOrders() {
 
   return (
     <Shell>
-      <div className="ktc-glass" style={{ padding: 28 }}>
+      <div className="ktc-glass" style={{ padding: 18 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
           <div>
             <h1 className="ktc-title">{t('My Job Orders')}</h1>

@@ -74,7 +74,7 @@ export default function CustomerDetail() {
   if (loading) return <AdminShell><span className="ktc-label">{t('Loading…')}</span></AdminShell>
   if (!cust) return (
     <AdminShell>
-      <div className="ktc-glass" style={{ padding: 28 }}>
+      <div className="ktc-glass" style={{ padding: 18 }}>
         <p className="ktc-label">{t('Customer not found.')} <Link to="/admin/customers" className="ktc-link">{t('Back to Customers')}</Link></p>
       </div>
     </AdminShell>
@@ -85,7 +85,7 @@ export default function CustomerDetail() {
     <AdminShell crumb={cust.full_name || cust.email || t('Customer')}>
       {error && <div className="ktc-glass" style={{ padding: 14, marginBottom: 16, color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
 
-      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           {cust.customer_code && <span className="ktc-mono" style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--ink-2))' }}>{cust.customer_code}</span>}
           <h1 className="ktc-title">{cust.full_name || cust.email || t('Customer')}</h1>
@@ -131,7 +131,7 @@ export default function CustomerDetail() {
         )}
       </div>
 
-      <div className="ktc-glass" style={{ padding: 28 }}>
+      <div className="ktc-glass" style={{ padding: 18 }}>
         <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('Job order history')}</h2>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 16 }}>{t('{n} order(s).', { n: orders.length })}</p>
         {orders.length === 0 ? (
