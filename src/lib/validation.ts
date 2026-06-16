@@ -21,17 +21,6 @@ const ALLOWED_UPLOAD_TYPES = [
 // Types the browser can decode + re-encode on a canvas (HEIC/HEIF can't be).
 const COMPRESSIBLE = ['image/jpeg', 'image/png', 'image/webp']
 
-export function uploadIssue(file: File): string | null {
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return `File is too large — the maximum is ${MAX_UPLOAD_MB} MB.`
-  }
-  // Some browsers leave type empty for unusual files; the bucket rejects those.
-  if (file.type && !ALLOWED_UPLOAD_TYPES.includes(file.type.toLowerCase())) {
-    return 'Only image files (JPG, PNG, WebP, HEIC) or a PDF are allowed.'
-  }
-  return null
-}
-
 /**
  * Prepare a picked file for upload: oversized browser-decodable images are
  * downscaled (max 2200px long edge) and re-encoded as JPEG, stepping quality

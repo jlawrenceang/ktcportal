@@ -13,7 +13,7 @@ import { useT } from '../lib/i18n'
 //  * Queue: open orders with an X-ray service line, oldest first.
 //  * Lookup: search a container/van number or JO number → cleared or not.
 //  * "Confirm X-ray done" stamps date/time and completes the order
-//    (record_xray RPC — permission-gated server-side).
+//    (record_van_xray RPC — permission-gated server-side).
 
 interface CheckerOrder {
   id: string

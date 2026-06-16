@@ -23,7 +23,7 @@ export type Permission =
 /**
  * UI mirror of the owner-tweakable role gates (role_permissions, migration
  * 0035). This only decides what to SHOW — the backend enforces the same gates
- * via has_permission() in RLS policies and the record_xray /
+ * via has_permission() in RLS policies and the record_van_xray /
  * record_service_invoice RPCs. Owner passes every gate (failsafe).
  */
 export function usePermissions() {

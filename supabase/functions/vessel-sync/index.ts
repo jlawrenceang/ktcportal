@@ -61,9 +61,12 @@ Deno.serve(async (req) => {
     })
     if (!r.ok) throw new Error('Sheets read failed: ' + (await r.text()))
     const rows: string[][] = (await r.json()).values ?? []
-    if (rows.length < 2) return json({ ok: true, sheet_rows: 0, upserted: 0, note: 'sheet empty or header-only' })
-
-    const header = rows[0].map((h) => String(h ?? '').trim().toLowerCase().replace(/\s+/g, '_'))
+    // Find the header row (the first row containing a "vessel_visit" cell) so the
+    // sheet can carry a logo / title / notes above the headers — data is every
+    // row below it.
+    const hi = rows.findIndex((row) => row.some((c) => String(c ?? '').trim().toLowerCase().replace(/\s+/g, '_') === 'vessel_visit'))
+    if (hi < 0) return json({ ok: false, error: 'no header row found — add a row with the column headers (vessel_visit, vessel_name, voyage_number, …)' }, 400)
+    const header = rows[hi].map((h) => String(h ?? '').trim().toLowerCase().replace(/\s+/g, '_'))
     const col = (n: string) => header.indexOf(n)
     const ci = { visit: col('vessel_visit'), name: col('vessel_name'), voy: col('voyage_number'), line: col('shipping_line'), arr: col('actual_arrival'), fin: col('finish_discharging'), berth: col('berth'), rem: col('remarks'), cancelled: col('cancelled') }
     if (ci.visit < 0 || ci.name < 0 || ci.voy < 0) {
@@ -73,7 +76,7 @@ Deno.serve(async (req) => {
     const upserts: Record<string, unknown>[] = []
     const seen = new Set<string>()
     let skipped = 0
-    for (const row of rows.slice(1)) {
+    for (const row of rows.slice(hi + 1)) {
       const visit = clean(row[ci.visit]), name = clean(row[ci.name]), voy = clean(row[ci.voy])
       if (!visit || !name || !voy) { skipped++; continue }
       if (seen.has(visit.toLowerCase())) { skipped++; continue }
@@ -97,7 +100,7 @@ Deno.serve(async (req) => {
       if (error) throw new Error('upsert failed: ' + error.message)
       upserted = upserts.length
     }
-    return json({ ok: true, sheet_rows: rows.length - 1, upserted, skipped })
+    return json({ ok: true, sheet_rows: rows.length - hi - 1, upserted, skipped })
   } catch (e) {
     return json({ ok: false, error: String(e) }, 500)
   }

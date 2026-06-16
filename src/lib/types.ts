@@ -31,7 +31,6 @@ export interface Broker {
   is_root_owner?: boolean
   /** Staff role ('admin' | 'cashier' | 'checker'); null for customers. */
   staff_role: string | null
-  tour_seen?: boolean
   tours_seen?: string[]
   irr_version: string | null
   irr_accepted_at: string | null
