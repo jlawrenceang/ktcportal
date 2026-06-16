@@ -56,7 +56,6 @@ export default function Shell({ children }: { children: ReactNode }) {
         </Link>
         <span className="ktc-nav-spacer" aria-hidden />
         <Clock />
-        <span className="ktc-nav-spacer" aria-hidden />
         <NotificationBell />
       </nav>
 

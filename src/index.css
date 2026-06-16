@@ -893,8 +893,19 @@
     .ktc-calc-layout { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
   }
   /* Sections stacked inside the single inputs card, divided by a hairline. */
-  .ktc-calc-section { padding: 16px 18px; }
+  .ktc-calc-section { padding: 13px 15px; }
   .ktc-calc-section + .ktc-calc-section { border-top: 1px solid var(--glass-brd); }
+  /* Small, quiet step number in front of each section header. */
+  .ktc-step-num {
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    width: 17px; height: 17px;
+    border-radius: 5px;
+    background: rgb(var(--acc-rgb) / 0.12);
+    color: var(--acc-2);
+    font-size: 10.5px; font-weight: 700;
+  }
 
   /* ---- Home overview: stat tiles + bulletin ---- */
   .ktc-stat-grid {

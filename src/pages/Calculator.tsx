@@ -158,9 +158,14 @@ export default function Calculator() {
   }, [rateOf, basicServices, count20, count40, lfd, pickupDate, xrayRate, xrayVans, settings, reeferVans, plugIn, plugOut, rules, line, trade, t])
 
   const hasContainers = count20 > 0 || count40 > 0
+  // No vessel & voyage → no charges at all (ops rule): the estimate is tied to a
+  // specific vessel call, so without one we don't compute anything (incl. the
+  // ancillary / admin / print fees).
+  const hasVessel = !!vesselVisit
+  const canGenerate = hasVessel && hasContainers
 
   function generate() {
-    if (!hasContainers) return
+    if (!canGenerate) return
     setGenerated(true)
     // On a narrow screen the estimate is below the inputs — bring it into view.
     requestAnimationFrame(() => estimateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
@@ -168,26 +173,38 @@ export default function Calculator() {
 
   // ---- small UI helpers ----
   const StepHead = ({ n, title, sub }: { n: number; title: string; sub?: string }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
       <span className="ktc-step-num">{n}</span>
       <div style={{ minWidth: 0 }}>
-        <h2 style={{ margin: 0, fontSize: 15.5, fontWeight: 650 }}>{title}</h2>
-        {sub && <p className="ktc-label" style={{ margin: '1px 0 0', fontSize: 12 }}>{sub}</p>}
+        <h2 style={{ margin: 0, fontSize: 13.5, fontWeight: 650, lineHeight: 1.3 }}>{title}</h2>
+        {sub && <p className="ktc-label" style={{ margin: '2px 0 0', fontSize: 11.5, lineHeight: 1.4 }}>{sub}</p>}
       </div>
     </div>
   )
   const numInput = (val: number, set: (n: number) => void, label: string) => (
     <input className="ktc-input ktc-mono" type="number" min={0} step={1} inputMode="numeric"
       value={val || ''} placeholder="0" onChange={(e) => set(Math.max(0, Math.floor(Number(e.target.value)) || 0))}
-      style={{ width: 84, padding: '8px 10px', textAlign: 'center', fontSize: 15 }} aria-label={label} />
+      style={{ width: 70, padding: '6px 8px', textAlign: 'center', fontSize: 14 }} aria-label={label} />
   )
   const seg = <T extends string>(value: T, set: (v: T) => void, opts: { v: T; label: string }[]) => (
     <div style={{ display: 'inline-flex', gap: 4, padding: 3, borderRadius: 999, border: '1px solid var(--glass-brd)', background: 'var(--c-w55)', flexWrap: 'wrap' }}>
       {opts.map((o) => (
         <button key={o.v} type="button" onClick={() => set(o.v)}
-          style={{ border: 0, cursor: 'pointer', borderRadius: 999, padding: '5px 14px', fontSize: 12.5, fontWeight: 650,
+          style={{ border: 0, cursor: 'pointer', borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 650,
             color: value === o.v ? '#fff' : 'hsl(var(--ink-2))', background: value === o.v ? 'linear-gradient(135deg, var(--acc), var(--acc-2))' : 'transparent' }}>
           {t(o.label)}
+        </button>
+      ))}
+    </div>
+  )
+  // Trade route: blue = Domestic, orange = Foreign, so the two read distinctly.
+  const originSeg = (
+    <div style={{ display: 'inline-flex', gap: 4, padding: 3, borderRadius: 999, border: '1px solid var(--glass-brd)', background: 'var(--c-w55)' }}>
+      {([['domestic', 'Domestic', 'linear-gradient(135deg, #3b82f6, #2563eb)'], ['foreign', 'Foreign', 'linear-gradient(135deg, var(--acc), var(--acc-2))']] as const).map(([v, label, bg]) => (
+        <button key={v} type="button" onClick={() => setOrigin(v)}
+          style={{ border: 0, cursor: 'pointer', borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 650,
+            color: origin === v ? '#fff' : 'hsl(var(--ink-2))', background: origin === v ? bg : 'transparent' }}>
+          {t(label)}
         </button>
       ))}
     </div>
@@ -199,16 +216,16 @@ export default function Calculator() {
   )
   const Row = ({ label, value, hint }: { label: string; value: string; hint?: string }) => (
     <tr style={{ borderBottom: '1px solid hsl(var(--line-soft))' }}>
-      <td style={{ padding: '7px 0' }}>{label}{hint ? <span className="ktc-label" style={{ fontSize: 12 }}> {hint}</span> : null}</td>
+      <td style={{ padding: '5px 0' }}>{label}{hint ? <span className="ktc-label" style={{ fontSize: 11 }}> {hint}</span> : null}</td>
       <td className="ktc-mono" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{value}</td>
     </tr>
   )
 
   return (
     <Shell>
-      <div style={{ margin: '14px 4px 20px' }}>
-        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, letterSpacing: '-0.025em' }}>{t('Rate Calculator')}</h1>
-        <p className="ktc-sub" style={{ maxWidth: 560 }}>
+      <div style={{ margin: '10px 4px 14px' }}>
+        <h1 style={{ margin: 0, fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>{t('Rate Calculator')}</h1>
+        <p className="ktc-sub" style={{ maxWidth: 560, fontSize: 12.5 }}>
           {t('Build your estimate step by step, then tap Generate. This is a guide — the official amount is confirmed on the Service Invoice at the KTC office.')}
         </p>
       </div>
@@ -219,7 +236,7 @@ export default function Calculator() {
           {/* 1 — Shipping line + vessel */}
           <div className="ktc-calc-section">
             <StepHead n={1} title={t('Shipping line & vessel')} sub={t('Sets your trade route and the Last Free Day for storage.')} />
-            <div style={{ display: 'grid', gap: 12 }}>
+            <div style={{ display: 'grid', gap: 11 }}>
               <div style={{ display: 'grid', gap: 6 }}>
                 <span className="ktc-label">{t('Shipping line')}</span>
                 <select className="ktc-input" value={line} onChange={(e) => chooseLine(e.target.value)}>
@@ -228,9 +245,9 @@ export default function Calculator() {
                 </select>
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
-                <span className="ktc-label">{t('Vessel & voyage')} <span style={{ opacity: 0.7 }}>({t('for storage / Last Free Day')})</span></span>
+                <span className="ktc-label">{t('Vessel & voyage')} <span style={{ opacity: 0.7 }}>({t('required for the estimate')})</span></span>
                 <select className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
-                  <option value="">{line && lineVessels.length === 0 ? t('No current vessels for this line') : t('Select a vessel… (optional)')}</option>
+                  <option value="">{line && lineVessels.length === 0 ? t('No current vessels for this line') : t('Select a vessel & voyage…')}</option>
                   {lineVessels.map((v) => <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name.toUpperCase()} — {v.voyage_number.toUpperCase()}</option>)}
                 </select>
                 {lfd && <span className="ktc-label" style={{ fontSize: 12 }}>{t('Last Free Day:')} <b>{new Date(lfd).toLocaleDateString()}</b> — {t('storage applies after this date.')}</span>}
@@ -241,12 +258,12 @@ export default function Calculator() {
           {/* 2 — Trade route (derived) + 3 — Shipment type */}
           <div className="ktc-calc-section">
             <StepHead n={2} title={t('Trade route & shipment')} sub={t('The route is set by your shipping line; choose the shipment type.')} />
-            <div style={{ display: 'grid', gap: 14 }}>
+            <div style={{ display: 'grid', gap: 11 }}>
               {fieldRow(
                 t('Trade route'),
                 line
-                  ? <span className="ktc-chip ktc-chip--accent" style={{ fontWeight: 650 }}>{origin === 'domestic' ? t('Domestic') : t('Foreign')}</span>
-                  : seg(origin, setOrigin, [{ v: 'domestic', label: 'Domestic' }, { v: 'foreign', label: 'Foreign' }]),
+                  ? <span className={`ktc-chip ${origin === 'domestic' ? 'ktc-chip--info' : 'ktc-chip--accent'}`} style={{ fontWeight: 650 }}>{origin === 'domestic' ? t('Domestic') : t('Foreign')}</span>
+                  : originSeg,
               )}
               {fieldRow(
                 t('Shipment'),
@@ -258,7 +275,7 @@ export default function Calculator() {
           {/* 4 — Container counts */}
           <div className="ktc-calc-section">
             <StepHead n={3} title={t('Containers')} sub={t('How many vans of each size?')} />
-            <div style={{ display: 'grid', gap: 14 }}>
+            <div style={{ display: 'grid', gap: 11 }}>
               {fieldRow(t('20ft containers'), numInput(count20, setCount20, t('20ft containers')))}
               {fieldRow(t('40ft containers'), numInput(count40, setCount40, t('40ft containers')))}
             </div>
@@ -267,7 +284,7 @@ export default function Calculator() {
           {/* Ancillary services (optional) */}
           <div className="ktc-calc-section">
             <StepHead n={4} title={t('Ancillary services')} sub={t('Optional — added depending on your order.')} />
-            <div style={{ display: 'grid', gap: 14 }}>
+            <div style={{ display: 'grid', gap: 11 }}>
               {fieldRow(t('X-ray — number of vans'), numInput(xrayVans, setXrayVans, t('X-ray vans')))}
               {lfd && fieldRow(t('Planned pickup date (storage)'),
                 <input className="ktc-input" type="date" value={pickupDate} onChange={(e) => setPickupDate(e.target.value)} style={{ maxWidth: 180 }} />)}
@@ -294,20 +311,22 @@ export default function Calculator() {
         </div>
 
         {/* ---- Estimate column ---- */}
-        <div ref={estimateRef} className="ktc-glass" style={{ padding: 22, position: 'sticky', top: 86 }} data-tour="calc-estimate">
+        <div ref={estimateRef} className="ktc-glass" style={{ padding: 16, position: 'sticky', top: 86 }} data-tour="calc-estimate">
           <StepHead n={5} title={t('Estimate')} />
-          <button type="button" className="ktc-btn" disabled={!hasContainers} onClick={generate}
-            style={{ width: '100%', marginBottom: 14, opacity: hasContainers ? 1 : 0.55 }}>
+          <button type="button" className="ktc-btn" disabled={!canGenerate} onClick={generate}
+            style={{ width: '100%', marginBottom: 14, opacity: canGenerate ? 1 : 0.55 }}>
             {t('Generate estimate')}
           </button>
 
-          {!hasContainers ? (
-            <p className="ktc-label" style={{ fontSize: 13 }}>{t('Enter your 20ft / 40ft container counts, then tap Generate estimate.')}</p>
+          {!hasVessel ? (
+            <p className="ktc-label" style={{ fontSize: 12.5 }}>{t('Select a shipping line and vessel & voyage first — charges are estimated against the vessel’s call.')}</p>
+          ) : !hasContainers ? (
+            <p className="ktc-label" style={{ fontSize: 12.5 }}>{t('Enter your 20ft / 40ft container counts, then tap Generate estimate.')}</p>
           ) : !generated ? (
-            <p className="ktc-label" style={{ fontSize: 13 }}>{t('Tap Generate estimate to see the charges.')}</p>
+            <p className="ktc-label" style={{ fontSize: 12.5 }}>{t('Tap Generate estimate to see the charges.')}</p>
           ) : (
             <>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
                 <tbody>
                   {calc.basic.map((b) => <Row key={b.key} label={t(b.label)} value={peso(b.amount)} hint={b.tag} />)}
                   {calc.storageDays > 0 && <Row label={t('Storage')} value={peso(calc.storage)} hint={`× ${calc.storageDays} ${t('day(s)')}${calc.storageTag ? ' ' + calc.storageTag : ''}`} />}
@@ -317,8 +336,8 @@ export default function Calculator() {
                   <Row label={t('Admin / service fee')} value={peso(settings.admin)} />
                   <Row label={t('Print fee')} value={peso(settings.print)} />
                   <tr>
-                    <td style={{ padding: '11px 0', fontWeight: 700, fontSize: 15 }}>{t('Estimated charges')}</td>
-                    <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 17, color: 'var(--acc-2)', whiteSpace: 'nowrap' }}>{peso(calc.charges)}</td>
+                    <td style={{ padding: '9px 0', fontWeight: 700, fontSize: 14 }}>{t('Estimated charges')}</td>
+                    <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 16, color: 'var(--acc-2)', whiteSpace: 'nowrap' }}>{peso(calc.charges)}</td>
                   </tr>
                 </tbody>
               </table>

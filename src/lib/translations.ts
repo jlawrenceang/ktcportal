@@ -24,6 +24,10 @@ export const tl: Record<string, string> = {
   "At least 8 characters": "Hindi bababa sa 8 character",
   "A letter": "May letra",
   "A number": "May numero",
+  // Rate calculator — vessel-gated estimate
+  "required for the estimate": "kailangan para sa estimate",
+  "Select a vessel & voyage…": "Pumili ng vessel at voyage…",
+  "Select a shipping line and vessel & voyage first — charges are estimated against the vessel’s call.": "Pumili muna ng shipping line at vessel & voyage — naka-base ang charges sa biyahe ng vessel.",
   " — re-upload to replace": " — i-upload ulit para palitan",
   " Note: their valid ID could not be deleted — see the warning on the page.": " Note: hindi ma-delete ang valid ID nila — tingnan ang warning sa page.",
   " Their valid ID was removed from storage.": " Tinanggal sa storage ang valid ID nila.",
