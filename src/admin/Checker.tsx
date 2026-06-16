@@ -25,7 +25,7 @@ interface CheckerOrder {
   created_at: string
   broker?: { full_name: string | null } | null
   consignee?: { code: string; name: string } | null
-  lines?: { container_number: string; service_request: string }[]
+  lines?: { id: string; container_number: string; service_request: string; xray_done_at: string | null }[]
   serving?: ServingNumber[]
 }
 
@@ -38,7 +38,7 @@ function one<T>(v: T | T[] | null | undefined): T | null {
 }
 
 const SELECT =
-  'id, jo_number, status, xray_performed_at, service_invoice_no, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
+  'id, jo_number, status, xray_performed_at, service_invoice_no, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
 
 const isXray = (s: string) => s.toLowerCase().includes('x-ray')
 
@@ -65,8 +65,8 @@ export default function Checker() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<CheckerOrder[] | null>(null)
-  const [busyId, setBusyId] = useState<string | null>(null)
-  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [busyLine, setBusyLine] = useState<string | null>(null)
+  const [confirmLine, setConfirmLine] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // RPS assessment (operations / admin). Move types + rates come from move_rates.
@@ -107,7 +107,7 @@ export default function Checker() {
       .map((o) => ({ ...o, broker: one(o.broker), consignee: one(o.consignee) }))
       // X-ray still pending (a JO with other services can stay open after its
       // X-ray is done — it leaves this queue but remains findable via lookup)
-      .filter((o) => (o.lines ?? []).some((l) => isXray(l.service_request)) && !o.xray_performed_at)
+      .filter((o) => (o.lines ?? []).some((l) => isXray(l.service_request) && !l.xray_done_at))
       .sort((a, b) => (xrayNo(a) ?? Infinity) - (xrayNo(b) ?? Infinity)) // serve in line order
     setQueue(rows)
     setLoading(false)
@@ -139,10 +139,10 @@ export default function Checker() {
     return () => clearTimeout(handle)
   }, [query])
 
-  async function confirmXray(id: string) {
-    setBusyId(id); setError(null)
-    const { error: rpcErr } = await supabase.rpc('record_xray', { p_id: id })
-    setBusyId(null); setConfirmId(null)
+  async function confirmVan(lineId: string) {
+    setBusyLine(lineId); setError(null)
+    const { error: rpcErr } = await supabase.rpc('record_van_xray', { p_line_id: lineId })
+    setBusyLine(null); setConfirmLine(null)
     if (rpcErr) { setError(rpcErr.message); return }
     setQuery(''); setResults(null)
     await load()
@@ -150,7 +150,7 @@ export default function Checker() {
 
   function OrderCard({ o, highlight }: { o: CheckerOrder; highlight?: boolean }) {
     const xrayLines = (o.lines ?? []).filter((l) => isXray(l.service_request))
-    const confirmable = can('confirm_xray') && !o.xray_performed_at && ['submitted', 'processing', 'on_hold'].includes(o.status)
+    const open = ['submitted', 'processing', 'on_hold'].includes(o.status)
     return (
       <div style={{
         padding: '16px 18px', borderRadius: 16, background: 'var(--c-w60)',
@@ -171,32 +171,34 @@ export default function Checker() {
         <div className="ktc-label" style={{ fontSize: 13.5, marginTop: 6 }}>
           {o.broker?.full_name || t('Unknown customer')} · {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('no consignee')}
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-          {(xrayLines.length ? xrayLines : o.lines ?? []).map((l, i) => (
-            <span key={i} className="ktc-mono" style={{ fontSize: 13.5, fontWeight: 600, padding: '6px 12px', borderRadius: 9, background: 'var(--c-w70)', border: '1px solid var(--glass-brd)' }}>
-              {l.container_number}
-              <span className="ktc-label" style={{ fontSize: 11, marginLeft: 8, fontFamily: 'var(--font-sans)' }}>{l.service_request}</span>
-            </span>
+        {/* Per-van X-ray — tap a van to mark ITS X-ray done (logs date/time). */}
+        <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+          {xrayLines.map((l) => (
+            <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '9px 12px', borderRadius: 11, background: 'var(--c-w70)', border: '1px solid var(--glass-brd)' }}>
+              <span className="ktc-mono" style={{ fontSize: 15, fontWeight: 600 }}>{l.container_number}</span>
+              <span className="ktc-label" style={{ fontSize: 11.5 }}>{l.service_request}</span>
+              {l.xray_done_at ? (
+                <span className="ktc-chip ktc-chip--success" style={{ marginLeft: 'auto' }}>
+                  ✓ {t('X-ray done')} · {new Date(l.xray_done_at).toLocaleString()}
+                </span>
+              ) : !open ? (
+                <span className="ktc-chip" style={{ marginLeft: 'auto' }}>{t(o.status)}</span>
+              ) : can('confirm_xray') ? (
+                confirmLine === l.id ? (
+                  <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{t('Mark X-ray done now ({time})?', { time: new Date().toLocaleTimeString() })}</span>
+                    <button className="ktc-btn ktc-btn--sm" disabled={busyLine === l.id} onClick={() => void confirmVan(l.id)}>{busyLine === l.id ? t('Saving…') : t('✓ Yes')}</button>
+                    <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => setConfirmLine(null)}>{t('Back')}</button>
+                  </span>
+                ) : (
+                  <button className="ktc-btn ktc-btn--sm" style={{ marginLeft: 'auto' }} onClick={() => setConfirmLine(l.id)}>{t('✓ X-ray done')}</button>
+                )
+              ) : (
+                <span className="ktc-chip ktc-chip--danger" style={{ marginLeft: 'auto' }}>{t('X-ray pending')}</span>
+              )}
+            </div>
           ))}
         </div>
-        {confirmable && (
-          <div style={{ marginTop: 14 }}>
-            {confirmId === o.id ? (
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 14, fontWeight: 600 }}>{t('Confirm X-ray done now ({time})?', { time: new Date().toLocaleTimeString() })}</span>
-                <button className="ktc-btn" style={{ width: 'auto', padding: '12px 22px', fontSize: 15 }} disabled={busyId === o.id}
-                  onClick={() => void confirmXray(o.id)}>
-                  {busyId === o.id ? t('Saving…') : t('✓ Yes — X-ray done')}
-                </button>
-                <button className="ktc-btn-secondary" style={{ padding: '12px 18px' }} onClick={() => setConfirmId(null)}>{t('Back')}</button>
-              </div>
-            ) : (
-              <button className="ktc-btn" style={{ width: 'auto', padding: '13px 26px', fontSize: 15 }} onClick={() => setConfirmId(o.id)}>
-                {t('✓ Confirm X-ray done')}
-              </button>
-            )}
-          </div>
-        )}
         {can('assess_rps') && (
           <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--glass-brd)' }}>
             {assessId === o.id ? (
