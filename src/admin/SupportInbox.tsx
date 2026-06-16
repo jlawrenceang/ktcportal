@@ -40,25 +40,25 @@ const CATEGORY_LABEL: Record<string, string> = {
   accreditation: 'Accreditation',
   job_order: 'Job order',
   payment: 'Payment',
+  app_system: 'App / System',
+  customer_service: 'Customer service',
+  operations: 'Operations',
   other: 'Other',
 }
 
 const STATUS_LABEL: Record<string, string> = {
   open: 'Open',
-  answered: 'Answered',
   closed: 'Closed',
 }
 const STATUS_TONE: Record<string, string> = {
   open: 'warning',
-  answered: 'info',
   closed: '',
 }
 
-type Filter = 'all' | 'open' | 'answered' | 'closed'
+type Filter = 'all' | 'open' | 'closed'
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'open', label: 'Open' },
-  { key: 'answered', label: 'Answered' },
   { key: 'closed', label: 'Closed' },
 ]
 
@@ -88,7 +88,10 @@ export default function SupportInbox() {
   const [filter, setFilter] = useState<Filter>('open')
   const [error, setError] = useState<string | null>(null)
 
-  const [openId, setOpenId] = useState<string | null>(null)
+  // The open ticket is stored as its own object (not derived from the filtered
+  // list) so the thread modal stays put after a reply / status change — it used
+  // to vanish or re-pop when the row left the current filter.
+  const [active, setActive] = useState<Ticket | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [threadLoading, setThreadLoading] = useState(false)
   const [reply, setReply] = useState('')
@@ -130,31 +133,35 @@ export default function SupportInbox() {
     setMessages((data ?? []) as Message[])
   }, [])
 
-  function openTicket(ticketId: string) {
-    setOpenId(ticketId)
+  function openTicket(tk: Ticket) {
+    setActive(tk)
     setReply('')
     setError(null)
-    void loadThread(ticketId)
+    void loadThread(tk.id)
   }
 
   async function sendReply() {
-    if (!openId || !reply.trim()) return
+    if (!active || !reply.trim()) return
     setSending(true); setError(null)
-    const { error: err } = await supabase.rpc('post_ticket_message', { p_ticket: openId, p_body: reply.trim() })
+    const { error: err } = await supabase.rpc('post_ticket_message', { p_ticket: active.id, p_body: reply.trim() })
     setSending(false)
     if (err) { setError(err.message); return }
     setReply('')
-    await loadThread(openId)
-    await loadTickets(filter)
+    await loadThread(active.id)
+    void loadTickets(filter)
   }
 
-  async function setStatus(ticketId: string, status: string) {
+  async function setStatus(status: string) {
+    if (!active) return
     setBusy(true); setError(null)
-    const { error: err } = await supabase.rpc('set_ticket_status', { p_ticket: ticketId, p_status: status })
+    const { error: err } = await supabase.rpc('set_ticket_status', { p_ticket: active.id, p_status: status })
     setBusy(false)
     if (err) { setError(err.message); return }
-    await loadThread(ticketId)
-    await loadTickets(filter)
+    // Update the open ticket in place so the modal reflects the new status and
+    // stays open (no flicker, no disappearing row).
+    setActive((a) => (a ? { ...a, status } : a))
+    void loadThread(active.id)
+    void loadTickets(filter)
   }
 
   if (permLoading) {
@@ -179,8 +186,6 @@ export default function SupportInbox() {
       </AdminShell>
     )
   }
-
-  const openTicketRow = tickets.find((tk) => tk.id === openId) ?? null
 
   return (
     <AdminShell>
@@ -212,7 +217,7 @@ export default function SupportInbox() {
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
             {tickets.map((tk) => (
-              <button key={tk.id} type="button" onClick={() => openTicket(tk.id)}
+              <button key={tk.id} type="button" onClick={() => openTicket(tk)}
                 style={{ textAlign: 'left', cursor: 'pointer', padding: '14px 16px', borderRadius: 14, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', minWidth: 0 }}>
@@ -232,9 +237,9 @@ export default function SupportInbox() {
       </div>
 
       {/* Thread modal */}
-      {openTicketRow && (() => {
-        const tk = openTicketRow
-        const close = () => { setOpenId(null); setMessages([]); setError(null) }
+      {active && (() => {
+        const tk = active
+        const close = () => { setActive(null); setMessages([]); setError(null) }
         return (
           <div className="ktc-modal-backdrop" onClick={close}>
             <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()}
@@ -257,19 +262,13 @@ export default function SupportInbox() {
 
                 {/* Status controls */}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-                  {tk.status !== 'answered' && (
-                    <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={busy} onClick={() => void setStatus(tk.id, 'answered')}>
-                      {t('Mark answered')}
+                  {tk.status !== 'closed' ? (
+                    <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={busy} onClick={() => void setStatus('closed')}>
+                      {t('Close ticket')}
                     </button>
-                  )}
-                  {tk.status !== 'closed' && (
-                    <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={busy} onClick={() => void setStatus(tk.id, 'closed')}>
-                      {t('Close')}
-                    </button>
-                  )}
-                  {tk.status === 'closed' && (
-                    <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={busy} onClick={() => void setStatus(tk.id, 'open')}>
-                      {t('Reopen')}
+                  ) : (
+                    <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={busy} onClick={() => void setStatus('open')}>
+                      {t('Reopen ticket')}
                     </button>
                   )}
                 </div>
@@ -304,14 +303,20 @@ export default function SupportInbox() {
                   </div>
                 )}
 
-                {/* Reply */}
-                <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
-                  <textarea className="ktc-input" rows={3} value={reply} onChange={(e) => setReply(e.target.value)}
-                    placeholder={t('Type your reply to the customer…')} style={{ width: '100%', resize: 'vertical' }} />
-                  <button type="button" className="ktc-btn ktc-btn--sm" disabled={sending || !reply.trim()} onClick={() => void sendReply()} style={{ justifySelf: 'start' }}>
-                    {sending ? t('Sending…') : t('Send reply')}
-                  </button>
-                </div>
+                {/* Reply — a closed ticket is locked; reopen it to continue. */}
+                {tk.status === 'closed' ? (
+                  <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 12, padding: '10px 12px', borderRadius: 9, background: 'var(--c-w35)', border: '1px dashed var(--glass-brd)' }}>
+                    {t('🔒 This ticket is closed. Reopen it to send a message.')}
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
+                    <textarea className="ktc-input" rows={3} value={reply} onChange={(e) => setReply(e.target.value)}
+                      placeholder={t('Type your reply to the customer…')} style={{ width: '100%', resize: 'vertical' }} />
+                    <button type="button" className="ktc-btn ktc-btn--sm" disabled={sending || !reply.trim()} onClick={() => void sendReply()} style={{ justifySelf: 'start' }}>
+                      {sending ? t('Sending…') : t('Send reply')}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

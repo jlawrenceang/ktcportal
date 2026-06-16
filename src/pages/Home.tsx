@@ -6,13 +6,13 @@ import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { homeSteps } from '../components/WelcomeTour'
 import { usePageTour } from '../components/TourProvider'
-import NotificationBar from '../components/NotificationBar'
 import BulletinBoard from '../components/BulletinBoard'
 import { useT } from '../lib/i18n'
 
-// Home is an at-a-glance OVERVIEW: KTC's bulletin board + your unread
-// notifications. Navigation lives in the bottom bar; order counts surface as a
-// badge on the Orders tab.
+// Home is an at-a-glance OVERVIEW: KTC's bulletin board + light order counts.
+// Unread notifications live ONLY in the top-bar bell now (the old inline
+// NotificationBar "bubble" was redundant with it). Navigation lives in the
+// bottom bar; order counts surface as a badge on the Orders tab.
 export default function Home() {
   const { session } = useAuth()
   const { broker } = useBroker()
@@ -59,7 +59,6 @@ export default function Home() {
       </div>
 
       <BulletinBoard />
-      <NotificationBar />
     </Shell>
   )
 }

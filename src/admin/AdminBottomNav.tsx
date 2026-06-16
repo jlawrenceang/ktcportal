@@ -31,6 +31,7 @@ const CashIcon = () => (<svg {...ip}><rect x="2" y="6" width="20" height="12" rx
 const ManualIcon = () => (<svg {...ip}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>)
 const SupportIcon = () => (<svg {...ip}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>)
 const CalcIcon = () => (<svg {...ip}><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" /></svg>)
+const BulletinIcon = () => (<svg {...ip}><path d="M3 11l15-7v16l-15-7z" /><path d="M3 11v3a2 2 0 0 0 2 2h1" /><path d="M7 16v3a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2" /></svg>)
 const DashIcon = GridIcon
 
 type Dest = { to: string; label: string; perm?: Permission; icon: ReactNode; end?: boolean }
@@ -47,6 +48,7 @@ const GRID: Dest[] = [
   { to: '/admin/consignees', label: 'Consignees', perm: 'manage_consignees', icon: <BuildingIcon /> },
   { to: '/admin/vessel-schedule', label: 'Vessels', perm: 'manage_vessel_schedule', icon: <VesselIcon /> },
   { to: '/calculator', label: 'Rate Calculator', icon: <CalcIcon /> },
+  { to: '/admin/bulletin', label: 'Bulletin', perm: 'manage_pricing', icon: <BulletinIcon /> },
   { to: '/admin/settings', label: 'Settings', perm: 'manage_pricing', icon: <GearIcon /> },
   { to: '/admin/logs', label: 'Logs', perm: 'manage_approvals', icon: <LogsIcon /> },
   { to: '/admin/support', label: 'Support', perm: 'manage_support', icon: <SupportIcon /> },

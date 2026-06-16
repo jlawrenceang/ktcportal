@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../lib/supabase'
+import { useFileViewer } from './FileViewerModal'
 import { useT } from '../lib/i18n'
 
 // Customer bulletin board (Home): admin-posted topics (migration 0076). Tapping
-// a topic opens its full message in a modal — no page navigation.
-type Post = { id: string; title: string; body: string; pinned: boolean; created_at: string }
+// a topic opens its full message in a modal — no page navigation. A post may
+// carry one attachment (a memo), opened in a nested in-app viewer (0113).
+type Post = { id: string; title: string; body: string; pinned: boolean; created_at: string; attachment_path: string | null; attachment_name: string | null }
 
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
@@ -16,9 +18,13 @@ export default function BulletinBoard() {
   const [posts, setPosts] = useState<Post[]>([])
   const [readIds, setReadIds] = useState<Set<string>>(new Set())
   const [open, setOpen] = useState<Post | null>(null)
+  const [fileErr, setFileErr] = useState<string | null>(null)
+  // Nested viewer for the post's attachment (a memo). Portaled to <body> so it
+  // sits above this post modal regardless of stacking context.
+  const { openFromStorage, viewerModal } = useFileViewer(setFileErr)
 
   useEffect(() => {
-    void supabase.from('bulletin_posts').select('id, title, body, pinned, created_at')
+    void supabase.from('bulletin_posts').select('id, title, body, pinned, created_at, attachment_path, attachment_name')
       .eq('is_published', true)
       .order('pinned', { ascending: false })
       .order('sort_order', { ascending: true })
@@ -73,10 +79,26 @@ export default function BulletinBoard() {
             <div style={{ overflowY: 'auto', padding: '16px 20px', fontSize: 14, lineHeight: 1.65, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
               {open.body}
             </div>
+            {open.attachment_path && (
+              <div style={{ padding: '12px 20px 16px', borderTop: '1px solid var(--glass-brd)' }}>
+                <button type="button" className="ktc-btn-secondary ktc-btn--sm"
+                  onClick={() => { setFileErr(null); void openFromStorage('bulletin-files', open.attachment_path, open.attachment_name || open.title) }}>
+                  📎 {t('View attachment')}
+                </button>
+                {open.attachment_name && (
+                  <span className="ktc-label" style={{ fontSize: 11.5, marginLeft: 10 }}>{open.attachment_name}</span>
+                )}
+                {fileErr && <div style={{ color: 'var(--acc-2)', fontSize: 12, marginTop: 6 }}>{fileErr}</div>}
+              </div>
+            )}
           </div>
         </div>,
         document.body,
       )}
+
+      {/* The attachment viewer is a modal-within-a-modal — portal it to <body>
+          so it renders above the post modal. */}
+      {viewerModal && createPortal(viewerModal, document.body)}
     </div>
   )
 }

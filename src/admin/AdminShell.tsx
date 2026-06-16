@@ -68,16 +68,21 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
         </Link>
         <span style={{ flex: 1 }} />
         <StaffNotificationBell />
-        <span
-          title={role ? `${t(role)}: ${broker?.email ?? ''}` : undefined}
-          style={{
-            flex: '0 0 auto', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
-            padding: '4px 10px', borderRadius: 999, color: '#fff',
-            background: 'linear-gradient(135deg, var(--acc), var(--acc-2))',
-          }}
-        >
-          {role ? t(role) : t('Admin')}
-        </span>
+        {/* Only render once the role is known — never fall back to a generic
+            "Admin" label (that made the owner's pill flash "Admin" on every
+            tab switch while the profile reloaded). */}
+        {role && (
+          <span
+            title={`${t(role)}: ${broker?.email ?? ''}`}
+            style={{
+              flex: '0 0 auto', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+              padding: '4px 10px', borderRadius: 999, color: '#fff',
+              background: 'linear-gradient(135deg, var(--acc), var(--acc-2))',
+            }}
+          >
+            {t(role)}
+          </span>
+        )}
       </nav>
 
       <div className="ktc-stagger">{children}</div>

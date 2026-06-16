@@ -27,6 +27,9 @@ interface Message {
 }
 
 const CATEGORIES: { key: string; label: string }[] = [
+  { key: 'app_system', label: 'App / System (bug or system concern)' },
+  { key: 'customer_service', label: 'Customer service' },
+  { key: 'operations', label: 'Operations' },
   { key: 'account', label: 'Account' },
   { key: 'accreditation', label: 'Accreditation' },
   { key: 'job_order', label: 'Job order' },
@@ -37,12 +40,10 @@ const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(CATEGORIES.map
 
 const STATUS_LABEL: Record<string, string> = {
   open: 'Open',
-  answered: 'KTC replied',
   closed: 'Closed',
 }
 const STATUS_TONE: Record<string, string> = {
   open: 'info',
-  answered: 'success',
   closed: '',
 }
 
@@ -81,8 +82,9 @@ export default function SupportTickets() {
   const [body, setBody] = useState('')
   const [creating, setCreating] = useState(false)
 
-  // Open ticket thread.
-  const [openId, setOpenId] = useState<string | null>(null)
+  // Open ticket thread. Stored as its own object (not derived from the list) so
+  // the modal stays put after a reply or a list refresh.
+  const [active, setActive] = useState<Ticket | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [threadLoading, setThreadLoading] = useState(false)
   const [reply, setReply] = useState('')
@@ -129,12 +131,12 @@ export default function SupportTickets() {
     setMessages((data ?? []) as Message[])
   }, [])
 
-  function openTicket(ticketId: string) {
-    setOpenId(ticketId)
+  function openTicket(tk: Ticket) {
+    setActive(tk)
     setReply('')
     setError(null)
     setCopied(false)
-    void loadThread(ticketId)
+    void loadThread(tk.id)
   }
 
   async function createTicket() {
@@ -146,23 +148,24 @@ export default function SupportTickets() {
     })
     setCreating(false)
     if (err) { setError(err.message); return }
+    const created: Ticket | null = typeof data === 'string'
+      ? { id: data, subject: subject.trim(), category, status: 'open', created_at: new Date().toISOString(), last_message_at: new Date().toISOString() }
+      : null
     setSubject(''); setCategory('other'); setBody(''); setShowNew(false)
     await loadTickets()
-    if (typeof data === 'string') openTicket(data)
+    if (created) openTicket(created)
   }
 
   async function sendReply() {
-    if (!openId || !reply.trim()) return
+    if (!active || !reply.trim()) return
     setSending(true); setError(null)
-    const { error: err } = await supabase.rpc('post_ticket_message', { p_ticket: openId, p_body: reply.trim() })
+    const { error: err } = await supabase.rpc('post_ticket_message', { p_ticket: active.id, p_body: reply.trim() })
     setSending(false)
     if (err) { setError(err.message); return }
     setReply('')
-    await loadThread(openId)
-    await loadTickets()
+    await loadThread(active.id)
+    void loadTickets()
   }
-
-  const openTicketRow = tickets.find((tk) => tk.id === openId) ?? null
 
   // The prefilled message that carries the ticket reference off-platform.
   function prefill(ticket: Ticket): string {
@@ -261,7 +264,7 @@ export default function SupportTickets() {
           ) : (
             <div style={{ display: 'grid', gap: 8 }}>
               {tickets.map((tk) => (
-                <button key={tk.id} type="button" className="ktc-jo-row" onClick={() => openTicket(tk.id)}>
+                <button key={tk.id} type="button" className="ktc-jo-row" onClick={() => openTicket(tk)}>
                   <span style={{ minWidth: 0, display: 'block' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <b style={{ fontSize: 13.5 }}>{tk.subject}</b>
@@ -279,9 +282,9 @@ export default function SupportTickets() {
       </div>
 
       {/* Thread modal */}
-      {openTicketRow && (() => {
-        const tk = openTicketRow
-        const close = () => { setOpenId(null); setMessages([]); setError(null) }
+      {active && (() => {
+        const tk = active
+        const close = () => { setActive(null); setMessages([]); setError(null) }
         const channels: { key: Channel; label: string; value: string | undefined }[] = [
           { key: 'call', label: t('Call'), value: contact.phone },
           { key: 'email', label: t('Email'), value: contact.email },
@@ -337,19 +340,21 @@ export default function SupportTickets() {
                   </div>
                 )}
 
-                {/* Reply */}
+                {/* Reply — a closed ticket is locked; the customer continues via
+                    a hand-off below or opens a new ticket. */}
                 {tk.status === 'closed' ? (
-                  <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 14 }}>
-                    {t('This ticket is closed. Send a message to reopen it.')}
+                  <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 14, padding: '10px 12px', borderRadius: 9, background: 'var(--c-w35)', border: '1px dashed var(--glass-brd)' }}>
+                    {t('🔒 This ticket is closed. Open a new ticket if you need further help.')}
                   </div>
-                ) : null}
-                <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
-                  <textarea className="ktc-input" rows={3} value={reply} onChange={(e) => setReply(e.target.value)}
-                    placeholder={t('Type your reply…')} style={{ width: '100%', resize: 'vertical' }} />
-                  <button type="button" className="ktc-btn ktc-btn--sm" disabled={sending || !reply.trim()} onClick={() => void sendReply()} style={{ justifySelf: 'start' }}>
-                    {sending ? t('Sending…') : t('Send reply')}
-                  </button>
-                </div>
+                ) : (
+                  <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
+                    <textarea className="ktc-input" rows={3} value={reply} onChange={(e) => setReply(e.target.value)}
+                      placeholder={t('Type your reply…')} style={{ width: '100%', resize: 'vertical' }} />
+                    <button type="button" className="ktc-btn ktc-btn--sm" disabled={sending || !reply.trim()} onClick={() => void sendReply()} style={{ justifySelf: 'start' }}>
+                      {sending ? t('Sending…') : t('Send reply')}
+                    </button>
+                  </div>
+                )}
 
                 {/* Talk to an agent now */}
                 <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--glass-brd)' }}>

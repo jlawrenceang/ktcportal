@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import Shell from '../components/Shell'
+import AdminShell from '../admin/AdminShell'
 import { supabase } from '../lib/supabase'
+import { useBroker } from '../lib/useBroker'
+import { hasAdminAccess } from '../lib/types'
 import { peso } from '../lib/pricing'
 import { usePageTour } from '../components/TourProvider'
 import { calculatorSteps } from '../components/WelcomeTour'
@@ -30,6 +33,11 @@ type Svc = { service: string; rate: number; unit: string; vatable: boolean }
 export default function Calculator() {
   const { t } = useT()
   usePageTour('calculator', calculatorSteps)
+  // Staff/owner reach the calculator from the admin Menu — keep them in the
+  // admin shell (rail + admin tab bar) instead of swapping the whole UI into
+  // the customer portal. Customers get the customer shell.
+  const { broker, loading: brokerLoading } = useBroker()
+  const Wrap = hasAdminAccess(broker) ? AdminShell : Shell
 
   const [termRates, setTermRates] = useState<TermRate[]>([])
   const [services, setServices] = useState<Svc[]>([])
@@ -232,8 +240,19 @@ export default function Calculator() {
     </tr>
   )
 
+  // Wait for the profile so we pick the right shell (avoids a flash of the
+  // customer portal for a staff/owner user). Cached after the first page, so
+  // this only shows on a cold direct load.
+  if (brokerLoading) {
+    return (
+      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+        <span className="ktc-label">{t('Loading…')}</span>
+      </div>
+    )
+  }
+
   return (
-    <Shell>
+    <Wrap>
       <div style={{ margin: '10px 4px 14px' }}>
         <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{t('Rate Calculator')}</h1>
         <p className="ktc-sub" style={{ maxWidth: 560, fontSize: 12.5 }}>
@@ -385,6 +404,6 @@ export default function Calculator() {
           )}
         </div>
       </div>
-    </Shell>
+    </Wrap>
   )
 }

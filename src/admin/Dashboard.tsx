@@ -38,7 +38,9 @@ export default function Dashboard() {
     Promise.all([
       n(customers().eq('status', 'pending')),
       n(supabase.from('consignees').select('id', { count: 'exact', head: true }).eq('status', 'pending')),
-      n(customers()),
+      // Only APPROVED accounts are "customers" — a pending (in-approval) account
+      // isn't a customer yet, so it shouldn't bump this count.
+      n(customers().eq('status', 'approved')),
       n(supabase.from('consignees').select('id', { count: 'exact', head: true })),
       // matches the queue's default "Open" view this tile links to
       n(supabase.from('job_orders').select('id', { count: 'exact', head: true })

@@ -39,6 +39,7 @@ const Consignees = lazy(() => import('./admin/Consignees'))
 const AllJobOrders = lazy(() => import('./admin/AllJobOrders'))
 const AdminNewJobOrder = lazy(() => import('./admin/NewJobOrder'))
 const Settings = lazy(() => import('./admin/Settings'))
+const BulletinBoardAdmin = lazy(() => import('./admin/BulletinBoardAdmin'))
 const Checker = lazy(() => import('./admin/Checker'))
 const CashierStation = lazy(() => import('./admin/CashierStation'))
 const VesselSchedule = lazy(() => import('./admin/VesselSchedule'))
@@ -135,6 +136,7 @@ export default function App() {
           <Route path="/admin/logs" element={<Admin><Logs /></Admin>} />
           <Route path="/admin/security" element={<Admin><Security /></Admin>} />
           <Route path="/admin/settings" element={<Admin><Settings /></Admin>} />
+          <Route path="/admin/bulletin" element={<Admin><BulletinBoardAdmin /></Admin>} />
           <Route path="/admin/support" element={<Admin><SupportInbox /></Admin>} />
           <Route path="/admin/manual" element={<Admin><AdminManual /></Admin>} />
 

@@ -351,39 +351,7 @@ export default function Settings() {
     setEmailMsg(next ? t('✓ Customer emails are ON.') : t('✓ Customer emails are suspended.'))
   }
 
-  // Bulletin board (0076): admin posts announcements shown on customer Home.
-  type Bulletin = { id: string; title: string; body: string; is_published: boolean; pinned: boolean; created_at: string }
-  const [bposts, setBposts] = useState<Bulletin[]>([])
-  const [bTitle, setBTitle] = useState('')
-  const [bBody, setBBody] = useState('')
-  const [bBusy, setBBusy] = useState(false)
-  const [bMsg, setBMsg] = useState<string | null>(null)
-  async function loadBulletins() {
-    const { data } = await supabase.from('bulletin_posts')
-      .select('id, title, body, is_published, pinned, created_at')
-      .order('pinned', { ascending: false }).order('created_at', { ascending: false })
-    setBposts((data ?? []) as Bulletin[])
-  }
-  useEffect(() => { void loadBulletins() }, [])
-  async function addBulletin() {
-    if (!bTitle.trim() || !bBody.trim()) { setBMsg(t('Enter a title and a message.')); return }
-    setBBusy(true); setBMsg(null)
-    const { error } = await supabase.from('bulletin_posts').insert({ title: bTitle.trim(), body: bBody.trim() })
-    setBBusy(false)
-    if (error) { setBMsg(error.message); return }
-    setBTitle(''); setBBody(''); setBMsg(t('✓ Posted to the bulletin board.'))
-    await loadBulletins()
-  }
-  async function patchBulletin(b: Bulletin, patch: Partial<Bulletin>) {
-    const { error } = await supabase.from('bulletin_posts').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', b.id)
-    if (error) { setBMsg(error.message); return }
-    await loadBulletins()
-  }
-  async function delBulletin(id: string) {
-    const { error } = await supabase.from('bulletin_posts').delete().eq('id', id)
-    if (error) { setBMsg(error.message); return }
-    await loadBulletins()
-  }
+  // Bulletin board moved to its own page (/admin/bulletin) — see BulletinBoardAdmin.
 
   async function createStaff(e: FormEvent) {
     e.preventDefault()
@@ -532,38 +500,6 @@ export default function Settings() {
           )}
         </div>
       )}
-
-      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
-        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Bulletin board')}</h2>
-        <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
-          {t('Announcements shown on every customer’s Home. Each post is a topic customers tap to read in full.')}
-        </p>
-        <div style={{ display: 'grid', gap: 8, maxWidth: 560 }}>
-          <input className="ktc-input" placeholder={t('Topic title')} value={bTitle} onChange={(e) => setBTitle(e.target.value)} />
-          <textarea className="ktc-input" rows={3} placeholder={t('Message')} value={bBody} onChange={(e) => setBBody(e.target.value)} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <button className="ktc-btn" type="button" disabled={bBusy} onClick={() => void addBulletin()} style={{ width: 'auto', padding: '10px 20px' }}>
-              {bBusy ? t('Posting…') : t('Post to board')}
-            </button>
-            {bMsg && <span className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600 }}>{bMsg}</span>}
-          </div>
-        </div>
-        {bposts.length > 0 && (
-          <div style={{ display: 'grid', gap: 8, marginTop: 16, maxWidth: 560 }}>
-            {bposts.map((b) => (
-              <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: b.is_published ? 'var(--c-w55)' : 'var(--c-w30)', border: '1px solid var(--glass-brd)', opacity: b.is_published ? 1 : 0.6 }}>
-                <span style={{ flex: '1 1 auto', minWidth: 0 }}>
-                  <span style={{ fontSize: 13.5, fontWeight: 600, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.pinned ? '📌 ' : ''}{b.title}</span>
-                  <span className="ktc-label" style={{ fontSize: 11.5 }}>{b.is_published ? t('Published') : t('Draft')}</span>
-                </span>
-                <button type="button" className="ktc-link" style={{ fontSize: 12 }} onClick={() => void patchBulletin(b, { pinned: !b.pinned })}>{b.pinned ? t('Unpin') : t('Pin')}</button>
-                <button type="button" className="ktc-link" style={{ fontSize: 12 }} onClick={() => void patchBulletin(b, { is_published: !b.is_published })}>{b.is_published ? t('Hide') : t('Publish')}</button>
-                <button type="button" className="ktc-link" style={{ fontSize: 12, color: 'var(--acc-2)' }} onClick={() => void delBulletin(b.id)}>{t('Delete')}</button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
