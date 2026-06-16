@@ -223,40 +223,40 @@ export default function Consignees() {
 
   return (
     <AdminShell>
-      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
-        <h1 className="ktc-title">{t('Consignees')}</h1>
-        <p className="ktc-sub" style={{ marginBottom: 20 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 16 }}>
+        <h1 className="ktc-title" style={{ fontSize: 18 }}>{t('Consignees')}</h1>
+        <p className="ktc-sub" style={{ marginBottom: 14, fontSize: 12 }}>
           {t('Added consignees are')} <b>{t('pending')}</b>. {t('A consignee needs')} <b>{t('address, TIN, and an attached 2303')}</b> {t('before it can be approved; only approved consignees are visible to customers.')}
         </p>
 
-        <div style={{ display: 'grid', gap: 6, marginBottom: 18, maxWidth: 360 }}>
-          <label className="ktc-label" htmlFor="csv">{t('Bulk import CSV (name, optional code)')}</label>
-          <input id="csv" ref={csvRef} type="file" accept=".csv,text/csv" className="ktc-input" onChange={onCsv} disabled={busy} style={{ padding: '9px 13px' }} />
+        <div style={{ display: 'grid', gap: 5, marginBottom: 14, maxWidth: 340 }}>
+          <label className="ktc-label" htmlFor="csv" style={{ fontSize: 12 }}>{t('Bulk import CSV (name, optional code)')}</label>
+          <input id="csv" ref={csvRef} type="file" accept=".csv,text/csv" className="ktc-input ktc-input--compact" onChange={onCsv} disabled={busy} style={{ padding: '6px 10px' }} />
         </div>
 
-        <form onSubmit={addOne} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <Field label={t('Consignee name *')} w={220}><input className="ktc-input" value={name} onChange={(e) => setName(e.target.value)} required minLength={MIN_NAME} /></Field>
-          <Field label={t('Code (optional)')} w={120}><input className="ktc-input" value={code} onChange={(e) => setCode(e.target.value)} placeholder={t('auto')} /></Field>
-          <Field label={t('Address')} w={260}><input className="ktc-input" value={address} onChange={(e) => setAddress(e.target.value)} /></Field>
-          <Field label={t('TIN')} w={150}><input className="ktc-input" value={tin} onChange={(e) => setTin(e.target.value)} /></Field>
-          <Field label={t('2303 document')} w={210}><input ref={docRef} className="ktc-input" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc(e.target.files?.[0] ?? null)} style={{ padding: '9px 11px' }} /></Field>
-          <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>{t('Add consignee')}</button>
+        <form onSubmit={addOne} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <Field label={t('Consignee name *')} w={200}><input className="ktc-input ktc-input--compact" value={name} onChange={(e) => setName(e.target.value)} required minLength={MIN_NAME} /></Field>
+          <Field label={t('Code (optional)')} w={110}><input className="ktc-input ktc-input--compact" value={code} onChange={(e) => setCode(e.target.value)} placeholder={t('auto')} /></Field>
+          <Field label={t('Address')} w={230}><input className="ktc-input ktc-input--compact" value={address} onChange={(e) => setAddress(e.target.value)} /></Field>
+          <Field label={t('TIN')} w={140}><input className="ktc-input ktc-input--compact" value={tin} onChange={(e) => setTin(e.target.value)} /></Field>
+          <Field label={t('2303 document')} w={190}><input ref={docRef} className="ktc-input ktc-input--compact" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc(e.target.files?.[0] ?? null)} style={{ padding: '6px 10px' }} /></Field>
+          <button className="ktc-btn ktc-btn--sm" type="submit" disabled={busy} style={{ width: 'auto', padding: '8px 16px', fontSize: 13 }}>{t('Add consignee')}</button>
         </form>
 
-        {busy && <div className="ktc-label" style={{ marginTop: 12 }}>{t('Working…')}</div>}
-        {notice && <div className="ktc-label" style={{ marginTop: 12, fontSize: 13 }}>{notice}</div>}
-        {error && <div style={{ marginTop: 12, color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
+        {busy && <div className="ktc-label" style={{ marginTop: 10, fontSize: 12.5 }}>{t('Working…')}</div>}
+        {notice && <div className="ktc-label" style={{ marginTop: 10, fontSize: 12.5 }}>{notice}</div>}
+        {error && <div style={{ marginTop: 10, color: 'var(--acc-2)', fontSize: 12.5 }}>{error}</div>}
       </div>
 
-      <div className="ktc-glass" style={{ padding: 28 }}>
+      <div className="ktc-glass" style={{ padding: 18 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
-          <select className="ktc-input" value={filter} onChange={(e) => changeFilter(e.target.value as Filter)} style={{ padding: '8px 10px' }}>
+          <select className="ktc-input ktc-input--compact" value={filter} onChange={(e) => changeFilter(e.target.value as Filter)}>
             <option value="all">{t('All')}</option>
             <option value="pending">{t('Pending')}</option>
             <option value="approved">{t('Approved')}</option>
             <option value="rejected">{t('Rejected')}</option>
           </select>
-          <input className="ktc-input" placeholder={t('Search code or name…')} value={query} onChange={(e) => changeQuery(e.target.value)} style={{ maxWidth: 240, width: '100%' }} />
+          <input className="ktc-input ktc-input--compact" placeholder={t('Search code or name…')} value={query} onChange={(e) => changeQuery(e.target.value)} style={{ maxWidth: 240, width: '100%' }} />
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
