@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '../lib/supabase'
 import { useT } from '../lib/i18n'
 
@@ -54,7 +55,10 @@ export default function BulletinBoard() {
         ))}
       </div>
 
-      {open && (
+      {/* Portal to <body>: the bulletin card is a .ktc-glass element, and
+          backdrop-filter creates a stacking context that would otherwise trap
+          this fixed modal beneath the bottom tab bar (z-index 45). */}
+      {open && createPortal(
         <div className="ktc-modal-backdrop" onClick={() => setOpen(null)}>
           <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()}
             style={{ width: '100%', maxWidth: 480, padding: 0, display: 'flex', flexDirection: 'column', maxHeight: '85vh' }}>
@@ -70,7 +74,8 @@ export default function BulletinBoard() {
               {open.body}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )
