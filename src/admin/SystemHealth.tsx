@@ -75,7 +75,7 @@ export default function SystemHealth() {
             <h3 className="ktc-label" style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('Scheduled jobs')}</h3>
             <div style={{ display: 'grid', gap: 6 }}>
               {health.jobs.map((j) => (
-                <div key={j.name} style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap', fontSize: 13, padding: '8px 12px', borderRadius: 9, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                <div key={j.name} style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap', fontSize: 13, padding: '8px 12px', borderRadius: 9, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)', overflowWrap: 'anywhere' }}>
                   <span className={`ktc-chip ${j.status === 'succeeded' ? 'ktc-chip--success' : j.status === 'failed' ? 'ktc-chip--danger' : ''}`}>
                     {j.status ? t(j.status) : t('no runs yet')}
                   </span>
@@ -100,7 +100,7 @@ export default function SystemHealth() {
             {health.outbound_failures.length > 0 && (
               <div style={{ display: 'grid', gap: 6 }}>
                 {health.outbound_failures.map((f, i) => (
-                  <div key={i} style={{ fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'var(--c-h0-75-97)', border: '1px solid var(--c-h0-70-88)' }}>
+                  <div key={i} style={{ fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'var(--c-h0-75-97)', border: '1px solid var(--c-h0-70-88)', overflowWrap: 'anywhere' }}>
                     <b>{f.kind}</b> · {f.label} — {f.status ? t('HTTP {status}', { status: f.status }) : f.error}{' '}
                     <span className="ktc-label" style={{ fontSize: 11.5 }}>{new Date(f.at).toLocaleString()}</span>
                   </div>
@@ -118,7 +118,7 @@ export default function SystemHealth() {
               <div style={{ display: 'grid', gap: 6 }}>
                 {health.security_events.map((s, i) => (
                   <div key={i} style={{
-                    fontSize: 12.5, padding: '8px 12px', borderRadius: 9,
+                    fontSize: 12.5, padding: '8px 12px', borderRadius: 9, overflowWrap: 'anywhere',
                     background: s.kind === 'protected_field_attempt' ? 'var(--c-h0-75-97)' : 'var(--c-w55)',
                     border: s.kind === 'protected_field_attempt' ? '1px solid var(--c-h0-70-88)' : '1px solid var(--glass-brd)',
                   }}>
@@ -143,7 +143,7 @@ export default function SystemHealth() {
             ) : (
               <div style={{ display: 'grid', gap: 6 }}>
                 {health.client_errors.map((e, i) => (
-                  <div key={i} style={{ fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                  <div key={i} style={{ fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)', overflowWrap: 'anywhere' }}>
                     <span className="ktc-mono" style={{ fontSize: 12 }}>{e.message}</span>
                     <span className="ktc-label" style={{ fontSize: 11.5, marginLeft: 8 }}>
                       {e.path ?? ''} · {new Date(e.at).toLocaleString()}
