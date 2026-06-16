@@ -75,5 +75,5 @@ Chosen option: **C** (migrations `0089`, `0090`, `0097`).
 * `supabase/migrations/0089_verify_job_order.sql` (anon `verify_job_order` RPC, QR target)
 * `supabase/migrations/0090_verify_payment_and_containers.sql` (payment status + container cross-check)
 * `supabase/migrations/0097_rps_in_completion_gate.sql` (verify RPC returns RPS state)
-* `src/pages/JobOrderPrint.tsx` (watermark + QR), `src/pages/VerifyJobOrder.tsx` (public `/verify/:id` page)
+* `src/pages/JobOrderPrint.tsx` (watermark + QR), `src/pages/Verify.tsx` (public `/verify/:id` page)
 * `docs/obsidian-vault/09-Future/` (deferred guard / gate module)

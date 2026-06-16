@@ -12,6 +12,11 @@ Parking lot for ideas not on the committed [[Roadmap]]. Nothing here is a commit
 
 - **[[Terminal & Depot Operating System (North Star)]]** — the endgame: create/upgrade KTC's existing TOS into an **Octopi-class, modular Navis-style terminal + depot operating system**. Container/EIR data spine first, then gate/depot-M&R/yard/billing/EDI. Recorded in **ADR-0015**; grounded by `docs/research/navis-tos-landscape-2026-06-13.md`.
 
+## Module specs (deferred)
+
+- **[[Gate Module (gate-in-out)]]** — the container/EIR-level **gate pass** + guard gate-in/gate-out (one-way per trade, single-use, holds on pending balance). The gate pass is keyed on the container, **not** the Job Order (most containers have no JO). Launch ships **verify-only** (the `/verify/:id` QR); the gate *action* layer is deferred. Recorded in **ADR-0022**; builds on the verify-QR ([[Verify-QR Anti-Forgery]]).
+- **[[Vessel Schedule Monitoring]]** — vessel/voyage schedule monitoring for the operations floor.
+
 ## Candidates (smaller ideas)
 
 - **Per-broker consignee assignment UI** — explicit accreditation linking brokers ↔ consignees (beyond the global approved set). *(Partially on the Roadmap as scoping.)*
