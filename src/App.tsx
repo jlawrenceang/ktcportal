@@ -27,6 +27,8 @@ const JobOrderPrint = lazy(() => import('./pages/JobOrderPrint'))
 const Verify = lazy(() => import('./pages/Verify'))
 const Payment = lazy(() => import('./pages/Payment'))
 const Calculator = lazy(() => import('./pages/Calculator'))
+const AppHome = lazy(() => import('./app/AppHome'))
+const AppChecker = lazy(() => import('./app/AppChecker'))
 const Vessels = lazy(() => import('./pages/Vessels'))
 const SupportTickets = lazy(() => import('./pages/SupportTickets'))
 const Manual = lazy(() => import('./pages/Manual'))
@@ -121,6 +123,10 @@ export default function App() {
           <Route path="/job-orders" element={<Protected><MyJobOrders /></Protected>} />
           <Route path="/support" element={<Protected><SupportTickets /></Protected>} />
           <Route path="/manual" element={<Protected><Manual /></Protected>} />
+
+          {/* Installable staff app (focused, role-aware) */}
+          <Route path="/app" element={<Protected><AppHome /></Protected>} />
+          <Route path="/app/checker" element={<Admin><AppChecker /></Admin>} />
 
           {/* Admin portal */}
           <Route path="/admin" element={<Admin><Dashboard /></Admin>} />
