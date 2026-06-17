@@ -6,14 +6,15 @@ import { usePermissions, type Permission } from '../lib/usePermissions'
 import { useAdminCounts } from '../lib/useAdminCounts'
 import { useTour } from '../components/TourProvider'
 import { useT } from '../lib/i18n'
+import LangToggle from '../components/LangToggle'
+import ThemeToggle from '../components/ThemeToggle'
+import PushToggle from '../components/PushToggle'
 
 // A small "needs attention" pill (capped at 9+).
 function Pill({ n }: { n: number }) {
   if (!n) return null
   return <span aria-hidden className="ktc-tab-badge">{n > 9 ? '9+' : n}</span>
 }
-import LangToggle from '../components/LangToggle'
-import ThemeToggle from '../components/ThemeToggle'
 
 // Admin bottom tab bar — the SAME pattern as the customer BottomNav (floating
 // bar on all widths + ⊞ Menu grid popup), so the staff portal matches the
@@ -162,6 +163,7 @@ export default function AdminBottomNav() {
                 <span style={{ flex: 1 }}>{t('Dark mode')}</span>
                 <ThemeToggle />
               </div>
+              <PushToggle />
               <button type="button" className="ktc-menu-setting" onClick={() => void handleSignOut()}>
                 <span style={{ flex: 1 }}>{t('Sign out')}</span>
               </button>

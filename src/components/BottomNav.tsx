@@ -7,6 +7,7 @@ import { useTour } from './TourProvider'
 import { useT } from '../lib/i18n'
 import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
+import PushToggle from './PushToggle'
 
 // Persistent bottom tab bar — the single navigation on ALL widths (a centered
 // floating bar on desktop too). 5 icons: Home · Orders · Vessels · Rates · ⊞ Menu.
@@ -152,6 +153,7 @@ export default function BottomNav() {
                 <span style={{ flex: 1 }}>{t('Dark mode')}</span>
                 <ThemeToggle />
               </div>
+              <PushToggle />
               <button type="button" className="ktc-menu-setting" onClick={() => void handleSignOut()}>
                 <span style={{ flex: 1 }}>{t('Sign out')}</span>
               </button>
