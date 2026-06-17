@@ -37,3 +37,23 @@ Thumbs.db
 # local screenshot capture (not committed)
 docs/screenshots/
 docs/ktc-screenshots.zip
+
+# Android signing keystore + secrets (never commit)
+android-keystore.jks
+*.jks
+*.keystore
+android/
+*.apk
+*.aab
+
+# Generated TWA/Android project (built locally from twa-manifest.json, never committed)
+/app/
+/gradle/
+/gradlew
+/gradlew.bat
+/build.gradle
+/settings.gradle
+/gradle.properties
+/local.properties
+/manifest-checksum.txt
+/store_icon.png
