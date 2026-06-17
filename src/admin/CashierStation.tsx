@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import AdminShell from './AdminShell'
+import RoleShell from '../app/RoleShell'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import { usePageTour } from '../components/TourProvider'
@@ -43,7 +43,7 @@ function one<T>(v: T | T[] | null | undefined): T | null {
 
 const dangerBtn: React.CSSProperties = { background: 'linear-gradient(135deg,#e0574a,#c5392b)', color: '#fff', border: 0, borderRadius: 10, padding: '8px 14px', fontWeight: 650, cursor: 'pointer', fontSize: 13 }
 
-export default function CashierStation() {
+export default function CashierStation({ app = false }: { app?: boolean }) {
   const { t } = useT()
   usePageTour('cashier', cashierSteps)
   const [orders, setOrders] = useState<CashOrder[]>([])
@@ -168,7 +168,7 @@ export default function CashierStation() {
   )
 
   return (
-    <AdminShell>
+    <RoleShell app={app} title="Cashier">
       <div style={{ margin: '14px 4px 18px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
         <div>
           <h1 className="ktc-title">{t('Cashier')}</h1>
@@ -281,6 +281,6 @@ export default function CashierStation() {
           </div>
         </div>
       )}
-    </AdminShell>
+    </RoleShell>
   )
 }

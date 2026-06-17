@@ -22,7 +22,7 @@ import { VERSION_LABEL, VERSION_FULL } from '../version'
 // minute before, and one tap keeps them alive.
 const ADMIN_IDLE_LOGOUT_MS = 60 * 60 * 1000
 
-export default function AdminShell({ children }: { children: ReactNode; crumb?: string }) {
+export default function AdminShell({ children }: { children: ReactNode; crumb?: string; title?: string }) {
   const { t } = useT()
   const { signOut } = useAuth()
   const { broker } = usePermissions()

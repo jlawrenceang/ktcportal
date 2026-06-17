@@ -71,10 +71,12 @@ function RoleLanding() {
       </div>
     )
   }
-  if (broker?.staff_role === 'checker') return <Navigate to="/admin/checker" replace />
-  if (broker?.staff_role === 'operations') return <Navigate to="/admin/job-orders" replace />
-  if (broker?.staff_role === 'cashier') return <Navigate to="/admin/cashier" replace />
-  if (broker?.staff_role === 'csr') return <Navigate to="/admin/support" replace />
+  // Operational roles land on their FOCUSED single-purpose screen (web + app);
+  // the full portal is one tap away via "Open full portal".
+  if (broker?.staff_role === 'checker') return <Navigate to="/app/checker" replace />
+  if (broker?.staff_role === 'operations') return <Navigate to="/app/operations" replace />
+  if (broker?.staff_role === 'cashier') return <Navigate to="/app/cashier" replace />
+  if (broker?.staff_role === 'csr') return <Navigate to="/app/support" replace />
   if (hasAdminAccess(broker)) return <Navigate to="/admin" replace />
   return <Home />
 }
@@ -127,6 +129,9 @@ export default function App() {
           {/* Installable staff app (focused, role-aware) */}
           <Route path="/app" element={<Protected><AppHome /></Protected>} />
           <Route path="/app/checker" element={<Admin><AppChecker /></Admin>} />
+          <Route path="/app/cashier" element={<Admin><CashierStation app /></Admin>} />
+          <Route path="/app/support" element={<Admin><SupportInbox app /></Admin>} />
+          <Route path="/app/operations" element={<Admin><AllJobOrders app /></Admin>} />
 
           {/* Admin portal */}
           <Route path="/admin" element={<Admin><Dashboard /></Admin>} />

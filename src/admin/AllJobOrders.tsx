@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
-import AdminShell from './AdminShell'
+import RoleShell from '../app/RoleShell'
 import { supabase } from '../lib/supabase'
 import { usePermissions } from '../lib/usePermissions'
 import { useFileViewer } from '../components/FileViewerModal'
@@ -118,7 +118,7 @@ const btn = (variant: 'solid' | 'ghost' | 'danger'): CSSProperties => ({
   background: variant === 'solid' ? 'linear-gradient(135deg, var(--acc), var(--acc-2))' : variant === 'danger' ? 'var(--c-h0-75-96)' : 'var(--c-w60)',
 })
 
-export default function AllJobOrders() {
+export default function AllJobOrders({ app = false }: { app?: boolean }) {
   const { t } = useT()
   usePageTour('operations', operationsSteps)
   const { can } = usePermissions()
@@ -310,7 +310,7 @@ export default function AllJobOrders() {
   }
 
   return (
-    <AdminShell>
+    <RoleShell app={app} title="Job Orders">
       <div className="ktc-glass" style={{ padding: 18 }}>
         <h1 className="ktc-title">{t('Job Orders')}</h1>
         <p className="ktc-sub" style={{ marginBottom: 14 }}>{t('Review and process job orders from verified customers.')}</p>
@@ -717,6 +717,6 @@ export default function AllJobOrders() {
           </div>
         </div>
       )}
-    </AdminShell>
+    </RoleShell>
   )
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import AdminShell from './AdminShell'
+import RoleShell from '../app/RoleShell'
 import { supabase } from '../lib/supabase'
 import { usePermissions } from '../lib/usePermissions'
 import { usePageTour } from '../components/TourProvider'
@@ -79,7 +79,7 @@ function StatusChip({ status }: { status: string }) {
   )
 }
 
-export default function SupportInbox() {
+export default function SupportInbox({ app = false }: { app?: boolean }) {
   const { t } = useT()
   usePageTour('support', supportSteps)
   const { can, loading: permLoading } = usePermissions()
@@ -166,29 +166,29 @@ export default function SupportInbox() {
 
   if (permLoading) {
     return (
-      <AdminShell>
+      <RoleShell app={app} title="Support">
         <div className="ktc-glass" style={{ padding: 18 }}>
           <div className="ktc-label">{t('Loading…')}</div>
         </div>
-      </AdminShell>
+      </RoleShell>
     )
   }
 
   if (!allowed) {
     return (
-      <AdminShell>
+      <RoleShell app={app} title="Support">
         <div className="ktc-glass" style={{ padding: 18 }}>
           <h1 className="ktc-title">{t('Support')}</h1>
           <p className="ktc-label" style={{ fontSize: 14, marginTop: 8 }}>
             {t('You don’t have access to the support inbox.')}
           </p>
         </div>
-      </AdminShell>
+      </RoleShell>
     )
   }
 
   return (
-    <AdminShell>
+    <RoleShell app={app} title="Support">
       <div className="ktc-glass" style={{ padding: 18 }}>
         <h1 className="ktc-title">{t('Support')}</h1>
         <p className="ktc-sub" style={{ marginBottom: 14 }}>{t('Customer support tickets. Newest activity first.')}</p>
@@ -322,6 +322,6 @@ export default function SupportInbox() {
           </div>
         )
       })()}
-    </AdminShell>
+    </RoleShell>
   )
 }
