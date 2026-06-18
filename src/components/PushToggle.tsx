@@ -23,15 +23,18 @@ export default function PushToggle({ variant = 'menu' }: { variant?: 'menu' | 'b
 
   async function toggle() {
     setBusy(true); setErr(null)
-    if (on) {
-      await disablePush()
-      setOn(false)
-    } else {
-      const r = await enablePush()
-      if (r.ok) setOn(true)
-      else setErr(r.error ?? t('Could not enable alerts.'))
+    try {
+      if (on) {
+        await disablePush()
+        setOn(false)
+      } else {
+        const r = await enablePush()
+        if (r.ok) setOn(true)
+        else setErr(r.error ?? t('Could not enable alerts.'))
+      }
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
   }
 
   const statusChip = (

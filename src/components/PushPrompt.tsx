@@ -53,10 +53,13 @@ export default function PushPrompt() {
 
   async function turnOn() {
     setBusy(true); setErr(null)
-    const r = await enablePush()
-    setBusy(false)
-    if (r.ok) { localStorage.setItem(KEY, 'enabled'); setOpen(false) }
-    else setErr(r.error ?? t('Could not enable alerts.'))
+    try {
+      const r = await enablePush()
+      if (r.ok) { localStorage.setItem(KEY, 'enabled'); setOpen(false) }
+      else setErr(r.error ?? t('Could not enable alerts.'))
+    } finally {
+      setBusy(false)
+    }
   }
   function notNow() {
     localStorage.setItem(KEY, 'dismissed') // don't auto-ask again
