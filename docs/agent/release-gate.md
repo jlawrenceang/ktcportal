@@ -31,6 +31,7 @@ Every plan, implementation, review, and merge must explicitly pass all six check
 
 ## 6. Release readiness and rollback discipline
 - Required checks: `npm run lint`, `npm run build`, and a targeted smoke test on the touched flow (see `testing-and-release.md`).
+- **For any change touching SQL/migrations**, also run `node scripts/check-security-invariants.mjs` — it fails the release if a `SECURITY DEFINER` trigger/internal helper became client-callable (the 0105 ACL rule, now a standing check) or the owner-guard trigger (`guard_broker_protected_fields`) is missing. A new internal/trigger definer function must `revoke … from public, anon, authenticated`.
 - For DB changes, record what migration was applied and how to reverse it.
 - Record assumptions, residual risks, and rollback steps before merge.
 
