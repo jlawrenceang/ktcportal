@@ -6,7 +6,7 @@
 // (migration 0037); can also be invoked manually with the same header.
 //
 // Required function secrets (scripts/setup-boc-mirror.mjs sets them):
-//   CRON_SECRET      — shared secret for the trigger
+//   BOC_CRON_SECRET  — per-function trigger secret (legacy CRON_SECRET still honored)
 //   GOOGLE_SA_EMAIL  — Google service-account email (Sheet shared with it, Editor)
 //   GOOGLE_SA_KEY    — the service account's PKCS8 private key (PEM, \n-escaped ok)
 //   BOC_SHEET_ID     — target spreadsheet id (the long id in the Sheet URL)
@@ -40,7 +40,10 @@ async function googleToken(saEmail: string, saKeyPem: string): Promise<string> {
 }
 
 Deno.serve(async (req) => {
-  const secret = Deno.env.get('CRON_SECRET')
+  // Per-function secret. Falls back to the legacy shared CRON_SECRET during the
+  // transition so this function is never collateral-403'd when the OTHER cron's
+  // setup script runs (the project-wide-CRON_SECRET gotcha).
+  const secret = Deno.env.get('BOC_CRON_SECRET') ?? Deno.env.get('CRON_SECRET')
   if (!secret || req.headers.get('x-cron-secret') !== secret) {
     return json({ ok: false, error: 'forbidden' }, 403)
   }

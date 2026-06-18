@@ -16,7 +16,8 @@
 //
 // One-time Google setup (manual): reuse the boc-mirror service account (or make
 // one + enable the Google Sheets API + create a JSON key). SHARE the vessel
-// Sheet with the service-account email as VIEWER. The sheet's first row must be
+// Sheet with the service-account email as EDITOR (the function writes the
+// computed Last Free Day back into the sheet). The sheet's first row must be
 // the headers: vessel_visit, vessel_name, voyage_number (required) +
 // shipping_line, actual_arrival, finish_discharging, berth, remarks, cancelled.
 //
@@ -57,9 +58,11 @@ const dep = await api('/functions/deploy?slug=vessel-sync', { method: 'POST', bo
 if (!dep.ok) { console.error(`deploy failed: ${dep.status} ${await dep.text()}`); process.exit(1) }
 console.log('✓ vessel-sync function deployed')
 
-// 2) Function secrets.
+// 2) Function secrets. Use a PER-FUNCTION secret name (VESSEL_CRON_SECRET) so a
+//    rerun never clobbers boc-mirror's secret — the function reads
+//    VESSEL_CRON_SECRET ?? CRON_SECRET. (Avoids the project-wide-CRON_SECRET gotcha.)
 const cronSecret = get('VESSEL_CRON_SECRET') || randomBytes(24).toString('hex')
-const secrets = [{ name: 'CRON_SECRET', value: cronSecret }]
+const secrets = [{ name: 'VESSEL_CRON_SECRET', value: cronSecret }]
 for (const [env, name] of [['GOOGLE_SA_EMAIL', 'GOOGLE_SA_EMAIL'], ['GOOGLE_SA_KEY', 'GOOGLE_SA_KEY'], ['VESSEL_SHEET_ID', 'VESSEL_SHEET_ID']]) {
   const v = get(env)
   if (v) secrets.push({ name, value: v })

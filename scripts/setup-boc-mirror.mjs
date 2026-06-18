@@ -58,9 +58,11 @@ const dep = await api('/functions/deploy?slug=boc-mirror', { method: 'POST', bod
 if (!dep.ok) { console.error(`deploy failed: ${dep.status} ${await dep.text()}`); process.exit(1) }
 console.log('✓ boc-mirror function deployed')
 
-// 2) Function secrets.
+// 2) Function secrets. Use a PER-FUNCTION secret name (BOC_CRON_SECRET) so a
+//    rerun never clobbers vessel-sync's secret — the function reads
+//    BOC_CRON_SECRET ?? CRON_SECRET. (Avoids the project-wide-CRON_SECRET gotcha.)
 const cronSecret = get('BOC_CRON_SECRET') || randomBytes(24).toString('hex')
-const secrets = [{ name: 'CRON_SECRET', value: cronSecret }]
+const secrets = [{ name: 'BOC_CRON_SECRET', value: cronSecret }]
 for (const [env, name] of [['GOOGLE_SA_EMAIL', 'GOOGLE_SA_EMAIL'], ['GOOGLE_SA_KEY', 'GOOGLE_SA_KEY'], ['BOC_SHEET_ID', 'BOC_SHEET_ID']]) {
   const v = get(env)
   if (v) secrets.push({ name, value: v })

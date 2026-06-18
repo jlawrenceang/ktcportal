@@ -18,7 +18,8 @@
 // (trigger_vessel_sync, 0109), both POST with the x-cron-secret header.
 //
 // Required function secrets (scripts/setup-vessel-sync.mjs sets them):
-//   CRON_SECRET / GOOGLE_SA_EMAIL / GOOGLE_SA_KEY / VESSEL_SHEET_ID
+//   VESSEL_CRON_SECRET / GOOGLE_SA_EMAIL / GOOGLE_SA_KEY / VESSEL_SHEET_ID
+//   (legacy shared CRON_SECRET still honored as a fallback)
 // The vessel Sheet must be shared with GOOGLE_SA_EMAIL as EDITOR (the LFD mirror
 // writes back).
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -80,7 +81,9 @@ const truthy = (v: unknown): boolean => /^(1|true|yes|y|cancelled|cancel)$/i.tes
 const deriveVisit = (name: string, voy: string, disc: string): string => `${name} ${voy} ${disc}`.trim().toUpperCase().replace(/\s+/g, ' ')
 
 Deno.serve(async (req) => {
-  const secret = Deno.env.get('CRON_SECRET')
+  // Per-function secret; legacy shared CRON_SECRET kept as a transition fallback
+  // so a boc-mirror setup rerun can't collateral-403 this function.
+  const secret = Deno.env.get('VESSEL_CRON_SECRET') ?? Deno.env.get('CRON_SECRET')
   if (!secret || req.headers.get('x-cron-secret') !== secret) return json({ ok: false, error: 'forbidden' }, 403)
   const saEmail = Deno.env.get('GOOGLE_SA_EMAIL')
   const saKey = Deno.env.get('GOOGLE_SA_KEY')

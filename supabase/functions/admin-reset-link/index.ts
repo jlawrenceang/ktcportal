@@ -6,8 +6,9 @@
 //
 // Security: owner/admin ONLY, and never the owner failsafe account. The gateway
 // requires a valid session (default verify_jwt); we additionally confirm the
-// caller is admin/owner using the service-role key. Mirrors the boc-mirror
-// function's runtime conventions.
+// caller is admin/owner by calling public.is_admin() AS THE CALLER (anon key +
+// the caller's JWT) so the DB's MFA(aal2) + live-session checks apply — a stolen
+// password at aal1 cannot mint reset links. Mirrors the boc-mirror conventions.
 //
 // Invoked from the admin portal: supabase.functions.invoke('admin-reset-link',
 //   { body: { customer_id, redirect_to } }).
@@ -27,7 +28,8 @@ Deno.serve(async (req) => {
 
   const url = Deno.env.get('SUPABASE_URL')
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-  if (!url || !serviceKey) return json({ error: 'Function not configured.' }, 500)
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
+  if (!url || !serviceKey || !anonKey) return json({ error: 'Function not configured.' }, 500)
 
   const jwt = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '')
   if (!jwt) return json({ error: 'Missing authorization.' }, 401)
@@ -38,10 +40,17 @@ Deno.serve(async (req) => {
   const { data: u, error: uErr } = await admin.auth.getUser(jwt)
   if (uErr || !u.user) return json({ error: 'Invalid session.' }, 401)
 
-  // 2) Caller must be admin or owner.
-  const { data: caller } = await admin
-    .from('customers').select('is_admin, is_owner').eq('user_id', u.user.id).maybeSingle()
-  if (!caller || !(caller.is_admin || caller.is_owner)) return json({ error: 'Admin access required.' }, 403)
+  // 2) Caller must be admin/owner — evaluated by the DB AS THE CALLER, so
+  //    is_admin() folds in MFA(aal2) + session-alive. is_admin() already returns
+  //    true for the owner (is_admin OR is_owner). A password-only (aal1) session
+  //    of an MFA-enrolled admin therefore fails here, closing the bypass.
+  const callerClient = createClient(url, anonKey, {
+    global: { headers: { Authorization: `Bearer ${jwt}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+  const { data: isAdmin, error: permErr } = await callerClient.rpc('is_admin')
+  if (permErr) return json({ error: 'Authorization check failed.' }, 500)
+  if (isAdmin !== true) return json({ error: 'Admin access required (complete MFA verification if enabled).' }, 403)
 
   // 3) Resolve the target customer.
   let body: { customer_id?: string; redirect_to?: string }
@@ -55,7 +64,21 @@ Deno.serve(async (req) => {
   if (target.is_owner) return json({ error: 'The owner account can’t be reset from here.' }, 403)
 
   // 4) Mint the recovery (set-password) link. No email is sent.
-  const redirectTo = body.redirect_to || `${url}/reset-password`
+  //    Allowlist redirect_to to the portal origin (defense-in-depth over Auth's
+  //    own Redirect-URL allowlist) so the action link can't be aimed elsewhere.
+  const safeRedirect = (input?: string): string => {
+    const fallback = `${url}/reset-password`
+    if (!input) return fallback
+    try {
+      const r = new URL(input)
+      if (r.protocol === 'https:' &&
+          (r.hostname === 'ktcterminal.com' || r.hostname.endsWith('.ktcterminal.com'))) {
+        return input
+      }
+    } catch { /* not an absolute URL */ }
+    return fallback
+  }
+  const redirectTo = safeRedirect(body.redirect_to)
   const { data: link, error: lErr } = await admin.auth.admin.generateLink({
     type: 'recovery',
     email: target.email,
