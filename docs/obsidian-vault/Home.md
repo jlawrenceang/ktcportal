@@ -59,6 +59,7 @@ Rule of thumb: if you are asking *"what is the rule?"* open `docs/agent/*`. If y
 - [[Two-Gate Completion]] · [[Additional-Charge Supplements]] · [[Verify-QR Anti-Forgery]]
 - [[Comment Visibility & Escalation]] · [[Cashier Station]] · [[Support Tickets]] · [[Staff Notifications]]
 - [[CAPTCHA Bot Protection]] · [[RLS Posture]] · [[Broker Agreement]] · [[visionOS Design System]]
+- [[Localization (i18n)]] · [[Mobile & Tablet UX]]
 - [[Job Order Lifecycle]] — full state machine (source of truth)
 
 ## Documentation governance
