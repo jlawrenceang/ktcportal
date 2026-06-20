@@ -7,6 +7,7 @@ import type { Broker } from '../lib/types'
 import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
 import { useT } from '../lib/i18n'
 import LangToggle from '../components/LangToggle'
+import TestPushCard from './TestPushCard'
 import { peso } from '../lib/pricing'
 import { SHIPPING_LINES, TERMINAL_CHARGE_SERVICES, CHARGE_RULE_ACTIONS } from '../lib/shippingLines'
 
@@ -418,6 +419,8 @@ export default function Settings() {
         </div>
         <LangToggle />
       </div>
+
+      {isOwner && <TestPushCard />}
 
       <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <h1 className="ktc-title">{t('Staff & access')}</h1>
