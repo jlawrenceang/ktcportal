@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useT } from '../lib/i18n'
 
@@ -8,7 +8,7 @@ import { useT } from '../lib/i18n'
 // mounted while it navigates between pages.
 
 export interface TourStep {
-  icon: string
+  icon: ReactNode
   title: string
   body: string
   to?: string      // navigate here for this step
@@ -110,7 +110,7 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
           ...cardPos,
         }}
       >
-        <div aria-hidden style={{ fontSize: 34, lineHeight: 1 }}>{s.icon}</div>
+        <div aria-hidden style={{ width: 48, height: 48, borderRadius: 14, display: 'grid', placeItems: 'center', background: 'rgb(var(--acc-rgb) / 0.12)', color: 'var(--acc-2)' }}>{s.icon}</div>
         <h2 style={{ margin: '12px 0 0', fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{t(s.title)}</h2>
         <p className="ktc-label" style={{ marginTop: 9, fontSize: 13.5, lineHeight: 1.6 }}>{t(s.body)}</p>
 
@@ -128,7 +128,7 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
             <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => setStep(step - 1)}>{t('← Back')}</button>
           )}
           <button type="button" className="ktc-btn" style={{ flex: 1 }} onClick={() => (last ? finish() : setStep(step + 1))}>
-            {last ? t('Done 🚀') : t('Next →')}
+            {last ? t('Done') : t('Next →')}
           </button>
         </div>
         {!last && (

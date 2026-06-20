@@ -24,7 +24,7 @@ export function joEventLabel(e: JobOrderEvent): string {
 
 /** Labels for security_events kinds. */
 export const SECURITY_EVENT_LABEL: Record<string, string> = {
-  protected_field_attempt: '🚨 Blocked privilege-escalation attempt',
+  protected_field_attempt: 'Blocked privilege-escalation attempt',
   role_gate_changed: 'Role gate changed',
   session_evicted: 'Session evicted — account signed in on a new device',
 }

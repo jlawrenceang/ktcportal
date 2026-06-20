@@ -76,10 +76,11 @@ export default function StaffNotificationBell() {
       void supabase.rpc('mark_staff_notifications_read', { p_ids: [n.id] }).then(() => undefined, () => undefined)
     }
     // Route by target: payment/RPS events → the orders list (handing the order
-    // id over the same way the customer bell does); support → the inbox; the
-    // rest (account verifications) → the admin home.
+    // id over the same way the customer bell does); support → the inbox;
+    // account verifications → the approvals desk; anything else → the admin home.
     if (n.job_order_id) { sessionStorage.setItem('ktc_jo_filed_id', n.job_order_id); navigate('/admin/job-orders'); return }
     if (n.ticket_id) { navigate('/admin/support'); return }
+    if (n.kind === 'account') { navigate('/admin/approvals'); return }
     navigate('/admin')
   }
 

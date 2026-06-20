@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import { hasAdminAccess } from '../lib/types'
 import { useT } from '../lib/i18n'
+import { ShieldIcon } from '../components/icons'
 
 // /admin/security — two-factor authentication self-service for staff + owner.
 // Enroll: QR (or manual secret) → 6-digit verify. Once verified, the backend
@@ -164,8 +165,8 @@ export default function Security() {
           </div>
         ) : (
           <div style={{ marginTop: 20 }}>
-            <button className="ktc-btn" type="button" disabled={busy} onClick={() => void startEnroll()} style={{ width: 'auto', padding: '12px 26px' }}>
-              {busy ? t('Preparing…') : t('🔐 Set up two-factor authentication')}
+            <button className="ktc-btn" type="button" disabled={busy} onClick={() => void startEnroll()} style={{ width: 'auto', padding: '12px 26px', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              {busy ? t('Preparing…') : <><ShieldIcon size={16} /> {t('Set up two-factor authentication')}</>}
             </button>
           </div>
         )}

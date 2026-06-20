@@ -7,6 +7,7 @@ import { useBroker } from '../lib/useBroker'
 import { prepareUpload } from '../lib/validation'
 import { loadPricingConfig, computeCharges, peso, type PricingConfig } from '../lib/pricing'
 import { useT } from '../lib/i18n'
+import { ClockIcon, PaperclipIcon } from '../components/icons'
 import type { JobOrder } from '../lib/types'
 
 // Per-JO payment page: fee computation + KTC bank/GCash details + QR +
@@ -153,7 +154,7 @@ export default function Payment() {
       )}
       {outstandingSupps.length > 0 && (
         <Notice tone="warning" style={{ marginBottom: 16 }}>
-          ⏳ <b>{t('Under review')}</b> — {t('KTC added an additional charge to this order. Please settle it below; the order can’t be completed until it’s paid.')}
+          <span aria-hidden style={{ display: 'inline-flex', verticalAlign: '-3px' }}><ClockIcon size={15} /></span> <b>{t('Under review')}</b> — {t('KTC added an additional charge to this order. Please settle it below; the order can’t be completed until it’s paid.')}
         </Notice>
       )}
       {order.service_invoice_no && (
@@ -336,7 +337,7 @@ function PaySection({ title, amount, status, note, submittedAt, file, setFile, o
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) setFile(f) }} style={{ maxWidth: 340, padding: '10px 13px' }} />
             ) : (
               <>
-                <span style={{ fontSize: 13, fontWeight: 500, padding: '9px 13px', borderRadius: 10, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📎 {file.name}</span>
+                <span style={{ fontSize: 13, fontWeight: 500, padding: '9px 13px', borderRadius: 10, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 7 }}><PaperclipIcon size={14} /> {file.name}</span>
                 <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy} onClick={onSubmit}>{busy ? t('Sending…') : t('Submit to KTC')}</button>
                 <button type="button" className="ktc-link" disabled={busy} onClick={() => setFile(null)}>{t('Remove')}</button>
               </>

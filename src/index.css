@@ -230,6 +230,23 @@
   /* Opaque surface (two-class so it beats .ktc-glass regardless of source order)
      — the dropdown list must be fully readable, not see-through. */
   .ktc-glass.ktc-notif-panel { background: var(--c-solid); }
+  /* Phones: the bell sits mid-rail (avatar to its right), so an anchored
+     right:0 dropdown runs off the left edge and gets clipped. Detach it into a
+     centered sheet under the rail. .ktc-nav has backdrop-filter, so it is the
+     containing block for this fixed child — left/right/top resolve against the
+     rail, giving a full-width, never-clipped panel on any phone. */
+  @media (max-width: 560px) {
+    .ktc-notif-panel {
+      position: fixed;
+      top: calc(100% + 10px);
+      left: 0;
+      right: 0;
+      width: auto;
+      max-width: none;
+      max-height: calc(100dvh - 150px);
+      overflow-y: auto;
+    }
+  }
   .ktc-burger-label { font-size: 13px; font-weight: 650; }
   .ktc-nav-links {
     display: flex;

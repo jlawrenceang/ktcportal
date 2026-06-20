@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { useT } from '../lib/i18n'
+import { LockIcon } from './icons'
 import { useBroker } from '../lib/useBroker'
 import { useAuth } from '../lib/AuthContext'
 
@@ -41,8 +42,8 @@ export default function ProtectedDoc({ children }: { children: ReactNode }) {
   return (
     <>
       <div className="ktc-protected-doc" onContextMenu={(e) => e.preventDefault()} onCopy={(e) => e.preventDefault()}>
-        <div className="ktc-confidential-badge">
-          🔒 {t('Confidential — for viewing only. Printing, saving and copying are disabled.')}
+        <div className="ktc-confidential-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+          <LockIcon size={14} /> {t('Confidential — for viewing only. Printing, saving and copying are disabled.')}
         </div>
         {children}
         <div className="ktc-doc-watermark" aria-hidden style={{ backgroundImage: `url("${wmSvg}")` }} />

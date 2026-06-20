@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useT } from '../lib/i18n'
+import { GlobeIcon } from './icons'
 
 // Public / auth-flow routes where the chooser must NOT appear — most importantly
 // /confirmed, where the email-confirmation link establishes a transient session
@@ -36,7 +37,7 @@ export default function LanguageGate() {
           <button className="ktc-btn-secondary" type="button" onClick={() => setLang('tl')}>Filipino (Tagalog)</button>
         </div>
         <p className="ktc-label" style={{ margin: '16px 0 0', fontSize: 12, opacity: 0.75 }}>
-          You can change this later — 🌐 EN / FIL in the side menu (or Settings).<br />
+          You can change this later — <span style={{ display: 'inline-flex', verticalAlign: '-2px' }}><GlobeIcon size={13} /></span> EN / FIL in the side menu (or Settings).<br />
           Pwede mong palitan kahit kailan sa menu o Settings.
         </p>
       </div>

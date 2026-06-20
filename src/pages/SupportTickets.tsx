@@ -3,6 +3,7 @@ import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import { useT } from '../lib/i18n'
+import { LockIcon } from '../components/icons'
 
 // Customer support tickets — the logged system-of-record. Customers open
 // tickets, exchange threaded messages with KTC, and (optionally) hand off to a
@@ -343,8 +344,9 @@ export default function SupportTickets() {
                 {/* Reply — a closed ticket is locked; the customer continues via
                     a hand-off below or opens a new ticket. */}
                 {tk.status === 'closed' ? (
-                  <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 14, padding: '10px 12px', borderRadius: 9, background: 'var(--c-w35)', border: '1px dashed var(--glass-brd)' }}>
-                    {t('🔒 This ticket is closed. Open a new ticket if you need further help.')}
+                  <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 14, padding: '10px 12px', borderRadius: 9, background: 'var(--c-w35)', border: '1px dashed var(--glass-brd)', display: 'flex', alignItems: 'flex-start', gap: 7 }}>
+                    <span aria-hidden style={{ flex: '0 0 auto', marginTop: 1 }}><LockIcon size={13} /></span>
+                    {t('This ticket is closed. Open a new ticket if you need further help.')}
                   </div>
                 ) : (
                   <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>

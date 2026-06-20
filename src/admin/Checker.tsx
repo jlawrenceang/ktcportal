@@ -283,7 +283,7 @@ export default function Checker() {
           {loading ? (
             [72, 72].map((h, i) => <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 16 }} />)
           ) : queue.length === 0 ? (
-            <span className="ktc-label" style={{ fontSize: 14 }}>{t('Queue is clear. 🎉')}</span>
+            <span className="ktc-label" style={{ fontSize: 14 }}>{t('Queue is clear.')}</span>
           ) : (
             queue.map((o) => <OrderCard key={o.id} o={o} />)
           )}

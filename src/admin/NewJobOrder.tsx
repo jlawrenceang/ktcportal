@@ -7,6 +7,7 @@ import SearchPicker, { type PickerItem } from '../components/SearchPicker'
 import ContainerLinesEditor, { emptyLine, type LineDraft } from '../components/ContainerLinesEditor'
 import { searchConsignees, searchCustomers } from '../lib/pickerSearches'
 import { useT } from '../lib/i18n'
+import { PrinterIcon } from '../components/icons'
 
 // Admin "file on behalf of" (gap G3) — walk-ins at the window and in-house
 // ops. Files straight to 'submitted' via the admin_file_job_order RPC
@@ -117,8 +118,8 @@ export default function NewJobOrder() {
               {' '}{t('Serving numbers are assigned — the slip can be printed now.')}
             </div>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Link to={`/job-order/${filed.id}/print`} className="ktc-btn" style={{ width: 'auto', padding: '11px 22px', textDecoration: 'none' }}>
-                🖨 {t('Print slip')}
+              <Link to={`/job-order/${filed.id}/print`} className="ktc-btn" style={{ width: 'auto', padding: '11px 22px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                <PrinterIcon size={16} /> {t('Print slip')}
               </Link>
               <button type="button" className="ktc-btn-secondary" onClick={reset} style={{ width: 'auto', padding: '11px 22px' }}>
                 + {t('File another')}

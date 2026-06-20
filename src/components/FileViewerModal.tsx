@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useT } from '../lib/i18n'
+import { TrashIcon } from './icons'
 
 /**
  * One-line integration for pages that view stored attachments:
@@ -174,9 +175,9 @@ export default function FileViewerModal({
                 <button type="button" className="ktc-link" onClick={() => setConfirmDel(false)}>{t('No')}</button>
               </span>
             ) : (
-              <button type="button" className="ktc-btn-secondary ktc-btn--sm" style={{ color: 'var(--acc-2)' }} onClick={() => setConfirmDel(true)}
+              <button type="button" className="ktc-btn-secondary ktc-btn--sm" style={{ color: 'var(--acc-2)', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => setConfirmDel(true)}
                 title={t('Permanently delete this file from storage (DPA cleanup)')}>
-                🗑 {t('Delete')}
+                <TrashIcon size={15} /> {t('Delete')}
               </button>
             )
           )}

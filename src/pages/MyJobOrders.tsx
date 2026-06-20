@@ -10,6 +10,7 @@ import { myJobOrdersSteps } from '../components/WelcomeTour'
 import { useBroker } from '../lib/useBroker'
 import JoTimeline from '../components/JoTimeline'
 import EditJobOrderForm from '../components/EditJobOrderForm'
+import { ClockIcon } from '../components/icons'
 import { useT } from '../lib/i18n'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -46,7 +47,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 ]
 const EMPTY_HINT: Record<Filter, string> = {
   active: 'No active orders right now.',
-  action: 'Nothing needs your action. 🎉',
+  action: 'Nothing needs your action.',
   completed: 'No completed orders yet.',
   closed: 'No rejected or cancelled orders.',
   all: 'No job orders yet.',
@@ -298,7 +299,7 @@ export default function MyJobOrders() {
                           <b className="ktc-mono" style={{ fontSize: 13.5 }}>{o.entry_number ?? o.jo_number ?? t('Draft')}</b>
                           <StatusBadge status={o.status} />
                           {hasOutstandingSupplements(o) && (
-                            <span className="ktc-chip ktc-chip--warning" title={t('An additional charge is awaiting payment')}>⏳ {t('Under review')}</span>
+                            <span className="ktc-chip ktc-chip--warning" title={t('An additional charge is awaiting payment')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><ClockIcon size={13} /> {t('Under review')}</span>
                           )}
                         </span>
                         <span className="ktc-label" style={{ display: 'block', fontSize: 12, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -347,7 +348,7 @@ export default function MyJobOrders() {
                   <b className="ktc-mono" style={{ fontSize: 15 }}>{o.jo_number ?? t('Draft (no number yet)')}</b>
                   <StatusBadge status={o.status} />
                   {hasOutstandingSupplements(o) && (
-                    <span className="ktc-chip ktc-chip--warning" title={t('An additional charge is awaiting payment')}>⏳ {t('Under review')}</span>
+                    <span className="ktc-chip ktc-chip--warning" title={t('An additional charge is awaiting payment')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><ClockIcon size={13} /> {t('Under review')}</span>
                   )}
                 </div>
                 <button type="button" aria-label={t('Close')} onClick={close}

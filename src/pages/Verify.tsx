@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { CheckCircleIcon, AlertTriangleIcon } from '../components/icons'
 
 // Public slip-verification page (the slip QR points here). No login: it calls
 // the anon `verify_job_order` RPC and confirms, LIVE against the KTC database,
@@ -50,8 +51,8 @@ export default function Verify() {
             <p style={{ textAlign: 'center', color: '#5a6678', fontSize: 14 }}>Verifying…</p>
           ) : phase === 'notfound' ? (
             <>
-              <div style={{ textAlign: 'center', padding: '14px 12px', borderRadius: 12, background: headTone.bg, border: `1px solid ${headTone.brd}`, color: headTone.ink, fontWeight: 800, fontSize: 18, letterSpacing: '0.02em' }}>
-                ⚠ NOT FOUND
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px 12px', borderRadius: 12, background: headTone.bg, border: `1px solid ${headTone.brd}`, color: headTone.ink, fontWeight: 800, fontSize: 18, letterSpacing: '0.02em' }}>
+                <AlertTriangleIcon size={18} /> NOT FOUND
               </div>
               <p style={{ textAlign: 'center', fontSize: 13, color: '#5a6678', marginTop: 14 }}>
                 This code doesn’t match any Job Order in the KTC system. The slip may be invalid.
@@ -60,8 +61,8 @@ export default function Verify() {
           ) : (
             <>
               {/* Headline: PAID is the cashier-clearance signal */}
-              <div style={{ textAlign: 'center', padding: '16px 12px', borderRadius: 12, background: headTone.bg, border: `1px solid ${headTone.brd}`, color: headTone.ink, fontWeight: 800, fontSize: 24, letterSpacing: '0.04em' }}>
-                {paid ? '✓ PAID' : '⚠ NOT PAID'}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '16px 12px', borderRadius: 12, background: headTone.bg, border: `1px solid ${headTone.brd}`, color: headTone.ink, fontWeight: 800, fontSize: 24, letterSpacing: '0.04em' }}>
+                {paid ? <><CheckCircleIcon size={22} /> PAID</> : <><AlertTriangleIcon size={22} /> NOT PAID</>}
               </div>
               <p style={{ textAlign: 'center', fontSize: 13, color: '#5a6678', marginTop: 8 }}>
                 Order status: <b style={{ color: '#15233a' }}>{STATUS_LABEL[v!.status] ?? v!.status}</b>

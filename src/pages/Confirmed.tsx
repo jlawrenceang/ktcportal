@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useT } from '../lib/i18n'
+import { CheckCircleIcon, AlertTriangleIcon } from '../components/icons'
 
 // Landing page for the email-confirmation link. Supabase's link carries a
 // ONE-TIME token: a valid first click establishes a session here (email is
@@ -77,7 +78,7 @@ export default function Confirmed() {
           </>
         ) : verdict === 'ok' ? (
           <>
-            <div style={{ fontSize: 40, lineHeight: 1, marginBottom: 8 }}>✓</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10, color: 'var(--ok, #1c9e6b)' }}><CheckCircleIcon size={40} /></div>
             <h1 style={{ margin: 0, fontSize: 23, fontWeight: 600, letterSpacing: '-0.02em' }}>{t('Email confirmed')}</h1>
             <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6 }}>
               {t('Thanks — your email address is verified. This window will close shortly; then sign in at portal.ktcterminal.com to continue and upload your valid ID.')}
@@ -94,7 +95,7 @@ export default function Confirmed() {
           </>
         ) : (
           <>
-            <div style={{ fontSize: 38, lineHeight: 1, marginBottom: 8 }}>⚠️</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10, color: 'var(--acc-2)' }}><AlertTriangleIcon size={38} /></div>
             <h1 style={{ margin: 0, fontSize: 21, fontWeight: 600, letterSpacing: '-0.02em' }}>{t('This link is no longer valid')}</h1>
             <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6 }}>
               {t('This confirmation link has already been used or has expired. If you’ve already confirmed your email, just sign in. Otherwise sign in to send yourself a fresh confirmation link.')}

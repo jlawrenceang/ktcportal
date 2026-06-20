@@ -5,6 +5,7 @@ import { usePermissions } from '../lib/usePermissions'
 import { usePageTour } from '../components/TourProvider'
 import { supportSteps } from './AdminTour'
 import { useT } from '../lib/i18n'
+import { LockIcon } from '../components/icons'
 
 // Staff support inbox — gated on the manage_support permission. Lists every
 // ticket with a status filter; opening one shows the thread, a reply box, and
@@ -305,8 +306,9 @@ export default function SupportInbox({ app = false }: { app?: boolean }) {
 
                 {/* Reply — a closed ticket is locked; reopen it to continue. */}
                 {tk.status === 'closed' ? (
-                  <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 12, padding: '10px 12px', borderRadius: 9, background: 'var(--c-w35)', border: '1px dashed var(--glass-brd)' }}>
-                    {t('🔒 This ticket is closed. Reopen it to send a message.')}
+                  <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 12, padding: '10px 12px', borderRadius: 9, background: 'var(--c-w35)', border: '1px dashed var(--glass-brd)', display: 'flex', alignItems: 'flex-start', gap: 7 }}>
+                    <span aria-hidden style={{ flex: '0 0 auto', marginTop: 1 }}><LockIcon size={13} /></span>
+                    {t('This ticket is closed. Reopen it to send a message.')}
                   </div>
                 ) : (
                   <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>

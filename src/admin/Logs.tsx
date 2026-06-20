@@ -94,7 +94,7 @@ export default function Logs() {
       count = n ?? 0
       out = ((data ?? []) as { id: number; kind: string; label: string | null; status_code: number | null; error_msg: string | null; created_at: string }[]).map((e) => ({
         id: String(e.id), at: e.created_at, actor: null,
-        title: `${e.kind === 'email' ? '✉️' : '⇄'} ${e.label ?? e.kind}`,
+        title: e.label ?? e.kind,
         sub: e.error_msg ?? (e.status_code ? `HTTP ${e.status_code}` : t('pending')),
         tone: e.error_msg || (e.status_code ?? 0) >= 400 ? 'danger' : undefined,
       }))
@@ -154,7 +154,7 @@ export default function Logs() {
           </div>
         ) : rows.length === 0 ? (
           <span className="ktc-label" style={{ fontSize: 14 }}>
-            {cat === 'security' ? t('No security events. 🎉') : cat === 'errors' ? t('No client errors recorded. 🎉') : t('Nothing here yet.')}
+            {cat === 'security' ? t('No security events.') : cat === 'errors' ? t('No client errors recorded.') : t('Nothing here yet.')}
           </span>
         ) : (
           <div style={{ display: 'grid', gap: 6 }}>

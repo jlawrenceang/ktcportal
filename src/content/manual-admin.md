@@ -18,7 +18,7 @@ The landing page shows live counts — pending approvals, the open job-order que
 
 ### ID retention
 
-Uploaded IDs are kept a guaranteed **24 hours** (review window — deletion is blocked), can be deleted manually from the file viewer (🗑) between 24 hours and 3 days, and are **auto-purged at 3 days**. Approving does not delete the file immediately.
+Uploaded IDs are kept a guaranteed **24 hours** (review window — deletion is blocked), can be deleted manually from the file viewer (Delete) between 24 hours and 3 days, and are **auto-purged at 3 days**. Approving does not delete the file immediately.
 
 ## 3 · Processing job orders
 
@@ -27,7 +27,7 @@ The **Job Orders** queue shows live orders (held drafts from unverified accounts
 - **Per-service completion:** tick ✓ on each service line as it's done. The first ✓ moves the order to *processing*; it completes only when **all** lines are done.
 - **Hold for info** (with a note): the customer sees the note, responds and resubmits in-app — **keeping their serving number**. Their reply is shown on the card.
 - **Reject** (with a note): recoverable rejections let the customer fix and refile — they rejoin at the **back of the line**; **↩ Restore #N** gives the original number back when justified.
-- **🕘 History** on every card: filed / status changes / service-done events with actor names and timestamps.
+- **History** on every card: filed / status changes / service-done events with actor names and timestamps.
 - **Serving numbers** are per service line, reset weekly (Monday 00:15 carry-over re-queues open orders at the front, in order). Cancel/reject vacates a number (burned, not reused).
 
 ## 4 · Payments and invoices
@@ -35,7 +35,7 @@ The **Job Orders** queue shows live orders (held drafts from unverified accounts
 - **Payment proofs:** orders with an uploaded deposit slip show "Payment proof to review". Open the slip (viewer offers Print / Save), then **Confirm** or **Reject with a note** — the customer is emailed either way and can re-upload.
 - **Recording the Service Invoice** (issued by the ERP, only once paid): enter **both** numbers — the control no. (OR-INV-… / BI-INV-…) and the **printed pad serial** (leading zeros kept). OR = **PAID**, BI = **BILLED** (credit). Both are validated, saved atomically, and logged.
 - **Unpaid · completed** view: completed orders without an invoice, with aging chips (*unpaid 3d*).
-- **🗄 Archive paid & completed** (or the Monday cron) moves finished, invoiced orders out of the default views; customer history is unaffected.
+- **Archive paid & completed** (or the Monday cron) moves finished, invoiced orders out of the default views; customer history is unaffected.
 
 ## 5 · Filing on behalf (New JO)
 
@@ -48,7 +48,7 @@ For walk-ins: **New JO** files a job order for any customer — it goes **straig
 
 ## 7 · Settings
 
-- **Service rates & fees:** locked by default — tap "🔒 Locked — unlock to edit". Per-service rates (₱, per container, VATable flag), flat admin and print fees. **VAT is fixed at the statutory 12%** (server-guarded). Drag rows (⠿) to set the display order everywhere. Saving re-locks.
+- **Service rates & fees:** locked by default — tap "Locked — unlock to edit". Per-service rates (₱, per container, VATable flag), flat admin and print fees. **VAT is fixed at the statutory 12%** (server-guarded). Drag rows (⠿) to set the display order everywhere. Saving re-locks.
 - **Service catalogue:** add a service (name + VATable — names are permanent, deactivate instead of rename), toggle active/inactive (inactive = hidden from new filings; existing orders keep their label and pricing), ✕ delete only if never used.
 - **Payment details:** bank name / account / GCash and the QR image shown on the customer payment page. Blank fields are hidden.
 - **Staff accounts:** create cashier / checker logins (username + password, no email), reset passwords, and edit the **role-gate matrix** — what each role can see and do. Gates are enforced server-side.

@@ -33,7 +33,7 @@ Customers can only file a job order against a **current** vessel/voyage, so keep
 - **Add a call:** vessel visit (e.g. `26RUH02`), vessel name, voyage, shipping line, actual arrival, finish discharging, berth. The **Last Free Day computes itself** (finish discharging + that line's free-days, which admin sets) — and a call **drops off automatically** once its last free day passes. No manual closing.
 - **Bulk update:** tap **⬇ Template**, fill the sheet (or paste from your own), then **⬆ Import** — it adds/updates by **vessel visit**, so re-importing the same sheet is safe (no duplicates).
 - **Calendar** view shows arrivals by month.
-- **📸 Snapshot** makes a clean image of the **active vessels** — on a phone it shares straight to your **Viber group**; on a computer it downloads so you can attach it.
+- **Snapshot** makes a clean image of the **active vessels** — on a phone it shares straight to your **Viber group**; on a computer it downloads so you can attach it.
 - If a customer's vessel isn't listed yet, they file with **"not listed"** and type it in — add the call and it lines up.
 
 ## 5 · What's not yours
@@ -48,4 +48,4 @@ Processing job orders, holds, rejects, payments and invoices belong to **admin**
 
 ---
 
-*Replay this guide's quick tour with the ✨ button in the nav.*
+*Replay this guide's quick tour with the Quick tour button in the nav.*

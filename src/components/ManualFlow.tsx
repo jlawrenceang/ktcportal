@@ -1,5 +1,6 @@
 import { Fragment } from 'react'
 import { useT } from '../lib/i18n'
+import { MapIcon } from './icons'
 
 // The "process at a glance" flow window used by the manuals — a highlighted box
 // with one or more left-to-right phases of numbered steps joined by arrows, and
@@ -20,7 +21,7 @@ export default function ManualFlow({
   const { t } = useT()
   return (
     <div className="ktc-flow-window">
-      <span className="ktc-flow-window-label">🗺️ {t(label)}</span>
+      <span className="ktc-flow-window-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><MapIcon size={15} /> {t(label)}</span>
       <div className="ktc-phases" aria-hidden>
         {phases.map((ph, pi) => (
           <Fragment key={pi}>

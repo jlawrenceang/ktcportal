@@ -33,7 +33,7 @@ Ipinapakita ng view na ito ang mga completed order na wala pa ring invoice, kasa
 
 ## 4 · Housekeeping
 
-- **🗄 Archive paid & completed** — nililinis nito ang mga tapos na, na-invoice na order palabas ng default views (tumatakbo rin ito nang automatic tuwing Lunes). Hindi ito nakakaapekto sa history ng customer.
+- **Archive paid & completed** — nililinis nito ang mga tapos na, na-invoice na order palabas ng default views (tumatakbo rin ito nang automatic tuwing Lunes). Hindi ito nakakaapekto sa history ng customer.
 
 ## 5 · Ang session mo
 

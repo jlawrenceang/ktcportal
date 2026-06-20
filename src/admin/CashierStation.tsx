@@ -187,7 +187,7 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
         <>
           {/* 1 — Online proofs to review */}
           <Section title={t('Payments to review')} count={toReview.length} sub={t('Online payment slips waiting for your confirmation.')}>
-            {toReview.length === 0 ? <span className="ktc-label" style={{ fontSize: 13.5 }}>{t('Nothing to review. 🎉')}</span> : toReview.map((o) => (
+            {toReview.length === 0 ? <span className="ktc-label" style={{ fontSize: 13.5 }}>{t('Nothing to review.')}</span> : toReview.map((o) => (
               <Card key={o.id} o={o}>
                 {o.payment_status === 'submitted' && <ReviewActions o={o} kind="base" />}
                 {o.rps_payment_status === 'submitted' && <ReviewActions o={o} kind="rps" />}

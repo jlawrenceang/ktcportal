@@ -33,7 +33,7 @@ Makakapag-file lang ang mga customer ng Job Order kontra sa isang **current** na
 - **Add a call:** vessel visit (hal. `26RUH02`), vessel name, voyage, shipping line, actual arrival, finish discharging, berth. Ang **Last Free Day ay kusang nako-compute** (finish discharging + ang free-days ng line na iyon, na set ng admin) — at awtomatikong **maaalis ang call** kapag lumipas na ang last free day nito. Walang manu-manong pagsasara.
 - **Bulk update:** i-tap ang **⬇ Template**, punan ang sheet (o i-paste mula sa sarili mo), tapos **⬆ Import** — magda-dagdag/mag-uupdate ito ayon sa **vessel visit**, kaya ligtas na i-re-import ang parehong sheet (walang mado-doble).
 - **Calendar** view ang nagpapakita ng mga arrival kada buwan.
-- **📸 Snapshot** ay gumagawa ng malinis na imahe ng **active vessels** — sa phone, diretsong nai-share sa iyong **Viber group**; sa computer, nada-download ito para ma-attach mo.
+- **Snapshot** ay gumagawa ng malinis na imahe ng **active vessels** — sa phone, diretsong nai-share sa iyong **Viber group**; sa computer, nada-download ito para ma-attach mo.
 - Kung wala pa sa listahan ang vessel ng customer, mag-file sila gamit ang **"not listed"** at i-type ito — i-add mo lang ang call at maa-align ito.
 
 ## 5 · What's not yours
@@ -48,4 +48,4 @@ Ang pag-process ng Job Order, holds, rejects, payments at invoices ay para sa **
 
 ---
 
-*I-replay ang quick tour ng guide na ito gamit ang ✨ button sa nav.*
+*I-replay ang quick tour ng guide na ito gamit ang Quick tour button sa nav.*

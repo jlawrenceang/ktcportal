@@ -11,6 +11,7 @@ import { usePageTour } from '../components/TourProvider'
 import { operationsSteps } from './AdminTour'
 import { peso } from '../lib/pricing'
 import { useT } from '../lib/i18n'
+import { ArchiveIcon, PencilIcon, ClockIcon, ChatIcon } from '../components/icons'
 
 interface AdminJobOrder extends JobOrder {
   broker?: { full_name: string | null; email: string | null; contact_number: string | null } | null
@@ -328,10 +329,10 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
             </button>
           ))}
           {can('process_job_orders') && (filter === 'completed' || filter === 'all') && (
-            <button type="button" className="ktc-btn-secondary ktc-btn--sm" style={{ marginLeft: 'auto' }} disabled={archiving}
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6 }} disabled={archiving}
               title={t('Archives every completed order that has a Service Invoice number (= paid). Also runs automatically every Monday.')}
               onClick={() => void archiveDone()}>
-              {archiving ? t('Archiving…') : t('🗄 Archive paid & completed')}
+              {archiving ? t('Archiving…') : <><ArchiveIcon size={15} /> {t('Archive paid & completed')}</>}
             </button>
           )}
         </div>
@@ -343,7 +344,7 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
           </div>
         ) : orders.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>
-            {filter === 'unpaid' ? t('Nothing waiting for payment — every completed order has an invoice. 🎉') : t('No job orders in this view.')}
+            {filter === 'unpaid' ? t('Nothing waiting for payment — every completed order has an invoice.') : t('No job orders in this view.')}
           </div>
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
@@ -373,14 +374,14 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
                         </span>
                       ))}
                       {o.last_customer_edit_at && ['submitted', 'processing', 'on_hold'].includes(o.status) && (
-                        <span className="ktc-chip ktc-chip--warning"
+                        <span className="ktc-chip ktc-chip--warning" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
                           title={t('The customer changed this order after filing — please re-check it.') + ' · ' + new Date(o.last_customer_edit_at).toLocaleString()}>
-                          ✎ {t('Edited after filing')}
+                          <PencilIcon size={13} /> {t('Edited after filing')}
                         </span>
                       )}
                       {hasOutstandingSupplements(o) && (
-                        <span className="ktc-chip ktc-chip--warning" title={t('An additional charge is still unpaid — the order can’t complete until it’s settled.')}>
-                          ⏳ {t('Under review · additional charge')}
+                        <span className="ktc-chip ktc-chip--warning" title={t('An additional charge is still unpaid — the order can’t complete until it’s settled.')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          <ClockIcon size={13} /> {t('Under review · additional charge')}
                         </span>
                       )}
                       {!o.service_invoice_no && o.payment_status === 'submitted' && (
@@ -570,18 +571,18 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
                       </button>
                     )}
                     {(can('process_job_orders') || can('review_payments') || can('manage_support')) && !['cancelled', 'rejected', 'held'].includes(o.status) && editId !== o.id && (
-                      <button style={btn('ghost')} disabled={isBusy} onClick={() => openEdit(o)} title={t('Correct the entry / vessel / voyage')}>
-                        ✎ {t('Edit details')}
+                      <button style={{ ...btn('ghost'), display: 'inline-flex', alignItems: 'center', gap: 6 }} disabled={isBusy} onClick={() => openEdit(o)} title={t('Correct the entry / vessel / voyage')}>
+                        <PencilIcon size={14} /> {t('Edit details')}
                       </button>
                     )}
                     {printable && (
                       <Link to={`/job-order/${o.id}/print`} target="_blank" style={{ ...btn('ghost'), textDecoration: 'none' }}>{t('Print slip ↗')}</Link>
                     )}
-                    <button style={btn('ghost')} onClick={() => { setMsgOrder(o); setCopied(false) }} title={t('Compose a status message for Viber / SMS / Messenger')}>
-                      💬 {t('Message')}
+                    <button style={{ ...btn('ghost'), display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => { setMsgOrder(o); setCopied(false) }} title={t('Compose a status message for Viber / SMS / Messenger')}>
+                      <ChatIcon size={14} /> {t('Message')}
                     </button>
-                    <button style={btn('ghost')} onClick={() => toggleHistory(o.id)} title={t('Timeline, documents & comments')}>
-                      🕘 {t('Timeline')}
+                    <button style={{ ...btn('ghost'), display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => toggleHistory(o.id)} title={t('Timeline, documents & comments')}>
+                      <ClockIcon size={14} /> {t('Timeline')}
                     </button>
                   </div>
 

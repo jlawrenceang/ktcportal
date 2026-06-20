@@ -8,6 +8,7 @@ import { AGREEMENT_VERSION, AGREEMENT_VERSION_LABEL, AGREEMENT_BODY } from '../c
 import { MarkdownBody } from '../components/MarkdownDoc'
 import { prepareUpload } from '../lib/validation'
 import { useT } from '../lib/i18n'
+import { PaperclipIcon } from '../components/icons'
 
 // Focused landing page for a confirmed customer who hasn't uploaded a valid ID yet.
 // They attach a file, can view/remove it, then deliberately submit. After submit
@@ -118,7 +119,7 @@ export default function VerifyId() {
             </>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
-              <span style={{ fontSize: 13, fontWeight: 500, flex: '1 1 auto', wordBreak: 'break-all' }}>📎 {file.name}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, flex: '1 1 auto', wordBreak: 'break-all', display: 'inline-flex', alignItems: 'center', gap: 7 }}><PaperclipIcon size={15} /> {file.name}</span>
               <button type="button" className="ktc-link" onClick={() => setShowPreview(true)} style={{ fontSize: 13 }}>{t('View')}</button>
               <button type="button" className="ktc-link" onClick={removeFile} style={{ fontSize: 13, color: 'var(--acc-2)' }}>{t('Remove')}</button>
             </div>

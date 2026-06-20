@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { useT } from '../lib/i18n'
+import { ShieldIcon } from './icons'
 
 // Shown by ProtectedRoute when a fresh login finds this account already
 // signed in on another device. The user chooses: Terminate the other session
@@ -26,7 +27,7 @@ export default function SessionConflictModal() {
   return (
     <div style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', padding: 24 }}>
       <div className="ktc-glass" style={{ padding: 32, maxWidth: 440, width: '100%' }}>
-        <div style={{ fontSize: 30, marginBottom: 6 }} aria-hidden>🔐</div>
+        <div style={{ marginBottom: 8, color: 'var(--acc)' }} aria-hidden><ShieldIcon size={30} /></div>
         <h1 style={{ margin: 0, fontSize: 20, fontWeight: 650 }}>
           {t('Already signed in on another device')}
         </h1>

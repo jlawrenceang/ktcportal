@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useT } from '../lib/i18n'
+import { DownloadIcon } from './icons'
 
 // "Install app" row for the nav ⊞ Menu. Appears only when the browser offers
 // installation (Android Chrome fires `beforeinstallprompt`) and hides once the
@@ -34,7 +35,7 @@ export default function InstallButton() {
 
   return (
     <button type="button" className="ktc-menu-setting" onClick={() => void install()}>
-      <span style={{ flex: 1, textAlign: 'left' }}>⬇️ {t('Install app')}</span>
+      <span style={{ flex: 1, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 8 }}><DownloadIcon size={16} /> {t('Install app')}</span>
     </button>
   )
 }

@@ -5,6 +5,7 @@ import { usePermissions } from '../lib/usePermissions'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import type { ServingNumber } from '../lib/types'
 import { useT } from '../lib/i18n'
+import { CameraIcon } from '../components/icons'
 
 // Checker app screen: scan the slip QR (encodes /verify/<jo-id>) with the
 // camera, or type the JO number, then confirm X-ray per van. Reuses the same
@@ -172,8 +173,8 @@ export default function AppChecker() {
               </div>
             ) : (
               <div style={{ display: 'grid', gap: 12 }}>
-                <button type="button" className="ktc-btn" style={{ fontSize: 17, padding: '16px' }} onClick={() => void startScan()}>
-                  📷 {t('Scan slip QR')}
+                <button type="button" className="ktc-btn" style={{ fontSize: 17, padding: '16px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} onClick={() => void startScan()}>
+                  <CameraIcon size={18} /> {t('Scan slip QR')}
                 </button>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input className="ktc-input ktc-mono" value={manual} onChange={(e) => setManual(e.target.value)}
@@ -226,7 +227,7 @@ export default function AppChecker() {
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 650 }}>{t('X-ray line — {count} waiting', { count: loading ? '…' : queue.length })}</h2>
             <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
               {loading ? [60, 60].map((h, i) => <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 12 }} />)
-                : queue.length === 0 ? <span className="ktc-label" style={{ fontSize: 14 }}>{t('Queue is clear. 🎉')}</span>
+                : queue.length === 0 ? <span className="ktc-label" style={{ fontSize: 14 }}>{t('Queue is clear.')}</span>
                 : queue.map((o) => (
                   <button key={o.id} type="button" onClick={() => setActive(o)}
                     style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', padding: '12px 14px', borderRadius: 12, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)', cursor: 'pointer', font: 'inherit', color: 'hsl(var(--ink))' }}>

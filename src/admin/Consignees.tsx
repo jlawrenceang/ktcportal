@@ -5,6 +5,7 @@ import type { AccreditationStatus, Consignee } from '../lib/types'
 import { prepareUpload } from '../lib/validation'
 import { useFileViewer } from '../components/FileViewerModal'
 import { useT } from '../lib/i18n'
+import { AlertTriangleIcon } from '../components/icons'
 
 function parseCsv(text: string): string[][] {
   const rows: string[][] = []
@@ -332,7 +333,7 @@ export default function Consignees() {
                 <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: '1px solid hsl(var(--line-soft))' }}>
                   <span style={{ flex: 1, fontSize: 14 }}>
                     <b>{c.code}</b> – {c.name}
-                    {!complete && c.status !== 'approved' && <span className="ktc-label" style={{ fontSize: 11, marginLeft: 8 }}>{t('⚠ needs address/TIN/2303')}</span>}
+                    {!complete && c.status !== 'approved' && <span className="ktc-label" style={{ fontSize: 11, marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 4, verticalAlign: '-1px' }}><AlertTriangleIcon size={11} /> {t('needs address/TIN/2303')}</span>}
                   </span>
                   {c.doc_2303_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', c.doc_2303_path, t('2303 — {name}', { name: c.name }))} style={{ fontSize: 12 }}>{t('2303')}</button>}
                   <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{t(c.status)}</span>

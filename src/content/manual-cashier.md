@@ -33,7 +33,7 @@ This view lists completed orders that still have no invoice, with aging chips (*
 
 ## 4 · Housekeeping
 
-- **🗄 Archive paid & completed** tidies finished, invoiced orders out of the default views (also runs automatically on Mondays). Customer history is unaffected.
+- **Archive paid & completed** tidies finished, invoiced orders out of the default views (also runs automatically on Mondays). Customer history is unaffected.
 
 ## 5 · Your session
 

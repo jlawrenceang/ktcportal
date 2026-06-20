@@ -5,6 +5,7 @@ import ManualFlow, { type FlowStep, type FlowPhase } from '../components/ManualF
 import ProtectedDoc from '../components/ProtectedDoc'
 import { usePermissions } from '../lib/usePermissions'
 import { useT } from '../lib/i18n'
+import { PrinterIcon } from '../components/icons'
 import adminBody from '../content/manual-admin.md?raw'
 import operationsBody from '../content/manual-operations.md?raw'
 import cashierBody from '../content/manual-cashier.md?raw'
@@ -119,7 +120,7 @@ export default function ManualPage() {
         ))}
         <span style={{ flex: 1 }} />
         {broker?.is_owner && (
-          <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => window.print()}>🖨️ {t('Print this guide')}</button>
+          <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => window.print()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><PrinterIcon size={15} /> {t('Print this guide')}</button>
         )}
       </div>
       <ProtectedDoc>

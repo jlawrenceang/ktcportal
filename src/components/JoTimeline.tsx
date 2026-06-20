@@ -5,6 +5,7 @@ import { useFileViewer } from './FileViewerModal'
 import { joEventLabel } from '../lib/eventLabels'
 import type { JobOrderEvent } from '../lib/types'
 import { useT } from '../lib/i18n'
+import { PaperclipIcon } from './icons'
 
 // Unified Job Order timeline: lifecycle events + supporting documents + two-way
 // comments (customer ↔ KTC), from the jo_timeline RPC (migration 0070). The
@@ -143,9 +144,9 @@ export default function JoTimeline({ orderId, userId, canComment, canAttach, sta
                     {label}
                   </div>
                   {r.doc_path && (
-                    <button type="button" className="ktc-link" style={{ fontSize: 12.5, marginTop: 4 }}
+                    <button type="button" className="ktc-link" style={{ fontSize: 12.5, marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 5 }}
                       onClick={() => void openFromStorage('jo-documents', r.doc_path!, r.doc_filename ?? t('Document'))}>
-                      📎 {r.doc_filename ?? t('View document')}
+                      <PaperclipIcon size={13} /> {r.doc_filename ?? t('View document')}
                     </button>
                   )}
                 </div>
@@ -169,7 +170,7 @@ export default function JoTimeline({ orderId, userId, canComment, canAttach, sta
             value={text} onChange={(e) => setText(e.target.value)} />
           {canAttach && !(staff && internal) && (file ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '8px 12px', borderRadius: 9, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
-              <span style={{ flex: '1 1 auto', wordBreak: 'break-all' }}>📎 {file.name}</span>
+              <span style={{ flex: '1 1 auto', wordBreak: 'break-all', display: 'inline-flex', alignItems: 'center', gap: 6 }}><PaperclipIcon size={14} /> {file.name}</span>
               <button type="button" className="ktc-link" style={{ fontSize: 12.5, color: 'var(--acc-2)' }} onClick={() => setFile(null)}>{t('Remove')}</button>
             </div>
           ) : (

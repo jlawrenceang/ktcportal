@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useT } from '../lib/i18n'
 import { supabase } from '../lib/supabase'
+import { PaperclipIcon } from './icons'
 import type { Broker } from '../lib/types'
 import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_TEL } from '../lib/contact'
 import { prepareUpload } from '../lib/validation'
@@ -103,7 +104,7 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
               }} style={{ padding: '9px 13px' }} />
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
-              <span style={{ fontSize: 13, fontWeight: 500, flex: '1 1 auto', wordBreak: 'break-all' }}>📎 {file.name}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, flex: '1 1 auto', wordBreak: 'break-all', display: 'inline-flex', alignItems: 'center', gap: 7 }}><PaperclipIcon size={14} /> {file.name}</span>
               <button type="button" className="ktc-link" onClick={() => setFile(null)} style={{ fontSize: 13, color: 'var(--acc-2)' }}>{t('Remove')}</button>
             </div>
           )}

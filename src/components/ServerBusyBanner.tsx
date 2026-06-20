@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useT } from '../lib/i18n'
+import { AlertTriangleIcon } from './icons'
 
 // Global "servers are busy" notice. Listens for the ktc:server-busy /
 // ktc:server-ok events emitted by the wrapped fetch in lib/supabase.ts.
@@ -36,7 +37,7 @@ export default function ServerBusyBanner() {
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14,
       boxShadow: '0 2px 10px rgba(0,0,0,.18)', fontSize: 14, lineHeight: 1.4,
     }}>
-      <span>⚠️ {t("KTC's servers are busy right now — please try again in a moment.")}</span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><AlertTriangleIcon size={17} /> {t("KTC's servers are busy right now — please try again in a moment.")}</span>
       <button type="button" onClick={() => window.location.reload()} style={{
         background: '#fff', color: '#D6321E', border: 'none', borderRadius: 8,
         padding: '6px 16px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',

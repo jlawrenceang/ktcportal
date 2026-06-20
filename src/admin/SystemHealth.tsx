@@ -17,7 +17,7 @@ interface Health {
 }
 
 const SECURITY_LABEL: Record<string, string> = {
-  protected_field_attempt: '🚨 Blocked privilege-escalation attempt',
+  protected_field_attempt: 'Blocked privilege-escalation attempt',
   role_gate_changed: 'Role gate changed',
 }
 
@@ -95,7 +95,7 @@ export default function SystemHealth() {
           {/* Outbound */}
           <div>
             <h3 className="ktc-label" style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {t('Outgoing calls — {n} in 24h', { n: health.outbound_24h })} · {health.outbound_failures.length === 0 ? t('no failures this week 🎉') : t('{n} recent failure(s)', { n: health.outbound_failures.length })}
+              {t('Outgoing calls — {n} in 24h', { n: health.outbound_24h })} · {health.outbound_failures.length === 0 ? t('no failures this week') : t('{n} recent failure(s)', { n: health.outbound_failures.length })}
             </h3>
             {health.outbound_failures.length > 0 && (
               <div style={{ display: 'grid', gap: 6 }}>
@@ -139,7 +139,7 @@ export default function SystemHealth() {
               {t('Client errors — {n} in 24h', { n: health.client_errors_24h })}
             </h3>
             {health.client_errors.length === 0 ? (
-              <span className="ktc-label" style={{ fontSize: 13 }}>{t('None recorded. 🎉')}</span>
+              <span className="ktc-label" style={{ fontSize: 13 }}>{t('None recorded.')}</span>
             ) : (
               <div style={{ display: 'grid', gap: 6 }}>
                 {health.client_errors.map((e, i) => (

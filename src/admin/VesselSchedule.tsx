@@ -5,6 +5,7 @@ import { usePageTour } from '../components/TourProvider'
 import { vesselSteps } from './AdminTour'
 import { MonthCalendar, Badge, fmt, fmtDT, type VesselRow } from '../components/VesselCalendar'
 import { useT } from '../lib/i18n'
+import { AlertTriangleIcon, CameraIcon, RefreshIcon } from '../components/icons'
 
 // ── Vessel schedule (operations) ──────────────────────────────────────────
 // Reads vessel_schedule_v: last_free_day + is_current are computed server-side
@@ -292,8 +293,8 @@ export default function VesselSchedule() {
       {/* Pending vessel requests — unlisted vessels customers filed against. */}
       {reqs.length > 0 && (
         <div className="ktc-glass" style={{ padding: 16, marginBottom: 16, border: '1px solid var(--c-h40-85-78)', background: 'var(--c-h40-95-97)' }}>
-          <strong style={{ fontSize: 14, display: 'block', marginBottom: 4 }}>
-            {t('⚠ Vessel requests — {n} awaiting review', { n: reqs.length })}
+          <strong style={{ fontSize: 14, display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
+            <AlertTriangleIcon size={15} /> {t('Vessel requests — {n} awaiting review', { n: reqs.length })}
           </strong>
           <p className="ktc-label" style={{ fontSize: 12.5, marginBottom: 12, lineHeight: 1.5 }}>
             {t('Customers filed Job Orders against these vessels, which aren’t on the schedule. Add the call above (if needed), then link it here to approve — every waiting order adopts the scheduled vessel. Or reject if it doesn’t belong.')}
@@ -330,8 +331,8 @@ export default function VesselSchedule() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
         <strong style={{ fontSize: 14 }}>{showAll ? t('{count} total call(s)', { count: visible.length }) : t('{count} current call(s)', { count: visible.length })}</strong>
-        <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" onClick={() => void snapshot()} title={t('Share a snapshot of active vessels to your Viber group')}>{t('📸 Snapshot')}</button>
-        <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" disabled={syncing} onClick={() => void syncNow()} title={t('Pull the latest edits from the Google Sheet now and refresh the Last Free Day mirror')}>{syncing ? t('Syncing…') : t('🔄 Sync sheet')}</button>
+        <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" onClick={() => void snapshot()} title={t('Share a snapshot of active vessels to your Viber group')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><CameraIcon size={15} /> {t('Snapshot')}</button>
+        <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" disabled={syncing} onClick={() => void syncNow()} title={t('Pull the latest edits from the Google Sheet now and refresh the Last Free Day mirror')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{syncing ? t('Syncing…') : <><RefreshIcon size={15} /> {t('Sync sheet')}</>}</button>
         <div style={{ display: 'inline-flex', gap: 4 }}>
           <button className={`ktc-btn ktc-btn--sm ${view === 'table' ? '' : 'ktc-btn-ghost'}`} type="button" onClick={() => setView('table')}>{t('Table')}</button>
           <button className={`ktc-btn ktc-btn--sm ${view === 'calendar' ? '' : 'ktc-btn-ghost'}`} type="button" onClick={() => setView('calendar')}>{t('Calendar')}</button>

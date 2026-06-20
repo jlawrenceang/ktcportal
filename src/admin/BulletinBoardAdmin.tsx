@@ -5,6 +5,7 @@ import { useBroker } from '../lib/useBroker'
 import { hasAdminAccess } from '../lib/types'
 import { useFileViewer } from '../components/FileViewerModal'
 import { useT } from '../lib/i18n'
+import { PinIcon, PaperclipIcon } from '../components/icons'
 
 // Bulletin board manager (its own page, 2026-06-17 — moved out of Settings).
 // Admin/owner post announcements shown on every customer's Home. Each post can
@@ -112,8 +113,8 @@ export default function BulletinBoardAdmin() {
           <input className="ktc-input ktc-input--compact" placeholder={t('Topic title')} value={title} onChange={(e) => setTitle(e.target.value)} />
           <textarea className="ktc-input ktc-input--compact" rows={3} placeholder={t('Message')} value={body} onChange={(e) => setBody(e.target.value)} style={{ resize: 'vertical' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <label className="ktc-btn-secondary ktc-btn--sm" style={{ cursor: 'pointer' }}>
-              {file ? t('Change file') : t('📎 Attach memo (optional)')}
+            <label className="ktc-btn-secondary ktc-btn--sm" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              {file ? t('Change file') : <><PaperclipIcon size={14} /> {t('Attach memo (optional)')}</>}
               <input ref={fileRef} type="file" accept="image/*,application/pdf" style={{ display: 'none' }}
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
             </label>
@@ -139,13 +140,13 @@ export default function BulletinBoardAdmin() {
             {posts.map((b) => (
               <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: b.is_published ? 'var(--c-w55)' : 'var(--c-w30)', border: '1px solid var(--glass-brd)', opacity: b.is_published ? 1 : 0.6 }}>
                 <span style={{ flex: '1 1 auto', minWidth: 0 }}>
-                  <span style={{ fontSize: 13.5, fontWeight: 600, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.pinned ? '📌 ' : ''}{b.title}</span>
+                  <span style={{ fontSize: 13.5, fontWeight: 600, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.pinned && <span aria-hidden style={{ verticalAlign: '-2px', marginRight: 4 }}><PinIcon size={13} /></span>}{b.title}</span>
                   <span className="ktc-label" style={{ fontSize: 11.5, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                     {b.is_published ? t('Published') : t('Draft')}
                     {b.attachment_path && (
-                      <button type="button" className="ktc-link" style={{ fontSize: 11.5 }}
+                      <button type="button" className="ktc-link" style={{ fontSize: 11.5, display: 'inline-flex', alignItems: 'center', gap: 5 }}
                         onClick={() => void openFromStorage('bulletin-files', b.attachment_path, b.attachment_name || t('Attachment'))}>
-                        📎 {t('View file')}
+                        <PaperclipIcon size={13} /> {t('View file')}
                       </button>
                     )}
                   </span>

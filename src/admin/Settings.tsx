@@ -11,6 +11,7 @@ import TestPushCard from './TestPushCard'
 import TestEmailCard from './TestEmailCard'
 import { peso } from '../lib/pricing'
 import { SHIPPING_LINES, TERMINAL_CHARGE_SERVICES, CHARGE_RULE_ACTIONS } from '../lib/shippingLines'
+import { LockIcon, PencilIcon } from '../components/icons'
 
 // Terminal tariff dimensions (migration 0073): service × trade × origin × size.
 const TERM_SERVICES: [string, string][] = [['arrastre', 'Arrastre'], ['wharfage', 'Wharfage'], ['lolo', 'LoLo'], ['weighing', 'Weighing scale (export)'], ['storage', 'Storage (per day)']]
@@ -415,7 +416,7 @@ export default function Settings() {
         <div style={{ minWidth: 0 }}>
           <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>{t('Language')}</h2>
           <p className="ktc-sub" style={{ margin: '2px 0 0', fontSize: 12 }}>
-            {t('Switch the portal between English and Filipino. Also available as 🌐 EN / FIL in the side menu.')}
+            {t('Switch the portal between English and Filipino. Also available as EN / FIL in the side menu.')}
           </p>
         </div>
         <LangToggle />
@@ -507,8 +508,9 @@ export default function Settings() {
             className="ktc-btn-secondary ktc-btn--sm"
             onClick={() => { setPricingLocked((v) => !v); setPricingMsg(null) }}
             title={pricingLocked ? t('Prices are locked against accidental edits — unlock to change them') : t('Lock editing again')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
-            {pricingLocked ? t('🔒 Locked — unlock to edit') : t('🔓 Editing · tap to lock')}
+            {pricingLocked ? <><LockIcon size={14} /> {t('Locked — unlock to edit')}</> : <><PencilIcon size={14} /> {t('Editing · tap to lock')}</>}
           </button>
         </div>
 

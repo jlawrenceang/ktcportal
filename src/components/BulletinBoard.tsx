@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../lib/supabase'
 import { useFileViewer } from './FileViewerModal'
 import { useT } from '../lib/i18n'
+import { PinIcon, PaperclipIcon } from './icons'
 
 // Customer bulletin board (Home): admin-posted topics (migration 0076). Tapping
 // a topic opens its full message in a modal — no page navigation. A post may
@@ -46,7 +47,7 @@ export default function BulletinBoard() {
 
   return (
     <div className="ktc-glass ktc-bulletin" data-tour="home-bulletin">
-      <h2 className="ktc-bulletin-title">📌 {t('Bulletin board')}</h2>
+      <h2 className="ktc-bulletin-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><PinIcon size={17} /> {t('Bulletin board')}</h2>
       <div className="ktc-board-list">
         {posts.map((p) => (
           <button key={p.id} type="button" className="ktc-board-item" onClick={() => openPost(p)}>
@@ -82,8 +83,9 @@ export default function BulletinBoard() {
             {open.attachment_path && (
               <div style={{ padding: '12px 20px 16px', borderTop: '1px solid var(--glass-brd)' }}>
                 <button type="button" className="ktc-btn-secondary ktc-btn--sm"
-                  onClick={() => { setFileErr(null); void openFromStorage('bulletin-files', open.attachment_path, open.attachment_name || open.title) }}>
-                  📎 {t('View attachment')}
+                  onClick={() => { setFileErr(null); void openFromStorage('bulletin-files', open.attachment_path, open.attachment_name || open.title) }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <PaperclipIcon size={15} /> {t('View attachment')}
                 </button>
                 {open.attachment_name && (
                   <span className="ktc-label" style={{ fontSize: 11.5, marginLeft: 10 }}>{open.attachment_name}</span>

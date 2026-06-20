@@ -8,6 +8,7 @@ import IdleWarning from '../components/IdleWarning'
 import StaffNotificationBell from '../components/StaffNotificationBell'
 import PushPrompt from '../components/PushPrompt'
 import { useT } from '../lib/i18n'
+import { LockIcon } from '../components/icons'
 
 // Focused "app mode" chrome for the installed staff app — a slim top bar (logo
 // + role + bell + Lock) and the screen, nothing else. Single-purpose, big touch
@@ -56,8 +57,9 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
             background: 'linear-gradient(135deg, var(--acc), var(--acc-2))',
           }}>{t(role)}</span>
         )}
-        <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void lock()} title={t('Lock / sign out')}>
-          🔒 {t('Lock')}
+        <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void lock()} title={t('Lock / sign out')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <LockIcon size={15} /> {t('Lock')}
         </button>
       </nav>
 
