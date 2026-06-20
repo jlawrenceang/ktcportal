@@ -88,6 +88,7 @@ export default function Consignees() {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
   const [page, setPage] = useState(0)
+  const [pendingCount, setPendingCount] = useState(0)
 
   // add form
   const [name, setName] = useState('')
@@ -123,6 +124,13 @@ export default function Consignees() {
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, filter, page])
+
+  // Keep the "pending" count fresh for the bulk-approve bar — recompute whenever
+  // the visible list changes (after any load or status action).
+  useEffect(() => {
+    void supabase.from('consignees').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+      .then(({ count }) => setPendingCount(count ?? 0))
+  }, [list])
 
   function changeQuery(v: string) { setQuery(v); setPage(0) }
   function changeFilter(v: Filter) { setFilter(v); setPage(0) }
@@ -179,6 +187,23 @@ export default function Consignees() {
     finally { setBusy(false) }
   }
 
+  // Bulk approve every pending consignee in one update (across all pages). Used
+  // for the seeded master list, which is name + code only — completeness is
+  // filled in later (0120 dropped the address/TIN/2303 pre-approval requirement).
+  async function approveAllPending() {
+    if (pendingCount === 0) return
+    if (!window.confirm(t('Approve all {n} pending consignees? They become visible to customers in job orders. You can still edit details afterwards.', { n: pendingCount }))) return
+    setBusy(true); setError(null); setNotice(null)
+    const { error } = await supabase.from('consignees')
+      .update({ status: 'approved', decided_at: new Date().toISOString() })
+      .eq('status', 'pending')
+    setBusy(false)
+    if (error) return setError(friendly(error, t))
+    setNotice(t('Approved {n} pending consignee(s).', { n: pendingCount }))
+    setPendingCount(0)
+    await load()
+  }
+
   async function setStatus(c: Consignee, status: AccreditationStatus) {
     setBusy(true); setError(null)
     const { error } = await supabase.from('consignees').update({ status, decided_at: new Date().toISOString() }).eq('id', c.id)
@@ -226,7 +251,7 @@ export default function Consignees() {
       <div className="ktc-glass" style={{ padding: 18, marginBottom: 16 }}>
         <h1 className="ktc-title" style={{ fontSize: 18 }}>{t('Consignees')}</h1>
         <p className="ktc-sub" style={{ marginBottom: 14, fontSize: 12 }}>
-          {t('Added consignees are')} <b>{t('pending')}</b>. {t('A consignee needs')} <b>{t('address, TIN, and an attached 2303')}</b> {t('before it can be approved; only approved consignees are visible to customers.')}
+          {t('Added consignees are')} <b>{t('pending')}</b> {t('and become visible to customers once approved. Address, TIN, and the 2303 can be filled in later — they’re no longer required to approve.')}
         </p>
 
         <div style={{ display: 'grid', gap: 5, marginBottom: 14, maxWidth: 340 }}>
@@ -258,6 +283,17 @@ export default function Consignees() {
           </select>
           <input className="ktc-input ktc-input--compact" placeholder={t('Search code or name…')} value={query} onChange={(e) => changeQuery(e.target.value)} style={{ maxWidth: 240, width: '100%' }} />
         </div>
+
+        {pendingCount > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, padding: '9px 13px', borderRadius: 10, background: 'var(--c-h40-90-94)', border: '1px solid var(--glass-brd)', flexWrap: 'wrap' }}>
+            <span className="ktc-label" style={{ fontSize: 12.5, flex: 1, minWidth: 160 }}>
+              {t('{n} consignee(s) pending approval.', { n: pendingCount })}
+            </span>
+            <button className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void approveAllPending()} style={{ width: 'auto', padding: '6px 14px', fontSize: 12.5 }}>
+              {t('Approve all pending')}
+            </button>
+          </div>
+        )}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <span className="ktc-label" style={{ fontSize: 13 }}>{total === 0 ? t('No results') : t('Showing {from}–{to} of {total}', { from, to, total })}</span>
