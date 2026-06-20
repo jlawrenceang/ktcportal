@@ -5,11 +5,12 @@ import { useT } from '../lib/i18n'
 
 // Soft "turn on notifications?" popup shown shortly after login. The actual
 // browser permission prompt only fires on the explicit "Turn on" tap (a user
-// gesture, as browsers require). Shows at most once per session and never again
-// once the user enables it or taps "Not now". Always re-enableable from the
-// ⊞ Menu → 🔔 Notifications.
+// gesture, as browsers require). Auto-shows at most ONCE per browser — after it
+// has appeared we leave the user alone forever, even if they neither enabled it
+// nor tapped "Not now" (otherwise it re-nags every single login). Always
+// re-enableable from the ⊞ Menu → 🔔 Notifications.
 const KEY = 'ktc_push_prompt' // localStorage: 'enabled' | 'dismissed'
-const SEEN = 'ktc_push_prompt_seen' // sessionStorage: shown this session
+const SEEN = 'ktc_push_prompt_seen' // localStorage: auto-prompt has fired once on this browser
 
 export default function PushPrompt() {
   const { t } = useT()
@@ -41,8 +42,12 @@ export default function PushPrompt() {
         if (r.ok) localStorage.setItem(KEY, 'enabled')
         return
       }
-      if (sessionStorage.getItem(SEEN)) return
-      sessionStorage.setItem(SEEN, '1')
+      // Persisted in localStorage (not sessionStorage) so the soft prompt fires
+      // at most once per browser — never re-nags on later logins. The fix for
+      // the "prompt loops forever" report: previously this was per-session, so a
+      // user who never explicitly enabled/dismissed saw it again every login.
+      if (localStorage.getItem(SEEN)) return
+      localStorage.setItem(SEEN, '1')
       // Small delay so it doesn't slam in during the post-login transition.
       setTimeout(() => { if (!cancelled) setOpen(true) }, 1200)
     })()

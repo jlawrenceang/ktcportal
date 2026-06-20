@@ -40,16 +40,25 @@ function withTimeout<T>(p: PromiseLike<T>, ms: number, label: string): Promise<T
   ])
 }
 
-async function doEnablePush(): Promise<{ ok: boolean; error?: string }> {
-  const perm = await Notification.requestPermission()
-  if (perm !== 'granted') return { ok: false, error: 'Notifications are blocked — allow them in your browser/site settings.' }
+// iOS / iPadOS only deliver Web Push to apps ADDED TO THE HOME SCREEN. In a
+// plain Safari tab PushManager exists (so the toggle shows) but requesting
+// permission / subscribing silently never resolves — the "stuck on …" report.
+// Detect that case and fail fast with guidance instead of spinning forever.
+function isIos(): boolean {
+  if (typeof navigator === 'undefined') return false
+  return /iphone|ipad|ipod/i.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) // iPadOS reports as Mac
+}
+function isStandalone(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia?.('(display-mode: standalone)').matches
+    || (navigator as { standalone?: boolean }).standalone === true
+}
 
-  const { data: cfg } = await withTimeout(
-    supabase.from('push_config').select('value').eq('key', 'vapid_public').maybeSingle(), 10_000, 'Loading settings')
-  const vapid = (cfg as { value: string } | null)?.value
-  if (!vapid) return { ok: false, error: 'Notifications aren’t set up yet. Please try again later.' }
-
-  const reg = await navigator.serviceWorker.register('/sw.js')
+// Subscribe this browser + persist the subscription. Every network / browser
+// step is individually time-bounded so none can stall indefinitely.
+async function subscribeAndSave(vapid: string): Promise<{ ok: boolean; error?: string }> {
+  const reg = await withTimeout(navigator.serviceWorker.register('/sw.js'), 10_000, 'Starting the background service')
   await withTimeout(navigator.serviceWorker.ready, 10_000, 'Starting the background service')
   let sub = await reg.pushManager.getSubscription()
   if (!sub) {
@@ -71,12 +80,30 @@ async function doEnablePush(): Promise<{ ok: boolean; error?: string }> {
   return { ok: true }
 }
 
-// Never throws and never hangs — an overall cap guarantees the caller's busy
-// state always clears, even if a step stalls indefinitely.
+// Never throws and never hangs. Permission is user-gated (we don't cut off the
+// person's own decision with a tight timer), but it's still bounded so the
+// caller's busy state ("…") can never get stuck forever, and every step after
+// it is individually capped.
 export async function enablePush(): Promise<{ ok: boolean; error?: string }> {
   if (!pushSupported()) return { ok: false, error: 'Notifications aren’t supported on this browser.' }
+  if (isIos() && !isStandalone()) {
+    return { ok: false, error: 'On iPhone/iPad: tap Share → “Add to Home Screen”, then open the app from there to turn on notifications.' }
+  }
   try {
-    return await withTimeout(doEnablePush(), 25_000, 'Enabling alerts')
+    let perm = Notification.permission
+    if (perm === 'default') {
+      // Generous cap: a deciding user takes seconds; this only rescues the rare
+      // browser where the permission promise never settles at all.
+      perm = await withTimeout(Notification.requestPermission(), 60_000, 'Waiting for your permission choice')
+    }
+    if (perm !== 'granted') return { ok: false, error: 'Notifications are blocked — allow them in your browser/site settings.' }
+
+    const { data: cfg } = await withTimeout(
+      supabase.from('push_config').select('value').eq('key', 'vapid_public').maybeSingle(), 10_000, 'Loading settings')
+    const vapid = (cfg as { value: string } | null)?.value
+    if (!vapid) return { ok: false, error: 'Notifications aren’t set up yet. Please try again later.' }
+
+    return await withTimeout(subscribeAndSave(vapid), 20_000, 'Enabling alerts')
   } catch (e) {
     return { ok: false, error: (e as Error)?.message || 'Could not enable alerts. Please try again.' }
   }
