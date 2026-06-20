@@ -52,12 +52,16 @@ export default function PushPrompt() {
         if (r.ok) localStorage.setItem(KEY, 'enabled')
         return
       }
-      // Persisted (not sessionStorage) so the soft prompt fires at most once per
-      // account — never re-nags on later logins.
+      // Fires at most once per account — never re-nags on later logins.
       if (localStorage.getItem(SEEN)) return
-      localStorage.setItem(SEEN, '1')
-      // Small delay so it doesn't slam in during the post-login transition.
-      setTimeout(() => { if (!cancelled) setOpen(true) }, 1200)
+      // Mark "seen" only when the popup ACTUALLY opens. Setting it before the
+      // delay meant an unmount / navigation within the 1.2s would burn the flag
+      // and the prompt would then never appear again.
+      setTimeout(() => {
+        if (cancelled) return
+        localStorage.setItem(SEEN, '1')
+        setOpen(true)
+      }, 1200)
     })()
     return () => { cancelled = true }
   }, [langChosen, uid])
