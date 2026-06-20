@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import PushToggle from './PushToggle'
 import { useT } from '../lib/i18n'
+import { BellIcon, CreditCardIcon, ChatIcon, IdCardIcon, type IconProps } from './icons'
 
 // Staff-side notification center — the mirror of the customer NotificationBell,
 // but routed BY PERMISSION (0085). RLS on staff_notifications already filters
@@ -19,25 +20,16 @@ type Notif = {
   created_at: string
 }
 
-const ICON: Record<string, string> = {
-  payment: '💳',
-  rps_payment: '💳',
-  support: '💬',
-  account: '🪪',
+const ICON: Record<string, (p: IconProps) => ReactNode> = {
+  payment: CreditCardIcon,
+  rps_payment: CreditCardIcon,
+  support: ChatIcon,
+  account: IdCardIcon,
 }
 
 function fmtWhen(iso: string): string {
   return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
-
-// Outline notification bell (matches the customer bell's line-icon style).
-const BellIcon = ({ size = 20 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-  </svg>
-)
 
 export default function StaffNotificationBell() {
   const { t } = useT()
@@ -153,7 +145,9 @@ export default function StaffNotificationBell() {
                       font: 'inherit', color: 'hsl(var(--ink))',
                     }}
                   >
-                    <span aria-hidden style={{ fontSize: 15, lineHeight: 1.3, flex: '0 0 auto' }}>{ICON[n.kind] ?? '🔔'}</span>
+                    <span aria-hidden style={{ flex: '0 0 auto', display: 'inline-flex', marginTop: 1, color: 'hsl(var(--ink-2))' }}>
+                      {(ICON[n.kind] ?? BellIcon)({ size: 17 })}
+                    </span>
                     <span style={{ minWidth: 0, flex: '1 1 auto' }}>
                       <span style={{ display: 'block', fontSize: 12.5, lineHeight: 1.4, fontWeight: isRead ? 400 : 600 }}>{n.title}</span>
                       <span className="ktc-label" style={{ fontSize: 11, opacity: 0.7 }}>{fmtWhen(n.created_at)}</span>

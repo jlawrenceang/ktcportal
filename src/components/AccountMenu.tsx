@@ -6,6 +6,9 @@ import { useT } from '../lib/i18n'
 import { useTour } from './TourProvider'
 import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
+import { GearIcon, GlobeIcon, MoonIcon, SignOutIcon } from './icons'
+
+const iconWrap = { width: 20, display: 'inline-flex', justifyContent: 'center', flex: '0 0 auto', color: 'hsl(var(--ink-2))' } as const
 
 // Gmail-style account menu for the top rail: a round avatar (initials) that opens
 // a dropdown with the signed-in identity, Settings, the quick tour, language +
@@ -84,7 +87,7 @@ export default function AccountMenu({ settingsTo, settingsLabel }: { settingsTo?
           <div style={{ height: 1, background: 'var(--glass-brd)', margin: '2px 4px 4px' }} />
           {settingsTo && (
             <button type="button" role="menuitem" className="ktc-menu-setting" onClick={() => go(settingsTo)}>
-              <span aria-hidden style={{ fontSize: 16, width: 20, textAlign: 'center' }}>⚙️</span>
+              <span aria-hidden style={iconWrap}><GearIcon size={17} /></span>
               <span style={{ flex: 1 }}>{t(settingsLabel ?? 'Settings')}</span>
             </button>
           )}
@@ -95,18 +98,18 @@ export default function AccountMenu({ settingsTo, settingsLabel }: { settingsTo?
             </button>
           )}
           <div className="ktc-menu-setting" role="menuitem">
-            <span aria-hidden style={{ fontSize: 16, width: 20, textAlign: 'center' }}>🌐</span>
+            <span aria-hidden style={iconWrap}><GlobeIcon size={17} /></span>
             <span style={{ flex: 1 }}>{t('Language')}</span>
             <LangToggle />
           </div>
           <div className="ktc-menu-setting" role="menuitem">
-            <span aria-hidden style={{ fontSize: 16, width: 20, textAlign: 'center' }}>🌙</span>
+            <span aria-hidden style={iconWrap}><MoonIcon size={17} /></span>
             <span style={{ flex: 1 }}>{t('Dark mode')}</span>
             <ThemeToggle />
           </div>
           <div style={{ height: 1, background: 'var(--glass-brd)', margin: '4px 4px' }} />
           <button type="button" role="menuitem" className="ktc-menu-setting" onClick={() => void handleSignOut()}>
-            <span aria-hidden style={{ fontSize: 16, width: 20, textAlign: 'center' }}>⎋</span>
+            <span aria-hidden style={iconWrap}><SignOutIcon size={17} /></span>
             <span style={{ flex: 1 }}>{t('Sign out')}</span>
           </button>
         </div>

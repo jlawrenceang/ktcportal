@@ -1,9 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import PushToggle from './PushToggle'
 import { useT } from '../lib/i18n'
+import {
+  BellIcon, ChatIcon, AlertTriangleIcon, BanIcon, CheckCircleIcon, CreditCardIcon,
+  ReceiptIcon, MegaphoneIcon, TicketIcon, ClockIcon, SparkleIcon, type IconProps,
+} from './icons'
 
 // Persistent notification center in the top nav (every page). Shows an unread
 // badge; the dropdown lists recent notifications (read + unread) with the
@@ -11,34 +15,26 @@ import { useT } from '../lib/i18n'
 // The Home dashboard keeps its inline bar for a louder "you have updates" cue.
 type Notif = { id: string; job_order_id: string | null; kind: string; title: string; created_at: string; read_at: string | null }
 
-const ICON: Record<string, string> = {
-  comment: '💬',
-  on_hold: '⚠️',
-  rejected: '⛔',
-  approved: '✅',
-  completed: '🎉',
-  payment_rejected: '💳',
-  payment_confirmed: '💳',
-  account_approved: '🎉',
-  rps: '🧾',
-  announcement: '📢',
-  support_reply: '💬',
-  serving: '🎫',
-  payment_reminder: '⏰',
+// Per-kind line icon (shared set) — replaces the old emoji map.
+const ICON: Record<string, (p: IconProps) => ReactNode> = {
+  comment: ChatIcon,
+  on_hold: AlertTriangleIcon,
+  rejected: BanIcon,
+  approved: CheckCircleIcon,
+  completed: CheckCircleIcon,
+  payment_rejected: CreditCardIcon,
+  payment_confirmed: CreditCardIcon,
+  account_approved: SparkleIcon,
+  rps: ReceiptIcon,
+  announcement: MegaphoneIcon,
+  support_reply: ChatIcon,
+  serving: TicketIcon,
+  payment_reminder: ClockIcon,
 }
 
 function fmtWhen(iso: string): string {
   return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
-
-// Outline notification bell (matches the dashboard's line-icon style).
-const BellIcon = ({ size = 20 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-  </svg>
-)
 
 export default function NotificationBell() {
   const { t } = useT()
@@ -148,7 +144,9 @@ export default function NotificationBell() {
                     font: 'inherit', color: 'hsl(var(--ink))',
                   }}
                 >
-                  <span aria-hidden style={{ fontSize: 15, lineHeight: 1.3, flex: '0 0 auto' }}>{ICON[n.kind] ?? '🔔'}</span>
+                  <span aria-hidden style={{ flex: '0 0 auto', display: 'inline-flex', marginTop: 1, color: 'hsl(var(--ink-2))' }}>
+                    {(ICON[n.kind] ?? BellIcon)({ size: 17 })}
+                  </span>
                   <span style={{ minWidth: 0, flex: '1 1 auto' }}>
                     <span style={{ display: 'block', fontSize: 12.5, lineHeight: 1.4, fontWeight: n.read_at ? 400 : 600 }}>{n.title}</span>
                     <span className="ktc-label" style={{ fontSize: 11, opacity: 0.7 }}>{fmtWhen(n.created_at)}</span>
