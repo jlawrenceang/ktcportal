@@ -96,7 +96,11 @@ export default function FileViewerModal({
         const blob = await res.blob()
         if (!active) return
         objectUrl = URL.createObjectURL(blob)
-        setKind(blob.type === 'application/pdf' ? 'pdf' : 'image')
+        // Trust the MIME type, but fall back to the file extension — some storage
+        // configs hand a PDF back as application/octet-stream, which would
+        // otherwise render (and try to print) as a broken image.
+        const isPdf = blob.type === 'application/pdf' || /\.pdf$/i.test(fileName)
+        setKind(isPdf ? 'pdf' : 'image')
         setBlobUrl(objectUrl)
       } catch {
         if (active) setError(t('Could not load the file. Please try again.'))
@@ -130,17 +134,22 @@ export default function FileViewerModal({
       pdfFrameRef.current?.contentWindow?.print()
       return
     }
-    // Images: stage a minimal document in the hidden print iframe.
+    // Images: stage a minimal document in the hidden print iframe. The print is
+    // triggered via a DOM onload handler set from here (this file's 'self'
+    // script) — NOT an inline onload attribute, which the CSP (script-src 'self',
+    // no unsafe-inline) blocks, which is what stopped printing entirely.
     const frame = printFrameRef.current
+    const win = frame?.contentWindow
     const doc = frame?.contentDocument
-    if (!frame || !doc) return
+    if (!frame || !win || !doc) return
     doc.open()
-    doc.write(
-      `<!doctype html><title>${title}</title>` +
-      `<style>body{margin:0;display:grid;place-items:center}img{max-width:100%;max-height:100vh}</style>` +
-      `<img src="${blobUrl}" onload="setTimeout(function(){window.print()},50)">`,
-    )
+    doc.write('<!doctype html><meta charset="utf-8"><style>body{margin:0;display:grid;place-items:center}img{max-width:100%;max-height:100vh}</style>')
+    doc.title = title
     doc.close()
+    const img = doc.createElement('img')
+    img.onload = () => { win.focus(); win.print() }
+    img.src = blobUrl
+    doc.body.appendChild(img)
   }
 
   async function doDelete() {
