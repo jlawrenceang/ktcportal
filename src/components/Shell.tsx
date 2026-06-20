@@ -12,6 +12,7 @@ import BrokerStatusBanner from './BrokerStatusBanner'
 import IdleWarning from './IdleWarning'
 import { useT } from '../lib/i18n'
 import NotificationBell from './NotificationBell'
+import AccountMenu from './AccountMenu'
 import BottomNav from './BottomNav'
 import Clock from './Clock'
 import PushPrompt from './PushPrompt'
@@ -58,6 +59,7 @@ export default function Shell({ children }: { children: ReactNode }) {
         <span className="ktc-nav-spacer" aria-hidden />
         <Clock />
         <NotificationBell />
+        <AccountMenu settingsTo="/account" settingsLabel="My Account" />
       </nav>
 
       {locked ? (
