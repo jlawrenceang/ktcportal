@@ -80,7 +80,6 @@ export default function Shell({ children }: { children: ReactNode }) {
           <Link to="/agreement" className="ktc-foot-link">{t('Customer Agreement')}</Link>
         </div>
         <div className="ktc-foot-meta">
-          <img src="/ktc-logo.png" alt="" aria-hidden className="ktc-foot-logo" />
           <span>KTC Online Portal <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.</span>
         </div>
       </footer>
