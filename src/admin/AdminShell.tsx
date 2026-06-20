@@ -70,22 +70,14 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
         </Link>
         <span style={{ flex: 1 }} />
         <StaffNotificationBell />
-        {/* Only render once the role is known — never fall back to a generic
-            "Admin" label (that made the owner's pill flash "Admin" on every
-            tab switch while the profile reloaded). */}
-        {role && (
-          <span
-            title={`${t(role)}: ${broker?.email ?? ''}`}
-            style={{
-              flex: '0 0 auto', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
-              padding: '4px 10px', borderRadius: 999, color: '#fff',
-              background: 'linear-gradient(135deg, var(--acc), var(--acc-2))',
-            }}
-          >
-            {t(role)}
-          </span>
-        )}
-        <AccountMenu settingsTo={broker?.is_admin || broker?.is_owner ? '/admin/settings' : undefined} settingsLabel="Settings" />
+        {/* The role now lives inside the account menu's identity header (passed
+            below) instead of as a separate rail pill — only set once the role is
+            known so the owner's badge never flashes a generic "Admin". */}
+        <AccountMenu
+          settingsTo={broker?.is_admin || broker?.is_owner ? '/admin/settings' : undefined}
+          settingsLabel="Settings"
+          role={role || undefined}
+        />
       </nav>
 
       <div className="ktc-stagger">{children}</div>

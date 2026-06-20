@@ -10,6 +10,20 @@ import { GearIcon, GlobeIcon, MoonIcon, SignOutIcon } from './icons'
 
 const iconWrap = { width: 20, display: 'inline-flex', justifyContent: 'center', flex: '0 0 auto', color: 'hsl(var(--ink-2))' } as const
 
+// Soft, visionOS-tasteful tint per staff role so the badge reads at a glance
+// without shouting. Owner keeps the brand accent; the rest get muted gradients
+// (white text stays legible on each). Unknown roles fall back to the accent.
+const ACCENT_BG = 'linear-gradient(135deg, var(--acc), var(--acc-2))'
+const ROLE_BG: Record<string, string> = {
+  Owner: ACCENT_BG,
+  Admin: 'linear-gradient(135deg, #6e74e8, #5057d4)',      // indigo
+  Cashier: 'linear-gradient(135deg, #3fae6b, #2e9457)',    // green
+  Checker: 'linear-gradient(135deg, #3fa9d6, #2e8ec0)',    // blue
+  Operations: 'linear-gradient(135deg, #d9942f, #be7d1c)', // amber
+  CSR: 'linear-gradient(135deg, #2fb3a6, #1f9488)',        // teal
+  Customer: 'linear-gradient(135deg, #5b6b86, #43506b)',   // slate
+}
+
 // Gmail-style account menu for the top rail: a round avatar (initials) that opens
 // a dropdown with the signed-in identity, Settings, the quick tour, language +
 // dark-mode toggles (mirroring the ⊞ Menu), and Sign out. Shared by the customer
@@ -22,7 +36,7 @@ function initials(name?: string | null, email?: string | null): string {
   return src.slice(0, 2).toUpperCase()
 }
 
-export default function AccountMenu({ settingsTo, settingsLabel }: { settingsTo?: string; settingsLabel?: string }) {
+export default function AccountMenu({ settingsTo, settingsLabel, role }: { settingsTo?: string; settingsLabel?: string; role?: string }) {
   const { t } = useT()
   const { broker } = useBroker()
   const { signOut } = useAuth()
@@ -51,7 +65,9 @@ export default function AccountMenu({ settingsTo, settingsLabel }: { settingsTo?
   const name = broker?.full_name || broker?.email || t('Account')
   const email = broker?.email || ''
   const ini = initials(broker?.full_name, broker?.email)
-  const avatarBg = 'linear-gradient(135deg, var(--acc), var(--acc-2))'
+  // Tint the avatar with the role color too, so the role reads at a glance from
+  // the rail without opening the menu (customers have no role → brand accent).
+  const avatarBg = (role && ROLE_BG[role]) || ACCENT_BG
 
   return (
     <span ref={wrapRef} style={{ position: 'relative', display: 'inline-flex', flex: '0 0 auto' }}>
@@ -82,6 +98,13 @@ export default function AccountMenu({ settingsTo, settingsLabel }: { settingsTo?
             <span style={{ minWidth: 0 }}>
               <span style={{ display: 'block', fontSize: 13.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
               {email && <span className="ktc-label" style={{ display: 'block', fontSize: 11.5, opacity: 0.75, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</span>}
+              {role && (
+                <span style={{
+                  display: 'inline-block', marginTop: 5, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.06em',
+                  textTransform: 'uppercase', padding: '3px 9px', borderRadius: 999, color: '#fff',
+                  background: ROLE_BG[role] ?? ACCENT_BG,
+                }}>{t(role)}</span>
+              )}
             </span>
           </div>
           <div style={{ height: 1, background: 'var(--glass-brd)', margin: '2px 4px 4px' }} />

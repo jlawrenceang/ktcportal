@@ -59,7 +59,7 @@ export default function Shell({ children }: { children: ReactNode }) {
         <span className="ktc-nav-spacer" aria-hidden />
         <Clock />
         <NotificationBell />
-        <AccountMenu settingsTo="/account" settingsLabel="My Account" />
+        <AccountMenu settingsTo="/account" settingsLabel="My Account" role="Customer" />
       </nav>
 
       {locked ? (
