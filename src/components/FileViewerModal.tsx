@@ -1,7 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useT } from '../lib/i18n'
-import { TrashIcon } from './icons'
+import { TrashIcon, ReceiptIcon } from './icons'
+
+// Mobile browsers (iOS Safari, Android Chrome) can't render a PDF inline in an
+// iframe — they show a blank/blocked frame. On those we offer an "Open PDF"
+// action that hands the file to the device's native viewer instead. (iPadOS 13+
+// reports a desktop UA, so also treat a touch-capable "Mac" as mobile.)
+const IS_MOBILE = typeof navigator !== 'undefined' && (
+  /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+  (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.userAgent))
+)
 
 /**
  * One-line integration for pages that view stored attachments:
@@ -190,9 +199,11 @@ export default function FileViewerModal({
               </button>
             )
           )}
-          <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={print} disabled={!blobUrl}>
-            {t('Print')}
-          </button>
+          {!(IS_MOBILE && kind === 'pdf') && (
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={print} disabled={!blobUrl}>
+              {t('Print')}
+            </button>
+          )}
           <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={save} disabled={!blobUrl}>
             {t('Save')}
           </button>
@@ -212,7 +223,20 @@ export default function FileViewerModal({
           ) : !blobUrl ? (
             <div className="ktc-skeleton" style={{ width: '70%', height: 220 }} />
           ) : kind === 'pdf' ? (
-            <iframe ref={pdfFrameRef} src={blobUrl} title={title} style={{ width: '100%', height: '70vh', border: 0 }} />
+            IS_MOBILE ? (
+              <div style={{ display: 'grid', gap: 14, placeItems: 'center', padding: 28, textAlign: 'center' }}>
+                <span aria-hidden style={{ color: 'hsl(var(--ink-2))' }}><ReceiptIcon size={40} /></span>
+                <span className="ktc-label" style={{ fontSize: 13.5, maxWidth: 280, lineHeight: 1.5 }}>
+                  {t('PDF preview isn’t supported on this device. Open it in your browser’s viewer to read, print or share it.')}
+                </span>
+                <button type="button" className="ktc-btn" style={{ width: 'auto', padding: '11px 24px' }}
+                  onClick={() => window.open(blobUrl, '_blank', 'noopener,noreferrer')}>
+                  {t('Open PDF')}
+                </button>
+              </div>
+            ) : (
+              <iframe ref={pdfFrameRef} src={blobUrl} title={title} style={{ width: '100%', height: '70vh', border: 0 }} />
+            )
           ) : (
             <img src={blobUrl} alt={title} style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 10, boxShadow: 'var(--shadow-md)' }} />
           )}

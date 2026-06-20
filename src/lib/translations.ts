@@ -282,6 +282,8 @@ export const tl: Record<string, string> = {
   "Current:": "Kasalukuyan:",
   "customer": "customer",
   "Customer": "Customer",
+  "Open PDF": "Buksan ang PDF",
+  "PDF preview isn’t supported on this device. Open it in your browser’s viewer to read, print or share it.": "Hindi sinusuportahan ang PDF preview sa device na ito. Buksan ito sa viewer ng iyong browser para basahin, i-print o i-share.",
   "Customer Agreement (Terms & Conditions)": "Kasunduan ng Customer (Mga Tuntunin at Kundisyon)",
   "Customer not found.": "Hindi nahanap ang customer.",
   "Customer profile not found.": "Hindi nahanap ang customer profile.",
