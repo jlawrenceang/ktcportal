@@ -84,8 +84,8 @@ function RoleLanding() {
 
 export default function App() {
   return (
-    <I18nProvider>
     <AuthProvider>
+    <I18nProvider>
       <BrowserRouter>
         <TourProvider>
         <LanguageGate />
@@ -157,7 +157,7 @@ export default function App() {
         </Suspense>
         </TourProvider>
       </BrowserRouter>
-    </AuthProvider>
     </I18nProvider>
+    </AuthProvider>
   )
 }

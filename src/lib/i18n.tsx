@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { tl } from './translations'
+import { useAuth } from './AuthContext'
 
 // Lightweight, dependency-free i18n. English is the source of truth and the
 // translation KEY: components wrap user-facing strings with t('English text'),
@@ -7,12 +8,15 @@ import { tl } from './translations'
 // Tagalog. Anything not in the dictionary falls back to English automatically,
 // so the app is always shippable mid-translation.
 //
-// Default is English; the choice is remembered per browser (localStorage).
+// Default is English; the chosen language VALUE is remembered per browser
+// (device preference). Whether a given ACCOUNT has been asked to choose is
+// tracked PER USER, so the first-run language chooser fires once for every
+// account — important for shared / kiosk devices.
 // Interpolation: t('Hello {name}', { name }) replaces {name} in either language.
 
 export type Lang = 'en' | 'tl'
-const KEY = 'ktc_lang'
-const CHOSEN = 'ktc_lang_set' // set once the user has made an explicit choice
+const KEY = 'ktc_lang'                                       // language value — per browser
+const chosenKeyFor = (uid: string) => `ktc_lang_chosen_${uid}` // "has this account picked?" — per account
 
 export type TFunc = (en: string, vars?: Record<string, string | number>) => string
 
@@ -43,18 +47,28 @@ function initialLang(): Lang {
     return 'en'
   }
 }
-function initialChosen(): boolean {
-  try { return localStorage.getItem(CHOSEN) === '1' } catch { return false }
-}
-
 export function I18nProvider({ children }: { children: ReactNode }) {
+  const { session } = useAuth()
+  const uid = session?.user?.id ?? null
   const [lang, setLangState] = useState<Lang>(initialLang)
-  const [langChosen, setChosen] = useState<boolean>(initialChosen)
+  const [tick, setTick] = useState(0) // bump to re-read the per-account flag after a pick
+
+  // Has THIS signed-in account explicitly chosen a language yet? No session
+  // (login / confirm screens) → treat as chosen so we never gate those.
+  const langChosen = useMemo(() => {
+    if (!uid) return true
+    try { return localStorage.getItem(chosenKeyFor(uid)) === '1' } catch { return true }
+  }, [uid, tick])
+
   const setLang = useCallback((l: Lang) => {
-    try { localStorage.setItem(KEY, l); localStorage.setItem(CHOSEN, '1') } catch { /* ignore */ }
+    try {
+      localStorage.setItem(KEY, l)
+      if (uid) localStorage.setItem(chosenKeyFor(uid), '1')
+    } catch { /* ignore */ }
     setLangState(l)
-    setChosen(true)
-  }, [])
+    setTick((n) => n + 1)
+  }, [uid])
+
   const t = useCallback<TFunc>((en, vars) => {
     const out = lang === 'tl' ? (tl[en] ?? en) : en
     return interpolate(out, vars)

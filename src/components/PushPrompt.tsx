@@ -2,19 +2,22 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { pushSupported, isPushOn, enablePush } from '../lib/push'
 import { useT } from '../lib/i18n'
+import { useAuth } from '../lib/AuthContext'
 
 // Soft "turn on notifications?" popup shown right after the first-run language
 // choice (so it's a clean yes/no, one screen after the language gate). The actual
 // browser permission prompt only fires on the explicit "Turn on" tap (a user
-// gesture, as browsers require). Auto-shows at most ONCE per browser — after it
-// has appeared we leave the user alone forever, even if they neither enabled it
-// nor tapped "Not now" (otherwise it re-nags every single login). Always
-// re-enableable from the ⊞ Menu → 🔔 Notifications.
-const KEY = 'ktc_push_prompt' // localStorage: 'enabled' | 'dismissed'
-const SEEN = 'ktc_push_prompt_seen' // localStorage: auto-prompt has fired once on this browser
+// gesture, as browsers require). Auto-shows at most ONCE PER ACCOUNT — the flags
+// are keyed by user id so every account that signs in is asked once (matters on
+// shared / kiosk devices) but is never re-nagged after. Re-enableable any time
+// from the 🔔 bell.
+const keyFor = (uid: string | null) => (uid ? `ktc_push_prompt_${uid}` : 'ktc_push_prompt') // 'enabled' | 'dismissed'
+const seenFor = (uid: string | null) => (uid ? `ktc_push_prompt_seen_${uid}` : 'ktc_push_prompt_seen')
 
 export default function PushPrompt() {
   const { t, langChosen } = useT()
+  const { session } = useAuth()
+  const uid = session?.user?.id ?? null
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -30,10 +33,12 @@ export default function PushPrompt() {
   }, [open])
 
   useEffect(() => {
-    // Wait for the first-run language choice so the order is: language gate →
-    // then this notification prompt (no overlap), and it shows in the chosen
-    // language. Returning users already have langChosen=true, so it runs at once.
-    if (!langChosen) return
+    // Wait for the signed-in account AND its first-run language choice, so the
+    // order is: language gate → this notification prompt (no overlap), in the
+    // chosen language. Keyed per account so each user is asked once.
+    if (!uid || !langChosen) return
+    const KEY = keyFor(uid)
+    const SEEN = seenFor(uid)
     if (!pushSupported()) return
     if (localStorage.getItem(KEY)) return
     if (Notification.permission === 'denied') return
@@ -47,17 +52,15 @@ export default function PushPrompt() {
         if (r.ok) localStorage.setItem(KEY, 'enabled')
         return
       }
-      // Persisted in localStorage (not sessionStorage) so the soft prompt fires
-      // at most once per browser — never re-nags on later logins. The fix for
-      // the "prompt loops forever" report: previously this was per-session, so a
-      // user who never explicitly enabled/dismissed saw it again every login.
+      // Persisted (not sessionStorage) so the soft prompt fires at most once per
+      // account — never re-nags on later logins.
       if (localStorage.getItem(SEEN)) return
       localStorage.setItem(SEEN, '1')
       // Small delay so it doesn't slam in during the post-login transition.
       setTimeout(() => { if (!cancelled) setOpen(true) }, 1200)
     })()
     return () => { cancelled = true }
-  }, [langChosen])
+  }, [langChosen, uid])
 
   if (!open) return null
 
@@ -65,14 +68,14 @@ export default function PushPrompt() {
     setBusy(true); setErr(null)
     try {
       const r = await enablePush()
-      if (r.ok) { localStorage.setItem(KEY, 'enabled'); setOpen(false) }
+      if (r.ok) { localStorage.setItem(keyFor(uid), 'enabled'); setOpen(false) }
       else setErr(r.error ?? t('Could not enable alerts.'))
     } finally {
       setBusy(false)
     }
   }
   function notNow() {
-    localStorage.setItem(KEY, 'dismissed') // don't auto-ask again
+    localStorage.setItem(keyFor(uid), 'dismissed') // don't auto-ask this account again
     setOpen(false)
   }
 
