@@ -172,6 +172,45 @@ export interface JobOrder {
   supplements?: JoSupplement[]
 }
 
+// ── Release / pull-out module (ADR-0024, migration 0124) ──────────────────
+export type ReleaseStatus =
+  | 'submitted' | 'docs_verified' | 'payable' | 'paid' | 'released' | 'on_hold' | 'cancelled'
+
+export interface ReleaseOrder {
+  id: string
+  release_number: string | null
+  customer_id: string
+  consignee_id: string | null
+  bl_number: string
+  doc_path: string | null
+  status: ReleaseStatus
+  verified_at?: string | null
+  amount?: number | null
+  charges_note?: string | null
+  charges_set_at?: string | null
+  payment_status: 'unpaid' | 'submitted' | 'confirmed' | 'rejected'
+  payment_proof_path?: string | null
+  payment_submitted_at?: string | null
+  payment_confirmed_at?: string | null
+  payment_note?: string | null
+  or_number?: string | null
+  released_at?: string | null
+  staff_note?: string | null
+  created_at: string
+  consignee?: { code: string; name: string } | null
+  broker?: { full_name: string | null; email: string | null } | null
+}
+
+export const RELEASE_STATUS_LABEL: Record<ReleaseStatus, string> = {
+  submitted: 'Awaiting document check',
+  docs_verified: 'Documents verified',
+  payable: 'Ready for payment',
+  paid: 'Paid — claim OR at office',
+  released: 'Released',
+  on_hold: 'Needs a corrected document',
+  cancelled: 'Cancelled',
+}
+
 // Last-resort fallback only — the live catalogue is service_rates
 // (admin-managed in Settings; cached per browser by useServices).
 export const SERVICE_REQUESTS = [

@@ -24,6 +24,7 @@ const VesselIcon = () => (<svg {...ip}><path d="M3 18a3 3 0 0 0 2.5 1.5h13A3 3 0
 const CalcIcon = () => (<svg {...ip}><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" /></svg>)
 const ManualIcon = () => (<svg {...ip}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>)
 const SupportIcon = () => (<svg {...ip}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>)
+const ReleaseIcon = () => (<svg {...ip}><rect x="2" y="7" width="13" height="11" rx="1" /><path d="M15 11h4l3 3v4h-7" /><path d="M6 18.5a1.5 1.5 0 0 0 3 0M16 18.5a1.5 1.5 0 0 0 3 0" /></svg>)
 
 const ORDER_LINKS = [
   { to: '/job-order', label: 'New Order', icon: <NewIcon /> },
@@ -32,6 +33,7 @@ const ORDER_LINKS = [
 const GRID = [
   { to: '/job-order', label: 'New Job Order', icon: <NewIcon /> },
   { to: '/job-orders', label: 'My Job Orders', icon: <OrdersIcon /> },
+  { to: '/releases', label: 'Release / Pull-out', icon: <ReleaseIcon /> },
   { to: '/vessels', label: 'Vessel Schedule', icon: <VesselIcon /> },
   { to: '/calculator', label: 'Rate Calculator', icon: <CalcIcon /> },
   { to: '/account', label: 'My Account', icon: <AccountIcon /> },

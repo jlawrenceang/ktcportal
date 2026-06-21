@@ -6,6 +6,13 @@ Top-level constitution for Claude Code.
 
 Maintain software for **KTC Container Terminal Corp.** — a container-terminal, port-services, and container-depot operator. Current scope: the **KTC Online Portal**, where accredited customers (customs brokers) file Job Orders against consignees and KTC staff run a separate admin portal. North star: grow it modularly toward a Navis-style terminal + depot operating system (`docs/obsidian-vault/09-Future/`). Protect access controls before UI polish.
 
+## Pillars & roadmap
+
+Two pillars on **one Supabase database**:
+
+- **Pillar 1 — the KTC Online Portal (this repo, live).** Accredited customers file **Job Orders** for special/ancillary services (X-ray, DEA, OOG) and KTC staff process them. Plus the **release / pull-out** flow (ADR-0024): customers file online — pick consignee + BL no. + upload **DO/BL** → **CSR** documents-desk verifies → staff enter charges → online pay (QRPH) → cashier confirms → **OR claimed at office** for pull-out. Customer-facing queue terms are **batch (filing day) + working-hours aging**, not a serving/priority number; the X-ray queue is an **operations** view (gate `view_xray_queue`), the checker is the spotter who confirms.
+- **Pillar 2 — Yard Operations (planned, not built).** An offline-first PWA **move logger** + a `moves` **event-log** spine from which inventory, container aging, bay occupancy, and per-equipment (billing) move counts are all **derived** (Postgres views), never hand-stored. This is the start of the container/EIR data spine (ADR-0015/0022). Full plan: `docs/obsidian-vault/09-Future/Yard Operations — Pillar 2 (Move Logger + Yard).md`. Phases: 0 schema+views → 1 logger → 2 inventory+aging → 3 yard map → 4 billing tie-in (`job_order_id` on billable moves) → 5 planning sim → 6 vessel-schedule optimization. Principle: **derived over hand-maintained; planned vs actual strictly separate; ship each phase before the next.**
+
 ## Non-negotiables
 
 - **Backend-enforced access.** Auth, approvals, roles live in RLS + SECURITY DEFINER RPCs, not frontend-only. CAPTCHA is server-enforced in Supabase.

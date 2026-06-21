@@ -42,7 +42,11 @@ const CalcIcon = () => (<svg {...ip}><rect x="4" y="2" width="16" height="20" rx
 const BulletinIcon = () => (<svg {...ip}><path d="M3 11l15-7v16l-15-7z" /><path d="M3 11v3a2 2 0 0 0 2 2h1" /><path d="M7 16v3a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2" /></svg>)
 const DashIcon = GridIcon
 
-type Dest = { to: string; label: string; perm?: Permission; icon: ReactNode; end?: boolean }
+const ReleaseIcon = () => (<svg {...ip}><rect x="2" y="7" width="13" height="11" rx="1" /><path d="M15 11h4l3 3v4h-7" /><path d="M6 18.5a1.5 1.5 0 0 0 3 0M16 18.5a1.5 1.5 0 0 0 3 0" /></svg>)
+
+type Dest = { to: string; label: string; perm?: Permission; anyPerm?: Permission[]; icon: ReactNode; end?: boolean }
+const canSee = (d: Dest, can: (p: Permission) => boolean) =>
+  (!d.perm || can(d.perm)) && (!d.anyPerm || d.anyPerm.some(can))
 
 // Everything a role can reach — the ⊞ Menu grid. Order = the admin's mental map.
 const GRID: Dest[] = [
@@ -51,6 +55,7 @@ const GRID: Dest[] = [
   { to: '/admin/new-job-order', label: 'New JO', perm: 'file_job_orders', icon: <NewIcon /> },
   { to: '/admin/checker', label: 'X-ray Queue', perm: 'view_xray_queue', icon: <CheckerIcon /> },
   { to: '/admin/cashier', label: 'Cashier', perm: 'review_payments', icon: <CashIcon /> },
+  { to: '/admin/releases', label: 'Releases', anyPerm: ['verify_release_docs', 'review_payments'], icon: <ReleaseIcon /> },
   { to: '/admin/approvals', label: 'Approvals', perm: 'manage_approvals', icon: <ApprovalsIcon /> },
   { to: '/admin/customers', label: 'Customers', perm: 'manage_customers', icon: <UsersIcon /> },
   { to: '/admin/consignees', label: 'Consignees', perm: 'manage_consignees', icon: <BuildingIcon /> },
@@ -94,11 +99,11 @@ export default function AdminBottomNav() {
   for (const c of candidates) {
     if (tabs.length >= 4) break
     if (seen.has(c.to)) continue
-    if (c.perm && !can(c.perm)) continue
+    if (!canSee(c, can)) continue
     seen.add(c.to); tabs.push(c)
   }
 
-  const grid = GRID.filter((g) => !g.perm || can(g.perm))
+  const grid = GRID.filter((g) => canSee(g, can))
 
   async function handleSignOut() {
     setOpen(false)

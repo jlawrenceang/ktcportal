@@ -32,6 +32,7 @@ const AppHome = lazyWithReload(() => import('./app/AppHome'))
 const AppChecker = lazyWithReload(() => import('./app/AppChecker'))
 const Vessels = lazyWithReload(() => import('./pages/Vessels'))
 const SupportTickets = lazyWithReload(() => import('./pages/SupportTickets'))
+const Releases = lazyWithReload(() => import('./pages/Releases'))
 const Manual = lazyWithReload(() => import('./pages/Manual'))
 const AdminManual = lazyWithReload(() => import('./admin/ManualPage'))
 const Dashboard = lazyWithReload(() => import('./admin/Dashboard'))
@@ -49,6 +50,7 @@ const VesselSchedule = lazyWithReload(() => import('./admin/VesselSchedule'))
 const Logs = lazyWithReload(() => import('./admin/Logs'))
 const Security = lazyWithReload(() => import('./admin/Security'))
 const SupportInbox = lazyWithReload(() => import('./admin/SupportInbox'))
+const AdminReleases = lazyWithReload(() => import('./admin/Releases'))
 
 function Protected({ children }: { children: ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>
@@ -125,6 +127,7 @@ export default function App() {
               disabled per ADR-0007) — old links fall through to the catch-all → / */}
           <Route path="/job-orders" element={<Protected><MyJobOrders /></Protected>} />
           <Route path="/support" element={<Protected><SupportTickets /></Protected>} />
+          <Route path="/releases" element={<Protected><Releases /></Protected>} />
           <Route path="/manual" element={<Protected><Manual /></Protected>} />
 
           {/* Installable staff app (focused, role-aware) */}
@@ -144,6 +147,7 @@ export default function App() {
           <Route path="/admin/new-job-order" element={<Admin><AdminNewJobOrder /></Admin>} />
           <Route path="/admin/checker" element={<Admin><Checker /></Admin>} />
           <Route path="/admin/cashier" element={<Admin><CashierStation /></Admin>} />
+          <Route path="/admin/releases" element={<Admin><AdminReleases /></Admin>} />
           <Route path="/admin/vessel-schedule" element={<Admin><VesselSchedule /></Admin>} />
           <Route path="/admin/logs" element={<Admin><Logs /></Admin>} />
           <Route path="/admin/security" element={<Admin><Security /></Admin>} />
