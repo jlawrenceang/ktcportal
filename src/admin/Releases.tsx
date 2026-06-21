@@ -163,7 +163,7 @@ export default function Releases() {
     if (!orNo.trim()) { setError(t('Enter the OR number.')); return }
     if (!invNo.trim()) { setError(t('Enter the ERP control no.')); return }
     setBusyId(id); setError(null)
-    const { error: err } = await supabase.rpc('record_release_or', { p_id: id, p_or: orNo.trim(), p_invoice_no: invNo.trim() })
+    const { error: err } = await supabase.rpc('record_release_or', { p_id: id, p_or: orNo.trim(), p_invoice_no: 'OR-INV-' + invNo.trim() })
     setBusyId(null)
     if (err) { setError(err.message); return }
     setOrId(null); setOrNo(''); setInvNo('')
@@ -542,14 +542,32 @@ export default function Releases() {
                     )}
                     <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
                       {orId === r.id ? (
-                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <input className="ktc-input ktc-mono" value={orNo} onChange={(e) => setOrNo(e.target.value.replace(/\D/g, '').slice(0, 6))} autoFocus
-                            inputMode="numeric" maxLength={6}
-                            placeholder={t('BIR OR no. (max 6 digits)')} style={{ maxWidth: 200, width: '100%', padding: '7px 11px', fontSize: 13 }} />
-                          <input className="ktc-input ktc-mono" value={invNo} onChange={(e) => setInvNo(e.target.value)}
-                            placeholder={t('ERP control no. (OR-INV-…, cash)')} style={{ maxWidth: 240, width: '100%', padding: '7px 11px', fontSize: 13 }} />
-                          <button style={btn('solid')} disabled={isBusy || !orNo.trim() || !invNo.trim()} onClick={() => void recordOr(r.id)}>{t('Record OR')}</button>
-                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setOrId(null); setOrNo(''); setInvNo('') }}>{t('Cancel')}</button>
+                        <span style={{ display: 'inline-flex', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                          <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 3 }}>
+                            <span style={{ fontSize: 11, opacity: 0.7 }}>{t('BIR OR no.')}</span>
+                            <input className="ktc-input ktc-mono" value={orNo} onChange={(e) => setOrNo(e.target.value.replace(/\D/g, '').slice(0, 6))} autoFocus
+                              inputMode="numeric" maxLength={6}
+                              placeholder={t('number')} style={{ width: 150, padding: '7px 11px', fontSize: 13 }} />
+                            <span className="ktc-mono" style={{ fontSize: 11, opacity: 0.6, minHeight: 14 }}>
+                              {orNo ? '= ' + orNo.padStart(6, '0') : t('up to 6 digits')}
+                            </span>
+                          </span>
+                          <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 3 }}>
+                            <span style={{ fontSize: 11, opacity: 0.7 }}>{t('ERP control no. (cash)')}</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                              <span className="ktc-mono" style={{ fontSize: 13, opacity: 0.7, paddingRight: 3 }}>OR-INV-</span>
+                              <input className="ktc-input ktc-mono" value={invNo} onChange={(e) => setInvNo(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                                inputMode="numeric" maxLength={8}
+                                placeholder={t('number')} style={{ width: 150, padding: '7px 11px', fontSize: 13 }} />
+                            </span>
+                            <span className="ktc-mono" style={{ fontSize: 11, opacity: 0.6, minHeight: 14 }}>
+                              {invNo ? '= OR-INV-' + invNo.padStart(8, '0') : t('8 digits')}
+                            </span>
+                          </span>
+                          <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', paddingTop: 18 }}>
+                            <button style={btn('solid')} disabled={isBusy || !orNo.trim() || !invNo.trim()} onClick={() => void recordOr(r.id)}>{t('Record OR')}</button>
+                            <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setOrId(null); setOrNo(''); setInvNo('') }}>{t('Cancel')}</button>
+                          </span>
                         </span>
                       ) : (
                         <button style={btn('solid')} disabled={isBusy} onClick={() => { setOrId(r.id); setOrNo(''); setInvNo('') }}
