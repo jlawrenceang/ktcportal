@@ -374,8 +374,8 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
                       )}
                       <span className="ktc-chip" title={t('Filed {date}', { date: new Date(o.created_at).toLocaleString() })}>{t('Batch')}: {batchLabel(o.created_at, t)}</span>
                       {isOpen && (
-                        <span className="ktc-chip" title={t('Time since filed')}
-                          style={ageH >= 24 ? { background: 'var(--c-h0-75-97)', color: 'var(--c-h0-60-40)' } : ageH >= 12 ? { background: 'var(--c-h40-90-96)', color: 'var(--c-h30-60-32)' } : undefined}>
+                        <span className="ktc-chip" title={t('X-ray working hours (9 AM–7 PM) since filed')}
+                          style={ageH >= 20 ? { background: 'var(--c-h0-75-97)', color: 'var(--c-h0-60-40)' } : ageH >= 10 ? { background: 'var(--c-h40-90-96)', color: 'var(--c-h30-60-32)' } : undefined}>
                           {t('Open {age}', { age: formatAge(o.created_at) })}
                         </span>
                       )}

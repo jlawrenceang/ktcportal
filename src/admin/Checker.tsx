@@ -170,7 +170,7 @@ export default function Checker() {
           <b className="ktc-mono" style={{ fontSize: 17 }}>{o.jo_number ?? '—'}</b>
           <Clearance o={o} />
           <span className="ktc-chip" style={{ fontSize: 11 }}>{t('Batch')}: {batchLabel(o.created_at, t)}</span>
-          <span className="ktc-label" style={{ fontSize: 12.5, marginLeft: 'auto' }}>
+          <span className="ktc-label" style={{ fontSize: 12.5, marginLeft: 'auto' }} title={t('X-ray working hours (9 AM–7 PM) since filed')}>
             {t('Open {age}', { age: formatAge(o.created_at) })}
           </span>
         </div>
@@ -297,6 +297,7 @@ export default function Checker() {
             <button type="button" className={`ktc-btn ktc-btn--sm ${view === 'cards' ? '' : 'ktc-btn-ghost'}`} onClick={() => setView('cards')}>{t('Cards')}</button>
           </div>
         </div>
+        <p className="ktc-label" style={{ fontSize: 11.5, marginTop: -6, marginBottom: 12 }}>{t('Age counts X-ray working hours (9 AM–7 PM) only — it pauses overnight.')}</p>
 
         {loading ? (
           <div style={{ display: 'grid', gap: 10 }}>{[60, 60].map((h, i) => <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 12 }} />)}</div>
@@ -313,7 +314,7 @@ export default function Checker() {
                   <th style={thStyle}>{t('Container')}</th>
                   <th style={thStyle}>{t('Consignee')}</th>
                   <th style={thStyle}>{t('Batch')}</th>
-                  <SortTh label={t('Age')} active={sortBy === 'age'} onClick={() => setSortBy('age')} />
+                  <SortTh label={t('Age · work hrs')} active={sortBy === 'age'} onClick={() => setSortBy('age')} />
                   <th style={thStyle} aria-hidden />
                 </tr>
               </thead>
@@ -326,7 +327,7 @@ export default function Checker() {
                       <td style={tdStyle}><span className="ktc-mono">{container}</span></td>
                       <td style={{ ...tdStyle, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('no consignee')}</td>
                       <td style={tdStyle}>{batchLabel(o.created_at, t)}</td>
-                      <td style={{ ...tdStyle, fontWeight: 600, color: h >= 24 ? 'var(--c-h0-60-40)' : h >= 12 ? 'var(--c-h30-60-32)' : 'inherit' }}>{formatAge(o.created_at)}</td>
+                      <td style={{ ...tdStyle, fontWeight: 600, color: h >= 20 ? 'var(--c-h0-60-40)' : h >= 10 ? 'var(--c-h30-60-32)' : 'inherit' }} title={t('X-ray working hours (9 AM–7 PM) since filed')}>{formatAge(o.created_at)}</td>
                       <td style={{ ...tdStyle, textAlign: 'right' }}>
                         {can('confirm_xray')
                           ? <button className="ktc-btn ktc-btn--sm" onClick={() => setConfirmTarget({ id: lineId, container, jo: o.jo_number ?? '—' })}>{t('Confirm')}</button>
