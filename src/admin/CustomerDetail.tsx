@@ -21,6 +21,15 @@ function one<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : (v ?? null)
 }
 
+type CisRow = {
+  trade_name: string | null; legal_name: string | null
+  business_address1: string | null; business_address2: string | null
+  tin: string | null; tel_no: string | null; mobile_no: string | null; email: string | null
+  doc_2303_path: string | null; doc_2307_path: string | null; doc_zero_rating_path: string | null
+  certified_at: string | null
+}
+type CisContact = { name: string; position: string | null; contact_number: string | null; email: string | null }
+
 export default function CustomerDetail() {
   const { t } = useT()
   const { id } = useParams()
@@ -33,6 +42,8 @@ export default function CustomerDetail() {
   const [resetLink, setResetLink] = useState<string | null>(null)
   const [resetBusy, setResetBusy] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [cis, setCis] = useState<CisRow | null>(null)
+  const [cisContacts, setCisContacts] = useState<CisContact[]>([])
 
   async function generateResetLink() {
     if (!cust) return
@@ -56,15 +67,19 @@ export default function CustomerDetail() {
   useEffect(() => {
     if (!id) return
     void (async () => {
-      const [c, o] = await Promise.all([
+      const [c, o, ci, cc] = await Promise.all([
         supabase.from('customers').select('*').eq('id', id).maybeSingle(),
         supabase.from('job_orders')
           .select('id, jo_number, entry_number, status, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)')
           .eq('customer_id', id).order('created_at', { ascending: false }),
+        supabase.from('customer_info').select('*').eq('customer_id', id).maybeSingle(),
+        supabase.from('customer_contacts').select('name, position, contact_number, email').eq('customer_id', id).order('created_at'),
       ])
       if (c.error) setError(c.error.message)
       setCust((c.data as Broker) ?? null)
       setOrders(((o.data ?? []) as unknown as JobOrder[]).map((r) => ({ ...r, consignee: one(r.consignee) })))
+      setCis((ci.data as CisRow) ?? null)
+      setCisContacts((cc.data ?? []) as CisContact[])
       setLoading(false)
     })()
   }, [id])
@@ -128,6 +143,38 @@ export default function CustomerDetail() {
               </div>
             )}
           </div>
+        )}
+      </div>
+
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('Company Information')}</h2>
+        {!cis ? (
+          <p className="ktc-label" style={{ marginTop: 8, fontSize: 13 }}>{t('Not submitted yet.')}</p>
+        ) : (
+          <>
+            <div className="ktc-label" style={{ marginTop: 10, fontSize: 13.5, display: 'grid', gap: 4 }}>
+              <div>{t('Trade name:')} <b style={{ color: 'hsl(var(--ink))' }}>{cis.trade_name || '—'}</b></div>
+              {cis.legal_name && <div>{t('Customer name:')} {cis.legal_name}</div>}
+              <div>{t('Address:')} {[cis.business_address1, cis.business_address2].filter(Boolean).join(', ') || '—'}</div>
+              <div>{t('TIN / VAT:')} {cis.tin || '—'}</div>
+              <div>{t('Tel:')} {cis.tel_no || '—'} · {t('Mobile:')} {cis.mobile_no || '—'}</div>
+              <div>{t('Email:')} {cis.email || '—'}</div>
+              <div>{t('Certified:')} {cis.certified_at ? new Date(cis.certified_at).toLocaleString() : t('No')}</div>
+            </div>
+            {cisContacts.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Authorized representatives')}</div>
+                <ul style={{ margin: '6px 0 0', paddingLeft: 18, fontSize: 13 }}>
+                  {cisContacts.map((c, i) => <li key={i}>{c.name}{c.position ? ` — ${c.position}` : ''}{c.contact_number ? ` · ${c.contact_number}` : ''}{c.email ? ` · ${c.email}` : ''}</li>)}
+                </ul>
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
+              {cis.doc_2303_path && <button className="ktc-link" style={{ fontSize: 13 }} onClick={() => void openFromStorage('customer-docs', cis.doc_2303_path, t('BIR 2303'))}>{t('2303')}</button>}
+              {cis.doc_2307_path && <button className="ktc-link" style={{ fontSize: 13 }} onClick={() => void openFromStorage('customer-docs', cis.doc_2307_path, t('BIR 2307'))}>{t('2307')}</button>}
+              {cis.doc_zero_rating_path && <button className="ktc-link" style={{ fontSize: 13 }} onClick={() => void openFromStorage('customer-docs', cis.doc_zero_rating_path, t('Zero-Rating Certificate'))}>{t('Zero-rating')}</button>}
+            </div>
+          </>
         )}
       </div>
 

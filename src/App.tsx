@@ -33,6 +33,7 @@ const AppChecker = lazyWithReload(() => import('./app/AppChecker'))
 const Vessels = lazyWithReload(() => import('./pages/Vessels'))
 const SupportTickets = lazyWithReload(() => import('./pages/SupportTickets'))
 const Releases = lazyWithReload(() => import('./pages/Releases'))
+const CompanyInfo = lazyWithReload(() => import('./pages/CompanyInfo'))
 const Manual = lazyWithReload(() => import('./pages/Manual'))
 const AdminManual = lazyWithReload(() => import('./admin/ManualPage'))
 const Dashboard = lazyWithReload(() => import('./admin/Dashboard'))
@@ -117,6 +118,7 @@ export default function App() {
           {/* Broker portal */}
           <Route path="/" element={<Protected><RoleLanding /></Protected>} />
           <Route path="/account" element={<Protected><Account /></Protected>} />
+          <Route path="/company-info" element={<Protected><CompanyInfo /></Protected>} />
           <Route path="/verify-id" element={<Protected><VerifyId /></Protected>} />
           <Route path="/job-order" element={<Protected><JobOrder /></Protected>} />
           <Route path="/job-order/:id/print" element={<Protected><JobOrderPrint /></Protected>} />

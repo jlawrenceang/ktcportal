@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
@@ -37,6 +37,13 @@ export default function JobOrder() {
   // `busy` check twice and file the order twice.
   const submittingRef = useRef(false)
   const [reviewing, setReviewing] = useState(false)
+
+  // Company Information must be complete before filing (server-enforced in 0133;
+  // this is the UX mirror so they aren't blocked only after hitting submit).
+  const [cisComplete, setCisComplete] = useState<boolean | null>(null)
+  useEffect(() => {
+    void supabase.rpc('my_company_info_complete').then(({ data }) => setCisComplete(data === true))
+  }, [])
 
   // Vessel + voyage (required) — picked from the current vessel schedule, with
   // an escape hatch for a call not yet listed (operations reconciles it later).
@@ -217,16 +224,24 @@ export default function JobOrder() {
           {t('File for container terminal services.')}
         </p>
 
-        <Wizard
-          steps={wizardSteps}
-          step={wizStep}
-          onStepChange={setWizStep}
-          onSubmit={openReview}
-          busy={busy}
-          error={error}
-          footer={pendingNotice}
-          submitLabel={busy ? (approved ? t('Submitting…') : t('Filing…')) : approved ? t('Submit Job Order') : t('File Job Order')}
-        />
+        {cisComplete === false ? (
+          <div style={{ fontSize: 13.5, lineHeight: 1.6, padding: '16px 18px', borderRadius: 12, background: 'var(--c-h40-90-97)', border: '1px solid var(--c-h35-85-82)', color: 'var(--c-h30-60-32)' }}>
+            <b>{t('Complete your Company Information first')}</b>
+            <div style={{ marginTop: 4 }}>{t('Before you can file orders, please complete your company profile (Customer Information Sheet).')}</div>
+            <Link to="/company-info" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-block', width: 'auto', padding: '8px 16px', marginTop: 12 }}>{t('Go to Company Information')}</Link>
+          </div>
+        ) : (
+          <Wizard
+            steps={wizardSteps}
+            step={wizStep}
+            onStepChange={setWizStep}
+            onSubmit={openReview}
+            busy={busy}
+            error={error}
+            footer={pendingNotice}
+            submitLabel={busy ? (approved ? t('Submitting…') : t('Filing…')) : approved ? t('Submit Job Order') : t('File Job Order')}
+          />
+        )}
       </div>
 
       {reviewing && (

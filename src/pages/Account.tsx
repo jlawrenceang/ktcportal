@@ -54,6 +54,12 @@ export default function Account() {
   const email = broker?.email ?? session?.user.email ?? ''
   const approved = broker?.status === 'approved'
 
+  // Company Information (Customer Info Sheet) completeness — required before filing.
+  const [cisComplete, setCisComplete] = useState<boolean | null>(null)
+  useEffect(() => {
+    void supabase.rpc('my_company_info_complete').then(({ data }) => setCisComplete(data === true))
+  }, [])
+
   useEffect(() => {
     if (!broker) return
     setBaseName(broker.full_name ?? '')
@@ -169,6 +175,28 @@ export default function Account() {
             <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 999, background: sp.bg, color: sp.ink, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
               {t(STATUS_LABEL[broker?.status ?? 'pending'] ?? broker?.status ?? '')}
             </span>
+          </div>
+        </div>
+
+        {/* Company Information (Customer Info Sheet) */}
+        <div className="ktc-glass" style={{ padding: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{t('Company Information')}</h2>
+            <p className="ktc-label" style={{ marginTop: 4, marginBottom: 0, fontSize: 12.5 }}>
+              {cisComplete === false
+                ? t('Required before you can file orders — please complete it.')
+                : t('Your company profile (Customer Information Sheet).')}
+            </p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {cisComplete !== null && (
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 999, background: cisComplete ? 'var(--c-h150-50-88)' : 'var(--c-h40-90-86)', color: cisComplete ? 'var(--c-h150-55-26)' : 'var(--c-h30-75-32)' }}>
+                {cisComplete ? t('Complete') : t('Incomplete')}
+              </span>
+            )}
+            <Link to="/company-info" className="ktc-btn ktc-btn--sm" style={{ width: 'auto', padding: '8px 16px' }}>
+              {cisComplete ? t('View / edit') : t('Complete now')}
+            </Link>
           </div>
         </div>
 

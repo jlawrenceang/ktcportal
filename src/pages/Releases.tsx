@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Shell from '../components/Shell'
 import Notice from '../components/Notice'
 import SearchPicker, { type PickerItem } from '../components/SearchPicker'
@@ -84,6 +85,12 @@ export default function Releases() {
   // raises otherwise. Unlike job orders (which let a `pending` broker file a
   // held order), pending may NOT file a release. Gate the form upfront.
   const approved = broker?.status === 'approved'
+
+  // Company Information must be complete before filing (server-enforced in 0133).
+  const [cisComplete, setCisComplete] = useState<boolean | null>(null)
+  useEffect(() => {
+    void supabase.rpc('my_company_info_complete').then(({ data }) => setCisComplete(data === true))
+  }, [])
 
   // List of the customer's own release orders (read directly via RLS).
   const [rows, setRows] = useState<ReleaseOrder[]>([])
@@ -183,6 +190,12 @@ export default function Releases() {
           <Notice tone="warning">
             {t('Your account must be approved before you can file a release / pull-out request.')}
           </Notice>
+        </div>
+      ) : cisComplete === false ? (
+        <div style={{ marginBottom: 16, fontSize: 13.5, lineHeight: 1.6, padding: '16px 18px', borderRadius: 12, background: 'var(--c-h40-90-97)', border: '1px solid var(--c-h35-85-82)', color: 'var(--c-h30-60-32)' }}>
+          <b>{t('Complete your Company Information first')}</b>
+          <div style={{ marginTop: 4 }}>{t('Before you can file a release, please complete your company profile (Customer Information Sheet).')}</div>
+          <Link to="/company-info" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-block', width: 'auto', padding: '8px 16px', marginTop: 12 }}>{t('Go to Company Information')}</Link>
         </div>
       ) : (
       /* File a release */
