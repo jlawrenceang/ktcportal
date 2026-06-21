@@ -1,9 +1,10 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import { usePermissions } from '../lib/usePermissions'
-import { batchLabel, formatAge, ageHours } from '../lib/batch'
+import { batchLabel, formatAge } from '../lib/batch'
+import XrayQueueTable, { type QueueRow } from '../components/XrayQueueTable'
 import { usePageTour } from '../components/TourProvider'
 import { checkerSteps } from './AdminTour'
 import { useT } from '../lib/i18n'
@@ -25,20 +26,6 @@ interface CheckerOrder {
   broker?: { full_name: string | null } | null
   consignee?: { code: string; name: string } | null
   lines?: { id: string; container_number: string; service_request: string; xray_done_at: string | null; xray_done_by_name: string | null }[]
-}
-
-const thStyle: CSSProperties = { padding: '8px 10px', fontSize: 11.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', textAlign: 'left' }
-const tdStyle: CSSProperties = { padding: '9px 10px', verticalAlign: 'middle' }
-
-// Clickable column header for the container table — sort by JO no. or by age.
-function SortTh({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <th style={{ padding: 0 }}>
-      <button type="button" onClick={onClick} style={{ ...thStyle, display: 'inline-flex', alignItems: 'center', gap: 4, background: 'none', border: 0, cursor: 'pointer', font: 'inherit', color: active ? 'var(--acc-2)' : 'hsl(var(--ink-2))' }}>
-        {label}{active ? ' ↓' : ''}
-      </button>
-    </th>
-  )
 }
 
 function one<T>(v: T | T[] | null | undefined): T | null {
@@ -77,7 +64,6 @@ export default function Checker() {
   const [confirmTarget, setConfirmTarget] = useState<{ id: string; container: string; jo: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<'table' | 'cards'>('table')
-  const [sortBy, setSortBy] = useState<'jo' | 'age'>('jo')
 
   // RPS assessment (operations / admin). Move types + rates come from move_rates.
   const [moveRates, setMoveRates] = useState<{ move_type: string; rate: number }[]>([])
@@ -240,19 +226,16 @@ export default function Checker() {
   }
 
   // Flat list of containers (vans) still needing X-ray — the working log.
-  const vanRows = queue.flatMap((o) =>
-    (o.lines ?? []).filter((l) => isXray(l.service_request) && !l.xray_done_at).map((l) => ({ lineId: l.id, container: l.container_number, o })))
-  const sortedVans = [...vanRows].sort((a, b) =>
-    sortBy === 'age'
-      ? new Date(a.o.created_at).getTime() - new Date(b.o.created_at).getTime()
-      : (a.o.jo_number ?? '').localeCompare(b.o.jo_number ?? ''))
+  const vanRows: QueueRow[] = queue.flatMap((o) =>
+    (o.lines ?? []).filter((l) => isXray(l.service_request) && !l.xray_done_at)
+      .map((l) => ({ lineId: l.id, container: l.container_number, jo_number: o.jo_number, consignee: o.consignee ?? null, created_at: o.created_at })))
 
   return (
     <AdminShell>
       <div style={{ margin: '14px 4px 20px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
         <div>
-          <h1 className="ktc-title">{t('X-ray Checker')}</h1>
-          <p className="ktc-sub">{t("Confirm completed X-rays · look up a van's clearance before release.")}</p>
+          <h1 className="ktc-title">{t('X-ray Queue')}</h1>
+          <p className="ktc-sub">{t('Plan the X-ray line by JO order and age; the checker confirms each van.')}</p>
         </div>
         <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={refresh} disabled={cooling}>{t('↻ Refresh')}</button>
       </div>
@@ -297,8 +280,6 @@ export default function Checker() {
             <button type="button" className={`ktc-btn ktc-btn--sm ${view === 'cards' ? '' : 'ktc-btn-ghost'}`} onClick={() => setView('cards')}>{t('Cards')}</button>
           </div>
         </div>
-        <p className="ktc-label" style={{ fontSize: 11.5, marginTop: -6, marginBottom: 12 }}>{t('Age counts X-ray working hours (9 AM–7 PM) only — it pauses overnight.')}</p>
-
         {loading ? (
           <div style={{ display: 'grid', gap: 10 }}>{[60, 60].map((h, i) => <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 12 }} />)}</div>
         ) : vanRows.length === 0 ? (
@@ -306,39 +287,8 @@ export default function Checker() {
         ) : view === 'cards' ? (
           <div style={{ display: 'grid', gap: 10 }}>{queue.map((o) => <OrderCard key={o.id} o={o} />)}</div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--glass-brd)' }}>
-                  <SortTh label={t('JO no.')} active={sortBy === 'jo'} onClick={() => setSortBy('jo')} />
-                  <th style={thStyle}>{t('Container')}</th>
-                  <th style={thStyle}>{t('Consignee')}</th>
-                  <th style={thStyle}>{t('Batch')}</th>
-                  <SortTh label={t('Age · work hrs')} active={sortBy === 'age'} onClick={() => setSortBy('age')} />
-                  <th style={thStyle} aria-hidden />
-                </tr>
-              </thead>
-              <tbody>
-                {sortedVans.map(({ lineId, container, o }) => {
-                  const h = ageHours(o.created_at)
-                  return (
-                    <tr key={lineId} style={{ borderTop: '1px solid var(--glass-brd)' }}>
-                      <td style={tdStyle}><b className="ktc-mono">{o.jo_number ?? '—'}</b></td>
-                      <td style={tdStyle}><span className="ktc-mono">{container}</span></td>
-                      <td style={{ ...tdStyle, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('no consignee')}</td>
-                      <td style={tdStyle}>{batchLabel(o.created_at, t)}</td>
-                      <td style={{ ...tdStyle, fontWeight: 600, color: h >= 20 ? 'var(--c-h0-60-40)' : h >= 10 ? 'var(--c-h30-60-32)' : 'inherit' }} title={t('X-ray working hours (9 AM–7 PM) since filed')}>{formatAge(o.created_at)}</td>
-                      <td style={{ ...tdStyle, textAlign: 'right' }}>
-                        {can('confirm_xray')
-                          ? <button className="ktc-btn ktc-btn--sm" onClick={() => setConfirmTarget({ id: lineId, container, jo: o.jo_number ?? '—' })}>{t('Confirm')}</button>
-                          : <span className="ktc-chip ktc-chip--danger">{t('pending')}</span>}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+          <XrayQueueTable rows={vanRows} canConfirm={can('confirm_xray')}
+            onConfirm={(r) => setConfirmTarget({ id: r.lineId, container: r.container, jo: r.jo_number ?? '—' })} />
         )}
       </div>
       {confirmTarget && (
