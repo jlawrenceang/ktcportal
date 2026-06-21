@@ -36,6 +36,22 @@ test.describe('KTC portal — unauthenticated smoke', () => {
     expect(res?.status()).toBe(200)
   })
 
+  // Release / pull-out module (ADR-0024) — routes exist and are auth-gated.
+  test('protected customer releases route redirects to /login when logged out', async ({ page }) => {
+    await page.goto('/releases')
+    await expect(page).toHaveURL(/\/login$/)
+  })
+
+  test('protected admin releases route redirects to /login when logged out', async ({ page }) => {
+    await page.goto('/admin/releases')
+    await expect(page).toHaveURL(/\/login$/)
+  })
+
+  test('SPA deep-link /admin/releases is served by the rewrite (HTTP 200)', async ({ page }) => {
+    const res = await page.goto('/admin/releases')
+    expect(res?.status()).toBe(200)
+  })
+
   test('unknown route falls through to /login', async ({ page }) => {
     await page.goto('/this-route-does-not-exist')
     await expect(page).toHaveURL(/\/login$/)

@@ -72,4 +72,13 @@ test.describe('KTC portal — authenticated (Phase 2)', () => {
   test.fixme('consignee CRUD: add, duplicate guard, accredit, approve (ST01 Lane 3)', async () => {})
   test.fixme('submit a job order against a master-list consignee (ST01 Lane 4)', async () => {})
   test.fixme('owner creates staff; staff signs in; owner non-revocable (ST01 Lane 5)', async () => {})
+
+  // Release / pull-out module (ADR-0024) — the automated counterpart to ST04.
+  // Run against the seeded TEST project; do not mutate prod.
+  test.fixme('customer files a release: consignee + BL + DO/BL upload → submitted (ST04 Lane A)', async () => {})
+  test.fixme('CSR verifies release docs → docs_verified; hold → on_hold → customer resubmits (ST04 Lane B)', async () => {})
+  test.fixme('staff sets charges once (>0) → payable; adds a supplement (ST04 Lane C)', async () => {})
+  test.fixme('customer pays → cashier confirms → paid (ST04 Lane D)', async () => {})
+  test.fixme('record OR: BIR OR ≤6 digits + ERP OR-INV cash-only → released; OR blocked by unpaid supplement (ST04 Lane E)', async () => {})
+  test.fixme('cancel a pre-payment release (customer + staff) (ST04 Lane F)', async () => {})
 })
