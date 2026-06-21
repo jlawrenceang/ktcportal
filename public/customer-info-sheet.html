@@ -82,9 +82,9 @@
 <body>
 
 <div class="toolbar no-print">
-  <button onclick="window.print()">Print</button>
-  <a class="dl" href="customer-info-sheet.pdf" download>Download PDF</a>
-  <span>Fill it on screen, then Print (choose &ldquo;Save as PDF&rdquo; to keep a copy) &mdash; or Download the blank PDF to fill by hand.</span>
+  <button onclick="window.print()">Print / Save filled PDF</button>
+  <a class="dl" href="customer-info-sheet.pdf" download>Download blank PDF</a>
+  <span>Fill it on screen, then click <b>Print / Save filled PDF</b> &mdash; your typed answers are included (pick &ldquo;Save as PDF&rdquo; in the print dialog). &ldquo;Download blank PDF&rdquo; gives an empty form to fill by hand.</span>
 </div>
 
 <div class="sheet">
@@ -164,6 +164,17 @@
 
   <footer class="foot">KTC Customer Information Sheet v1.0.0 &middot; &copy; 2026 KTC Container Terminal Corp.</footer>
 </div>
+
+<script>
+  // Reflect what the user types into the DOM so the FILLED form reliably renders
+  // in Print / Save-as-PDF (some print engines ignore live input values otherwise).
+  document.addEventListener('input', function (e) {
+    var el = e.target;
+    if (el.tagName !== 'INPUT') return;
+    if (el.type === 'checkbox') { if (el.checked) el.setAttribute('checked', 'checked'); else el.removeAttribute('checked'); }
+    else el.setAttribute('value', el.value);
+  });
+</script>
 
 </body>
 </html>
