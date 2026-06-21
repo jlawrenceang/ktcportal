@@ -91,7 +91,7 @@ export default function AccountMenu({ settingsTo, settingsLabel, role }: { setti
           className="ktc-glass"
           role="menu"
           aria-label={t('Account')}
-          style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, minWidth: 248, padding: 6, borderRadius: 14, zIndex: 60, background: 'var(--c-solid)', boxShadow: '0 14px 44px rgba(0,0,0,.18)' }}
+          style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, minWidth: 248, maxWidth: '92vw', padding: 6, borderRadius: 14, zIndex: 60, background: 'var(--c-solid)', boxShadow: '0 14px 44px rgba(0,0,0,.18)' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '10px 12px 12px' }}>
             <span aria-hidden style={{ width: 40, height: 40, borderRadius: 999, flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 15, background: avatarBg }}>{ini}</span>

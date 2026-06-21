@@ -547,24 +547,24 @@ export default function Releases() {
                             <span style={{ fontSize: 11, opacity: 0.7 }}>{t('BIR OR no.')}</span>
                             <input className="ktc-input ktc-mono" value={orNo} onChange={(e) => setOrNo(e.target.value.replace(/\D/g, '').slice(0, 6))} autoFocus
                               inputMode="numeric" maxLength={6}
-                              placeholder={t('number')} style={{ width: 150, padding: '7px 11px', fontSize: 13 }} />
+                              placeholder={t('number')} style={{ maxWidth: 150, width: '100%', padding: '7px 11px', fontSize: 13 }} />
                             <span className="ktc-mono" style={{ fontSize: 11, opacity: 0.6, minHeight: 14 }}>
                               {orNo ? '= ' + orNo.padStart(6, '0') : t('up to 6 digits')}
                             </span>
                           </span>
                           <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 3 }}>
                             <span style={{ fontSize: 11, opacity: 0.7 }}>{t('ERP control no. (cash)')}</span>
-                            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap' }}>
                               <span className="ktc-mono" style={{ fontSize: 13, opacity: 0.7, paddingRight: 3 }}>OR-INV-</span>
                               <input className="ktc-input ktc-mono" value={invNo} onChange={(e) => setInvNo(e.target.value.replace(/\D/g, '').slice(0, 8))}
                                 inputMode="numeric" maxLength={8}
-                                placeholder={t('number')} style={{ width: 150, padding: '7px 11px', fontSize: 13 }} />
+                                placeholder={t('number')} style={{ maxWidth: 150, width: '100%', padding: '7px 11px', fontSize: 13 }} />
                             </span>
                             <span className="ktc-mono" style={{ fontSize: 11, opacity: 0.6, minHeight: 14 }}>
                               {invNo ? '= OR-INV-' + invNo.padStart(8, '0') : t('8 digits')}
                             </span>
                           </span>
-                          <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', paddingTop: 18 }}>
+                          <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                             <button style={btn('solid')} disabled={isBusy || !orNo.trim() || !invNo.trim()} onClick={() => void recordOr(r.id)}>{t('Record OR')}</button>
                             <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setOrId(null); setOrNo(''); setInvNo('') }}>{t('Cancel')}</button>
                           </span>

@@ -440,15 +440,15 @@ export default function Settings() {
             <form onSubmit={createStaff} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
               <div style={{ display: 'grid', gap: 6 }}>
                 <label className="ktc-label" htmlFor="suName">{t('Full name')}</label>
-                <input id="suName" className="ktc-input" required value={suName} onChange={(e) => setSuName(e.target.value)} style={{ width: 200 }} />
+                <input id="suName" className="ktc-input" required value={suName} onChange={(e) => setSuName(e.target.value)} style={{ maxWidth: 200, width: '100%' }} />
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
                 <label className="ktc-label" htmlFor="suEmail">{t('Email')}</label>
-                <input id="suEmail" className="ktc-input" type="email" required value={suEmail} onChange={(e) => setSuEmail(e.target.value)} placeholder="staff@email.com" style={{ width: 240 }} />
+                <input id="suEmail" className="ktc-input" type="email" required value={suEmail} onChange={(e) => setSuEmail(e.target.value)} placeholder="staff@email.com" style={{ maxWidth: 240, width: '100%' }} />
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
                 <label className="ktc-label" htmlFor="suRole">{t('Role')}</label>
-                <select id="suRole" className="ktc-input" value={suRole} onChange={(e) => setSuRole(e.target.value as 'admin' | 'cashier' | 'checker' | 'operations' | 'csr')} style={{ width: 130 }}>
+                <select id="suRole" className="ktc-input" value={suRole} onChange={(e) => setSuRole(e.target.value as 'admin' | 'cashier' | 'checker' | 'operations' | 'csr')} style={{ maxWidth: 130, width: '100%' }}>
                   <option value="admin">{t('Admin')}</option>
                   <option value="operations">{t('Operations')}</option>
                   <option value="cashier">{t('Cashier')}</option>
@@ -526,7 +526,7 @@ export default function Settings() {
               onDrop={() => { if (dragIdx !== null && dragIdx !== i) moveRate(dragIdx, i); setDragIdx(null) }}
               onDragEnd={() => setDragIdx(null)}
               style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10,
+                display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10,
                 background: r.active ? 'var(--c-w55)' : 'var(--c-w30)',
                 border: dragIdx === i ? '1px dashed rgb(var(--acc-rgb) / 0.6)' : '1px solid var(--glass-brd)',
                 opacity: r.active ? 1 : 0.6,
@@ -538,7 +538,7 @@ export default function Settings() {
                 {r.service}
                 {!r.active && <span className="ktc-chip" style={{ fontSize: 10 }}>{t('inactive')}</span>}
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
                 <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
                 <input className="ktc-input" type="number" step="0.01" min="0" value={r.rate ?? ''} disabled={pricingLocked}
                   placeholder={t('Enter rate')}
@@ -654,8 +654,8 @@ export default function Settings() {
           {TERM_SERVICES.map(([svc, svcLabel]) => (
             <div key={svc} style={{ display: 'grid', gap: 6 }}>
               <span style={{ fontSize: 13.5, fontWeight: 700 }}>{t(svcLabel)}</span>
-              <div className="ktc-label" style={{ display: 'flex', gap: 10, fontSize: 11.5, paddingLeft: 2 }}>
-                <span style={{ flex: '1 1 150px' }}>{t('Trade · origin')}</span>
+              <div className="ktc-label" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 11.5, paddingLeft: 2 }}>
+                <span style={{ flex: '1 1 150px', minWidth: 0 }}>{t('Trade · origin')}</span>
                 <span style={{ width: 120, textAlign: 'center' }}>{t('20ft')}</span>
                 <span style={{ width: 120, textAlign: 'center' }}>{t('40ft')}</span>
               </div>
@@ -663,8 +663,8 @@ export default function Settings() {
                 const r20 = termRates.find((x) => x.service === svc && x.trade === trade && x.origin === origin && x.size === '20')
                 const r40 = termRates.find((x) => x.service === svc && x.trade === trade && x.origin === origin && x.size === '40')
                 return (
-                  <div key={`${trade}-${origin}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
-                    <span style={{ flex: '1 1 150px', fontSize: 12.5, fontWeight: 600, textTransform: 'capitalize' }}>{t(trade)} · {t(origin)}</span>
+                  <div key={`${trade}-${origin}`} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: '6px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                    <span style={{ flex: '1 1 150px', minWidth: 0, fontSize: 12.5, fontWeight: 600, textTransform: 'capitalize' }}>{t(trade)} · {t(origin)}</span>
                     {[r20, r40].map((row, idx) => (
                       <span key={idx} style={{ width: 120, display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}>
                         <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
@@ -798,16 +798,16 @@ export default function Settings() {
           {t("Drives the vessel schedule's")} <strong>{t('Last Free Day')}</strong> {t('(finish discharging + import days). Set for import and export.')}
         </p>
         <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
-          <div className="ktc-label" style={{ display: 'flex', gap: 10, fontSize: 11.5 }}>
-            <span style={{ flex: 1 }}>{t('Shipping line')}</span>
+          <div className="ktc-label" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 11.5 }}>
+            <span style={{ flex: 1, minWidth: 0 }}>{t('Shipping line')}</span>
             <span style={{ width: 90, textAlign: 'center' }}>{t('Import days')}</span>
             <span style={{ width: 90, textAlign: 'center' }}>{t('Export days')}</span>
             <span style={{ width: 96, textAlign: 'center' }}>{t('In-house')}</span>
             <span style={{ width: 24 }} />
           </div>
           {shipLines.map((l) => (
-            <div key={l.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
-              <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{l.name}</span>
+            <div key={l.name} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: '6px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600 }}>{l.name}</span>
               <input className="ktc-input" type="number" min="0" value={l.free_days_import} onChange={(e) => setSl(l.name, 'free_days_import', Number(e.target.value))} style={{ width: 90, padding: '7px 10px', textAlign: 'center' }} />
               <input className="ktc-input" type="number" min="0" value={l.free_days_export} onChange={(e) => setSl(l.name, 'free_days_export', Number(e.target.value))} style={{ width: 90, padding: '7px 10px', textAlign: 'center' }} />
               <label style={{ width: 96, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 12 }} title={t('In-house line — hide its vessels from customers')}>

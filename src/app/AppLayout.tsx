@@ -47,7 +47,7 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
         <Link to="/app" aria-label={t('Go to start page')} style={{ display: 'inline-flex', flex: '0 0 auto', padding: '0 4px' }}>
           <img src="/ktc-logo.png" alt="KTC" style={{ height: 30 }} />
         </Link>
-        {title && <span style={{ fontSize: 15, fontWeight: 700, marginLeft: 4 }}>{t(title)}</span>}
+        {title && <span style={{ fontSize: 15, fontWeight: 700, marginLeft: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{t(title)}</span>}
         <span style={{ flex: 1 }} />
         <StaffNotificationBell />
         {role && (

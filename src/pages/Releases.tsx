@@ -221,7 +221,7 @@ export default function Releases() {
                   accept="image/*,application/pdf"
                   disabled={filing}
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) { setDocFile(f); setFileError(null) } }}
-                  style={{ maxWidth: 360, padding: '10px 13px' }}
+                  style={{ maxWidth: 360, width: '100%', padding: '10px 13px' }}
                 />
                 <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>{t('Optional now — KTC verifies the document before assessing the charges.')}</span>
               </>
@@ -417,7 +417,7 @@ function ReleaseDetail({ release, uid, info, qrUrl, onQrOpen, uploadDoc, onClose
                 {!redoc ? (
                   <input className="ktc-input" type="file" accept="image/*,application/pdf" disabled={busy}
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) { setRedoc(f); setError(null) } }}
-                    style={{ maxWidth: 360, padding: '10px 13px' }} />
+                    style={{ maxWidth: 360, width: '100%', padding: '10px 13px' }} />
                 ) : (
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                     <FileChip file={redoc} onRemove={() => setRedoc(null)} disabled={busy} />
@@ -483,7 +483,7 @@ function ReleaseDetail({ release, uid, info, qrUrl, onQrOpen, uploadDoc, onClose
                     {!proof ? (
                       <input className="ktc-input" type="file" accept="image/*,application/pdf" disabled={busy}
                         onChange={(e) => { const f = e.target.files?.[0]; if (f) { setProof(f); setError(null) } }}
-                        style={{ maxWidth: 360, padding: '10px 13px' }} />
+                        style={{ maxWidth: 360, width: '100%', padding: '10px 13px' }} />
                     ) : (
                       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                         <FileChip file={proof} onRemove={() => setProof(null)} disabled={busy} />
@@ -622,7 +622,7 @@ function SupplementRow({ supp, uid, busy, setBusy, setError, onChanged }: {
           {!proof ? (
             <input className="ktc-input" type="file" accept="image/*,application/pdf" disabled={busy}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) { setProof(f); setError(null) } }}
-              style={{ maxWidth: 360, padding: '10px 13px' }} />
+              style={{ maxWidth: 360, width: '100%', padding: '10px 13px' }} />
           ) : (
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <FileChip file={proof} onRemove={() => setProof(null)} disabled={busy} />

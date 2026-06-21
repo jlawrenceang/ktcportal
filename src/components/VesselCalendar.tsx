@@ -80,7 +80,8 @@ export function MonthCalendar({ rows }: { rows: VesselRow[] }) {
         <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" onClick={() => setOffset((o) => o + 1)}>›</button>
         {offset !== 0 && <button className="ktc-link" type="button" onClick={() => setOffset(0)}>Today</button>}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+      <div style={{ overflowX: 'auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, minWidth: 460 }}>
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
           <div key={d} className="ktc-label" style={{ fontSize: 11, textAlign: 'center', fontWeight: 600 }}>{d}</div>
         ))}
@@ -103,6 +104,7 @@ export function MonthCalendar({ rows }: { rows: VesselRow[] }) {
             )}
           </div>
         ))}
+      </div>
       </div>
       <p className="ktc-label" style={{ fontSize: 11.5, marginTop: 8 }}>Vessels shown on their actual arrival date.</p>
     </div>

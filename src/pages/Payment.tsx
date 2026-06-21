@@ -347,7 +347,7 @@ function PaySection({ title, amount, status, note, submittedAt, file, setFile, o
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 12 }}>
             {!file ? (
               <input className="ktc-input" type="file" accept="image/*,application/pdf" disabled={busy}
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) setFile(f) }} style={{ maxWidth: 340, padding: '10px 13px' }} />
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) setFile(f) }} style={{ maxWidth: 340, width: '100%', padding: '10px 13px' }} />
             ) : (
               <>
                 <span style={{ fontSize: 13, fontWeight: 500, padding: '9px 13px', borderRadius: 10, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 7 }}><PaperclipIcon size={14} /> {file.name}</span>
