@@ -132,4 +132,12 @@ export const enSimple: Record<string, string> = {
     "This account was just signed in on another device or browser, so this session was ended. Only one device can be signed in at a time. If this wasn't you, sign in again and change your password.",
   "To activate your account and pass final verification, attach a clear photo or PDF of a valid government-issued ID and submit it for KTC admin approval.":
     "To activate your account and finish verification, attach a clear photo or PDF of a valid government ID and submit it for KTC admin approval.",
+  "This order is already filed and has a queue number. Saving keeps your place in line — KTC will just re-review your changes.":
+    "This order is already filed and has a queue number. Saving keeps your place in line — KTC will just check your changes again.",
+  "Save these changes? KTC keeps your place in line and re-reviews the update.":
+    "Save these changes? KTC keeps your place in line and checks the update again.",
+  "Open a ticket and we’ll get back to you. You can also continue with a live agent below.":
+    "Open a ticket and we'll get back to you. You can also reach a live agent below.",
+  "You can continue to the portal first and prepare job orders — they’ll be held until your account is verified.":
+    "You can go to the portal first and prepare job orders — they stay held until your account is verified.",
 }
