@@ -12,6 +12,7 @@ import { operationsSteps } from './AdminTour'
 import { peso } from '../lib/pricing'
 import { useT } from '../lib/i18n'
 import { ArchiveIcon, PencilIcon, ClockIcon, ChatIcon } from '../components/icons'
+import ReleaseTracks from '../components/ReleaseTracks'
 
 interface AdminJobOrder extends JobOrder {
   broker?: { full_name: string | null; email: string | null; contact_number: string | null } | null
@@ -469,6 +470,11 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
                     <div style={{ marginTop: 8, fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'var(--c-h210-60-96)', border: '1px solid var(--c-h210-55-86)', color: 'var(--c-h210-55-32)' }}>
                       <b>{t('Customer reply:')}</b> {o.customer_note}
                     </div>
+                  )}
+
+                  {/* Two-gate release status: payment + X-ray → cleared for release */}
+                  {['submitted', 'processing', 'on_hold', 'completed'].includes(o.status) && (
+                    <div style={{ marginTop: 12 }}><ReleaseTracks o={o} /></div>
                   )}
 
                   {/* Actions — gated by the owner-tweakable role permissions */}

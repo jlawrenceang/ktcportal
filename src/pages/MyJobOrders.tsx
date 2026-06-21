@@ -10,6 +10,7 @@ import { myJobOrdersSteps } from '../components/WelcomeTour'
 import { useBroker } from '../lib/useBroker'
 import JoTimeline from '../components/JoTimeline'
 import EditJobOrderForm from '../components/EditJobOrderForm'
+import ReleaseTracks from '../components/ReleaseTracks'
 import { ClockIcon } from '../components/icons'
 import { useT } from '../lib/i18n'
 
@@ -152,7 +153,7 @@ export default function MyJobOrders() {
     let q = supabase
       .from('job_orders')
       .select(
-        'id, jo_number, entry_number, consignee_id, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, rejected_recoverable, payment_status, has_open_supplement, service_invoice_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), supplements:jo_supplements(id, suffix, label, amount, payment_status)',
+        'id, jo_number, entry_number, consignee_id, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, rejected_recoverable, payment_status, has_open_supplement, service_invoice_no, rps_status, rps_payment_status, completed_at, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at), supplements:jo_supplements(id, suffix, label, amount, payment_status)',
         { count: 'exact' },
       )
     if (f === 'active') q = q.in('status', ['held', 'submitted', 'processing', 'on_hold'])
@@ -376,6 +377,10 @@ export default function MyJobOrders() {
                   <Meta label={t('Date filed')} value={fmtDate(o.created_at)} />
                   <Meta label={t('Priority number')} value={serving.length ? serving.map((s) => `${t(SERVICE_LINE_LABEL[s.service_line])} #${s.serving_no}`).join(', ') : '—'} />
                 </div>
+
+                {['submitted', 'processing', 'on_hold', 'completed'].includes(o.status) && (
+                  <div style={{ marginTop: 16 }}><ReleaseTracks o={o} /></div>
+                )}
 
                 <div style={{ marginTop: 16 }}>
                   {o.status === 'held' && (
