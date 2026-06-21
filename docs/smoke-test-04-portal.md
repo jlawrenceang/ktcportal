@@ -42,14 +42,16 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 
 | Check | Command | Expected | Result |
 |---|---|---|---|
-| P1 TypeScript | `npx tsc --noEmit` | 0 errors | |
-| P2 Build | `npm run build` | PASS | |
-| P3 Deploy health | `curl -s -o /dev/null -w "%{http_code}\n" https://portal.ktcterminal.com` | `200` | |
-| P4 Bundle target | fetch `/assets/index-*.js`, grep | contains `mdlnfhyylvapzdubhyic.supabase.co`; jta-sys ref absent | |
-| P5 SPA rewrite | `curl … /releases` then `… /admin/releases` | `200` (not 404) for both | |
-| P6 CAPTCHA enforced | tokenless `POST /auth/v1/token?grant_type=password` (anon apikey) | `captcha_failed` | |
-| P7 Migrations applied | release RPCs resolve to the latest defs | `record_release_or(uuid,text,text)` exists; OR validation = "up to 6 digits, non-zero"; `normalize_erp_invoice_no` = OR-INV cash only | |
-| P8 Buckets present | `release-docs` (private) + `payment-slips` + `payment-qr` exist | release-docs RLS is per-user folder | |
+| P1 TypeScript | `npx tsc --noEmit` | 0 errors | ✅ **PASS** — 0 errors |
+| P2 Build | `npm run build` | PASS | ✅ **PASS** — built clean |
+| P3 Deploy health | `curl -s -o /dev/null -w "%{http_code}\n" https://portal.ktcterminal.com` | `200` | ✅ **PASS** — 200 |
+| P4 Bundle target | fetch `/assets/index-*.js`, grep | contains `mdlnfhyylvapzdubhyic.supabase.co`; jta-sys ref absent | ✅ **PASS** — only `mdlnfhyylvapzdubhyic.supabase.co` (no jta-sys) |
+| P5 SPA rewrite | `curl … /releases` then `… /admin/releases` | `200` (not 404) for both | ✅ **PASS** — both 200 |
+| P6 CAPTCHA enforced | tokenless `POST /auth/v1/token?grant_type=password` (anon apikey) | `captcha_failed` | ✅ **PASS** — `"error_code":"captcha_failed"` |
+| P7 Migrations applied | release RPCs resolve to the latest defs | `record_release_or(uuid,text,text)` exists; OR validation = "up to 6 digits, non-zero"; `normalize_erp_invoice_no` = OR-INV cash only | ✅ **PASS** — 3-arg sig + 6-digit OR rule + ERP cash-only all confirmed |
+| P8 Buckets present | `release-docs` (private) + `payment-slips` + `payment-qr` exist | release-docs RLS is per-user folder | ✅ **PASS** — `release-docs` + `payment-slips` private, `payment-qr` public (QR image) |
+
+> **Preflight run 2026-06-21 — all P1–P8 PASS** (v1.5.0, commit `2af1f3e`; migrations through `0131`). The Lane tables below are the manual blind walkthrough, still to be executed.
 
 If any preflight check fails, pause and fix first.
 
@@ -218,7 +220,7 @@ If any preflight check fails, pause and fix first.
 
 | Lane | Status | Key Findings | Go / Hold |
 |---|---|---|---|
-| Preflight (P1–P8) | | | |
+| Preflight (P1–P8) | ✅ PASS | All 8 gates pass (2026-06-21, v1.5.0 / `2af1f3e`) | Go |
 | A — Customer files a release (approval gate + cancel) | | | |
 | B — CSR documents desk (verify / hold / re-upload) | | | |
 | C — Charges (set once) + additional charge | | | |
