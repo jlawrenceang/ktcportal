@@ -102,6 +102,8 @@ export default function App() {
         >
         <Routes>
           <Route path="/login" element={<Login />} />
+          {/* Walk-in QR target — opens Login straight in sign-up mode */}
+          <Route path="/register" element={<Login />} />
           <Route path="/confirmed" element={<Confirmed />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />

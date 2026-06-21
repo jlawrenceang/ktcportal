@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type UIEvent } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
@@ -51,7 +51,9 @@ export default function Login() {
   const { t } = useT()
   const { signIn, signUp, session } = useAuth()
   const navigate = useNavigate()
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const location = useLocation()
+  // The /register URL (the walk-in QR target) opens straight in sign-up mode.
+  const [mode, setMode] = useState<'signin' | 'signup'>(location.pathname === '/register' ? 'signup' : 'signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -377,7 +379,12 @@ export default function Login() {
           </button>
         </p>
 
-        <p className="ktc-label" style={{ marginTop: 14, fontSize: 12, opacity: 0.7, textAlign: 'center' }}>
+        <p style={{ marginTop: 14, fontSize: 12, textAlign: 'center' }}>
+          <a href="/customer-info-sheet.html" target="_blank" rel="noopener" className="ktc-link">
+            {t('Customer Information Sheet (print / download)')}
+          </a>
+        </p>
+        <p className="ktc-label" style={{ marginTop: 8, fontSize: 12, opacity: 0.7, textAlign: 'center' }}>
           {t('KTC Online Portal')} <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.
         </p>
       </div>
