@@ -102,4 +102,34 @@ export const enSimple: Record<string, string> = {
     "Upload a valid government ID and a KTC admin will review your account. You can file Job Orders while you wait — but they stay held until a KTC admin reviews and approves your account.",
   "Upload your valid ID for final verification (banner above); once a KTC admin approves you, your held orders are sent automatically.":
     "Upload your valid ID for final verification (see the banner above); once a KTC admin approves you, your held orders are sent on their own.",
+  "Your queue of orders waiting for X-ray, sorted by line number, with the \"Now serving\" strip on top.":
+    "Your queue of orders waiting for X-ray, sorted by batch and aging.",
+  "We just need a quick update to finish verifying your account. Please review the note below, update your details, and resubmit — a KTC admin will review it again.":
+    "We just need a quick update to finish verifying your account. Please check the note below, update your details, and resubmit — a KTC admin will review it again.",
+  "Billed per hour (minimum {h} hours). A refundable cash bond of {amt} per van is required — the balance is returned 7–10 working days after withdrawal, once computed.":
+    "Charged per hour (minimum {h} hours). A refundable cash bond of {amt} per van is required — the balance comes back 7–10 working days after withdrawal, once computed.",
+  "Build your estimate step by step, then tap Generate. This is a guide — the official amount is confirmed on the Service Invoice at the KTC office.":
+    "Build your estimate step by step, then tap Generate. This is just a guide — the official amount is set on the Service Invoice at the KTC office.",
+  "Your account was just opened on another device, and for security only one device stays signed in at a time — so this one was signed out. That’s normal if it was you. Nothing is lost; your work is saved.":
+    "Your account was just opened on another device. For security, only one device can stay signed in at a time — so this one was signed out. That's normal if it was you. Nothing is lost; your work is saved.",
+  "Continue this ticket off-platform. Your ticket number is included so we can find it fast.":
+    "Continue this ticket outside the app. Your ticket number is included so we can find it fast.",
+  "Customers filed Job Orders against these vessels, which aren’t on the schedule. Add the call above (if needed), then link it here to approve — every waiting order adopts the scheduled vessel. Or reject if it doesn’t belong.":
+    "Customers filed Job Orders against these vessels, which aren't on the schedule. Add the call above (if needed), then link it here to approve — every waiting order picks up the scheduled vessel. Or reject it if it doesn't belong.",
+  "Generate a one-time link the customer can open to set a new password — copy it and send it to them directly (e.g. Viber/SMS). No email is sent. The link is single-use and expires in about an hour.":
+    "Make a one-time link the customer can open to set a new password — copy it and send it to them directly (e.g. Viber/SMS). No email is sent. The link works once and expires in about an hour.",
+  "Layer line-specific rules on top of the tariff: waive a charge, give a discount (% or ₱/container), or add a surcharge. Example: Maersk & MCC waive LoLo on export. Free storage days are set per line in the vessel schedule settings.":
+    "Add per-line rules on top of the tariff: waive a charge, give a discount (% or ₱/container), or add a surcharge. Example: Maersk & MCC waive LoLo on export. Free storage days are set per line in the vessel schedule settings.",
+  "Master switch for emails sent to customers (account approved, order on-hold / rejected, payment-proof issues). In-app notifications keep working either way. Owner security / watchdog alerts are never affected by this.":
+    "Main switch for emails sent to customers (account approved, order on-hold / rejected, payment-proof issues). In-app notifications keep working either way. Owner security / watchdog alerts are never affected by this.",
+  "Per-container rates the Rate Calculator looks up by the customer’s combination — trade (import/export), origin (domestic/foreign) and container size. Import bills arrastre + wharfage + LoLo; export adds weighing. Weighing applies to export only; on export, Maersk/MCC waive LoLo (the line shoulders it). Storage is per container, per day past the Last Free Day. Amounts in ₱, VAT-exclusive (12% VAT is added on the subtotal).":
+    "Per-container rates the Rate Calculator looks up by the customer's mix — trade (import/export), origin (domestic/foreign) and container size. Import bills arrastre + wharfage + LoLo; export adds weighing. Weighing is for export only; on export, Maersk/MCC waive LoLo (the line covers it). Storage is per container, per day past the Last Free Day. Amounts in ₱, VAT-exclusive (12% VAT is added on the subtotal).",
+  "Shown on the customer Help & Support page as “talk to an agent” deep links (call / SMS / Viber / email) with a prefilled message + ticket number. Leave a field blank to hide that channel.":
+    "Shown on the customer Help & Support page as “talk to an agent” links (call / SMS / Viber / email) with a ready-made message + ticket number. Leave a field blank to hide that channel.",
+  "This account is currently signed in on another device or browser. Only one device can be signed in at a time. Sign out the other session and continue here, or cancel and leave it as it is.":
+    "This account is already signed in on another device or browser. Only one device can be signed in at a time. Sign out the other session and continue here, or cancel and leave it as is.",
+  "This account was just signed in on another device or browser, so this session was ended. Only one device can be signed in at a time. If this wasn’t you, sign in again and change your password.":
+    "This account was just signed in on another device or browser, so this session was ended. Only one device can be signed in at a time. If this wasn't you, sign in again and change your password.",
+  "To activate your account and pass final verification, attach a clear photo or PDF of a valid government-issued ID and submit it for KTC admin approval.":
+    "To activate your account and finish verification, attach a clear photo or PDF of a valid government ID and submit it for KTC admin approval.",
 }
