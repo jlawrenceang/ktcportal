@@ -40,7 +40,7 @@ export default function Home() {
   const needsVerify = broker?.status === 'pending' && !broker?.valid_id_path
   const attention = stats.orderAttention + (needsVerify ? 1 : 0)
   // If verification is the only thing pending, send them straight to it.
-  const attentionTo = stats.orderAttention === 0 && needsVerify ? '/verify-id' : '/job-orders'
+  const attentionTo = stats.orderAttention === 0 && needsVerify ? '/verify-id' : '/job-orders?view=action'
 
   // First visit to Home auto-opens its tour; replay from the ⊞ Menu.
   usePageTour('home', homeSteps)

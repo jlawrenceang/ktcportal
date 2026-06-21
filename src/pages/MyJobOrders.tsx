@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
@@ -136,7 +136,12 @@ export default function MyJobOrders() {
   const [editingId, setEditingId] = useState<string | null>(null) // order being edited inline
   const [cancelId, setCancelId] = useState<string | null>(null) // order pending cancel confirmation
   const [busyId, setBusyId] = useState<string | null>(null)
-  const [filter, setFilter] = useState<Filter>('active')
+  // Initial view can be deep-linked from the dashboard tiles (?view=action, etc.).
+  const [params] = useSearchParams()
+  const requestedView = params.get('view')
+  const [filter, setFilter] = useState<Filter>(
+    FILTERS.some((f) => f.key === requestedView) ? (requestedView as Filter) : 'active',
+  )
   const [page, setPage] = useState(0)
   const [total, setTotal] = useState(0)
 
