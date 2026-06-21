@@ -49,7 +49,7 @@ const GRID: Dest[] = [
   { to: '/admin', label: 'Dashboard', perm: 'manage_approvals', icon: <DashIcon />, end: true },
   { to: '/admin/job-orders', label: 'Job Orders', perm: 'view_job_orders', icon: <OrdersIcon /> },
   { to: '/admin/new-job-order', label: 'New JO', perm: 'file_job_orders', icon: <NewIcon /> },
-  { to: '/admin/checker', label: 'X-ray Queue', perm: 'view_job_orders', icon: <CheckerIcon /> },
+  { to: '/admin/checker', label: 'X-ray Queue', perm: 'view_xray_queue', icon: <CheckerIcon /> },
   { to: '/admin/cashier', label: 'Cashier', perm: 'review_payments', icon: <CashIcon /> },
   { to: '/admin/approvals', label: 'Approvals', perm: 'manage_approvals', icon: <ApprovalsIcon /> },
   { to: '/admin/customers', label: 'Customers', perm: 'manage_customers', icon: <UsersIcon /> },
@@ -87,7 +87,7 @@ export default function AdminBottomNav() {
     { to: '/admin/cashier', label: 'Cashier', perm: 'review_payments', icon: <CashIcon /> },
     { to: '/admin/approvals', label: 'Approvals', perm: 'manage_approvals', icon: <ApprovalsIcon /> },
     { to: '/admin/vessel-schedule', label: 'Vessels', perm: 'manage_vessel_schedule', icon: <VesselIcon /> },
-    { to: '/admin/checker', label: 'X-ray Queue', perm: 'view_job_orders', icon: <CheckerIcon /> },
+    { to: '/admin/checker', label: 'X-ray Queue', perm: 'view_xray_queue', icon: <CheckerIcon /> },
   ]
   const tabs: Dest[] = [{ to: home, label: 'Home', icon: <HomeIcon />, end: true }]
   const seen = new Set([home])

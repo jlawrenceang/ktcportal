@@ -54,7 +54,7 @@ function Clearance({ o }: { o: CheckerOrder }) {
 
 export default function Checker() {
   const { t } = useT()
-  const { can } = usePermissions()
+  const { can, loading: permLoading } = usePermissions()
   usePageTour('checker', checkerSteps)
   const [queue, setQueue] = useState<CheckerOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -229,6 +229,16 @@ export default function Checker() {
   const vanRows: QueueRow[] = queue.flatMap((o) =>
     (o.lines ?? []).filter((l) => isXray(l.service_request) && !l.xray_done_at)
       .map((l) => ({ lineId: l.id, container: l.container_number, jo_number: o.jo_number, consignee: o.consignee ?? null, created_at: o.created_at })))
+
+  if (!permLoading && !can('view_xray_queue')) {
+    return (
+      <AdminShell>
+        <div className="ktc-glass" style={{ padding: 24 }}>
+          <p className="ktc-label" style={{ fontSize: 14 }}>{t('No access to the X-ray queue.')}</p>
+        </div>
+      </AdminShell>
+    )
+  }
 
   return (
     <AdminShell>

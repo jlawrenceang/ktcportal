@@ -232,6 +232,7 @@ export const tl: Record<string, string> = {
   "Awaiting release": "Naghihintay ng release",
   "Batch": "Batch",
   "X-ray Queue": "X-ray Queue",
+  "No access to the X-ray queue.": "Walang access sa X-ray queue.",
   "Plan the X-ray line by JO order and age; the checker confirms each van.": "Planuhin ang X-ray line ayon sa JO order at tagal; ang checker ang nagko-confirm ng bawat van.",
   "To X-ray — {count} container(s)": "Ix-ray — {count} container(s)",
   "JO no.": "JO no.",

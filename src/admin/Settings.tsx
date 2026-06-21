@@ -874,6 +874,7 @@ export default function Settings() {
                 <tbody>
                   {([
                     ['view_job_orders', 'View job orders'],
+                    ['view_xray_queue', 'View the X-ray queue (ops / checker / CSR — not cashier)'],
                     ['file_job_orders', 'File JO on behalf of a customer (walk-ins / in-house)'],
                     ['accept_orders', 'Accept order (submitted → processing)'],
                     ['complete_orders', 'Complete order (needs X-ray + payment done)'],
