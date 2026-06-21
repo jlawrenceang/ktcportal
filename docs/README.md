@@ -43,7 +43,7 @@ This repository uses **runtime-first documentation governance** (governing rules
 
 - `docs/email-templates/` — branded Resend email templates.
 - `docs/research/` — grounded research briefs (e.g. `navis-tos-landscape-2026-06-13.md`, the source-of-record behind the TOS north star / ADR-0015).
-- `docs/archive/` — superseded docs (holding pen; see `docs/archive/README.md`). Includes the Jotform/Sheets-era specs and the original ST02 lifecycle script.
+- `docs/archive/` — superseded docs (holding pen; see `docs/archive/README.md`). Includes the legacy pre-portal form/sheets-era specs and the original ST02 lifecycle script.
 - Deferred folders (`docs/plans/`, `docs/audits/`, `docs/operator-guide/`, `docs/flows/`) are created on first need — see `docs/agent/doc-governance.md`.
 
 When a document conflicts with runtime behavior, runtime behavior wins and the document must be updated or archived **in the same change**.

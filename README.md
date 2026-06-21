@@ -1,17 +1,12 @@
-# KTC Job Order System
+# KTC Online Portal (ktcportal)
 
-Broker-facing portal for **KTC Container Terminal Corp.** — accredited brokers log in,
-submit Job Orders (X-ray / DEA / OOG stripping) against their **approved consignees**, and
-manage accreditation requests.
+Customer-facing portal for **KTC Container Terminal Corp.** — accredited customers (customs
+brokers) log in, file **Job Orders** (X-ray / DEA / OOG) against consignees and file
+**release / pull-out** requests; KTC staff run a separate admin portal. North star: a
+modular Navis-style terminal + depot operating system (see `docs/obsidian-vault/09-Future/`).
 
 **Stack:** Vite + React + TypeScript + Tailwind + Supabase (Auth + Postgres + RLS).
-**Hosting:** Vercel (free Hobby for testing). **Design:** JTA v2 "visionOS" tokens, KTC accent.
-
-## Why an app (not just the Jotform)
-
-We started on Jotform (see [`docs/`](docs/)) and it's kept as a **working fallback form**.
-But "show each broker only *their* accredited consignees, behind a real login" needs a
-database + auth — which Jotform can't do natively. That's this app.
+**Hosting:** Vercel. **Design:** JTA v2 "visionOS" tokens, KTC accent.
 
 ## Getting started
 
@@ -49,7 +44,7 @@ src/
   components/ ProtectedRoute
   styles/     v2-tokens.css (visionOS design tokens)
 supabase/migrations/  schema
-assets/, scripts/, docs/   the original Jotform form + its theme (fallback)
+assets/, scripts/, docs/   logo, ops scripts, project docs (ADRs + obsidian-vault)
 ```
 
 ## Status / next

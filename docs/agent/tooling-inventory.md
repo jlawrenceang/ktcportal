@@ -32,7 +32,6 @@ All read the gitignored `.env.local`; none print or commit secrets.
 | `set-auth-security.mjs` | Tightens server-side GoTrue security settings (e.g. password min length). | `SUPABASE_ACCESS_TOKEN` (PAT) |
 | `check-auth-rate-limits.mjs` | Read-only print of Auth rate-limit/security settings (verifies the server limits behind the cosmetic client lockout). | `SUPABASE_ACCESS_TOKEN` (PAT) |
 | `send-test-email.mjs` | Sends the confirm-signup template to yourself via Resend to preview rendering. | `RESEND_API_KEY`, `RESEND_FROM` |
-| `apply-theme.sh` | **LEGACY (Jotform era)** — styled the old Jotform form. Dead since the React SPA; candidate for OWNER deletion. | — |
 
 > ⚠️ **Management-API scripts are currently broken:** `SUPABASE_ACCESS_TOKEN` in `.env.local` holds a project **secret API key** (`sb_secret_…`), not a personal access token (`sbp_…`). The Management API rejects it (verified 2026-06-13). Generate a PAT (Dashboard → Account → Access Tokens) before running the four PAT-marked scripts.
 

@@ -1,4 +1,4 @@
-# Secrets — never commit Jotform API keys, Google/Supabase creds
+# Secrets — never commit API keys, Google/Supabase creds
 .env
 .env.*
 !.env.example
