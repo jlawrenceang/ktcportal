@@ -2,7 +2,7 @@
 
 **Smoke Test ID:** ST03
 **Date:** 2026-06-16
-**Status:** DRAFT (ready to execute)
+**Status:** SUPERSEDED by **ST05** (2026-06-21, `docs/smoke-test-05-portal.md`) — kept for reference. ST03 was written at migration `0104`, before the serving-number retirement, the operations/checker X-ray split, and the Release / Pull-out module. Use **ST05** for the current go-live walkthrough.
 **Target:** https://portal.ktcterminal.com (live, pre-public) — DB migrations through **0104**, Vercel commit **1b2e824**
 **Format:** Canonical (see `docs/smoke-test-template-canonical.md`)
 **Supersedes:** the unexecuted contract lanes of **ST02** (see ST02 Closeout, 2026-06-16). ST01 (auth/onboarding/consignees/job-orders/staff) and the ST02 security inventory still stand as references.
