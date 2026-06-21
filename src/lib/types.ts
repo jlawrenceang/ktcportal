@@ -199,6 +199,19 @@ export interface ReleaseOrder {
   created_at: string
   consignee?: { code: string; name: string } | null
   broker?: { full_name: string | null; email: string | null } | null
+  supplements?: ReleaseSupplement[]
+}
+
+export interface ReleaseSupplement {
+  id: string
+  release_order_id?: string
+  label: string
+  amount: number
+  payment_status: 'unpaid' | 'submitted' | 'confirmed' | 'rejected'
+  payment_proof_path?: string | null
+  payment_submitted_at?: string | null
+  payment_note?: string | null
+  created_at?: string
 }
 
 export const RELEASE_STATUS_LABEL: Record<ReleaseStatus, string> = {

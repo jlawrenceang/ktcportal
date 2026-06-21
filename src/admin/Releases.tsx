@@ -5,7 +5,7 @@ import { useAutoRefresh } from '../lib/useAutoRefresh'
 import { usePermissions } from '../lib/usePermissions'
 import { useFileViewer } from '../components/FileViewerModal'
 import { peso } from '../lib/pricing'
-import { RELEASE_STATUS_LABEL, type ReleaseOrder } from '../lib/types'
+import { RELEASE_STATUS_LABEL, type ReleaseOrder, type ReleaseSupplement } from '../lib/types'
 import { useT } from '../lib/i18n'
 
 // Release / Pull-out desks (ADR-0024). Two permission-gated sections sharing one
@@ -21,7 +21,7 @@ function one<T>(v: T | T[] | null | undefined): T | null {
 }
 
 const SELECT =
-  'id, release_number, bl_number, doc_path, status, amount, charges_note, payment_status, payment_proof_path, payment_submitted_at, payment_note, or_number, created_at, verified_at, staff_note, consignee:consignees(code, name), broker:customers(full_name, email)'
+  'id, release_number, bl_number, doc_path, status, amount, charges_note, payment_status, payment_proof_path, payment_submitted_at, payment_note, or_number, created_at, verified_at, staff_note, consignee:consignees(code, name), broker:customers(full_name, email), supplements:release_supplements(id, label, amount, payment_status, payment_proof_path, payment_submitted_at, payment_note, created_at)'
 
 const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
   submitted: { bg: 'var(--c-h210-60-90)', ink: 'var(--c-h210-55-36)' },
@@ -31,6 +31,13 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
   released: { bg: 'var(--c-h150-50-88)', ink: 'var(--c-h150-55-26)' },
   on_hold: { bg: 'var(--c-h40-90-86)', ink: 'var(--c-h30-75-32)' },
   cancelled: { bg: 'var(--c-h220-12-88)', ink: 'var(--c-h220-8-40)' },
+}
+
+const SUP_STATUS_LABEL: Record<ReleaseSupplement['payment_status'], string> = {
+  unpaid: 'Unpaid',
+  submitted: 'Proof submitted',
+  confirmed: 'Paid',
+  rejected: 'Proof rejected',
 }
 
 const btn = (variant: 'solid' | 'ghost' | 'danger'): CSSProperties => ({
@@ -64,6 +71,13 @@ export default function Releases() {
   const [chargeId, setChargeId] = useState<string | null>(null)
   const [chargeAmount, setChargeAmount] = useState('')
   const [chargeNote, setChargeNote] = useState('')
+  // Documents desk — add-supplement inputs (release id getting an extra charge).
+  const [supId, setSupId] = useState<string | null>(null)
+  const [supLabel, setSupLabel] = useState('')
+  const [supAmount, setSupAmount] = useState('')
+  // Cashier — reject-supplement-payment note prompt (supplement id being rejected).
+  const [supRejectId, setSupRejectId] = useState<string | null>(null)
+  const [supRejectNote, setSupRejectNote] = useState('')
   // Cashier — reject-payment note prompt (release id being rejected).
   const [payRejectId, setPayRejectId] = useState<string | null>(null)
   const [payNote, setPayNote] = useState('')
@@ -82,6 +96,7 @@ export default function Releases() {
         ...r,
         consignee: one(r.consignee),
         broker: one(r.broker),
+        supplements: r.supplements ?? [],
       })),
     )
     setLoading(false)
@@ -107,6 +122,27 @@ export default function Releases() {
     setBusyId(null)
     if (err) { setError(err.message); return }
     setChargeId(null); setChargeAmount(''); setChargeNote('')
+    await load()
+  }
+
+  async function addCharge(releaseId: string) {
+    const amount = Number(supAmount)
+    if (!supLabel.trim()) { setError(t('Enter a label for the additional charge.')); return }
+    if (!supAmount.trim() || Number.isNaN(amount) || amount <= 0) { setError(t('Enter a valid charge amount.')); return }
+    setBusyId(releaseId); setError(null)
+    const { error: err } = await supabase.rpc('add_release_charge', { p_release: releaseId, p_label: supLabel.trim(), p_amount: amount })
+    setBusyId(null)
+    if (err) { setError(err.message); return }
+    setSupId(null); setSupLabel(''); setSupAmount('')
+    await load()
+  }
+
+  async function confirmSupplement(supplementId: string, releaseId: string, ok: boolean, note: string | null) {
+    setBusyId(releaseId); setError(null)
+    const { error: err } = await supabase.rpc('confirm_release_supplement_payment', { p_id: supplementId, p_ok: ok, p_note: note })
+    setBusyId(null)
+    if (err) { setError(err.message); return }
+    setSupRejectId(null); setSupRejectNote('')
     await load()
   }
 
@@ -166,9 +202,17 @@ export default function Releases() {
   // Documents desk buckets.
   const toCheck = rows.filter((r) => r.status === 'submitted' || r.status === 'on_hold')
   const toCharge = rows.filter((r) => r.status === 'docs_verified')
+  // Releases already priced where an extra (missed) charge can still be added.
+  const toSupplement = rows.filter((r) => r.status === 'payable' || r.status === 'paid')
   // Cashier buckets.
   const toReviewPay = rows.filter((r) => r.payment_status === 'submitted')
   const toRecordOr = rows.filter((r) => r.status === 'paid' && !r.or_number)
+  // Additional-charge payments awaiting cashier review (flattened across releases).
+  const toReviewSup = rows.flatMap((r) =>
+    (r.supplements ?? [])
+      .filter((s) => s.payment_status === 'submitted')
+      .map((s) => ({ s, r })),
+  )
 
   if (!permLoading && !showDocs && !showCashier) {
     return (
@@ -281,6 +325,55 @@ export default function Releases() {
               })}
             </div>
           )}
+
+          <h3 style={{ margin: '20px 0 10px', fontSize: 13.5, fontWeight: 650 }}>
+            {t('Additional charges')}{!loading ? ` · ${toSupplement.length}` : ''}
+          </h3>
+          <p className="ktc-sub" style={{ marginTop: -4, marginBottom: 10, fontSize: 12.5 }}>
+            {t('Add a charge that was missed after the release was priced. The cashier confirms its payment before the OR can be recorded.')}
+          </p>
+          {loading ? (
+            <div className="ktc-skeleton" style={{ height: 64, borderRadius: 12 }} />
+          ) : toSupplement.length === 0 ? (
+            <Empty label={t('No releases ready for an additional charge.')} />
+          ) : (
+            <div style={{ display: 'grid', gap: 12 }}>
+              {toSupplement.map((r) => {
+                const isBusy = busyId === r.id
+                const sups = r.supplements ?? []
+                return (
+                  <div key={r.id} style={cardStyle}>
+                    <Header r={r} />
+                    {sups.length > 0 && (
+                      <div style={{ display: 'grid', gap: 6, marginTop: 10 }}>
+                        {sups.map((s) => (
+                          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 12.5 }}>
+                            <span>{s.label}</span>
+                            <span className="ktc-mono" style={{ fontWeight: 600 }}>{peso(Number(s.amount))}</span>
+                            <span className="ktc-chip">{t(SUP_STATUS_LABEL[s.payment_status] ?? s.payment_status)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                      {supId === r.id ? (
+                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <input className="ktc-input" value={supLabel} autoFocus placeholder={t('Charge label')}
+                            onChange={(e) => setSupLabel(e.target.value)} style={{ maxWidth: 220, width: '100%', padding: '7px 11px', fontSize: 13 }} />
+                          <input className="ktc-input ktc-mono" value={supAmount} inputMode="decimal" placeholder={t('Amount (₱)')}
+                            onChange={(e) => setSupAmount(e.target.value.replace(/[^0-9.]/g, ''))} style={{ maxWidth: 150, width: '100%', padding: '7px 11px', fontSize: 13 }} />
+                          <button style={btn('solid')} disabled={isBusy || !supLabel.trim() || !supAmount.trim()} onClick={() => void addCharge(r.id)}>{t('Add charge')}</button>
+                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setSupId(null); setSupLabel(''); setSupAmount('') }}>{t('Cancel')}</button>
+                        </span>
+                      ) : (
+                        <button style={btn('ghost')} disabled={isBusy} onClick={() => { setSupId(r.id); setSupLabel(''); setSupAmount('') }}>{t('Add charge')}</button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -335,6 +428,55 @@ export default function Releases() {
           )}
 
           <h3 style={{ margin: '20px 0 10px', fontSize: 13.5, fontWeight: 650 }}>
+            {t('Additional-charge payments to review')}{!loading ? ` · ${toReviewSup.length}` : ''}
+          </h3>
+          {loading ? (
+            <div className="ktc-skeleton" style={{ height: 64, borderRadius: 12 }} />
+          ) : toReviewSup.length === 0 ? (
+            <Empty label={t('No additional-charge payments waiting for review.')} />
+          ) : (
+            <div style={{ display: 'grid', gap: 12 }}>
+              {toReviewSup.map(({ s, r }) => {
+                const isBusy = busyId === r.id
+                return (
+                  <div key={s.id} style={cardStyle}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                      <b className="ktc-mono" style={{ fontSize: 14 }}>{r.release_number ?? r.bl_number}</b>
+                      <span style={{ fontSize: 13 }}>{s.label}</span>
+                      <span className="ktc-chip ktc-chip--info ktc-mono">{peso(Number(s.amount))}</span>
+                    </div>
+                    <div className="ktc-label" style={{ fontSize: 13, marginTop: 4 }}>{who(r)}</div>
+                    {s.payment_submitted_at && (
+                      <div className="ktc-label" style={{ fontSize: 12, marginTop: 4 }}>
+                        {t('Proof submitted {date}', { date: new Date(s.payment_submitted_at).toLocaleString() })}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <button style={btn('ghost')} disabled={!s.payment_proof_path}
+                        onClick={() => void openFromStorage('payment-slips', s.payment_proof_path, `${t('Additional charge')} — ${s.label} · ${r.release_number ?? r.bl_number} (${who(r)})`)}>
+                        {t('View proof')}
+                      </button>
+                      {supRejectId === s.id ? (
+                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <input className="ktc-input" value={supRejectNote} onChange={(e) => setSupRejectNote(e.target.value)} autoFocus
+                            placeholder={t('Why? (shown to the customer)')} style={{ maxWidth: 260, width: '100%', padding: '7px 11px', fontSize: 13 }} />
+                          <button style={btn('danger')} disabled={isBusy || !supRejectNote.trim()} onClick={() => void confirmSupplement(s.id, r.id, false, supRejectNote.trim())}>{t('Reject proof')}</button>
+                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setSupRejectId(null); setSupRejectNote('') }}>{t('Cancel')}</button>
+                        </span>
+                      ) : (
+                        <>
+                          <button style={btn('solid')} disabled={isBusy} onClick={() => void confirmSupplement(s.id, r.id, true, null)}>{t('Confirm')}</button>
+                          <button style={btn('danger')} disabled={isBusy} onClick={() => { setSupRejectId(s.id); setSupRejectNote('') }}>{t('Reject')}</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <h3 style={{ margin: '20px 0 10px', fontSize: 13.5, fontWeight: 650 }}>
             {t('Record OR')}{!loading ? ` · ${toRecordOr.length}` : ''}
           </h3>
           {loading ? (
@@ -345,9 +487,15 @@ export default function Releases() {
             <div style={{ display: 'grid', gap: 12 }}>
               {toRecordOr.map((r) => {
                 const isBusy = busyId === r.id
+                const supBlocked = (r.supplements ?? []).some((s) => s.payment_status !== 'confirmed')
                 return (
                   <div key={r.id} style={cardStyle}>
                     <Header r={r} />
+                    {supBlocked && (
+                      <div style={{ marginTop: 10, fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'var(--c-h40-90-96)', border: '1px solid var(--c-h35-85-84)', color: 'var(--c-h30-60-32)' }}>
+                        {t('Additional charge unpaid — OR blocked until the cashier confirms every charge.')}
+                      </div>
+                    )}
                     <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
                       {orId === r.id ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>

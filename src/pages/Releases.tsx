@@ -10,7 +10,7 @@ import { prepareUpload } from '../lib/validation'
 import { peso } from '../lib/pricing'
 import { useT } from '../lib/i18n'
 import { PaperclipIcon } from '../components/icons'
-import { RELEASE_STATUS_LABEL, type ReleaseOrder, type ReleaseStatus } from '../lib/types'
+import { RELEASE_STATUS_LABEL, type ReleaseOrder, type ReleaseStatus, type ReleaseSupplement } from '../lib/types'
 
 // Customer-facing Release / Pull-out page (ADR-0024, migration 0124).
 // File an online release, upload the DO/BL for KTC's document check, pay the
@@ -19,7 +19,7 @@ import { RELEASE_STATUS_LABEL, type ReleaseOrder, type ReleaseStatus } from '../
 // DEFINER RPC (file_release_order / resubmit_release_doc / submit_release_payment).
 
 const SELECT_COLS =
-  'id, release_number, bl_number, status, amount, charges_note, payment_status, payment_proof_path, payment_note, or_number, staff_note, created_at, consignee:consignees(code, name)'
+  'id, release_number, bl_number, status, amount, charges_note, payment_status, payment_proof_path, payment_note, or_number, staff_note, created_at, consignee:consignees(code, name), supplements:release_supplements(id, label, amount, payment_status, payment_proof_path, payment_note, created_at)'
 
 // Per-status semantic tone for the .ktc-chip status pill (mirrors MyJobOrders).
 const STATUS_TONE: Record<ReleaseStatus, string> = {
@@ -30,6 +30,20 @@ const STATUS_TONE: Record<ReleaseStatus, string> = {
   released: 'success',
   on_hold: 'warning',
   cancelled: '',
+}
+
+// Tone + label for an additional-charge line's own payment status chip.
+const SUPP_TONE: Record<ReleaseSupplement['payment_status'], string> = {
+  unpaid: 'warning',
+  submitted: 'info',
+  confirmed: 'success',
+  rejected: '',
+}
+const SUPP_LABEL: Record<ReleaseSupplement['payment_status'], string> = {
+  unpaid: 'Unpaid',
+  submitted: 'Under review',
+  confirmed: 'Paid',
+  rejected: 'Rejected',
 }
 
 function fmtDate(iso: string): string {
@@ -451,6 +465,22 @@ function ReleaseDetail({ release, uid, info, qrUrl, onQrOpen, uploadDoc, onClose
               </>
             )}
 
+            {/* Additional charges (release_supplements) — each paid separately;
+                the OR is blocked until every line is confirmed. */}
+            {!!r.supplements?.length && (
+              <div style={{ display: 'grid', gap: 12 }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 14.5, fontWeight: 650 }}>{t('Additional charges')}</h3>
+                  <p className="ktc-label" style={{ fontSize: 12, marginTop: 6, lineHeight: 1.5 }}>
+                    {t('Charges KTC added after assessment. Pay to the same account / QR above. All additional charges must be settled before your Official Receipt (OR) can be released.')}
+                  </p>
+                </div>
+                {r.supplements.map((s) => (
+                  <SupplementRow key={s.id} supp={s} uid={uid} busy={busy} setBusy={setBusy} setError={setError} onChanged={onChanged} />
+                ))}
+              </div>
+            )}
+
             {r.status === 'paid' && (
               <Notice tone="success" title={t('Paid')}>
                 {t('Paid — claim your Official Receipt (OR) at the KTC office for pull-out.')}
@@ -471,6 +501,81 @@ function ReleaseDetail({ release, uid, info, qrUrl, onQrOpen, uploadDoc, onClose
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── Additional-charge line ─────────────────────────────────────────────────
+// One release_supplements row: shows label + amount + status chip, and lets the
+// customer pay it (separate proof per line) when unpaid / rejected. Mirrors the
+// base payment-proof upload (payment-slips bucket, submit_release_supplement_payment).
+function SupplementRow({ supp, uid, busy, setBusy, setError, onChanged }: {
+  supp: ReleaseSupplement
+  uid: string | undefined
+  busy: boolean
+  setBusy: (b: boolean) => void
+  setError: (e: string | null) => void
+  onChanged: () => Promise<void>
+}) {
+  const { t } = useT()
+  const s = supp
+  const [proof, setProof] = useState<File | null>(null)
+  const canPay = s.payment_status === 'unpaid' || s.payment_status === 'rejected'
+
+  async function paySupplement() {
+    if (!proof || !uid) { setError(t('Choose your payment slip first.')); return }
+    setBusy(true); setError(null)
+    const prepared = await prepareUpload(proof)
+    if ('error' in prepared) { setBusy(false); setError(t(prepared.error)); return }
+    const ext = prepared.file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const path = `${uid}/release-supp-${s.id}.${ext}`
+    const { error: upErr } = await supabase.storage.from('payment-slips').upload(path, prepared.file, { upsert: true, contentType: prepared.file.type })
+    if (upErr) { setBusy(false); setError(upErr.message); return }
+    const { error: rpcErr } = await supabase.rpc('submit_release_supplement_payment', { p_id: s.id, p_proof_path: path })
+    setBusy(false)
+    if (rpcErr) { setError(rpcErr.message); return }
+    setProof(null)
+    await onChanged()
+  }
+
+  const tone = SUPP_TONE[s.payment_status]
+  return (
+    <div style={{ display: 'grid', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+        <span style={{ fontWeight: 600, fontSize: 13.5, minWidth: 0, wordBreak: 'break-word' }}>{s.label}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flex: '0 0 auto' }}>
+          <b className="ktc-mono" style={{ fontSize: 14 }}>{peso(s.amount)}</b>
+          <span className={tone ? `ktc-chip ktc-chip--${tone}` : 'ktc-chip'}>{t(SUPP_LABEL[s.payment_status])}</span>
+        </span>
+      </div>
+
+      {s.payment_status === 'submitted' && (
+        <span className="ktc-label" style={{ fontSize: 12.5 }}>{t('Payment proof under review.')}</span>
+      )}
+      {s.payment_status === 'confirmed' && (
+        <span className="ktc-label" style={{ fontSize: 12.5 }}>{t('Paid.')}</span>
+      )}
+
+      {canPay && (
+        <div style={{ display: 'grid', gap: 10 }}>
+          {s.payment_status === 'rejected' && (
+            <Notice tone="error">{t('Your payment proof wasn’t accepted')}{s.payment_note ? <>: <b>{s.payment_note}</b></> : ''}. {t('Please re-upload a corrected slip.')}</Notice>
+          )}
+          <span className="ktc-label" style={{ fontSize: 12.5 }}>{t('Pay to the same account / QR above, then upload your receipt.')}</span>
+          {!proof ? (
+            <input className="ktc-input" type="file" accept="image/*,application/pdf" disabled={busy}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) { setProof(f); setError(null) } }}
+              style={{ maxWidth: 360, padding: '10px 13px' }} />
+          ) : (
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <FileChip file={proof} onRemove={() => setProof(null)} disabled={busy} />
+              <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void paySupplement()}>
+                {busy ? t('Sending…') : t('Submit to KTC')}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
