@@ -6,6 +6,34 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+## v1.5.0 — 2026-06-21 (release / pull-out module, ERP link, no-zero number rules, Taglish copy, ktcportal)
+
+### Customer-filed release / pull-out (ADR-0024, migrations `0124`–`0130`)
+- **New `release_orders` spine, separate from job orders** (release applies to *every* container; the JO is a service overlay — ADR-0022). Customer flow: file (consignee picker + **BL no.** + **DO/BL** upload to a private `release-docs` bucket) → **CSR documents desk** verifies (`verify_release_docs`; csr/admin) → staff **set charges (once)** → customer **pays** (proof to `payment-slips` + QRPH) → **cashier confirms** (`review_payments`) → **records OR** → `released` for pull-out. Statuses `submitted → docs_verified → payable → paid → released` (+ `on_hold` re-upload loop, `cancelled`). All writes via SECURITY DEFINER RPCs; customers SELECT only their own. This made **online DO verification live**. UI: `src/pages/Releases.tsx` (customer) + `src/admin/Releases.tsx` (two permission-gated desks); nav gains an "any-of-permissions" entry; a dedicated `view_xray_queue` gate (`0123`) makes the X-ray queue an **ops** view (CS can view, cashier can't).
+- **Additional charges (set-once base + supplements, `0125`):** the base charge can't be revised once set (financial integrity); missed charges become `release_supplements` lines the customer pays separately, and **the OR is blocked until every supplement is confirmed** (mirrors the JO supplement gate).
+- **ERP link (`0126`, combined into Record-OR):** recording captures the physical **BIR OR number** *and* the **ERP (Frappe) service-invoice control no.** in one cashier action — `service_invoice_no` is the link to the ERP document (the app still doesn't issue the official OR; the box can't release without it).
+- **Cancel (`0126`):** the owning customer **or** staff (`verify_release_docs`/`review_payments`) can cancel a release only before payment (`submitted|docs_verified|payable|on_hold`) — the previously-dead `cancelled` status is now live.
+- **Upfront approval gate:** the customer release page blocks filing for non-`approved` accounts (releases require full approval, unlike JOs which let `pending` file a held order).
+
+### No-zero number rules (migrations `0127`/`0128`)
+- **Numbers must be real:** the ERP control no. (release + JO) and pad serial **reject all-zeros**; the release **OR number** is validated (digits, non-zero, was free text); **amounts must be > 0** (`set_release_charges`, JO `add_supplement` — closed a zero-amount supplement gap). The cashier types only the number — a fixed `OR-INV-` prefix + live padded preview; **BIR OR pads to 6 digits, ERP to `OR-INV-00000000` (8), cash/OR only** for now (BI/credit deferred); padding is server-side (`0129`/`0130`). A configurable ERP series window exists but is intentionally left **open** (owner decision).
+- **Defaults are empty, never 0:** placeholder rate/fee columns (`service_rates`, `move_rates`, `terminal_rates`, `pricing_settings` admin/print fees) made **nullable** and seeded zeros nulled out (`vat_rate` + real owner-set fees preserved). The frontend (`src/lib/pricing.ts` + Calculator/Payment/Settings/Checker) now treats `null`/≤0 as **"not configured"** — shows a dash, excludes it from totals; never `₱NaN`, never a silent ₱0. Settings inputs are blank-not-zero (clearing one saves NULL). New `scripts/check-i18n.mjs`-style guard not needed here; covered by adversarial review (one MEDIUM fixed pre-apply).
+
+### Bilingual copy — easier Taglish + plainer English
+- **English simplified without touching any component:** new `src/lib/translations-en.ts` (`enSimple` override) + a one-line resolver change (`en: enSimple[key] ?? key`; `tl: tl[key] ?? enSimple[key] ?? key`) — the English string stays the t() key, so no call-site refactor.
+- **Whole `translations.ts` rewritten** to clear, courteous **professional Taglish** (not deep/formal, not slang; industry terms kept English) + plainer English where jargony, calibrated for a ~Grade-6 reading level. Retired "serving number" copy → daily **Batch + working-hours aging**; stale "broker" → "customer". New **`scripts/check-i18n.mjs`** verifies every value carries the same `{placeholders}` as its key (1,219 entries, 0 mismatches).
+
+### Responsive + demo tours
+- **Responsive clipping fixes** (audit verdict: good overall): dense admin-config rows (Settings tariff/free-days/rate + create-staff), the **vessel calendar** now scrolls legibly on phones, the Record-OR editor, the staff-rail title truncation (for longer Tagalog), AccountMenu edge, file-input widths.
+- **Demo tours fixed:** the **checker tour now fires** on `/app/checker` (was only wired on the desktop route a checker never visits); an **app-mode ✨ replay button**; retired "serving number / Now serving" copy reworded; a new **Release / Pull-out** step in the customer home tour.
+
+### Project rename + docs
+- **Jotform → ktcportal:** removed the dead Jotform theme/script, renamed the package + README, scrubbed live doc refs, and **renamed the GitHub repo** to `jlawrenceang/ktcportal` (history kept per doc-governance). The portal is a custom React app — Jotform was long gone.
+- **Docs:** per-role + whole-operation **Mermaid flowcharts** (`docs/diagrams/role-and-operation-flows.md`, verified against the live `role_permissions` matrix), **ST04** smoke test (release/pull-out + no-zero), ADR-0024 addendum.
+
+### Verification
+- Migrations `0123`–`0131` applied via the Management API + verified. `tsc` + `vite build` clean; `node scripts/check-security-invariants.mjs` OK; `node scripts/check-i18n.mjs` 0 mismatches; **Playwright smoke 14/14 PASS** vs prod (incl. new `/releases` routes). Each substantive piece adversarially reviewed (release base, supplements, ERP/cancel, null-safety, diagrams) + a final consolidated go-live review — **GO** verdict; the edges it flagged were fixed in this release: JO add-charge UI now requires a positive amount, the release set-charges client guard aligned to `> 0`, and **`0131`** blocks cancelling a release that has a paid/pending additional charge (no stranded supplement payment).
+
 ## v1.4.0 — 2026-06-16 (vessel monitoring v2 — Google Sheet sync, in-house hiding, busy banner)
 
 ### Vessel schedule v2 (migrations `0107`–`0111`, ADR-0023)

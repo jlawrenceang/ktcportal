@@ -120,7 +120,7 @@ export default function Releases() {
 
   async function setCharges(id: string) {
     const amount = Number(chargeAmount)
-    if (!chargeAmount.trim() || Number.isNaN(amount) || amount < 0) { setError(t('Enter a valid charge amount.')); return }
+    if (!chargeAmount.trim() || Number.isNaN(amount) || amount <= 0) { setError(t('Enter a valid charge amount.')); return }
     setBusyId(id); setError(null)
     const { error: err } = await supabase.rpc('set_release_charges', { p_id: id, p_amount: amount, p_note: chargeNote.trim() || null })
     setBusyId(null)

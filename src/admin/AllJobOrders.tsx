@@ -273,10 +273,10 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
   }
 
   async function addCharge() {
-    if (!charge || !chargeLabel.trim()) return
+    if (!charge || !chargeLabel.trim() || !(Number(chargeAmount) > 0)) return
     setBusyId(charge.id)
     const { error } = await supabase.rpc('add_supplement', {
-      p_jo: charge.id, p_label: chargeLabel.trim(), p_amount: Number(chargeAmount) || 0,
+      p_jo: charge.id, p_label: chargeLabel.trim(), p_amount: Number(chargeAmount),
     })
     setBusyId(null)
     if (error) { alert(error.message); return }
@@ -637,7 +637,7 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
                 onChange={(e) => setChargeAmount(e.target.value.replace(/[^0-9.]/g, ''))} style={{ fontSize: 13.5 }} />
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
-              <button style={btn('solid')} disabled={!!busyId || !chargeLabel.trim()} onClick={() => void addCharge()}>{busyId ? t('Adding…') : t('Add charge')}</button>
+              <button style={btn('solid')} disabled={!!busyId || !chargeLabel.trim() || !(Number(chargeAmount) > 0)} onClick={() => void addCharge()}>{busyId ? t('Adding…') : t('Add charge')}</button>
               <button type="button" className="ktc-link" onClick={() => setCharge(null)}>{t('Cancel')}</button>
             </div>
           </div>
