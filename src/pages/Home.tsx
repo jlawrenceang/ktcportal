@@ -19,18 +19,28 @@ export default function Home() {
   const { t } = useT()
   const firstName = (broker?.full_name || session?.user.email || '').split(' ')[0]
 
-  // Light at-a-glance counts (own orders via RLS): in-progress + needing action.
-  const [stats, setStats] = useState({ active: 0, attention: 0 })
+  // Light at-a-glance counts (own orders via RLS). "Active" = orders actually in
+  // the live pipeline — `held` is a DRAFT (a pending account's order, hidden from
+  // KTC until the account is verified), so it is NOT counted as active.
+  const [stats, setStats] = useState({ active: 0, orderAttention: 0 })
   useEffect(() => {
     void (async () => {
-      const [{ count: active }, { count: attention }] = await Promise.all([
-        supabase.from('job_orders').select('id', { count: 'exact', head: true }).in('status', ['held', 'submitted', 'processing', 'on_hold']),
+      const [{ count: active }, { count: orderAttention }] = await Promise.all([
+        supabase.from('job_orders').select('id', { count: 'exact', head: true }).in('status', ['submitted', 'processing', 'on_hold']),
         supabase.from('job_orders').select('id', { count: 'exact', head: true })
           .or('status.eq.on_hold,and(status.eq.rejected,rejected_recoverable.eq.true),and(payment_status.eq.rejected,status.in.(submitted,processing,completed))'),
       ])
-      setStats({ active: active ?? 0, attention: attention ?? 0 })
+      setStats({ active: active ?? 0, orderAttention: orderAttention ?? 0 })
     })()
   }, [])
+
+  // A pending account that hasn't uploaded a valid ID has ONE open action —
+  // verify (upload ID) — which also releases its held draft order(s). Count it
+  // as an attention item so the dashboard never says "0" while the ID is missing.
+  const needsVerify = broker?.status === 'pending' && !broker?.valid_id_path
+  const attention = stats.orderAttention + (needsVerify ? 1 : 0)
+  // If verification is the only thing pending, send them straight to it.
+  const attentionTo = stats.orderAttention === 0 && needsVerify ? '/verify-id' : '/job-orders'
 
   // First visit to Home auto-opens its tour; replay from the ⊞ Menu.
   usePageTour('home', homeSteps)
@@ -52,8 +62,8 @@ export default function Home() {
           <span className="ktc-stat-num">{stats.active}</span>
           <span className="ktc-stat-label">{t('Active orders')}</span>
         </Link>
-        <Link to="/job-orders" className={`ktc-glass ktc-stat${stats.attention > 0 ? ' ktc-stat--alert' : ''}`}>
-          <span className="ktc-stat-num">{stats.attention}</span>
+        <Link to={attentionTo} className={`ktc-glass ktc-stat${attention > 0 ? ' ktc-stat--alert' : ''}`}>
+          <span className="ktc-stat-num">{attention}</span>
           <span className="ktc-stat-label">{t('Need your attention')}</span>
         </Link>
       </div>
