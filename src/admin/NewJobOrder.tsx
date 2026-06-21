@@ -150,6 +150,7 @@ export default function NewJobOrder() {
                 selected={consignee}
                 onSelect={setConsignee}
                 search={searchConsignees}
+                minChars={1}
               />
             </div>
 

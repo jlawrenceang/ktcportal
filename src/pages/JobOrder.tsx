@@ -4,6 +4,7 @@ import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import SearchPicker, { type PickerItem } from '../components/SearchPicker'
+import ConsigneeRequestForm from '../components/ConsigneeRequestForm'
 import ContainerLinesEditor, { emptyLine, type LineDraft } from '../components/ContainerLinesEditor'
 import { searchConsignees } from '../lib/pickerSearches'
 import { usePageTour } from '../components/TourProvider'
@@ -155,7 +156,9 @@ export default function JobOrder() {
               selected={consignee}
               onSelect={setConsignee}
               search={searchConsignees}
+              minChars={1}
             />
+            <ConsigneeRequestForm onCreated={setConsignee} />
           </div>
           <div style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
             <label className="ktc-label" htmlFor="entry">{t('Entry Number')} *</label>

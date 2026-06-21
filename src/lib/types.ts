@@ -6,6 +6,9 @@ export interface Consignee {
   address: string | null
   tin: string | null
   doc_2303_path: string | null
+  doc_2307_path?: string | null
+  requested_by?: string | null
+  note?: string | null
 }
 
 export type BrokerStatus = 'pending' | 'approved' | 'rejected' | 'suspended'

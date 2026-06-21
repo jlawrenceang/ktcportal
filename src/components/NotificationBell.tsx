@@ -30,6 +30,8 @@ const ICON: Record<string, (p: IconProps) => ReactNode> = {
   support_reply: ChatIcon,
   serving: TicketIcon,
   payment_reminder: ClockIcon,
+  consignee_approved: CheckCircleIcon,
+  consignee_rejected: BanIcon,
 }
 
 function fmtWhen(iso: string): string {

@@ -51,6 +51,14 @@ export default function SearchPicker({
     return () => clearTimeout(handle)
   }, [query, selected, search, minChars])
 
+  // Reflect an externally-set selection (e.g. a just-requested consignee, or a
+  // pre-filled edit form) in the input so the field shows the chosen item rather
+  // than staying blank. Only acts when something is selected; clearing is handled
+  // by clear() so this never wipes what the user is typing.
+  useEffect(() => {
+    if (selected) setQuery(selected.sub ? `${selected.title} – ${selected.sub}` : selected.title)
+  }, [selected])
+
   function pick(item: PickerItem) {
     onSelect(item)
     setQuery(item.sub ? `${item.title} – ${item.sub}` : item.title)

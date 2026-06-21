@@ -109,7 +109,7 @@ export default function Consignees() {
     const s = query.replace(/[,()%*]/g, ' ').trim()
     let req = supabase
       .from('consignees')
-      .select('id, code, name, status, address, tin, doc_2303_path', { count: 'exact' })
+      .select('id, code, name, status, address, tin, doc_2303_path, doc_2307_path, requested_by, note', { count: 'exact' })
       .order('code')
       .range(page * PAGE, page * PAGE + PAGE - 1)
     if (s) req = req.or(`name.ilike.*${s}*,code.ilike.*${s}*`)
@@ -205,9 +205,11 @@ export default function Consignees() {
     await load()
   }
 
-  async function setStatus(c: Consignee, status: AccreditationStatus) {
+  async function setStatus(c: Consignee, status: AccreditationStatus, note?: string | null) {
     setBusy(true); setError(null)
-    const { error } = await supabase.from('consignees').update({ status, decided_at: new Date().toISOString() }).eq('id', c.id)
+    const patch: { status: AccreditationStatus; decided_at: string; note?: string | null } = { status, decided_at: new Date().toISOString() }
+    if (status === 'rejected') patch.note = note ?? null
+    const { error } = await supabase.from('consignees').update(patch).eq('id', c.id)
     setBusy(false)
     if (error) return setError(friendly(error, t))
     if (filter === 'all') setList((l) => l.map((x) => (x.id === c.id ? { ...x, status } : x)))
@@ -333,12 +335,14 @@ export default function Consignees() {
                 <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: '1px solid hsl(var(--line-soft))' }}>
                   <span style={{ flex: 1, fontSize: 14 }}>
                     <b>{c.code}</b> – {c.name}
+                    {c.requested_by && <span style={{ fontSize: 10.5, fontWeight: 700, marginLeft: 8, padding: '1px 7px', borderRadius: 999, background: 'var(--c-h40-90-94)', color: 'var(--c-h35-80-38)', verticalAlign: '1px' }}>{t('customer-requested')}</span>}
                     {!complete && c.status !== 'approved' && <span className="ktc-label" style={{ fontSize: 11, marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 4, verticalAlign: '-1px' }}><AlertTriangleIcon size={11} /> {t('needs address/TIN/2303')}</span>}
                   </span>
                   {c.doc_2303_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', c.doc_2303_path, t('2303 — {name}', { name: c.name }))} style={{ fontSize: 12 }}>{t('2303')}</button>}
+                  {c.doc_2307_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', c.doc_2307_path, t('2307 — {name}', { name: c.name }))} style={{ fontSize: 12 }}>{t('2307')}</button>}
                   <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{t(c.status)}</span>
                   {c.status !== 'approved' && <button className="ktc-link" disabled={busy} onClick={() => setStatus(c, 'approved')} style={{ fontSize: 13, color: 'var(--c-h150-60-32)' }}>{t('Approve')}</button>}
-                  {c.status !== 'rejected' && <button className="ktc-link" disabled={busy} onClick={() => setStatus(c, 'rejected')} style={{ fontSize: 13 }}>{t('Reject')}</button>}
+                  {c.status !== 'rejected' && <button className="ktc-link" disabled={busy} onClick={() => { const r = window.prompt(t('Reason for rejecting (optional — shown to the customer):'), ''); if (r === null) return; void setStatus(c, 'rejected', r.trim() || null) }} style={{ fontSize: 13 }}>{t('Reject')}</button>}
                   <button className="ktc-link" onClick={() => setEditing({ id: c.id, code: c.code, name: c.name, address: c.address ?? '', tin: c.tin ?? '', doc_2303_path: c.doc_2303_path })} style={{ fontSize: 13 }}>{t('Edit')}</button>
                   <button className="ktc-link" disabled={busy} onClick={() => remove(c)} style={{ fontSize: 13, color: 'var(--acc-2)' }}>{t('Delete')}</button>
                 </div>

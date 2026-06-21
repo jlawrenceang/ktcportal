@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Shell from '../components/Shell'
 import Notice from '../components/Notice'
 import SearchPicker, { type PickerItem } from '../components/SearchPicker'
+import ConsigneeRequestForm from '../components/ConsigneeRequestForm'
 import FileViewerModal from '../components/FileViewerModal'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
@@ -197,7 +198,9 @@ export default function Releases() {
               selected={consignee}
               onSelect={setConsignee}
               search={searchConsignees}
+              minChars={1}
             />
+            <ConsigneeRequestForm onCreated={setConsignee} />
           </div>
           <div style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="rel-bl">{t('BL Number')} *</label>

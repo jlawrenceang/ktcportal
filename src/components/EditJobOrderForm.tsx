@@ -98,7 +98,7 @@ export default function EditJobOrderForm({ order, onDone, onError, onCancel }: {
       <div style={{ display: 'grid', gap: 6 }}>
         <label className="ktc-label" htmlFor="edit-consignee">{t('Consignee')} *</label>
         <SearchPicker inputId="edit-consignee" placeholder={t('Search consignee by code or name…')}
-          selected={consignee} onSelect={setConsignee} search={searchConsignees} />
+          selected={consignee} onSelect={setConsignee} search={searchConsignees} minChars={1} />
       </div>
 
       <div style={{ display: 'grid', gap: 6 }}>
