@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import SearchPicker, { type PickerItem } from '../components/SearchPicker'
 import ConsigneeRequestForm from '../components/ConsigneeRequestForm'
+import VesselRequestModal from '../components/VesselRequestModal'
 import ContainerLinesEditor, { emptyLine, type LineDraft } from '../components/ContainerLinesEditor'
 import { searchConsignees } from '../lib/pickerSearches'
 import { usePageTour } from '../components/TourProvider'
@@ -29,6 +30,10 @@ export default function JobOrder() {
   // Consignee picker — searchable typeahead over the full master list.
   // (No per-broker accreditation gate: any registered broker can pick any consignee.)
   const [consignee, setConsignee] = useState<PickerItem | null>(null)
+  // True when the chosen consignee is one the customer just requested (pending
+  // KTC approval) — drives the "needs approval" tag. Reset when they pick another.
+  const [consigneePending, setConsigneePending] = useState(false)
+  function pickConsignee(item: PickerItem | null) { setConsignee(item); setConsigneePending(false) }
   const [entryNumber, setEntryNumber] = useState('')
   const [lines, setLines] = useState<LineDraft[]>([emptyLine()])
   const [busy, setBusy] = useState(false)
@@ -154,11 +159,16 @@ export default function JobOrder() {
               inputId="consignee"
               placeholder={t('Search consignee by code or name…')}
               selected={consignee}
-              onSelect={setConsignee}
+              onSelect={pickConsignee}
               search={searchConsignees}
               minChars={1}
             />
-            <ConsigneeRequestForm onCreated={setConsignee} />
+            <ConsigneeRequestForm onCreated={(item) => { setConsignee(item); setConsigneePending(true) }} />
+            {consigneePending && (
+              <div style={{ fontSize: 12.5, lineHeight: 1.5, padding: '9px 11px', borderRadius: 10, background: 'var(--c-h40-90-94)', border: '1px solid var(--c-h35-85-82)', color: 'var(--c-h30-60-32)' }}>
+                {t('New consignee — pending KTC approval. You can still file; KTC will verify it.')}
+              </div>
+            )}
           </div>
           <div style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
             <label className="ktc-label" htmlFor="entry">{t('Entry Number')} *</label>
@@ -181,23 +191,25 @@ export default function JobOrder() {
       content: (
         <div data-tour="jo-vessel" style={{ display: 'grid', gap: 6 }}>
           <label className="ktc-label" htmlFor="vessel">{t('Vessel & Voyage')}</label>
-          {!notListed ? (
-            <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
-              <option value="">{t('Select a vessel…')}</option>
-              {vessels.map((v) => (
-                <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name.toUpperCase()} — {v.voyage_number.toUpperCase()}</option>
-              ))}
-            </select>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <input className="ktc-input" style={{ textTransform: 'uppercase' }} placeholder={t('Vessel name')} value={mVessel} onChange={(e) => setMVessel(e.target.value.toUpperCase())} />
-              <input className="ktc-input" style={{ textTransform: 'uppercase' }} placeholder={t('Voyage number')} value={mVoyage} onChange={(e) => setMVoyage(e.target.value.toUpperCase())} />
+          {notListed && mVessel ? (
+            <div className="ktc-glass" style={{ padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 600, fontSize: 14 }}>
+                {mVessel}{mVoyage ? ` — ${mVoyage}` : ''}
+                <span style={{ marginLeft: 8, fontSize: 10.5, fontWeight: 700, padding: '1px 7px', borderRadius: 999, background: 'var(--c-h40-90-94)', color: 'var(--c-h35-80-38)' }}>{t('new · pending approval')}</span>
+              </span>
+              <button type="button" className="ktc-link" onClick={() => { setNotListed(false); setMVessel(''); setMVoyage('') }} style={{ fontSize: 12 }}>{t('Change')}</button>
             </div>
+          ) : (
+            <>
+              <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
+                <option value="">{t('Select a vessel…')}</option>
+                {vessels.map((v) => (
+                  <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name.toUpperCase()} — {v.voyage_number.toUpperCase()}</option>
+                ))}
+              </select>
+              <VesselRequestModal onCreated={(v) => { setNotListed(true); setMVessel(v.vessel_name); setMVoyage(v.voyage_number); setVesselVisit('') }} />
+            </>
           )}
-          <label className="ktc-label" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <input type="checkbox" checked={notListed} onChange={(e) => setNotListed(e.target.checked)} />
-            {t('My vessel isn’t listed — enter it manually (operations will match it)')}
-          </label>
         </div>
       ),
     },

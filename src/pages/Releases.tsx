@@ -91,6 +91,8 @@ export default function Releases() {
 
   // "File a release" form.
   const [consignee, setConsignee] = useState<PickerItem | null>(null)
+  const [consigneePending, setConsigneePending] = useState(false)
+  function pickConsignee(item: PickerItem | null) { setConsignee(item); setConsigneePending(false) }
   const [bl, setBl] = useState('')
   const [docFile, setDocFile] = useState<File | null>(null)
   const [filing, setFiling] = useState(false)
@@ -196,11 +198,16 @@ export default function Releases() {
               inputId="rel-consignee"
               placeholder={t('Search consignee by code or name…')}
               selected={consignee}
-              onSelect={setConsignee}
+              onSelect={pickConsignee}
               search={searchConsignees}
               minChars={1}
             />
-            <ConsigneeRequestForm onCreated={setConsignee} />
+            <ConsigneeRequestForm onCreated={(item) => { setConsignee(item); setConsigneePending(true) }} />
+            {consigneePending && (
+              <div style={{ fontSize: 12.5, lineHeight: 1.5, padding: '9px 11px', borderRadius: 10, background: 'var(--c-h40-90-94)', border: '1px solid var(--c-h35-85-82)', color: 'var(--c-h30-60-32)' }}>
+                {t('New consignee — pending KTC approval. You can still file; KTC will verify it.')}
+              </div>
+            )}
           </div>
           <div style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="rel-bl">{t('BL Number')} *</label>

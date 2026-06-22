@@ -3,13 +3,14 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { prepareUpload } from '../lib/validation'
 import { useT } from '../lib/i18n'
+import Modal from './Modal'
 import type { PickerItem } from './SearchPicker'
 
-// Customer "request a new consignee" — mirrors the vessel "not listed" flow.
-// Collects name + address + TIN + BIR 2303 (required) + 2307 (optional), uploads
-// the docs to the customer's own folder, then calls request_consignee (0132).
-// On success the new PENDING consignee is handed back via onCreated so the picker
-// selects it and the customer can keep filing while KTC verifies the documents.
+// Customer "request a new consignee" — opens a MODAL to fill the consignee's
+// Customer Information Sheet details + BIR 2303 (required) / 2307 (optional),
+// uploads the docs, then calls request_consignee (0132). On success the new
+// PENDING consignee is handed back via onCreated so the picker selects it and
+// the customer can keep filing while KTC verifies it ("needs approval").
 export default function ConsigneeRequestForm({ onCreated }: { onCreated: (item: PickerItem) => void }) {
   const { t } = useT()
   const { session } = useAuth()
@@ -31,6 +32,8 @@ export default function ConsigneeRequestForm({ onCreated }: { onCreated: (item: 
     if (error) throw new Error(error.message)
     return path
   }
+
+  function close() { setOpen(false); setErr(null) }
 
   async function submit() {
     setErr(null)
@@ -59,8 +62,8 @@ export default function ConsigneeRequestForm({ onCreated }: { onCreated: (item: 
     }
   }
 
-  if (!open) {
-    return (
+  return (
+    <>
       <button
         type="button"
         className="ktc-link"
@@ -69,28 +72,41 @@ export default function ConsigneeRequestForm({ onCreated }: { onCreated: (item: 
       >
         {t('Can’t find your consignee? Request a new one')}
       </button>
-    )
-  }
 
-  return (
-    <div style={{ marginTop: 8, padding: 12, borderRadius: 12, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)', display: 'grid', gap: 8 }}>
-      <div className="ktc-label" style={{ fontSize: 12 }}>
-        {t('New consignee — KTC will verify your BIR documents. You can keep filing in the meantime.')}
-      </div>
-      <input className="ktc-input ktc-input--compact" placeholder={t('Consignee name *')} value={name} onChange={(e) => setName(e.target.value)} />
-      <input className="ktc-input ktc-input--compact" placeholder={t('Business address')} value={address} onChange={(e) => setAddress(e.target.value)} />
-      <input className="ktc-input ktc-input--compact" placeholder={t('TIN / VAT Reg #')} value={tin} onChange={(e) => setTin(e.target.value)} />
-      <label className="ktc-label" style={{ fontSize: 11.5 }}>{t('BIR 2303 (Certificate of Registration) *')}</label>
-      <input className="ktc-input ktc-input--compact" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc2303(e.target.files?.[0] ?? null)} style={{ padding: '6px 10px' }} />
-      <label className="ktc-label" style={{ fontSize: 11.5 }}>{t('BIR 2307 (if withholding agent) — optional')}</label>
-      <input className="ktc-input ktc-input--compact" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc2307(e.target.files?.[0] ?? null)} style={{ padding: '6px 10px' }} />
-      {err && <div style={{ color: 'var(--acc-2)', fontSize: 12 }}>{err}</div>}
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-        <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void submit()} style={{ width: 'auto', padding: '7px 14px', fontSize: 12.5 }}>
-          {busy ? t('Submitting…') : t('Submit request')}
-        </button>
-        <button type="button" className="ktc-link" onClick={() => { setOpen(false); setErr(null) }} style={{ fontSize: 12.5 }}>{t('Cancel')}</button>
-      </div>
-    </div>
+      <Modal open={open} onClose={close} title={t('Request a new consignee')}>
+        <div style={{ display: 'grid', gap: 10 }}>
+          <div className="ktc-label" style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+            {t('Fill in the consignee’s details and attach their BIR documents. It’s created right away so you can keep filing — KTC verifies it (needs approval).')}
+          </div>
+          <div style={{ display: 'grid', gap: 5 }}>
+            <label className="ktc-label" style={{ fontSize: 11.5 }}>{t('Consignee name *')}</label>
+            <input className="ktc-input" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div style={{ display: 'grid', gap: 5 }}>
+            <label className="ktc-label" style={{ fontSize: 11.5 }}>{t('Business address')}</label>
+            <input className="ktc-input" value={address} onChange={(e) => setAddress(e.target.value)} />
+          </div>
+          <div style={{ display: 'grid', gap: 5 }}>
+            <label className="ktc-label" style={{ fontSize: 11.5 }}>{t('TIN / VAT Reg #')}</label>
+            <input className="ktc-input" value={tin} onChange={(e) => setTin(e.target.value)} />
+          </div>
+          <div style={{ display: 'grid', gap: 5 }}>
+            <label className="ktc-label" style={{ fontSize: 11.5 }}>{t('BIR 2303 (Certificate of Registration) *')}</label>
+            <input className="ktc-input" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc2303(e.target.files?.[0] ?? null)} style={{ padding: '7px 10px' }} />
+          </div>
+          <div style={{ display: 'grid', gap: 5 }}>
+            <label className="ktc-label" style={{ fontSize: 11.5 }}>{t('BIR 2307 (if withholding agent) — optional')}</label>
+            <input className="ktc-input" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc2307(e.target.files?.[0] ?? null)} style={{ padding: '7px 10px' }} />
+          </div>
+          {err && <div style={{ color: 'var(--acc-2)', fontSize: 12.5 }}>{err}</div>}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 4 }}>
+            <button type="button" className="ktc-btn" disabled={busy} onClick={() => void submit()} style={{ width: 'auto', padding: '9px 18px' }}>
+              {busy ? t('Submitting…') : t('Submit request')}
+            </button>
+            <button type="button" className="ktc-link" onClick={close} style={{ fontSize: 13 }}>{t('Cancel')}</button>
+          </div>
+        </div>
+      </Modal>
+    </>
   )
 }
