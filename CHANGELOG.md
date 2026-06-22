@@ -6,6 +6,29 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+Shipped to `main` / Vercel since v1.5.0 (deployed under the `v1.5.0` banner + new commit hashes — `APP_VERSION` not yet bumped; tag the next deploy **v1.6.0**). Two customer-facing initiatives on the portal, plus a deferred backend foundation (fuel).
+
+### Customer-requested consignees & vessels + "needs info" loop (migrations `0132`, `0137`–`0139`)
+- **Request a consignee** (`request_consignee`, `0132`): a customer who can't find their consignee files a new one — name + **business address + TIN** (compulsory `0139`) + **BIR 2303** (required) / 2307 (optional). Created as a **pending** consignee on the existing approval machine (`0008`/`0120`) and **usable immediately to file** (file-now; KTC verifies the BIR docs in parallel). Approve/reject in the existing `/admin/consignees`; the requester is notified.
+- **Request a vessel** (`request_vessel`, `0137`): mirrors the consignee flow from a modal — an unlisted vessel becomes a **pending** request at submit (the `0068` JO-insert trigger still dedupes); the customer immediately sees it tagged "pending approval".
+- **"Needs more info" review state** (`0138`): reviewers tag a request `needs_info` + note instead of a hard approve/reject; the requester is notified and can **edit & resubmit in-app** (→ `pending`) — recoverable, unlike `rejected`. Consignee review = admin + CSR (new permission **`review_consignee_requests`**); vessel review = ops/admin (`manage_vessel_schedule`). New customer **My Requests** view + admin **dashboard pending tile**.
+- **Vessel +1-day allowance** (`0139`): the schedule keeps a vessel one day past its last free day before it drops out of the picker.
+
+### Customer Information Sheet = consignee accreditation (migration `0133`, reverted by `0136`)
+- The CIS-with-documents **accredits a consignee** (the billed cargo-owner), not a broker account. `0133` first modeled it as a broker-account profile and gated all filing on it; **`0136` tears that gate down** — the customer base is one pool (a broker can also be a consignee), so there is **one CIS, held on the consignee record**, file-now, with missing BIR docs **flagged not blocked**. **Print CIS** renders the *filled* sheet (from consignee data) as a PDF; linked in the customer portal footer.
+
+### Container rate matrix — calculator / JO tariff rework (migration `0141`, 4 phases)
+- **`terminal_rates`** (the **calculator's** tariff) gains **fill (empty/full) × kind (dry/reefer)** on top of service/trade/origin/size — re-keyed, all 160 combos seeded (120 new cells start `rate = null`, so the calculator flags **"rate not set"** instead of charging ₱0).
+- **`job_order_lines`** gain `size`/`fill`/`kind` (nullable; required in the new filing UI, old rows stay valid); the three line-insert paths persist them per container.
+- **Admin tariff editor** gains the empty/full × dry/reefer grid; **calculator redesigned** (merged section, container types, ancillary dropdown). **Live billing is unchanged** — payment still uses `service_rates`; `terminal_rates` is the calculator/quote tariff only.
+- **Reverted** the JO container size/fill/kind *filing* UI: the **X-ray JO is operational, not priced**, so per-container pricing dimensions don't belong on it.
+
+### Fuel monitoring — Phase 0 foundations, then DEFERRED (ADR-0025; migrations `0135`, `0140`, `0150`)
+- Backend-only **derived-variance fuel module** on the moves spine — `equipment` + two append-only ledgers (`fuel_dispense` OUT / `fuel_delivery` IN), effective-dated `fuel_rates`/`fuel_settings`, interim `move_tally`, 7 derived views, RLS (`view_fuel_reports`/`manage_fuel`/`log_fuel`), audit triggers, CSH-model seeds; a non-admin **`purchaser`** staff role (`0150`). All three migrations applied to prod. **No frontend yet — Phase 1+ deferred; focus returned to the portal / job orders.** Also `0140`: revoke PUBLIC EXECUTE on the `0132` consignee-decision trigger fn (definer-ACL invariant, behaviour-neutral).
+
+### UI polish
+- **Modal standardization** — portal modals render into `<body>` (no longer overlap the tabbar/footer); consistent small-screen padding. **Taglish** copy for the new/redesigned screens.
+
 ## v1.5.0 — 2026-06-21 (release / pull-out module, ERP link, no-zero number rules, Taglish copy, ktcportal)
 
 ### Customer-filed release / pull-out (ADR-0024, migrations `0124`–`0130`)

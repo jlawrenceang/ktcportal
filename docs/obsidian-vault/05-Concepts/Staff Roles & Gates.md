@@ -2,7 +2,7 @@
 title: Staff Roles & Gates
 tags: [concept, security, roles, rbac, administration]
 type: concept
-last_updated: 2026-06-16
+last_updated: 2026-06-22
 ---
 
 # 👥 Staff Roles & Gates
@@ -11,13 +11,14 @@ The KTC admin portal runs on a **single owner-tunable permission matrix**, not h
 
 ## Roles
 
-`customers.staff_role` ∈ `admin · operations · cashier · checker · csr` (customers = `null`). Base set was `admin/cashier/checker` (`0035`); **operations** added (`0056`), **csr** added (`0086`).
+`customers.staff_role` ∈ `admin · operations · cashier · checker · csr · purchaser` (customers = `null`). Base set was `admin/cashier/checker` (`0035`); **operations** added (`0056`), **csr** added (`0086`), **purchaser** added (`0150`).
 
 - **admin** — the full back office. Holds every gate **except `confirm_xray`** (dropped `0095`).
 - **operations** — the terminal floor: accept orders, assess RPS, mark DEA/OOG done, tag additional charges, monitor X-ray (no confirm), complete; manage the vessel schedule; edit JO headers.
 - **cashier** — the money desk: review payments (online proof + walk-in), record the ERP invoice, complete once paid, hold/reject; edit JO headers. `/admin/cashier` station.
 - **checker** — **X-ray entry confirmation only** (BOC performs the X-ray; the checker confirms entry per van). View only otherwise. `/admin/checker`.
-- **csr** — customer-service desk: file JOs for customers + work the support inbox. **Never** changes order status. `/admin/support`. All customer comms funnel through CSR (operations lost `manage_support` in `0086`).
+- **csr** — customer-service desk: file JOs for customers + work the support inbox + **review consignee requests** (`review_consignee_requests`, `0138`). **Never** changes order status. `/admin/support`. All customer comms funnel through CSR (operations lost `manage_support` in `0086`).
+- **purchaser** *(DB only — frontend deferred)* — the **fuel desk** (procurement + fuel monitoring): non-admin, scoped, seeded with `view_fuel_reports` / `manage_fuel` / `log_fuel` only (`0135`/`0150`, [[ADR-0025]]). The React app has **no `purchaser` handling yet** (no route/label/nav), so don't assign it until [[Pending Items|Fuel Phase 1]] wires it.
 - **owner / root owner** — superset; bypasses **every** gate in `has_permission` (see [[Owner Failsafe]], [[Multi-Owner & Root Grants]]).
 
 ## Permission matrix (seeded defaults — owner can re-tune)
@@ -39,9 +40,12 @@ The KTC admin portal runs on a **single owner-tunable permission matrix**, not h
 | `manage_approvals` | ✅ | — | — | — | — |
 | `manage_customers` | ✅ | — | — | — | — |
 | `manage_consignees` | ✅ | — | — | — | — |
+| `review_consignee_requests` | ✅ | — | — | — | ✅ |
 | `manage_pricing` | ✅ | — | — | — | — |
 
 (Owner = all. `manage_*` admin-desk gates omitted for the restricted roles above default false.)
+
+**Fuel gates** (`0135`/`0150`, [[ADR-0025]]) — `view_fuel_reports` · `manage_fuel` · `log_fuel`, seeded **on for `admin` + `purchaser`** only. Omitted from the table above (own module, not wired into the UI matrix yet).
 
 ## Split processing gates (`0086`)
 
@@ -59,10 +63,10 @@ The single `process_job_orders` gate was **split** for the explicit staff transi
 
 ## Landings
 
-`RoleLanding` (`App.tsx`) routes by role: checker → `/admin/checker`, operations → `/admin/job-orders`, cashier → `/admin/cashier`, csr → `/admin/support`, admin/owner → `/admin`. The admin bottom-nav + [[Staff Notifications]] are permission-gated the same way.
+`RoleLanding` (`App.tsx`) routes by role: checker → `/admin/checker`, operations → `/admin/job-orders`, cashier → `/admin/cashier`, csr → `/admin/support`, admin/owner → `/admin`. The admin bottom-nav + [[Staff Notifications]] are permission-gated the same way. **`purchaser` has no landing/route yet** — it falls through to the default (the [[Pending Items|Fuel Phase 1]] wiring adds it).
 
 ## Related
 
 - [[Administration]] · [[Authentication]] · [[Owner Failsafe]] · [[Multi-Owner & Root Grants]] · [[RLS Posture]]
 - [[Two-Gate Completion]] · [[Job Order Lifecycle]] · [[Staff Notifications]]
-- Migrations `0035` (matrix), `0056` (operations), `0062` (assess_rps), `0086` (csr + split gates), `0087`/`0095` (checker-only X-ray), `0097` (ops regains `process_job_orders`)
+- Migrations `0035` (matrix), `0056` (operations), `0062` (assess_rps), `0086` (csr + split gates), `0087`/`0095` (checker-only X-ray), `0097` (ops regains `process_job_orders`), `0138` (`review_consignee_requests`), `0135`/`0150` (fuel gates + `purchaser` role)

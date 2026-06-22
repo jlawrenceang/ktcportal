@@ -2,14 +2,16 @@
 title: Roadmap
 tags: [memory, roadmap, planning]
 type: memory
-last_updated: 2026-06-13
+last_updated: 2026-06-22
 ---
 
 # 🧭 Roadmap (Phased)
 
 **Authoritative sequencing for KTC work.** Ordered by what ships next. When a phase finishes, its items move to [[Completed Milestones]] and the next phase becomes *Now*.
 
-Legend: **COMPLETED** · **NOW** · **NEXT** · **LATER** · **NORTH STAR**.
+Legend: **COMPLETED** · **NOW** · **NEXT** · **LATER** · **PARKED** · **NORTH STAR**.
+
+> **Active focus (2026-06-22):** portal / job-orders. The **fuel-monitoring** module ([[ADR-0025]]) was started as a parallel lane and is **parked after Phase 0** (schema live, no frontend) — see PARKED below.
 
 ## COMPLETED ✅ (through v1.1.0, 2026-06-13)
 
@@ -35,6 +37,10 @@ Legend: **COMPLETED** · **NOW** · **NEXT** · **LATER** · **NORTH STAR**.
 5. BOC Sheets mirror (blocked on Google service-account creds); bounded admin import if needed.
 6. Implement the 4 Playwright mutation `fixme` lanes; wire Playwright into CI.
 7. Per-customer accredited-consignee scoping; JO drafts + document attachments; status-change notifications.
+
+## PARKED ⏸️ — Fuel monitoring (Phase 0 done)
+
+**Derived-variance fuel module** on the [[Yard Operations — Pillar 2 (Move Logger + Yard)|moves]] spine ([[ADR-0025]]). **Phase 0 is live in prod + committed** (schema, ledgers, effective-dated rates, 7 derived views, `purchaser` role). **Resume when the portal lane gives way:** wire the role + 3 fuel permissions into the frontend, then build the `/admin/fuel` desk → mobile pump logger → estimate-from-live-moves → efficiency/anomaly. Detail in [[Pending Items]] + [[Fuel Monitoring (Yard Operations sub-module)]]. It also pulls **Pillar 2** (the yard move logger) forward, since the fuel estimate reads the same `moves`/`equipment` spine.
 
 ## NORTH STAR ⭐ — Terminal + Depot Operating System
 

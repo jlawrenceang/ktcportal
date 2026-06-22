@@ -5,7 +5,7 @@ type: core
 wave: 1
 status: live
 owner: Customer
-last_updated: 2026-06-16
+last_updated: 2026-06-22
 ---
 
 # 📝 Job Orders Core
@@ -27,10 +27,11 @@ The core transaction: a customer (or CSR / operations on behalf) files a Job Ord
 
 ## Model
 
-- `job_orders` (header) + `job_order_lines` (per-container lines, now with `xray_done_at/by/by_name`) + `service_completions` (per service line) + `serving_numbers` (one **priority** number per JO, `0100`).
+- `job_orders` (header) + `job_order_lines` (per-container lines, now with `xray_done_at/by/by_name`, + `size`/`fill`/`kind` `0141`) + `service_completions` (per service line) + `serving_numbers` (one **priority** number per JO, `0100`).
 - `jo_supplements` (`0101`) — additional-charge lines JO-####-A/B/C. `job_orders.has_open_supplement` denormalized flag (`0104`).
 - RPS: `rps_status` / `rps_path` / `rps_moves` / `rps_payment_status` (`0062`/`0063`).
-- Consignee from the master-list typeahead (ADR-0007). Service requests in `SERVICE_REQUESTS` (X-ray / DEA / OOG).
+- Consignee from the master-list typeahead (ADR-0007) — **unlisted ones can be requested** (`request_consignee`, file-now pending; see [[Consignees]]). Vessels similarly via `request_vessel` (`0137`). Service requests in `SERVICE_REQUESTS` (X-ray / DEA / OOG).
+- **Container rate matrix** (`0141`) — `terminal_rates` (the **calculator/quote** tariff) is keyed by service × trade × origin × **size × fill (empty/full) × kind (dry/reefer)**; unset cells flag "rate not set" (never ₱0). NOTE: this is the **calculator only** — **live billing runs on `service_rates`**, and the X-ray JO itself stays **operational/unpriced** (the size/fill/kind *filing* UI was reverted).
 - **Statuses:** `held` → `submitted` → `processing` → `completed`; or `on_hold` / `rejected` / `cancelled`. ("Under review" = a completed order bounced back by a new supplement.)
 
 ## Processing & completion

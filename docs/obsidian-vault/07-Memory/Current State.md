@@ -2,12 +2,22 @@
 title: Current State
 tags: [memory, current]
 type: memory
-last_updated: 2026-06-16
+last_updated: 2026-06-22
 ---
 
 # 📌 Current State (Runtime-Aligned)
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
+
+## 2026-06-22 — Self-service consignee/vessel requests, CIS-as-accreditation, rate matrix; fuel Phase 0 (deferred)
+
+**Migrations through `0150` applied to prod** (portal lane `0124`–`0141`; fuel lane `0135`/`0140`/`0150`). Two concurrent lanes ran — the **portal/job-orders** lane and a new **fuel** lane (deliberately split numbers). See [[2026-06-22 Consignee+Vessel Requests, CIS, Rate Matrix, Fuel Phase 0]]. In one line each:
+
+- **Self-service requests** — customers **request a consignee** (`request_consignee`, `0132`) or **vessel** (`request_vessel`, `0137`) that's missing; both are created **pending + usable-immediately** (file-now, KTC verifies in parallel). A recoverable **"needs info"** review state (`0138`) lets reviewers ask for more instead of rejecting; the customer edits & resubmits in-app. New **`review_consignee_requests`** gate (CSR), customer **My Requests** view, admin dashboard pending tile; consignee request now requires address + TIN + 2303 (`0139`).
+- **CIS = consignee accreditation** — the Customer Information Sheet accredits the **consignee** (billed cargo-owner), not a broker account. `0133` modeled it on the broker and gated all filing; **`0136` reverted** that — one customer pool, one CIS on the consignee record, file-now with missing docs flagged. **Print CIS** = the filled sheet as a PDF.
+- **Container rate matrix** (`0141`) — the **calculator's** `terminal_rates` tariff gains **empty/full × dry/reefer** (160 combos; 120 new cells `null` so it flags "rate not set", never ₱0); `job_order_lines` carry size/fill/kind; redesigned calculator + admin tariff editor. **Live billing is unchanged** (`service_rates`); the X-ray JO stays **operational/unpriced**.
+- **Fuel monitoring Phase 0 (deferred)** — backend-only **derived-variance module** on the moves spine ([[ADR-0025]]; `equipment` + `fuel_dispense`/`fuel_delivery` ledgers + effective-dated `fuel_rates`/`fuel_settings` + `move_tally` + 7 views + RLS + audit, `0135`), a non-admin **`purchaser`** role (`0150`), and a trigger-ACL fix (`0140`). **Live in the DB, committed (`9407d39`), but no frontend** — Phase 1+ parked; focus is back on the portal. Detail: [[Fuel Monitoring (Yard Operations sub-module)]].
+- **UI** — portal modals now render into `<body>` (no tabbar/footer overlap), consistent small-screen padding; Taglish on the new/redesigned screens.
 
 ## 2026-06-16 — Staff role matrix, two-gate completion, per-van X-ray, verify-QR
 
@@ -84,7 +94,7 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0104_open_supplement_flag`** — **all applied + tracked** in `public._migrations`. RLS + role-permission matrix (`has_permission`) + `session_alive()` woven into all helpers; pg_cron jobs (see [[System Scale]]). Email (Resend) fully wired (consolidated nudge, `0099`).
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0150_purchaser_role`** (141 files; numbering split across a portal lane and a fuel lane) — **all applied + tracked** in `public._migrations`. RLS + role-permission matrix (`has_permission`) + `session_alive()` woven into all helpers; pg_cron jobs (see [[System Scale]]). Email (Resend) fully wired (consolidated nudge, `0099`).
 
 ## In progress / not yet
 
