@@ -35,6 +35,7 @@ ADRs in this folder preserve decision history for the KTC broker portal.
 | [0022](0022-gate-pass-is-container-eir-not-job-order.md) | Gate pass is a container/EIR-level artifact (not the JO); gate action layer deferred, launch = verify-only | Accepted | 2026-06-16 | Architecture \| Workflow |
 | [0023](0023-vessel-schedule-google-sheet-sync.md) | Vessel schedule via a Google Sheet ↔ app sync (hourly + manual) with a computed Last Free Day mirror + in-house line hiding | Accepted | 2026-06-16 | Integration \| Workflow |
 | [0024](0024-customer-filed-online-release-pullout-payment.md) | Customer-filed online release/pull-out payment: DO/BL doc verification (CSR) → staff-set charges → online pay → OR at office | Accepted | 2026-06-21 | Architecture \| Database \| Workflow |
+| [0025](0025-fuel-monitoring-derived-variance-on-moves-spine.md) | Fuel monitoring as a derived variance module on the moves spine (estimate vs per-dispense actual, effective-dated rates) | Accepted | 2026-06-22 | Architecture \| Database \| Business Logic |
 
 ## Governance
 
