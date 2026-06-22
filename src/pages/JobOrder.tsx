@@ -5,7 +5,6 @@ import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import SearchPicker, { type PickerItem } from '../components/SearchPicker'
 import ConsigneeRequestForm from '../components/ConsigneeRequestForm'
-import VesselRequestModal from '../components/VesselRequestModal'
 import ContainerLinesEditor, { emptyLine, type LineDraft } from '../components/ContainerLinesEditor'
 import { searchConsignees } from '../lib/pickerSearches'
 import { usePageTour } from '../components/TourProvider'
@@ -43,14 +42,12 @@ export default function JobOrder() {
   const submittingRef = useRef(false)
   const [reviewing, setReviewing] = useState(false)
 
-  // Vessel + voyage (required) — picked from the current vessel schedule, with
-  // an escape hatch for a call not yet listed (operations reconciles it later).
+  // Vessel + voyage (required) — picked from the current vessel schedule ONLY.
+  // A call not yet listed is operations' work: the customer contacts KTC CS to
+  // have it added (self-service "new vessel" would conflict with the schedule).
   type VesselOpt = { vessel_visit: string; vessel_name: string; voyage_number: string }
   const [vessels, setVessels] = useState<VesselOpt[]>([])
   const [vesselVisit, setVesselVisit] = useState('')
-  const [notListed, setNotListed] = useState(false)
-  const [mVessel, setMVessel] = useState('')
-  const [mVoyage, setMVoyage] = useState('')
   useEffect(() => {
     void supabase.from('vessel_schedule_v').select('vessel_visit, vessel_name, voyage_number').eq('is_current', true).order('vessel_name')
       .then(({ data }) => setVessels((data ?? []) as VesselOpt[]))
@@ -67,8 +64,7 @@ export default function JobOrder() {
     return null
   }
   function vesselError() {
-    if (notListed) return (!mVessel.trim() || !mVoyage.trim()) ? t('Enter the vessel name and voyage number.') : null
-    return !vessels.find((v) => v.vessel_visit === vesselVisit) ? t('Select the vessel & voyage (or tick “not listed”).') : null
+    return !vessels.find((v) => v.vessel_visit === vesselVisit) ? t('Select the vessel & voyage from the list.') : null
   }
 
   // Show a "review everything before submitting" confirmation. Validates the
@@ -80,9 +76,7 @@ export default function JobOrder() {
     if (lines.filter((l) => l.container_number.trim()).length === 0) { setError(t('Add at least one container.')); setWizStep(2); return }
     setReviewing(true)
   }
-  const reviewVessel = notListed
-    ? `${mVessel.trim().toUpperCase()} — ${mVoyage.trim().toUpperCase()}`
-    : (() => { const s = vessels.find((v) => v.vessel_visit === vesselVisit); return s ? `${s.vessel_name.toUpperCase()} — ${s.voyage_number.toUpperCase()}` : '' })()
+  const reviewVessel = (() => { const s = vessels.find((v) => v.vessel_visit === vesselVisit); return s ? `${s.vessel_name.toUpperCase()} — ${s.voyage_number.toUpperCase()}` : '' })()
 
   async function submit() {
     if (submittingRef.current) return
@@ -101,15 +95,11 @@ export default function JobOrder() {
     }
     // Resolve vessel + voyage (required). Entry, vessel, voyage and container
     // numbers are all stored UPPERCASE — shipping identifiers are canonically caps.
-    let vVisit: string | null = null, vName = '', vVoyage = ''
-    if (notListed) {
-      vName = mVessel.trim().toUpperCase(); vVoyage = mVoyage.trim().toUpperCase()
-      if (!vName || !vVoyage) { setError(t('Enter the vessel name and voyage number.')); return }
-    } else {
-      const sel = vessels.find((v) => v.vessel_visit === vesselVisit)
-      if (!sel) { setError(t('Select the vessel & voyage (or tick “not listed”).')); return }
-      vVisit = sel.vessel_visit; vName = sel.vessel_name.toUpperCase(); vVoyage = sel.voyage_number.toUpperCase()
-    }
+    const sel = vessels.find((v) => v.vessel_visit === vesselVisit)
+    if (!sel) { setError(t('Select the vessel & voyage from the list.')); return }
+    const vVisit: string = sel.vessel_visit
+    const vName = sel.vessel_name.toUpperCase()
+    const vVoyage = sel.voyage_number.toUpperCase()
     const filled = lines.filter((l) => l.container_number.trim())
     if (filled.length === 0) {
       setError(t('Add at least one container.'))
@@ -190,26 +180,16 @@ export default function JobOrder() {
       validate: vesselError,
       content: (
         <div data-tour="jo-vessel" style={{ display: 'grid', gap: 6 }}>
-          <label className="ktc-label" htmlFor="vessel">{t('Vessel & Voyage')}</label>
-          {notListed && mVessel ? (
-            <div className="ktc-glass" style={{ padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: 600, fontSize: 14 }}>
-                {mVessel}{mVoyage ? ` — ${mVoyage}` : ''}
-                <span style={{ marginLeft: 8, fontSize: 10.5, fontWeight: 700, padding: '1px 7px', borderRadius: 999, background: 'var(--c-h40-90-94)', color: 'var(--c-h35-80-38)' }}>{t('new · pending approval')}</span>
-              </span>
-              <button type="button" className="ktc-link" onClick={() => { setNotListed(false); setMVessel(''); setMVoyage('') }} style={{ fontSize: 12 }}>{t('Change')}</button>
-            </div>
-          ) : (
-            <>
-              <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
-                <option value="">{t('Select a vessel…')}</option>
-                {vessels.map((v) => (
-                  <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name.toUpperCase()} — {v.voyage_number.toUpperCase()}</option>
-                ))}
-              </select>
-              <VesselRequestModal onCreated={(v) => { setNotListed(true); setMVessel(v.vessel_name); setMVoyage(v.voyage_number); setVesselVisit('') }} />
-            </>
-          )}
+          <label className="ktc-label" htmlFor="vessel">{t('Vessel & Voyage')} *</label>
+          <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
+            <option value="">{t('Select a vessel…')}</option>
+            {vessels.map((v) => (
+              <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name.toUpperCase()} — {v.voyage_number.toUpperCase()}</option>
+            ))}
+          </select>
+          <span className="ktc-label" style={{ fontSize: 11.5 }}>
+            {t('Can’t find your vessel? Contact KTC customer service to have it added to the schedule.')}
+          </span>
         </div>
       ),
     },

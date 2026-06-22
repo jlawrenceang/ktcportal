@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { prepareUpload } from '../lib/validation'
-import { cisPrintUrl } from '../lib/cis'
 import { useT } from '../lib/i18n'
 
 // Customer "My Requests" — their new-consignee + new-vessel submissions and where
@@ -79,7 +78,6 @@ export default function MyRequests() {
                   {c.status === 'needs_info' && c.note && <div className="ktc-label" style={{ fontSize: 11.5, marginTop: 2, fontStyle: 'italic' }}>“{c.note}”</div>}
                 </span>
                 {badge(c.status)}
-                <a className="ktc-link" href={cisPrintUrl({ mode: 'update', trade_name: c.name, address1: c.address ?? '', tin: c.tin ?? '' })} target="_blank" rel="noopener" style={{ fontSize: 12.5 }}>{t('Print CIS')}</a>
                 {c.status === 'needs_info' && <button type="button" className="ktc-btn ktc-btn--sm" onClick={() => setEditC(c)} style={{ width: 'auto', padding: '6px 12px', fontSize: 12.5 }}>{t('Edit & resubmit')}</button>}
               </div>
             ))}

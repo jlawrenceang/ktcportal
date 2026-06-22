@@ -22,15 +22,17 @@ export default function Home() {
   // Light at-a-glance counts (own orders via RLS). "Active" = orders actually in
   // the live pipeline — `held` is a DRAFT (a pending account's order, hidden from
   // KTC until the account is verified), so it is NOT counted as active.
-  const [stats, setStats] = useState({ active: 0, orderAttention: 0 })
+  const [stats, setStats] = useState({ active: 0, pending: 0, orderAttention: 0 })
   useEffect(() => {
     void (async () => {
-      const [{ count: active }, { count: orderAttention }] = await Promise.all([
+      const [{ count: active }, { count: pending }, { count: orderAttention }] = await Promise.all([
         supabase.from('job_orders').select('id', { count: 'exact', head: true }).in('status', ['submitted', 'processing', 'on_hold']),
+        // `held` = a draft awaiting account approval (hidden from KTC until verified) — shown as "pending".
+        supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('status', 'held'),
         supabase.from('job_orders').select('id', { count: 'exact', head: true })
           .or('status.eq.on_hold,and(status.eq.rejected,rejected_recoverable.eq.true),and(payment_status.eq.rejected,status.in.(submitted,processing,completed))'),
       ])
-      setStats({ active: active ?? 0, orderAttention: orderAttention ?? 0 })
+      setStats({ active: active ?? 0, pending: pending ?? 0, orderAttention: orderAttention ?? 0 })
     })()
   }, [])
 
@@ -61,6 +63,11 @@ export default function Home() {
         <Link to="/job-orders" className="ktc-glass ktc-stat">
           <span className="ktc-stat-num">{stats.active}</span>
           <span className="ktc-stat-label">{t('Active orders')}</span>
+          {stats.pending > 0 && (
+            <span style={{ fontSize: 11, fontWeight: 700, marginTop: 5, padding: '2px 9px', borderRadius: 999, background: 'var(--c-h40-90-94)', color: 'var(--c-h35-80-38)' }}>
+              {t('{n} pending approval', { n: stats.pending })}
+            </span>
+          )}
         </Link>
         <Link to={attentionTo} className={`ktc-glass ktc-stat${attention > 0 ? ' ktc-stat--alert' : ''}`}>
           <span className="ktc-stat-num">{attention}</span>

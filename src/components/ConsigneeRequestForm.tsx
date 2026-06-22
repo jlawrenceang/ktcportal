@@ -4,7 +4,6 @@ import { useAuth } from '../lib/AuthContext'
 import { prepareUpload } from '../lib/validation'
 import { useT } from '../lib/i18n'
 import Modal from './Modal'
-import { cisPrintUrl } from '../lib/cis'
 import type { PickerItem } from './SearchPicker'
 
 // Customer "request a new consignee" — a MODAL to fill the consignee's Customer
@@ -43,6 +42,8 @@ export default function ConsigneeRequestForm({ onCreated }: { onCreated: (item: 
   async function submit() {
     setErr(null)
     if (name.trim().length < 2) { setErr(t('Enter the consignee name.')); return }
+    if (!address.trim()) { setErr(t('Enter the business address.')); return }
+    if (!tin.trim()) { setErr(t('Enter the TIN / VAT Reg #.')); return }
     if (!doc2303) { setErr(t('Attach the BIR 2303 (Certificate of Registration).')); return }
     setBusy(true)
     try {
@@ -66,10 +67,6 @@ export default function ConsigneeRequestForm({ onCreated }: { onCreated: (item: 
     }
   }
 
-  function printCis() {
-    window.open(cisPrintUrl({ mode: 'new', trade_name: name.trim(), address1: address.trim(), tin: tin.trim() }), '_blank', 'noopener')
-  }
-
   return (
     <>
       <button
@@ -85,12 +82,9 @@ export default function ConsigneeRequestForm({ onCreated }: { onCreated: (item: 
         {created ? (
           <div style={{ display: 'grid', gap: 12 }}>
             <div style={{ fontSize: 13.5, lineHeight: 1.5 }}>
-              {t('Submitted: {code} – {name}. It is pending KTC approval — you can keep filing in the meantime.', { code: created.code, name: created.name })}
+              {t('Submitted: {code} – {name}. It’s been sent to KTC for review — you can keep filing in the meantime.', { code: created.code, name: created.name })}
             </div>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <button type="button" className="ktc-btn" onClick={printCis} style={{ width: 'auto', padding: '9px 18px' }}>{t('Print CIS')}</button>
-              <button type="button" className="ktc-link" onClick={reset} style={{ fontSize: 13 }}>{t('Done')}</button>
-            </div>
+            <button type="button" className="ktc-btn" onClick={reset} style={{ width: 'auto', padding: '9px 18px', justifySelf: 'start' }}>{t('Done')}</button>
           </div>
         ) : (
           <div style={{ display: 'grid', gap: 10 }}>
@@ -102,11 +96,11 @@ export default function ConsigneeRequestForm({ onCreated }: { onCreated: (item: 
               <input className="ktc-input" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div style={{ display: 'grid', gap: 5 }}>
-              <label className="ktc-label" style={{ fontSize: 11.5 }}>{t('Business address')}</label>
+              <label className="ktc-label" style={{ fontSize: 11.5 }}>{t('Business address *')}</label>
               <input className="ktc-input" value={address} onChange={(e) => setAddress(e.target.value)} />
             </div>
             <div style={{ display: 'grid', gap: 5 }}>
-              <label className="ktc-label" style={{ fontSize: 11.5 }}>{t('TIN / VAT Reg #')}</label>
+              <label className="ktc-label" style={{ fontSize: 11.5 }}>{t('TIN / VAT Reg # *')}</label>
               <input className="ktc-input" value={tin} onChange={(e) => setTin(e.target.value)} />
             </div>
             <div style={{ display: 'grid', gap: 5 }}>
