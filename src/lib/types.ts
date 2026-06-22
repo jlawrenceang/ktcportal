@@ -63,7 +63,7 @@ export function isStaff(b: Pick<Broker, 'is_admin' | 'is_owner' | 'staff_role'> 
 
 // Also the consignee approval status (the accreditation *feature* UI was
 // removed 2026-06-11; the DB table remains — see the ADR-0007 addendum).
-export type AccreditationStatus = 'pending' | 'approved' | 'rejected'
+export type AccreditationStatus = 'pending' | 'approved' | 'rejected' | 'needs_info'
 
 export type ServiceLine = 'xray' | 'dea' | 'oog' | 'other' | 'queue'
 

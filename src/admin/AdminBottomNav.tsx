@@ -58,7 +58,7 @@ const GRID: Dest[] = [
   { to: '/admin/releases', label: 'Releases', anyPerm: ['verify_release_docs', 'review_payments'], icon: <ReleaseIcon /> },
   { to: '/admin/approvals', label: 'Approvals', perm: 'manage_approvals', icon: <ApprovalsIcon /> },
   { to: '/admin/customers', label: 'Customers', perm: 'manage_customers', icon: <UsersIcon /> },
-  { to: '/admin/consignees', label: 'Consignees', perm: 'manage_consignees', icon: <BuildingIcon /> },
+  { to: '/admin/consignees', label: 'Consignees', anyPerm: ['manage_consignees', 'review_consignee_requests'], icon: <BuildingIcon /> },
   { to: '/admin/vessel-schedule', label: 'Vessels', perm: 'manage_vessel_schedule', icon: <VesselIcon /> },
   { to: '/calculator', label: 'Rate Calculator', icon: <CalcIcon /> },
   { to: '/admin/bulletin', label: 'Bulletin', perm: 'manage_pricing', icon: <BulletinIcon /> },

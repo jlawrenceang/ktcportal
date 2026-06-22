@@ -5,6 +5,7 @@ import type { AccreditationStatus, Consignee } from '../lib/types'
 import { prepareUpload } from '../lib/validation'
 import { useFileViewer } from '../components/FileViewerModal'
 import { cisPrintUrl } from '../lib/cis'
+import { usePermissions } from '../lib/usePermissions'
 import { useT } from '../lib/i18n'
 import { AlertTriangleIcon } from '../components/icons'
 
@@ -62,6 +63,7 @@ const STATUS_STYLE: Record<AccreditationStatus, { bg: string; fg: string }> = {
   pending: { bg: 'var(--c-h40-90-94)', fg: 'var(--c-h35-80-38)' },
   approved: { bg: 'var(--c-h150-50-93)', fg: 'var(--c-h150-60-30)' },
   rejected: { bg: 'var(--c-h0-70-95)', fg: 'var(--c-h0-65-45)' },
+  needs_info: { bg: 'var(--c-h40-95-92)', fg: 'var(--c-h30-70-38)' },
 }
 
 interface EditState {
@@ -80,6 +82,11 @@ async function upload2303(consigneeId: string, file: File): Promise<string> {
 
 export default function Consignees() {
   const { t } = useT()
+  const { can } = usePermissions()
+  // Full management (add/edit/delete/bulk) = manage_consignees (admin/owner).
+  // Review-only (approve/reject/needs info) = also CSR via review_consignee_requests.
+  const canManage = can('manage_consignees')
+  const canReview = canManage || can('review_consignee_requests')
   const [list, setList] = useState<Consignee[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -206,14 +213,13 @@ export default function Consignees() {
     await load()
   }
 
-  async function setStatus(c: Consignee, status: AccreditationStatus, note?: string | null) {
+  async function review(c: Consignee, action: 'approve' | 'reject' | 'needs_info', note?: string | null) {
     setBusy(true); setError(null)
-    const patch: { status: AccreditationStatus; decided_at: string; note?: string | null } = { status, decided_at: new Date().toISOString() }
-    if (status === 'rejected') patch.note = note ?? null
-    const { error } = await supabase.from('consignees').update(patch).eq('id', c.id)
+    const { error } = await supabase.rpc('review_consignee', { p_id: c.id, p_action: action, p_note: note ?? null })
     setBusy(false)
     if (error) return setError(friendly(error, t))
-    if (filter === 'all') setList((l) => l.map((x) => (x.id === c.id ? { ...x, status } : x)))
+    const status: AccreditationStatus = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'needs_info'
+    if (filter === 'all') setList((l) => l.map((x) => (x.id === c.id ? { ...x, status, note: note ?? x.note } : x)))
     else setList((l) => l.filter((x) => x.id !== c.id))
   }
 
@@ -258,19 +264,23 @@ export default function Consignees() {
           {t('Added consignees are')} <b>{t('pending')}</b> {t('and become visible to customers once approved. Address, TIN, and the 2303 can be filled in later — they’re no longer required to approve.')}
         </p>
 
-        <div style={{ display: 'grid', gap: 5, marginBottom: 14, maxWidth: 340 }}>
-          <label className="ktc-label" htmlFor="csv" style={{ fontSize: 12 }}>{t('Bulk import CSV (name, optional code)')}</label>
-          <input id="csv" ref={csvRef} type="file" accept=".csv,text/csv" className="ktc-input ktc-input--compact" onChange={onCsv} disabled={busy} style={{ padding: '6px 10px' }} />
-        </div>
+        {canManage && (
+          <>
+            <div style={{ display: 'grid', gap: 5, marginBottom: 14, maxWidth: 340 }}>
+              <label className="ktc-label" htmlFor="csv" style={{ fontSize: 12 }}>{t('Bulk import CSV (name, optional code)')}</label>
+              <input id="csv" ref={csvRef} type="file" accept=".csv,text/csv" className="ktc-input ktc-input--compact" onChange={onCsv} disabled={busy} style={{ padding: '6px 10px' }} />
+            </div>
 
-        <form onSubmit={addOne} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <Field label={t('Consignee name *')} w={200}><input className="ktc-input ktc-input--compact" value={name} onChange={(e) => setName(e.target.value)} required minLength={MIN_NAME} /></Field>
-          <Field label={t('Code (optional)')} w={110}><input className="ktc-input ktc-input--compact" value={code} onChange={(e) => setCode(e.target.value)} placeholder={t('auto')} /></Field>
-          <Field label={t('Address')} w={230}><input className="ktc-input ktc-input--compact" value={address} onChange={(e) => setAddress(e.target.value)} /></Field>
-          <Field label={t('TIN')} w={140}><input className="ktc-input ktc-input--compact" value={tin} onChange={(e) => setTin(e.target.value)} /></Field>
-          <Field label={t('2303 document')} w={190}><input ref={docRef} className="ktc-input ktc-input--compact" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc(e.target.files?.[0] ?? null)} style={{ padding: '6px 10px' }} /></Field>
-          <button className="ktc-btn ktc-btn--sm" type="submit" disabled={busy} style={{ width: 'auto', padding: '8px 16px', fontSize: 13 }}>{t('Add consignee')}</button>
-        </form>
+            <form onSubmit={addOne} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <Field label={t('Consignee name *')} w={200}><input className="ktc-input ktc-input--compact" value={name} onChange={(e) => setName(e.target.value)} required minLength={MIN_NAME} /></Field>
+              <Field label={t('Code (optional)')} w={110}><input className="ktc-input ktc-input--compact" value={code} onChange={(e) => setCode(e.target.value)} placeholder={t('auto')} /></Field>
+              <Field label={t('Address')} w={230}><input className="ktc-input ktc-input--compact" value={address} onChange={(e) => setAddress(e.target.value)} /></Field>
+              <Field label={t('TIN')} w={140}><input className="ktc-input ktc-input--compact" value={tin} onChange={(e) => setTin(e.target.value)} /></Field>
+              <Field label={t('2303 document')} w={190}><input ref={docRef} className="ktc-input ktc-input--compact" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc(e.target.files?.[0] ?? null)} style={{ padding: '6px 10px' }} /></Field>
+              <button className="ktc-btn ktc-btn--sm" type="submit" disabled={busy} style={{ width: 'auto', padding: '8px 16px', fontSize: 13 }}>{t('Add consignee')}</button>
+            </form>
+          </>
+        )}
 
         {busy && <div className="ktc-label" style={{ marginTop: 10, fontSize: 12.5 }}>{t('Working…')}</div>}
         {notice && <div className="ktc-label" style={{ marginTop: 10, fontSize: 12.5 }}>{notice}</div>}
@@ -282,13 +292,14 @@ export default function Consignees() {
           <select className="ktc-input ktc-input--compact" value={filter} onChange={(e) => changeFilter(e.target.value as Filter)}>
             <option value="all">{t('All')}</option>
             <option value="pending">{t('Pending')}</option>
+            <option value="needs_info">{t('Needs info')}</option>
             <option value="approved">{t('Approved')}</option>
             <option value="rejected">{t('Rejected')}</option>
           </select>
           <input className="ktc-input ktc-input--compact" placeholder={t('Search code or name…')} value={query} onChange={(e) => changeQuery(e.target.value)} style={{ maxWidth: 240, width: '100%' }} />
         </div>
 
-        {pendingCount > 0 && (
+        {canManage && pendingCount > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, padding: '9px 13px', borderRadius: 10, background: 'var(--c-h40-90-94)', border: '1px solid var(--glass-brd)', flexWrap: 'wrap' }}>
             <span className="ktc-label" style={{ fontSize: 12.5, flex: 1, minWidth: 160 }}>
               {t('{n} consignee(s) pending approval.', { n: pendingCount })}
@@ -342,11 +353,12 @@ export default function Consignees() {
                   {c.doc_2303_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', c.doc_2303_path, t('2303 — {name}', { name: c.name }))} style={{ fontSize: 12 }}>{t('2303')}</button>}
                   {c.doc_2307_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', c.doc_2307_path, t('2307 — {name}', { name: c.name }))} style={{ fontSize: 12 }}>{t('2307')}</button>}
                   <a className="ktc-link" href={cisPrintUrl({ mode: 'update', trade_name: c.name, address1: c.address ?? '', tin: c.tin ?? '' })} target="_blank" rel="noopener" style={{ fontSize: 12 }}>{t('CIS')}</a>
-                  <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{t(c.status)}</span>
-                  {c.status !== 'approved' && <button className="ktc-link" disabled={busy} onClick={() => setStatus(c, 'approved')} style={{ fontSize: 13, color: 'var(--c-h150-60-32)' }}>{t('Approve')}</button>}
-                  {c.status !== 'rejected' && <button className="ktc-link" disabled={busy} onClick={() => { const r = window.prompt(t('Reason for rejecting (optional — shown to the customer):'), ''); if (r === null) return; void setStatus(c, 'rejected', r.trim() || null) }} style={{ fontSize: 13 }}>{t('Reject')}</button>}
-                  <button className="ktc-link" onClick={() => setEditing({ id: c.id, code: c.code, name: c.name, address: c.address ?? '', tin: c.tin ?? '', doc_2303_path: c.doc_2303_path })} style={{ fontSize: 13 }}>{t('Edit')}</button>
-                  <button className="ktc-link" disabled={busy} onClick={() => remove(c)} style={{ fontSize: 13, color: 'var(--acc-2)' }}>{t('Delete')}</button>
+                  <span title={c.note ?? undefined} style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{t(c.status)}</span>
+                  {canReview && c.status !== 'approved' && <button className="ktc-link" disabled={busy} onClick={() => void review(c, 'approve')} style={{ fontSize: 13, color: 'var(--c-h150-60-32)' }}>{t('Approve')}</button>}
+                  {canReview && c.status !== 'needs_info' && <button className="ktc-link" disabled={busy} onClick={() => { const r = window.prompt(t('Ask the customer for more info — what’s needed:'), ''); if (r === null) return; if (!r.trim()) { setError(t('Add a note for the customer.')); return } void review(c, 'needs_info', r.trim()) }} style={{ fontSize: 13 }}>{t('Needs info')}</button>}
+                  {canReview && c.status !== 'rejected' && <button className="ktc-link" disabled={busy} onClick={() => { const r = window.prompt(t('Reason for rejecting (shown to the customer):'), ''); if (r === null) return; if (!r.trim()) { setError(t('Add a reason.')); return } void review(c, 'reject', r.trim()) }} style={{ fontSize: 13 }}>{t('Reject')}</button>}
+                  {canManage && <button className="ktc-link" onClick={() => setEditing({ id: c.id, code: c.code, name: c.name, address: c.address ?? '', tin: c.tin ?? '', doc_2303_path: c.doc_2303_path })} style={{ fontSize: 13 }}>{t('Edit')}</button>}
+                  {canManage && <button className="ktc-link" disabled={busy} onClick={() => remove(c)} style={{ fontSize: 13, color: 'var(--acc-2)' }}>{t('Delete')}</button>}
                 </div>
               )
             })}

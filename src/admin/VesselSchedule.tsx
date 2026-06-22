@@ -118,6 +118,18 @@ export default function VesselSchedule() {
     void loadReqs()
   }
 
+  async function needsInfoReq(r: VesselReq) {
+    const note = window.prompt(t('Ask the customer for more info on “{name}” — what’s needed:', { name: r.vessel_name }), '')
+    if (note === null) return // cancelled
+    if (!note.trim()) { setErr(t('Add a note for the customer explaining what’s needed.')); return }
+    setReqBusy(r.id); setErr(null); setMsg(null)
+    const { error } = await supabase.rpc('review_vessel_request', { p_id: r.id, p_action: 'needs_info', p_note: note.trim() })
+    setReqBusy(null)
+    if (error) { setErr(friendly(error)); return }
+    setMsg(t('Asked the customer for more info.'))
+    void loadReqs()
+  }
+
   const visible = useMemo(() => (showAll ? rows : rows.filter((r) => r.is_current)), [rows, showAll])
 
   function startEdit(r: VesselRow) {
@@ -319,6 +331,9 @@ export default function VesselSchedule() {
                 </select>
                 <button className="ktc-btn ktc-btn--sm" type="button" disabled={reqBusy === r.id} onClick={() => void approveReq(r)}>
                   {reqBusy === r.id ? t('Working…') : t('Approve & link')}
+                </button>
+                <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" disabled={reqBusy === r.id} onClick={() => void needsInfoReq(r)}>
+                  {t('Needs info')}
                 </button>
                 <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" disabled={reqBusy === r.id} onClick={() => void rejectReq(r)}>
                   {t('Reject')}

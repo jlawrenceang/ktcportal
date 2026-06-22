@@ -14,6 +14,7 @@ export type Permission =
   | 'manage_approvals'
   | 'manage_customers'
   | 'manage_consignees'
+  | 'review_consignee_requests'
   | 'manage_pricing'
   | 'manage_vessel_schedule'
   | 'assess_rps'
