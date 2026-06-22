@@ -28,13 +28,7 @@ export default function EditJobOrderForm({ order, onDone, onError, onCancel }: {
   const [entryNumber, setEntryNumber] = useState(order.entry_number ?? '')
   const [lines, setLines] = useState<LineDraft[]>(
     order.lines && order.lines.length
-      ? order.lines.map((l) => ({
-          container_number: l.container_number,
-          service_request: l.service_request,
-          size: l.size === '40' ? '40' : '20',
-          fill: l.fill === 'empty' ? 'empty' : 'full',
-          kind: l.kind === 'reefer' ? 'reefer' : 'dry',
-        }))
+      ? order.lines.map((l) => ({ container_number: l.container_number, service_request: l.service_request }))
       : [emptyLine()],
   )
   const [vessels, setVessels] = useState<VesselOpt[]>([])
@@ -83,7 +77,7 @@ export default function EditJobOrderForm({ order, onDone, onError, onCancel }: {
       p_vessel_visit: vVisit,
       p_vessel_name: vName,
       p_voyage_number: vVoyage,
-      p_lines: filled.map((l) => ({ container_number: l.container_number.trim().toUpperCase(), service_request: l.service_request, size: l.size, fill: l.fill, kind: l.kind })),
+      p_lines: filled.map((l) => ({ container_number: l.container_number.trim().toUpperCase(), service_request: l.service_request })),
     })
     setBusy(false)
     if (error) { onError(error.message); return }

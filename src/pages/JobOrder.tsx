@@ -6,7 +6,6 @@ import { useBroker } from '../lib/useBroker'
 import SearchPicker, { type PickerItem } from '../components/SearchPicker'
 import ConsigneeRequestForm from '../components/ConsigneeRequestForm'
 import ContainerLinesEditor, { emptyLine, type LineDraft } from '../components/ContainerLinesEditor'
-import { containerSpec } from '../lib/types'
 import { searchConsignees } from '../lib/pickerSearches'
 import { usePageTour } from '../components/TourProvider'
 import { jobOrderSteps } from '../components/WelcomeTour'
@@ -117,7 +116,7 @@ export default function JobOrder() {
       p_vessel_visit: vVisit,
       p_vessel_name: vName,
       p_voyage_number: vVoyage,
-      p_lines: filled.map((l) => ({ container_number: l.container_number.trim().toUpperCase(), service_request: l.service_request, size: l.size, fill: l.fill, kind: l.kind })),
+      p_lines: filled.map((l) => ({ container_number: l.container_number.trim().toUpperCase(), service_request: l.service_request })),
     })
     setBusy(false)
     if (fileErr) {
@@ -240,7 +239,7 @@ export default function JobOrder() {
                   {lines.filter((l) => l.container_number.trim()).map((l, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '6px 10px', borderRadius: 8, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
                       <span className="ktc-mono">{l.container_number.trim().toUpperCase()}</span>
-                      <span className="ktc-label" style={{ fontSize: 12 }}>{l.service_request} · {containerSpec(l)}</span>
+                      <span className="ktc-label" style={{ fontSize: 12 }}>{l.service_request}</span>
                     </div>
                   ))}
                 </div>

@@ -81,9 +81,6 @@ export default function NewJobOrder() {
       p_lines: filled.map((l) => ({
         container_number: l.container_number.trim(),
         service_request: l.service_request,
-        size: l.size,
-        fill: l.fill,
-        kind: l.kind,
       })),
       p_vessel_visit: vVisit,
       p_vessel_name: vName,

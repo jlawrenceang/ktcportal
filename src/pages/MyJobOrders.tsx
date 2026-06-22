@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
-import { hasOutstandingSupplements, containerSpec, type JobOrder } from '../lib/types'
+import { hasOutstandingSupplements, type JobOrder } from '../lib/types'
 import { batchLabel } from '../lib/batch'
 import { usePageTour } from '../components/TourProvider'
 import { myJobOrdersSteps } from '../components/WelcomeTour'
@@ -158,7 +158,7 @@ export default function MyJobOrders() {
     let q = supabase
       .from('job_orders')
       .select(
-        'id, jo_number, entry_number, consignee_id, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, rejected_recoverable, payment_status, has_open_supplement, service_invoice_no, rps_status, rps_payment_status, completed_at, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request, size, fill, kind), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at), supplements:jo_supplements(id, suffix, label, amount, payment_status)',
+        'id, jo_number, entry_number, consignee_id, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, rejected_recoverable, payment_status, has_open_supplement, service_invoice_no, rps_status, rps_payment_status, completed_at, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at), supplements:jo_supplements(id, suffix, label, amount, payment_status)',
         { count: 'exact' },
       )
     if (f === 'active') q = q.in('status', ['held', 'submitted', 'processing', 'on_hold'])
@@ -459,7 +459,7 @@ export default function MyJobOrders() {
                       <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
                         {o.lines!.map((l, i) => (
                           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, fontSize: 13, padding: '8px 12px', borderRadius: 9, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
-                            <span className="ktc-mono" style={{ fontWeight: 600 }}>{l.container_number}{l.size ? <span className="ktc-label" style={{ fontWeight: 400, fontSize: 11.5 }}> · {containerSpec(l)}</span> : null}</span>
+                            <span className="ktc-mono" style={{ fontWeight: 600 }}>{l.container_number}</span>
                             <span className="ktc-label" style={{ fontSize: 12.5 }}>{t(l.service_request)}</span>
                           </div>
                         ))}
