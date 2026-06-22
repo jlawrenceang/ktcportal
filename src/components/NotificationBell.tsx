@@ -32,6 +32,9 @@ const ICON: Record<string, (p: IconProps) => ReactNode> = {
   payment_reminder: ClockIcon,
   consignee_approved: CheckCircleIcon,
   consignee_rejected: BanIcon,
+  consignee_needs_info: AlertTriangleIcon,
+  vessel_needs_info: AlertTriangleIcon,
+  vessel_rejected: BanIcon,
 }
 
 function fmtWhen(iso: string): string {
@@ -85,6 +88,7 @@ export default function NotificationBell() {
     // Route by kind: support replies → the ticket page; order events → the
     // orders list (auto-opening that order); account/announcement → Home.
     if (n.kind === 'support_reply') { navigate('/support'); return }
+    if (n.kind.startsWith('consignee_') || n.kind.startsWith('vessel_')) { navigate('/requests'); return }
     if (n.job_order_id) { sessionStorage.setItem('ktc_jo_filed_id', n.job_order_id); navigate('/job-orders'); return }
     navigate('/')
   }

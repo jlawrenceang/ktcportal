@@ -33,6 +33,7 @@ const AppChecker = lazyWithReload(() => import('./app/AppChecker'))
 const Vessels = lazyWithReload(() => import('./pages/Vessels'))
 const SupportTickets = lazyWithReload(() => import('./pages/SupportTickets'))
 const Releases = lazyWithReload(() => import('./pages/Releases'))
+const MyRequests = lazyWithReload(() => import('./pages/MyRequests'))
 const Manual = lazyWithReload(() => import('./pages/Manual'))
 const AdminManual = lazyWithReload(() => import('./admin/ManualPage'))
 const Dashboard = lazyWithReload(() => import('./admin/Dashboard'))
@@ -130,6 +131,7 @@ export default function App() {
           <Route path="/job-orders" element={<Protected><MyJobOrders /></Protected>} />
           <Route path="/support" element={<Protected><SupportTickets /></Protected>} />
           <Route path="/releases" element={<Protected><Releases /></Protected>} />
+          <Route path="/requests" element={<Protected><MyRequests /></Protected>} />
           <Route path="/manual" element={<Protected><Manual /></Protected>} />
 
           {/* Installable staff app (focused, role-aware) */}
