@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import type { AccreditationStatus, Consignee } from '../lib/types'
 import { prepareUpload } from '../lib/validation'
 import { useFileViewer } from '../components/FileViewerModal'
+import { cisPrintUrl } from '../lib/cis'
 import { useT } from '../lib/i18n'
 import { AlertTriangleIcon } from '../components/icons'
 
@@ -340,6 +341,7 @@ export default function Consignees() {
                   </span>
                   {c.doc_2303_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', c.doc_2303_path, t('2303 — {name}', { name: c.name }))} style={{ fontSize: 12 }}>{t('2303')}</button>}
                   {c.doc_2307_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', c.doc_2307_path, t('2307 — {name}', { name: c.name }))} style={{ fontSize: 12 }}>{t('2307')}</button>}
+                  <a className="ktc-link" href={cisPrintUrl({ mode: 'update', trade_name: c.name, address1: c.address ?? '', tin: c.tin ?? '' })} target="_blank" rel="noopener" style={{ fontSize: 12 }}>{t('CIS')}</a>
                   <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{t(c.status)}</span>
                   {c.status !== 'approved' && <button className="ktc-link" disabled={busy} onClick={() => setStatus(c, 'approved')} style={{ fontSize: 13, color: 'var(--c-h150-60-32)' }}>{t('Approve')}</button>}
                   {c.status !== 'rejected' && <button className="ktc-link" disabled={busy} onClick={() => { const r = window.prompt(t('Reason for rejecting (optional — shown to the customer):'), ''); if (r === null) return; void setStatus(c, 'rejected', r.trim() || null) }} style={{ fontSize: 13 }}>{t('Reject')}</button>}

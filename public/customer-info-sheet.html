@@ -107,17 +107,17 @@
     </colgroup>
 
     <tr><td class="bar" colspan="4">Customer Information</td></tr>
-    <tr><td colspan="4"><div class="cell"><span class="cap">Trade Name (as appears in invoice)</span><input class="fill"></div></td></tr>
-    <tr><td colspan="4"><div class="cell"><span class="cap">Customer Name (leave blank if same with trade name)</span><input class="fill"></div></td></tr>
-    <tr><td colspan="4"><div class="cell"><span class="cap">Business Address Line 1</span><input class="fill"></div></td></tr>
-    <tr><td colspan="4"><div class="cell"><span class="cap">Business Address Line 2</span><input class="fill"></div></td></tr>
-    <tr><td colspan="4"><div class="cell"><span class="cap">TIN / VAT Reg #</span><input class="fill"></div></td></tr>
+    <tr><td colspan="4"><div class="cell"><span class="cap">Trade Name (as appears in invoice)</span><input class="fill" id="cis-trade_name"></div></td></tr>
+    <tr><td colspan="4"><div class="cell"><span class="cap">Customer Name (leave blank if same with trade name)</span><input class="fill" id="cis-customer_name"></div></td></tr>
+    <tr><td colspan="4"><div class="cell"><span class="cap">Business Address Line 1</span><input class="fill" id="cis-address1"></div></td></tr>
+    <tr><td colspan="4"><div class="cell"><span class="cap">Business Address Line 2</span><input class="fill" id="cis-address2"></div></td></tr>
+    <tr><td colspan="4"><div class="cell"><span class="cap">TIN / VAT Reg #</span><input class="fill" id="cis-tin"></div></td></tr>
 
     <tr><td class="bar" colspan="4">Company Details</td></tr>
     <tr>
-      <td colspan="1"><div class="cell"><span class="cap">Tel No.</span><input class="fill"></div></td>
-      <td colspan="1"><div class="cell"><span class="cap">Mobile No.</span><input class="fill"></div></td>
-      <td colspan="2"><div class="cell"><span class="cap">Email Address</span><input class="fill"></div></td>
+      <td colspan="1"><div class="cell"><span class="cap">Tel No.</span><input class="fill" id="cis-tel"></div></td>
+      <td colspan="1"><div class="cell"><span class="cap">Mobile No.</span><input class="fill" id="cis-mobile"></div></td>
+      <td colspan="2"><div class="cell"><span class="cap">Email Address</span><input class="fill" id="cis-email"></div></td>
     </tr>
 
     <tr><td class="bar" colspan="4">Contact Information (if authorized representative please indicate rep in position)</td></tr>
@@ -166,6 +166,25 @@
 </div>
 
 <script>
+  // Pre-fill from URL params (?trade_name=...&address1=...&tin=...) so a "Print CIS"
+  // link from a consignee renders the sheet already filled. New Customer / Updating
+  // is set via ?mode=new|update.
+  (function () {
+    var p = new URLSearchParams(location.search);
+    var map = { trade_name:'cis-trade_name', customer_name:'cis-customer_name', address1:'cis-address1',
+                address2:'cis-address2', tin:'cis-tin', tel:'cis-tel', mobile:'cis-mobile', email:'cis-email' };
+    for (var k in map) {
+      var v = p.get(k);
+      if (v) { var el = document.getElementById(map[k]); if (el) { el.value = v; el.setAttribute('value', v); } }
+    }
+    var mode = p.get('mode');
+    if (mode === 'new' || mode === 'update') {
+      var boxes = document.querySelectorAll('.ftype input[type=checkbox]');
+      var box = mode === 'new' ? boxes[0] : boxes[1];
+      if (box) { box.checked = true; box.setAttribute('checked', 'checked'); }
+    }
+  })();
+
   // Reflect what the user types into the DOM so the FILLED form reliably renders
   // in Print / Save-as-PDF (some print engines ignore live input values otherwise).
   document.addEventListener('input', function (e) {
