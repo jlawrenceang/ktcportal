@@ -13,9 +13,16 @@ import { peso } from '../lib/pricing'
 import { SHIPPING_LINES, TERMINAL_CHARGE_SERVICES, CHARGE_RULE_ACTIONS } from '../lib/shippingLines'
 import { LockIcon, PencilIcon } from '../components/icons'
 
-// Terminal tariff dimensions (migration 0073): service × trade × origin × size.
+// Terminal tariff dimensions: service × trade × origin × size × fill × kind (0141).
 const TERM_SERVICES: [string, string][] = [['arrastre', 'Arrastre'], ['wharfage', 'Wharfage'], ['lolo', 'LoLo'], ['weighing', 'Weighing scale (export)'], ['storage', 'Storage (per day)']]
 const TERM_COMBOS: [string, string][] = [['import', 'domestic'], ['import', 'foreign'], ['export', 'domestic'], ['export', 'foreign']]
+// The 4 container types per size column — empty/full × dry/reefer.
+const TERM_FILLKIND: [string, string, string][] = [
+  ['full', 'dry', 'Full · Dry'],
+  ['full', 'reefer', 'Full · Reefer'],
+  ['empty', 'dry', 'Empty · Dry'],
+  ['empty', 'reefer', 'Empty · Reefer'],
+]
 
 export default function Settings() {
   const { t } = useT()
@@ -240,12 +247,12 @@ export default function Settings() {
   }
 
   // Terminal tariff (arrastre / LoLo / storage), keyed by trade × origin × size (0073).
-  type TermRate = { id: string; service: string; trade: string; origin: string; size: string; rate: number | null }
+  type TermRate = { id: string; service: string; trade: string; origin: string; size: string; fill: string; kind: string; rate: number | null }
   const [termRates, setTermRates] = useState<TermRate[]>([])
   const [termBusy, setTermBusy] = useState(false)
   const [termMsg, setTermMsg] = useState<string | null>(null)
   useEffect(() => {
-    void supabase.from('terminal_rates').select('id, service, trade, origin, size, rate')
+    void supabase.from('terminal_rates').select('id, service, trade, origin, size, fill, kind, rate')
       .then(({ data }) => setTermRates(((data ?? []) as TermRate[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) }))))
   }, [])
   function setTermVal(id: string, rate: number | null) {
@@ -254,7 +261,7 @@ export default function Settings() {
   async function saveTerm() {
     setTermBusy(true); setTermMsg(null)
     const { error } = await supabase.from('terminal_rates')
-      .upsert(termRates.map((x) => ({ id: x.id, service: x.service, trade: x.trade, origin: x.origin, size: x.size, rate: x.rate })), { onConflict: 'id' })
+      .upsert(termRates.map((x) => ({ id: x.id, service: x.service, trade: x.trade, origin: x.origin, size: x.size, fill: x.fill, kind: x.kind, rate: x.rate })), { onConflict: 'id' })
     setTermBusy(false)
     setTermMsg(error ? error.message : t('✓ Terminal rates saved.'))
   }
@@ -659,24 +666,29 @@ export default function Settings() {
                 <span style={{ width: 120, textAlign: 'center' }}>{t('20ft')}</span>
                 <span style={{ width: 120, textAlign: 'center' }}>{t('40ft')}</span>
               </div>
-              {TERM_COMBOS.map(([trade, origin]) => {
-                const r20 = termRates.find((x) => x.service === svc && x.trade === trade && x.origin === origin && x.size === '20')
-                const r40 = termRates.find((x) => x.service === svc && x.trade === trade && x.origin === origin && x.size === '40')
-                return (
-                  <div key={`${trade}-${origin}`} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: '6px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
-                    <span style={{ flex: '1 1 150px', minWidth: 0, fontSize: 12.5, fontWeight: 600, textTransform: 'capitalize' }}>{t(trade)} · {t(origin)}</span>
-                    {[r20, r40].map((row, idx) => (
-                      <span key={idx} style={{ width: 120, display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}>
-                        <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
-                        <input className="ktc-input" type="number" step="0.01" min="0" value={row?.rate ?? ''}
-                          disabled={!row} placeholder={t('Enter rate')}
-                          onChange={(e) => row && setTermVal(row.id, e.target.value === '' ? null : Number(e.target.value))}
-                          style={{ width: 92, padding: '7px 10px' }} />
-                      </span>
-                    ))}
-                  </div>
-                )
-              })}
+              {TERM_COMBOS.map(([trade, origin]) => (
+                <div key={`${trade}-${origin}`} style={{ display: 'grid', gap: 4, padding: '8px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, textTransform: 'capitalize' }}>{t(trade)} · {t(origin)}</span>
+                  {TERM_FILLKIND.map(([fill, kind, fkLabel]) => {
+                    const r20 = termRates.find((x) => x.service === svc && x.trade === trade && x.origin === origin && x.size === '20' && x.fill === fill && x.kind === kind)
+                    const r40 = termRates.find((x) => x.service === svc && x.trade === trade && x.origin === origin && x.size === '40' && x.fill === fill && x.kind === kind)
+                    return (
+                      <div key={`${fill}-${kind}`} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+                        <span style={{ flex: '1 1 130px', minWidth: 0, fontSize: 11.5 }}>{t(fkLabel)}</span>
+                        {[r20, r40].map((row, idx) => (
+                          <span key={idx} style={{ width: 110, display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}>
+                            <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
+                            <input className="ktc-input" type="number" step="0.01" min="0" value={row?.rate ?? ''}
+                              disabled={!row} placeholder={t('Enter rate')}
+                              onChange={(e) => row && setTermVal(row.id, e.target.value === '' ? null : Number(e.target.value))}
+                              style={{ width: 84, padding: '6px 8px' }} />
+                          </span>
+                        ))}
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
             </div>
           ))}
         </div>
