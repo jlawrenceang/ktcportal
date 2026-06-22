@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { usePermissions } from '../lib/usePermissions'
 import { useFileViewer } from '../components/FileViewerModal'
 import JoTimeline from '../components/JoTimeline'
-import { SERVICE_LINE_LABEL, serviceLineOf, hasOutstandingSupplements, type JobOrder, type ServiceLine, type ServingNumber } from '../lib/types'
+import { SERVICE_LINE_LABEL, serviceLineOf, hasOutstandingSupplements, containerSpec, type JobOrder, type ServiceLine, type ServingNumber } from '../lib/types'
 import { isCreditInvoice } from '../lib/eventLabels'
 import { usePageTour } from '../components/TourProvider'
 import { operationsSteps } from './AdminTour'
@@ -41,7 +41,7 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 }
 
 const SELECT =
-  'id, jo_number, entry_number, consignee_id, vessel_name, voyage_number, vessel_visit, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, rps_status, rps_payment_status, rps_payment_proof_path, rps_payment_submitted_at, completed_at, archived_at, created_at, last_customer_edit_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at), supplements:jo_supplements(id, suffix, label, amount, payment_status, payment_proof_path, payment_submitted_at, payment_note, created_at)'
+  'id, jo_number, entry_number, consignee_id, vessel_name, voyage_number, vessel_visit, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, rps_status, rps_payment_status, rps_payment_proof_path, rps_payment_submitted_at, completed_at, archived_at, created_at, last_customer_edit_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request, size, fill, kind), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at), supplements:jo_supplements(id, suffix, label, amount, payment_status, payment_proof_path, payment_submitted_at, payment_note, created_at)'
 
 // Lines this order needs, with their per-service completion state (G1).
 function serviceProgress(o: JobOrder): { line: ServiceLine; done: boolean }[] {
@@ -430,7 +430,7 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
                   </div>
                   {o.lines && o.lines.length > 0 && (
                     <ul style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: 13 }}>
-                      {o.lines.map((l, i) => (<li key={i}>{l.container_number} — {l.service_request}</li>))}
+                      {o.lines.map((l, i) => (<li key={i}>{l.container_number} — {l.service_request}{l.size ? ` · ${containerSpec(l)}` : ''}</li>))}
                     </ul>
                   )}
                   {o.supplements && o.supplements.length > 0 && (

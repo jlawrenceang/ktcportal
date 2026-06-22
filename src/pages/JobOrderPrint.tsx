@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
+import { containerSpec } from '../lib/types'
 
 interface PrintOrder {
   id: string
@@ -11,7 +12,7 @@ interface PrintOrder {
   created_at: string
   customer?: { full_name: string | null; customer_code: string | null } | null
   consignee?: { code: string; name: string } | null
-  lines?: { container_number: string; service_request: string; xray_done_at: string | null; xray_done_by_name: string | null }[]
+  lines?: { container_number: string; service_request: string; size?: string | null; fill?: string | null; kind?: string | null; xray_done_at: string | null; xray_done_by_name: string | null }[]
   serving?: { service_line: string; serving_no: number; vacated_at: string | null }[]
 }
 
@@ -48,7 +49,7 @@ export default function JobOrderPrint() {
     if (!id) return
     supabase
       .from('job_orders')
-      .select('id, jo_number, entry_number, status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, vacated_at)')
+      .select('id, jo_number, entry_number, status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request, size, fill, kind, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, vacated_at)')
       .eq('id', id)
       .maybeSingle()
       .then(({ data }) => {
@@ -179,7 +180,7 @@ export default function JobOrderPrint() {
                   order.lines!.map((l, i) => (
                     <tr key={i}>
                       <Td mono>{l.container_number}</Td>
-                      <Td>{l.service_request}</Td>
+                      <Td>{l.service_request}{l.size ? ` · ${containerSpec(l)}` : ''}</Td>
                       <Td center>1</Td>
                       <Td right muted>—</Td>
                     </tr>

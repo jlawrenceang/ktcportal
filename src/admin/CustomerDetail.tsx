@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
-import { idDeletable, type Broker, type JobOrder } from '../lib/types'
+import { idDeletable, containerSpec, type Broker, type JobOrder } from '../lib/types'
 import { BrokerReview } from './BrokerReview'
 import { useFileViewer } from '../components/FileViewerModal'
 import { useT } from '../lib/i18n'
@@ -59,7 +59,7 @@ export default function CustomerDetail() {
       const [c, o] = await Promise.all([
         supabase.from('customers').select('*').eq('id', id).maybeSingle(),
         supabase.from('job_orders')
-          .select('id, jo_number, entry_number, status, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)')
+          .select('id, jo_number, entry_number, status, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request, size, fill, kind)')
           .eq('customer_id', id).order('created_at', { ascending: false }),
       ])
       if (c.error) setError(c.error.message)
@@ -149,7 +149,7 @@ export default function CustomerDetail() {
                 </div>
                 {o.lines && o.lines.length > 0 && (
                   <ul style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: 13 }}>
-                    {o.lines.map((l, i) => <li key={i}>{l.container_number} — {l.service_request}</li>)}
+                    {o.lines.map((l, i) => <li key={i}>{l.container_number} — {l.service_request}{l.size ? ` · ${containerSpec(l)}` : ''}</li>)}
                   </ul>
                 )}
               </div>

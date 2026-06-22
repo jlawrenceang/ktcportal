@@ -6,10 +6,13 @@ import { useT } from '../lib/i18n'
 export interface LineDraft {
   container_number: string
   service_request: string
+  size: '20' | '40'
+  fill: 'empty' | 'full'
+  kind: 'dry' | 'reefer'
 }
 
 export function emptyLine(): LineDraft {
-  return { container_number: '', service_request: SERVICE_REQUESTS[0] }
+  return { container_number: '', service_request: SERVICE_REQUESTS[0], size: '20', fill: 'full', kind: 'dry' }
 }
 
 /**
@@ -71,7 +74,7 @@ export default function ContainerLinesEditor({
     for (const t of tokens) {
       if (existing.has(t)) { dupes++; continue }
       existing.add(t)
-      added.push({ container_number: t, service_request: bulkService })
+      added.push({ container_number: t, service_request: bulkService, size: '20', fill: 'full', kind: 'dry' })
     }
     // Drop the single empty starter row if nothing's been typed into it yet.
     const base = lines.length === 1 && !lines[0].container_number.trim() ? [] : lines
@@ -109,17 +112,29 @@ export default function ContainerLinesEditor({
         }
       >
       {lines.map((line, i) => (
-        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
           <input
             className="ktc-input ktc-mono"
-            style={{ flex: '1 1 160px', textTransform: 'uppercase' }}
+            style={{ flex: '2 1 150px', textTransform: 'uppercase' }}
             placeholder={t('Container number (e.g. ABCD1234567)')}
             value={line.container_number}
             onChange={(e) => updateLine(i, { container_number: e.target.value.toUpperCase() })}
           />
+          <select className="ktc-input" style={{ flex: '1 1 78px' }} value={line.size} onChange={(e) => updateLine(i, { size: e.target.value as LineDraft['size'] })}>
+            <option value="20">20ft</option>
+            <option value="40">40ft</option>
+          </select>
+          <select className="ktc-input" style={{ flex: '1 1 90px' }} value={line.fill} onChange={(e) => updateLine(i, { fill: e.target.value as LineDraft['fill'] })}>
+            <option value="full">{t('Full')}</option>
+            <option value="empty">{t('Empty')}</option>
+          </select>
+          <select className="ktc-input" style={{ flex: '1 1 90px' }} value={line.kind} onChange={(e) => updateLine(i, { kind: e.target.value as LineDraft['kind'] })}>
+            <option value="dry">{t('Dry')}</option>
+            <option value="reefer">{t('Reefer')}</option>
+          </select>
           <select
             className="ktc-input"
-            style={{ flex: '1 1 160px' }}
+            style={{ flex: '2 1 150px' }}
             value={line.service_request}
             onChange={(e) => updateLine(i, { service_request: e.target.value })}
           >

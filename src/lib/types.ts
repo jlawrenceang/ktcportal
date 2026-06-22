@@ -132,6 +132,15 @@ export interface JobOrderLine {
   job_order_id: string
   container_number: string
   service_request: string
+  size?: string | null
+  fill?: string | null
+  kind?: string | null
+}
+
+/** Compact container spec for display, e.g. "20ft · Full · Reefer" ('' if unset). */
+export function containerSpec(l: { size?: string | null; fill?: string | null; kind?: string | null }): string {
+  const cap = (s?: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
+  return [l.size ? `${l.size}ft` : '', cap(l.fill), cap(l.kind)].filter(Boolean).join(' · ')
 }
 
 export interface JobOrder {
