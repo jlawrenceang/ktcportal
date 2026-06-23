@@ -80,7 +80,7 @@ const ROLE_FLOWS: Record<string, { steps: FlowStep[]; phases: FlowPhase[] }> = {
       { title: 'Confirm your email' },
       { title: 'Get verified' },
       { title: 'File a Job Order' },
-      { title: 'Get your serving number' },
+      { title: 'Track your orders by batch' },
       { title: 'View charges & pay' },
       { title: 'KTC processes your order' },
       { title: 'Print & claim' },

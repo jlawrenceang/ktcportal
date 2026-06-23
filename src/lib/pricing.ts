@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 // Fee computation per the decided model (2026-06-11):
 //   subtotal = Σ rate × containers per service (rates are VAT-EXCLUSIVE)
 //   VAT      = vat_rate × the VATABLE portion of the subtotal
-//   + flat admin/service fee and print fee (NOT VATable — added after VAT)
+//   + one flat admin & print fee (NOT VATable — added after VAT)
 // This is the operational "what to pay" amount — the official Service Invoice
 // still comes from the ERP at the cashier.
 
@@ -11,7 +11,7 @@ import { supabase } from './supabase'
 // Never coerce a null rate to a number for display; show "—" instead.
 export interface RateRow { service: string; rate: number | null; unit: string; vatable: boolean; active: boolean }
 export interface MoveRate { move_type: string; rate: number | null }
-export interface PricingConfig { rates: RateRow[]; moveRates: MoveRate[]; vatRate: number; adminFee: number | null; printFee: number | null }
+export interface PricingConfig { rates: RateRow[]; moveRates: MoveRate[]; vatRate: number; adminFee: number | null }
 
 // amount is null when the line's rate isn't configured (so it can render "—"
 // rather than a misleading ₱0). missingRate flags that case for callers.
@@ -22,7 +22,6 @@ export interface Charges {
   vatableBase: number
   vat: number
   adminFee: number | null
-  printFee: number | null
   total: number
   hasMissingRates: boolean
 }
@@ -42,7 +41,6 @@ export async function loadPricingConfig(): Promise<PricingConfig> {
     moveRates: ((m ?? []) as MoveRate[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) })),
     vatRate: settings.get('vat_rate') ?? 0.12,
     adminFee: settings.get('admin_fee') ?? null,
-    printFee: settings.get('print_fee') ?? null,
   }
 }
 
@@ -80,18 +78,16 @@ export function computeCharges(counts: Map<string, number>, cfg: PricingConfig, 
     }
   }
   const vat = vatableBase * cfg.vatRate
-  // Unconfigured (null/≤0) fees don't add to the total — but stay nullable so
+  // The unconfigured (null/≤0) fee doesn't add to the total — but stays nullable so
   // the UI can render "—" instead of ₱0.
   const adminFee = cfg.adminFee != null && cfg.adminFee > 0 ? cfg.adminFee : null
-  const printFee = cfg.printFee != null && cfg.printFee > 0 ? cfg.printFee : null
-  const total = subtotal + vat + (adminFee ?? 0) + (printFee ?? 0)
+  const total = subtotal + vat + (adminFee ?? 0)
   return {
     lines,
     subtotal,
     vatableBase,
     vat,
     adminFee,
-    printFee,
     total,
     hasMissingRates: lines.some((l) => l.missingRate),
   }

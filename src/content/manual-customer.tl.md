@@ -27,13 +27,13 @@ Lahat ng kailangan mo para mag-file at mag-track ng Job Orders para sa X-ray ins
 - Buksan ang **New Job Order**. Piliin ang **consignee** (mag-type ng ilang letra para hanapin sa master list), ilagay ang **entry number** mo, at magdagdag ng containers.
 - Bawat container row ay may **service** na kailangan nito (X-Ray, DEA, OOG Stripping…).
 - **Bulk paste:** i-paste ang buong listahan ng container numbers nang sabay-sabay — isang row kada container ang gagawin at lalaktawan ang mga duplicate.
-- Pag na-submit (verified accounts) makakakuha ang order ng permanenteng **JO number** nito (JO-000123) at isang **serving number kada service line**.
+- Pag na-submit (verified accounts) makakakuha ang order ng permanenteng **JO number** nito (JO-000123).
 
-### Numero mo sa pila
+### Mga order mo ayon sa batch
 
-- Bawat service ay may **weekly queue** (nire-reset tuwing Lunes). Ang serving number mo (hal. *X-Ray #14*) ang puwesto mo sa pilang iyon.
-- Bantayan ang **Now serving** board sa My Job Orders para ma-time ang punta mo sa terminal.
-- Kung i-on-hold ng KTC ang order mo at mag-resubmit ka, **mananatili ang numero mo**. Kung na-reject ang order at mag-refile ka, mapupunta ka sa **dulo ng pila** (pwedeng ibalik ng KTC ang dating numero mo kung may sapat na dahilan).
+- Naka-grupo ang mga order ayon sa **araw na ni-file mo sila** — batch ngayong araw, kahapon, at iba pa. Walang serving number na hihintayin.
+- Sa **My Job Orders**, bantayan ang **live status** ng bawat order para malaman kung kailan ang tamang punta mo sa terminal.
+- Kung i-on-hold ng KTC ang order mo at mag-resubmit ka, **mananatili ito sa orihinal na batch nito**. Kung na-reject ang order at mag-refile ka, ang na-refile na order ay sasama sa **batch ng kasalukuyang araw**.
 
 ---
 
@@ -43,10 +43,10 @@ Inililista ng **My Job Orders** lahat ng na-file mo. Filters: *Active* (default)
 
 - **Submitted** — nasa queue na ng KTC, naghihintay na ma-process.
 - **Processing** — approved na at ginagawa na; pwede mo nang i-print ang slip.
-- **On hold — info needed** — may kailangan ang KTC sa iyo; ipinapaliwanag ng note kung ano. Gamitin ang **Respond & resubmit** (mananatili ang serving number mo).
+- **On hold — info needed** — may kailangan ang KTC sa iyo; ipinapaliwanag ng note kung ano. Gamitin ang **Respond & resubmit**.
 - **Completed** — tapos na lahat ng services.
 - **Rejected** — tingnan ang note; kung recoverable, pwede mong ayusin at i-resubmit.
-- **Cancelled** — ikaw ang nag-cancel nito (na-vacate ang serving number, hindi na muling gagamitin).
+- **Cancelled** — ikaw ang nag-cancel nito.
 
 Pwede mong **i-cancel** ang sarili mong order mula sa card nito (may confirm prompt).
 
@@ -63,7 +63,7 @@ Pwede mong **i-cancel** ang sarili mong order mula sa card nito (may confirm pro
 
 ## 5 · I-print ang slip at release
 
-- Kapag nagsimula na ang processing, buksan ang order at **i-print ang A6 job-order slip** (JO number + serving number) — dalhin ito sa terminal.
+- Kapag nagsimula na ang processing, buksan ang order at **i-print ang A6 job-order slip** (JO number) — dalhin ito sa terminal.
 - Ire-release ang container ayon sa proseso ng KTC kapag naisyu na ang Service Invoice. I-track nang live ang bawat status change sa My Job Orders.
 
 ---

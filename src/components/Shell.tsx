@@ -77,11 +77,7 @@ export default function Shell({ children }: { children: ReactNode }) {
         <div className="ktc-foot-links">
           <Link to="/manual" className="ktc-foot-link">{t('User Manual')}</Link>
           <span aria-hidden className="ktc-foot-dot">·</span>
-          <Link to="/agreement" className="ktc-foot-link">{t('Customer Agreement')}</Link>
-          <span aria-hidden className="ktc-foot-dot">·</span>
           <Link to="/requests" className="ktc-foot-link">{t('My Requests')}</Link>
-          <span aria-hidden className="ktc-foot-dot">·</span>
-          <a href="/customer-info-sheet.html" target="_blank" rel="noopener" className="ktc-foot-link">{t('Customer Information Sheet')}</a>
         </div>
         <div className="ktc-foot-meta">
           <span>KTC Online Portal <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.</span>

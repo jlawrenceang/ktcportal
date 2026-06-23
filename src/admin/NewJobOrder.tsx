@@ -107,7 +107,7 @@ export default function NewJobOrder() {
       <div className="ktc-glass" style={{ padding: 18, maxWidth: 720 }}>
         <h1 className="ktc-title">{t('File for a Customer')}</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 22 }}>
-          {t("Walk-ins and in-house ops — the order is filed under the customer's account and enters the line as")}{' '}<b>{t('submitted')}</b>{' '}{t('(serving number assigned now).')}
+          {t("Walk-ins and in-house ops — the order is filed under the customer's account and enters the line as")}{' '}<b>{t('submitted')}</b>{' '}{t('(the order enters today’s batch).')}
         </p>
 
         {filed ? (
@@ -115,7 +115,7 @@ export default function NewJobOrder() {
             <div style={{ fontSize: 15, lineHeight: 1.7, padding: '16px 18px', borderRadius: 12, background: 'var(--c-h145-60-96)', border: '1px solid var(--c-h145-50-80)' }}>
               ✓ {t('Filed')} <b className="ktc-mono">{filed.jo_number ?? '—'}</b>
               {filed.customer_name ? <> {t('for')} <b>{filed.customer_name}</b></> : null}.
-              {' '}{t('Serving numbers are assigned — the slip can be printed now.')}
+              {' '}{t('The order is filed — you can print the slip now.')}
             </div>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link to={`/job-order/${filed.id}/print`} className="ktc-btn" style={{ width: 'auto', padding: '11px 22px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 7 }}>

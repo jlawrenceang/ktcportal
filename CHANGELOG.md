@@ -4,9 +4,22 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
-## [Unreleased]
+## v1.6.0 — 2026-06-23 (JO lifecycle overhaul, dual-view lists, unified payment, fee + terminology cleanups)
 
-Shipped to `main` / Vercel since v1.5.0 (deployed under the `v1.5.0` banner + new commit hashes — `APP_VERSION` not yet bumped; tag the next deploy **v1.6.0**). Two customer-facing initiatives on the portal, plus a deferred backend foundation (fuel).
+### Job-order lifecycle, payments & UX overhaul (migrations `0151`–`0156`)
+- **Vessel is ops-only:** removed the customer "request a vessel" surfaces (My Requests section + resubmit modal + `vessel_*` bell routing); the JO form now just reads *"If the vessel isn't listed here, please call KTC customer service for updates."* Ops keeps the vessel-request review panel.
+- **Serving number retired for customers (`0151`):** dropped the `serving_numbers_notify` trigger so customers / CSR no longer get a "Serving number #N" notification (copy scrubbed to batch + aging). The **ops X-ray queue keeps its number**.
+- **Reject is terminal; on-hold is field-targeted (`0154`):** a rejected JO is closed (no resubmit) with the reason shown; an on-hold JO now carries `needs_fields` — staff tick exactly which fields (consignee / entry / vessel / containers) the customer must re-enter, and only those unlock on resubmit (`hold_job_order` + `resubmit_needs_info`).
+- **Reject/suspend cascades:** rejecting a **consignee** (`0152`) or suspending/rejecting a **customer** (`0153`) now cancels their open job orders with a reason — **except** orders already paid or invoiced (left for manual handling).
+- **Unified payment pill:** one **"Balance to pay" / "Paid"** indicator (base + RPS + every supplement) replaces the scattered payment chips; the pay button reads **"Balances"**. Additional charges are now a **dropdown of admin-seeded types** (`additional_charge_types`, `0155`) with an editable amount, managed in Settings.
+- **Dual-view JO lists:** both the customer (`MyJobOrders`) and admin (`AllJobOrders`) lists gain a **Cards / List toggle** — zoned cards + a ⋯ actions menu on the admin side, replacing the "wall of text".
+- **Admin & print fee merged (`0156`):** the two flat fees become one **"Admin & print fee"** value.
+- **Trade terminology + origin pill:** foreign cargo shows **Import / Export**, domestic shows **Inbound / Outbound**; a colour-coded **Foreign / Domestic** pill replaces the plain text in the calculator + tariff editor.
+- **Footer trimmed:** the Customer Information Sheet link is removed (still available as "Print CIS" in the consignee flow); the Customer Agreement moved into the User Manual.
+
+---
+
+The work below also ships under v1.6.0 — it was already live on `main` / Vercel under the v1.5.0 banner (new commit hashes, `APP_VERSION` only now bumped):
 
 ### Customer-requested consignees & vessels + "needs info" loop (migrations `0132`, `0137`–`0139`)
 - **Request a consignee** (`request_consignee`, `0132`): a customer who can't find their consignee files a new one — name + **business address + TIN** (compulsory `0139`) + **BIR 2303** (required) / 2307 (optional). Created as a **pending** consignee on the existing approval machine (`0008`/`0120`) and **usable immediately to file** (file-now; KTC verifies the BIR docs in parallel). Approve/reject in the existing `/admin/consignees`; the requester is notified.

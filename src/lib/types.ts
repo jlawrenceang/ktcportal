@@ -148,6 +148,10 @@ export interface JobOrder {
   admin_note: string | null
   customer_note?: string | null
   rejected_recoverable?: boolean
+  /** Field-targeted "needs info": which fields staff asked the customer to
+   *  re-enter on an on-hold order (subset of consignee/entry/vessel/containers).
+   *  null/empty = general hold (note only). Set by hold_job_order (0154). */
+  needs_fields?: string[] | null
   has_open_supplement?: boolean
   last_customer_edit_at?: string | null
   xray_performed_at?: string | null

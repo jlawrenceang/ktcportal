@@ -188,7 +188,7 @@ export default function JobOrder() {
             ))}
           </select>
           <span className="ktc-label" style={{ fontSize: 11.5 }}>
-            {t('Can’t find your vessel? Contact KTC customer service to have it added to the schedule.')}
+            {t('If the vessel isn’t listed here, please call KTC customer service for updates.')}
           </span>
         </div>
       ),

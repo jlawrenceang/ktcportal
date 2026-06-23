@@ -1100,6 +1100,25 @@
   .ktc-jo-row:hover { background: rgba(255, 255, 255, 0.85); border-color: var(--glass-brd-strong); }
   .ktc-jo-cont, .ktc-jo-date { text-align: right; font-size: 12.5px; white-space: nowrap; }
   .ktc-jo-prio { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  /* Zoned card view (Cards toggle) — header / meta / footer zones. */
+  .ktc-jo-zcard {
+    display: grid;
+    gap: 7px;
+    width: 100%;
+    font: inherit;
+    color: hsl(var(--ink));
+    text-align: left;
+    padding: 14px 16px;
+    border: 1px solid var(--glass-brd);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
+  }
+  .ktc-jo-zcard:hover { background: rgba(255, 255, 255, 0.85); border-color: var(--glass-brd-strong); }
+  .ktc-jo-zcard-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ktc-jo-zcard-meta { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ktc-jo-zcard-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12.5px; }
 
   /* Skeleton shimmer — frosted placeholder while content loads */
   .ktc-skeleton {
@@ -1137,6 +1156,8 @@
 :root[data-theme='dark'] .ktc-drawer { background: #14171e; }
 :root[data-theme='dark'] .ktc-jo-row { background: rgba(255, 255, 255, 0.04); }
 :root[data-theme='dark'] .ktc-jo-row:hover { background: rgba(255, 255, 255, 0.09); }
+:root[data-theme='dark'] .ktc-jo-zcard { background: rgba(255, 255, 255, 0.04); }
+:root[data-theme='dark'] .ktc-jo-zcard:hover { background: rgba(255, 255, 255, 0.09); }
 :root[data-theme='dark'] .ktc-skeleton { background: rgba(255, 255, 255, 0.05); }
 
 /* Keep the top rail LIGHT in dark mode (a light "island") so the brand logo

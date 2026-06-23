@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Shell from '../components/Shell'
 import ProtectedDoc from '../components/ProtectedDoc'
 import ManualFlow from '../components/ManualFlow'
@@ -12,7 +12,7 @@ const STEPS: { title: string; body: string }[] = [
   { title: 'Confirm your email', body: 'We email you a confirmation link — click it to activate your account. You can resend it from the sign-in page if it doesn’t arrive.' },
   { title: 'Get verified', body: 'Upload a valid government ID. A KTC admin reviews and approves your account. You can start filing while you wait, but your orders are held until you’re approved.' },
   { title: 'File a Job Order', body: 'Choose the consignee, enter the Entry Number (C-…), pick the vessel & voyage, then add your container numbers and the service each one needs.' },
-  { title: 'Get your serving number', body: 'Once filed, each service line is given a “now serving” queue number. Follow the live status of every order under the Orders tab.' },
+  { title: 'Track your orders by batch', body: 'Once filed, your orders are grouped by the day you filed them (today’s batch, yesterday’s, and so on). Follow the live status of every order under the Orders tab — there’s no serving number to wait on.' },
   { title: 'View charges & pay', body: 'Open the order to see the fee breakdown, transfer using the official account details shown, and upload your payment slip. KTC admin reviews and confirms it.' },
   { title: 'KTC processes your order', body: 'KTC performs the service and moves the order from Processing to Completed. You’re notified of holds, rejections, or anything that needs your attention.' },
   { title: 'Print & claim', body: 'Once approved, print the Job Order slip and present it at the terminal to claim your Official Receipt and get document clearance.' },
@@ -53,6 +53,14 @@ export default function Manual() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Legal — the agreement lives here (not in the page footer). */}
+          <div style={{ marginTop: 22, paddingTop: 16, borderTop: '1px solid var(--glass-brd)' }}>
+            <p className="ktc-sub" style={{ margin: 0, fontSize: 13 }}>
+              {t('Looking for the legal terms?')}{' '}
+              <Link to="/agreement" className="ktc-link">{t('Read the KTC Customer Agreement')}</Link>.
+            </p>
           </div>
         </div>
       </ProtectedDoc>

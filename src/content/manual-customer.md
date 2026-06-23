@@ -27,13 +27,13 @@ Everything you need to file and track Job Orders for X-ray inspection, DEA exam,
 - Open **New Job Order**. Pick the **consignee** (type a few letters to search the master list), enter your **entry number**, and add containers.
 - Each container row gets the **service** it needs (X-Ray, DEA, OOG Stripping…).
 - **Bulk paste:** paste a whole list of container numbers at once — one row per container is created and duplicates are skipped.
-- On submit (verified accounts) the order gets its permanent **JO number** (JO-000123) and a **serving number per service line**.
+- On submit (verified accounts) the order gets its permanent **JO number** (JO-000123).
 
-### Your number in line
+### Your orders by batch
 
-- Each service runs a **weekly queue** (resets Monday). Your serving number (e.g. *X-Ray #14*) is your place in that line.
-- Watch the **Now serving** board on My Job Orders to time your trip to the terminal.
-- If KTC puts your order on hold and you resubmit, **you keep your number**. If an order is rejected and you refile, you go to the **back of the line** (KTC can restore your old number when justified).
+- Orders are grouped by the **day you filed them** — today's batch, yesterday's, and so on. There is no serving number to wait on.
+- On **My Job Orders**, track each order's **live status** to know when to time your trip to the terminal.
+- If KTC puts your order on hold and you resubmit, it **stays in its original batch**. If an order is rejected and you refile, the refiled order joins the **current day's batch**.
 
 ---
 
@@ -43,10 +43,10 @@ Everything you need to file and track Job Orders for X-ray inspection, DEA exam,
 
 - **Submitted** — in KTC's queue, waiting for processing.
 - **Processing** — approved and being worked; you can print the slip.
-- **On hold — info needed** — KTC needs something from you; the note explains what. Use **Respond & resubmit** (you keep your serving number).
+- **On hold — info needed** — KTC needs something from you; the note explains what. Use **Respond & resubmit**.
 - **Completed** — all services done.
 - **Rejected** — see the note; if it's recoverable you can fix and resubmit.
-- **Cancelled** — you cancelled it (the serving number is vacated, not reused).
+- **Cancelled** — you cancelled it.
 
 You can **cancel** your own order from its card (with a confirm prompt).
 
@@ -63,7 +63,7 @@ You can **cancel** your own order from its card (with a confirm prompt).
 
 ## 5 · Print the slip and release
 
-- Once processing starts, open the order and **print the A6 job-order slip** (JO number + serving number) — bring it to the terminal.
+- Once processing starts, open the order and **print the A6 job-order slip** (JO number) — bring it to the terminal.
 - The container is released per KTC's process once the Service Invoice is issued. Track every status change live on My Job Orders.
 
 ---

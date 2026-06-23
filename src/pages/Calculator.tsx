@@ -8,7 +8,8 @@ import { peso } from '../lib/pricing'
 import { usePageTour } from '../components/TourProvider'
 import { calculatorSteps } from '../components/WelcomeTour'
 import { useT } from '../lib/i18n'
-import { SHIPPING_LINES, normLine, type Origin } from '../lib/shippingLines'
+import { SHIPPING_LINES, normLine, tradeLabel, tradeAction, type Origin } from '../lib/shippingLines'
+import OriginPill from '../components/OriginPill'
 
 // Rate calculator — a guided estimate. Flow (redesigned 2026-06-22):
 //   1. Shipment details — shipping line, vessel & voyage, trade route (derived),
@@ -40,8 +41,8 @@ export default function Calculator() {
 
   const [termRates, setTermRates] = useState<TermRate[]>([])
   const [services, setServices] = useState<Svc[]>([])
-  const [settings, setSettings] = useState<{ vat: number; admin: number | null; print: number | null; reefer: number | null; reeferMin: number; deposit: number }>(
-    { vat: 0.12, admin: null, print: null, reefer: null, reeferMin: 4, deposit: 10000 })
+  const [settings, setSettings] = useState<{ vat: number; admin: number | null; reefer: number | null; reeferMin: number; deposit: number }>(
+    { vat: 0.12, admin: null, reefer: null, reeferMin: 4, deposit: 10000 })
   const [vessels, setVessels] = useState<VesselOpt[]>([])
   const [rules, setRules] = useState<Rule[]>([])
 
@@ -74,7 +75,7 @@ export default function Calculator() {
         .map((x) => ({ service: x.service, rate: x.rate == null ? null : Number(x.rate), unit: x.unit, vatable: x.vatable })))
       const m = new Map(((ps ?? []) as { key: string; value: number | null }[]).map((x) => [x.key, x.value == null ? null : Number(x.value)]))
       setSettings({
-        vat: m.get('vat_rate') ?? 0.12, admin: m.get('admin_fee') ?? null, print: m.get('print_fee') ?? null,
+        vat: m.get('vat_rate') ?? 0.12, admin: m.get('admin_fee') ?? null,
         reefer: m.get('reefer_rate') ?? null, reeferMin: m.get('reefer_min_hours') ?? 4, deposit: m.get('reefer_deposit') ?? 10000,
       })
       setVessels((v ?? []) as VesselOpt[])
@@ -188,7 +189,7 @@ export default function Calculator() {
 
     const vatable = basicTotal + (storage ?? 0) + (reefer ?? 0) + ancillaryVatable
     const vat = vatable * settings.vat
-    const charges = vatable + vat + (settings.admin ?? 0) + (settings.print ?? 0) + ancillaryFlat
+    const charges = vatable + vat + (settings.admin ?? 0) + ancillaryFlat
     return { basic, storage, storageTag, storageDays, ancillary, reeferOn, reefer, reeferHours, deposit, vatable, vat, charges, toPrepare: charges + deposit, hasUnconfigured }
   }, [rateOf, basicServices, cells, totalQty, lfd, pickupDate, services, addedSvcs, svcCounts, settings, reeferVans, plugIn, plugOut, rules, line, trade, t])
 
@@ -300,12 +301,15 @@ export default function Calculator() {
               {fieldRow(
                 <>{t('Trade route')} *</>,
                 line
-                  ? <span className={`ktc-chip ${origin === 'domestic' ? 'ktc-chip--info' : 'ktc-chip--accent'}`} style={{ fontWeight: 650 }}>{origin === 'domestic' ? t('Domestic') : t('Foreign')}</span>
+                  ? <OriginPill origin={origin} />
                   : <span className="ktc-label" style={{ fontSize: 12 }}>{t('Pick a shipping line')}</span>,
               )}
               {fieldRow(
                 <>{t('Shipment')} *</>,
-                seg(trade, setTrade, [{ v: 'import', label: 'Import (Withdrawal)' }, { v: 'export', label: 'Export (Deposit)' }]),
+                seg(trade, setTrade, [
+                  { v: 'import', label: `${tradeLabel('import', origin)} (${tradeAction('import')})` },
+                  { v: 'export', label: `${tradeLabel('export', origin)} (${tradeAction('export')})` },
+                ]),
               )}
               {fieldRow(
                 t('Planned pickup date'),
@@ -419,8 +423,7 @@ export default function Calculator() {
                   {calc.ancillary.map((a) => <Row key={a.service} label={a.service} value={a.amount == null ? '—' : peso(a.amount)} hint={a.amount == null ? t('not configured') : `× ${a.count}`} />)}
                   {calc.reeferOn && reeferVans > 0 && calc.reeferHours > 0 && <Row label={t('Electrical / reefer')} value={calc.reefer == null ? '—' : peso(calc.reefer)} hint={calc.reefer == null ? t('not configured') : `${reeferVans} × ${calc.reeferHours}h`} />}
                   <Row label={t('VAT ({pct}%)', { pct: (settings.vat * 100).toFixed(0) })} value={peso(calc.vat)} />
-                  <Row label={t('Admin / service fee')} value={settings.admin == null ? '—' : peso(settings.admin)} />
-                  <Row label={t('Print fee')} value={settings.print == null ? '—' : peso(settings.print)} />
+                  <Row label={t('Admin & print fee')} value={settings.admin == null ? '—' : peso(settings.admin)} />
                   <tr>
                     <td style={{ padding: '9px 0', fontWeight: 700, fontSize: 14 }}>{t('Estimated charges')}</td>
                     <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 16, color: 'var(--acc-2)', whiteSpace: 'nowrap' }}>{peso(calc.charges)}</td>
@@ -442,7 +445,7 @@ export default function Calculator() {
                 </div>
               )}
 
-              {(calc.vatable === 0 || calc.hasUnconfigured || settings.admin == null || settings.print == null) && (
+              {(calc.vatable === 0 || calc.hasUnconfigured || settings.admin == null) && (
                 <p className="ktc-label" style={{ fontSize: 12, marginTop: 10, color: 'var(--c-h30-70-36)' }}>
                   {t('Some rates aren’t set yet — ask KTC, or check Settings if you’re staff. Lines marked “—” aren’t in this estimate.')}
                 </p>

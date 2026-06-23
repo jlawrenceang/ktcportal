@@ -61,13 +61,13 @@ export const enSimple: Record<string, string> = {
   "Edit or update your personal details anytime. Changing your legal name needs re-verification by a KTC admin (since it's matched to your ID).":
     "Edit or update your details anytime. If you change your legal name, a KTC admin has to re-verify it (since it must match your ID).",
   "Every order you file shows here with its live status and serving number. Open one to \"View charges & pay\" (upload your deposit slip) and to Print the A6 slip once it's approved. The \"Now serving\" board up top helps you time your trip to the terminal.":
-    "Every order you file shows here with its live status and serving number. Open one to \"View charges & pay\" (upload your deposit slip) and to Print the A6 slip once it's approved. The \"Now serving\" board up top helps you plan when to go to the terminal.",
+    "Every order you file shows here with its live status, grouped by the day you filed it (its batch). Open one to \"View charges & pay\" (upload your deposit slip) and to Print the A6 slip once it's approved. Track each order's status to plan when to go to the terminal.",
   "File Job Orders for container terminal services from anywhere, anytime. No more queueing at the office. Here's a quick look around.":
     "File Job Orders for container terminal services from anywhere, anytime. No more lining up at the office. Here's a quick tour.",
   "If an order needs port-services moves (DEA / inspection), use Assess RPS on its card to record the moves — they bill per move on top of the base. Most orders need none.":
     "If an order needs port-services moves (DEA / inspection), use Assess RPS on its card to record the moves — they're billed per move on top of the base. Most orders need none.",
   "Add each container number and the service it needs — or Bulk paste a whole list at once. Then submit; you'll get a serving number per service line.":
-    "Add each container number and the service it needs — or Bulk paste a whole list at once. Then submit; you'll get a serving number for each service line.",
+    "Add each container number and the service it needs — or Bulk paste a whole list at once. Then submit; your order joins the day's batch and you track it by live status.",
   "Each line becomes a container row with the selected service — you can change any row's service afterward. Duplicates are skipped.":
     "Each line becomes a container row with the chosen service — you can change any row's service later. Duplicates are skipped.",
   "Days since completion without a Service Invoice on file":
@@ -80,8 +80,6 @@ export const enSimple: Record<string, string> = {
     "After you file, follow every order here — its live status, its batch and aging, View charges & pay, and Print slip once approved.",
   "Names containing “X-Ray”, “DEA”, or “OOG” join those serving-number queues; anything else queues under “Other”. Drag ⠿ to arrange the display order. Deactivate to retire a service (past orders keep their pricing); ✕ delete is only possible while no order has ever used it.":
     "Names with “X-Ray”, “DEA”, or “OOG” join those queues; anything else goes under “Other”. Drag ⠿ to set the display order. Deactivate to retire a service (past orders keep their pricing); ✕ delete only works while no order has ever used it.",
-  "Serving numbers are assigned — the slip can be printed now.":
-    "The batch is set — you can print the slip now.",
   "Switch between a table and a month calendar (vessels shown on their arrival date). Tick \"Show past/cancelled\" to see the full history. View only — KTC keeps the schedule up to date.":
     "Switch between a table and a month calendar (vessels appear on their arrival date). Tick \"Show past/cancelled\" to see the full history. View only — KTC keeps the schedule up to date.",
   "Tell the customer what information or update you need. They’ll see this note on the order.":

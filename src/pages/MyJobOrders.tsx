@@ -3,7 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
-import { hasOutstandingSupplements, type JobOrder } from '../lib/types'
+import type { JobOrder } from '../lib/types'
+import { joPaymentState } from '../lib/joPayment'
 import { batchLabel } from '../lib/batch'
 import { usePageTour } from '../components/TourProvider'
 import { myJobOrdersSteps } from '../components/WelcomeTour'
@@ -11,7 +12,9 @@ import { useBroker } from '../lib/useBroker'
 import JoTimeline from '../components/JoTimeline'
 import EditJobOrderForm from '../components/EditJobOrderForm'
 import ReleaseTracks from '../components/ReleaseTracks'
-import { ClockIcon } from '../components/icons'
+import SearchPicker, { type PickerItem } from '../components/SearchPicker'
+import ContainerLinesEditor, { emptyLine, type LineDraft } from '../components/ContainerLinesEditor'
+import { searchConsignees } from '../lib/pickerSearches'
 import { useT } from '../lib/i18n'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -20,7 +23,7 @@ const STATUS_LABEL: Record<string, string> = {
   processing: 'Approved · processing',
   on_hold: 'On hold · info needed',
   completed: 'Completed',
-  rejected: 'Rejected',
+  rejected: 'Not approved · closed',
   cancelled: 'Cancelled',
 }
 
@@ -33,6 +36,14 @@ const STATUS_TONE: Record<string, string> = {
   completed: 'success',
   rejected: 'danger',
   cancelled: '',
+}
+
+// Field-targeted "needs info": the keys staff can flag for re-entry (mirrors 0154).
+const FIELD_LABEL: Record<string, string> = {
+  consignee: 'Consignee',
+  entry: 'Entry Number',
+  vessel: 'Vessel & Voyage',
+  containers: 'Containers',
 }
 
 // Server-side views + pagination — a heavy filer's history stays fast to load
@@ -54,6 +65,9 @@ const EMPTY_HINT: Record<Filter, string> = {
   all: 'No job orders yet.',
 }
 
+type ViewMode = 'card' | 'list'
+type VesselOpt = { vessel_visit: string; vessel_name: string; voyage_number: string }
+
 // Dates render mm/dd/yyyy everywhere on this page.
 function fmtDate(iso: string): string {
   const d = new Date(iso)
@@ -70,6 +84,16 @@ function StatusBadge({ status }: { status: string }) {
   )
 }
 
+// Unified payment pill — ONE indicator for the whole order's balance (base + RPS
+// + every additional charge). Nothing renders before the order is billable.
+function PayPill({ o }: { o: JobOrder }) {
+  const { t } = useT()
+  const s = joPaymentState(o)
+  if (s === 'balance') return <span className="ktc-chip ktc-chip--warning">{t('Balance to pay')}</span>
+  if (s === 'paid') return <span className="ktc-chip ktc-chip--success">{t('Paid')}</span>
+  return null
+}
+
 // Small label/value pair for the detail modal's meta grid.
 function Meta({ label, value, span2 }: { label: string; value: string; span2?: boolean }) {
   return (
@@ -80,43 +104,109 @@ function Meta({ label, value, span2 }: { label: string; value: string; span2?: b
   )
 }
 
-// Inline form for the two "fix and resubmit" paths: respond to an on-hold
-// order, or resubmit a recoverable rejected order. Calls the matching RPC —
-// customers have no UPDATE policy; the SECURITY DEFINER RPC checks the
-// ownership + transition server-side.
-function ResubmitForm({ order, kind, onDone, onError }: {
+// Field-targeted "needs info" resubmit. KTC flags exactly which fields the customer
+// must re-enter (consignee / entry / vessel / containers); only those are editable
+// here — everything else is locked (the server ignores unflagged fields too). Calls
+// the resubmit_needs_info RPC (0154); customers have no UPDATE policy.
+function NeedsInfoForm({ order, onDone, onError }: {
   order: JobOrder
-  kind: 'on_hold' | 'rejected'
   onDone: () => void
   onError: (msg: string) => void
 }) {
   const { t } = useT()
+  const fields = order.needs_fields ?? []
+  const need = (k: string) => fields.includes(k)
   const [note, setNote] = useState('')
-  const [entry, setEntry] = useState('')
+  const [consignee, setConsignee] = useState<PickerItem | null>(
+    order.consignee_id && order.consignee
+      ? { id: order.consignee_id, title: order.consignee.code, sub: order.consignee.name }
+      : null,
+  )
+  const [entry, setEntry] = useState(order.entry_number ?? '')
+  const [vessels, setVessels] = useState<VesselOpt[]>([])
+  const [vesselVisit, setVesselVisit] = useState(order.vessel_visit ?? '')
+  const [lines, setLines] = useState<LineDraft[]>(
+    order.lines?.length ? order.lines.map((l) => ({ container_number: l.container_number, service_request: l.service_request })) : [emptyLine()],
+  )
   const [busy, setBusy] = useState(false)
 
+  useEffect(() => {
+    if (!need('vessel')) return
+    void supabase.from('vessel_schedule_v').select('vessel_visit, vessel_name, voyage_number').eq('is_current', true).order('vessel_name')
+      .then(({ data }) => setVessels((data ?? []) as VesselOpt[]))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   async function submit() {
-    if (kind === 'on_hold' && !note.trim()) { onError(t('Please describe what you updated or clarified.')); return }
+    onError('')
+    if (!note.trim()) { onError(t('Please describe what you updated or clarified.')); return }
+    const payload: Record<string, unknown> = { p_id: order.id, p_note: note.trim() }
+    if (need('consignee')) {
+      if (!consignee) { onError(t('Select a consignee from the list.')); return }
+      payload.p_consignee_id = consignee.id
+    }
+    if (need('entry')) {
+      if (!entry.trim()) { onError(t('Enter the Entry Number (C-…).')); return }
+      payload.p_entry_number = entry.trim().toUpperCase()
+    }
+    if (need('vessel')) {
+      const sel = vessels.find((v) => v.vessel_visit === vesselVisit)
+      if (!sel) { onError(t('Select the vessel & voyage from the list.')); return }
+      payload.p_vessel_visit = sel.vessel_visit; payload.p_vessel_name = sel.vessel_name.toUpperCase(); payload.p_voyage_number = sel.voyage_number.toUpperCase()
+    }
+    if (need('containers')) {
+      const filled = lines.filter((l) => l.container_number.trim())
+      if (!filled.length) { onError(t('Add at least one container.')); return }
+      payload.p_lines = filled.map((l) => ({ container_number: l.container_number.trim().toUpperCase(), service_request: l.service_request }))
+    }
     setBusy(true)
-    const { error } = kind === 'on_hold'
-      ? await supabase.rpc('respond_to_hold', { p_id: order.id, p_note: note.trim(), p_entry_number: entry.trim() || null })
-      : await supabase.rpc('resubmit_rejected', { p_id: order.id, p_note: note.trim() || null })
+    const { error } = await supabase.rpc('resubmit_needs_info', payload)
     setBusy(false)
     if (error) { onError(error.message); return }
     onDone()
   }
 
+  const lockedNote = fields.length > 0
+    ? t('Only the fields KTC asked for are editable — the rest stay as filed.')
+    : t('Reply to KTC below to resubmit this order.')
+
   return (
-    <div style={{ display: 'grid', gap: 8, marginBottom: 12, padding: '12px 14px', borderRadius: 10, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
-      <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>
-        {kind === 'on_hold' ? t('Your reply to KTC (what did you update or clarify?)') : t('What did you fix? (optional note to KTC)')}
-      </label>
-      <textarea className="ktc-input" rows={2} value={note} onChange={(e) => setNote(e.target.value)}
-        placeholder={kind === 'on_hold' ? t('e.g. Corrected the entry number — see below.') : t('e.g. Re-checked the container numbers with the shipping line.')} />
-      {kind === 'on_hold' && (
-        <input className="ktc-input" value={entry} onChange={(e) => setEntry(e.target.value.toUpperCase())} style={{ textTransform: 'uppercase' }}
-          placeholder={order.entry_number ? t('Corrected entry number (optional — currently {entry})', { entry: order.entry_number }) : t('Corrected entry number (optional)')} />
+    <div style={{ display: 'grid', gap: 12, marginBottom: 12, padding: '12px 14px', borderRadius: 10, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
+      <div className="ktc-label" style={{ fontSize: 12 }}>{lockedNote}</div>
+
+      {need('consignee') && (
+        <div style={{ display: 'grid', gap: 6 }}>
+          <label className="ktc-label" htmlFor="ni-consignee">{t('Consignee')} *</label>
+          <SearchPicker inputId="ni-consignee" placeholder={t('Search consignee by code or name…')}
+            selected={consignee} onSelect={setConsignee} search={searchConsignees} minChars={1} />
+        </div>
       )}
+      {need('entry') && (
+        <div style={{ display: 'grid', gap: 6 }}>
+          <label className="ktc-label" htmlFor="ni-entry">{t('Entry Number')} *</label>
+          <input id="ni-entry" className="ktc-input" value={entry} onChange={(e) => setEntry(e.target.value.toUpperCase())} style={{ textTransform: 'uppercase' }} placeholder={t('e.g. C-0000012345')} />
+        </div>
+      )}
+      {need('vessel') && (
+        <div style={{ display: 'grid', gap: 6 }}>
+          <label className="ktc-label" htmlFor="ni-vessel">{t('Vessel & Voyage')} *</label>
+          <select id="ni-vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
+            <option value="">{t('Select a vessel…')}</option>
+            {vessels.map((v) => (
+              <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name.toUpperCase()} — {v.voyage_number.toUpperCase()}</option>
+            ))}
+          </select>
+          <span className="ktc-label" style={{ fontSize: 11.5 }}>
+            {t('If the vessel isn’t listed here, please call KTC customer service for updates.')}
+          </span>
+        </div>
+      )}
+      {need('containers') && <ContainerLinesEditor lines={lines} onChange={setLines} />}
+
+      <div style={{ display: 'grid', gap: 6 }}>
+        <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Your reply to KTC (what did you update or clarify?)')}</label>
+        <textarea className="ktc-input" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('e.g. Corrected the entry number — see above.')} />
+      </div>
+
       <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void submit()} style={{ justifySelf: 'start' }}>
         {busy ? t('Resubmitting…') : t('Resubmit to KTC')}
       </button>
@@ -136,6 +226,7 @@ export default function MyJobOrders() {
   const [editingId, setEditingId] = useState<string | null>(null) // order being edited inline
   const [cancelId, setCancelId] = useState<string | null>(null) // order pending cancel confirmation
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [view, setView] = useState<ViewMode>(() => (localStorage.getItem('ktc_jo_view') as ViewMode) || 'card')
   // Initial view can be deep-linked from the dashboard tiles (?view=action, etc.).
   const [params] = useSearchParams()
   const requestedView = params.get('view')
@@ -144,6 +235,8 @@ export default function MyJobOrders() {
   )
   const [page, setPage] = useState(0)
   const [total, setTotal] = useState(0)
+
+  function changeView(v: ViewMode) { setView(v); localStorage.setItem('ktc_jo_view', v) }
 
   async function cancelOrder(id: string) {
     setBusyId(id); setError(null)
@@ -158,14 +251,14 @@ export default function MyJobOrders() {
     let q = supabase
       .from('job_orders')
       .select(
-        'id, jo_number, entry_number, consignee_id, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, rejected_recoverable, payment_status, has_open_supplement, service_invoice_no, rps_status, rps_payment_status, completed_at, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at), supplements:jo_supplements(id, suffix, label, amount, payment_status)',
+        'id, jo_number, entry_number, consignee_id, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, rejected_recoverable, needs_fields, payment_status, has_open_supplement, service_invoice_no, rps_status, rps_payment_status, completed_at, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), completions:service_completions(service_line, completed_at), supplements:jo_supplements(id, suffix, label, amount, payment_status)',
         { count: 'exact' },
       )
     if (f === 'active') q = q.in('status', ['held', 'submitted', 'processing', 'on_hold'])
     else if (f === 'action')
-      // On hold, fixable rejection, a rejected payment proof on a live order, or
-      // an unpaid additional charge ("under review") on a live order.
-      q = q.or('status.eq.on_hold,and(status.eq.rejected,rejected_recoverable.eq.true),and(payment_status.eq.rejected,status.in.(submitted,processing,completed)),and(has_open_supplement.eq.true,status.in.(submitted,processing,on_hold))')
+      // On hold, a rejected payment proof on a live order, or an unpaid additional
+      // charge ("balance to pay") on a live order. (Rejected is terminal — no action.)
+      q = q.or('status.eq.on_hold,and(payment_status.eq.rejected,status.in.(submitted,processing,completed)),and(has_open_supplement.eq.true,status.in.(submitted,processing,on_hold))')
     else if (f === 'completed') q = q.eq('status', 'completed')
     else if (f === 'closed') q = q.in('status', ['rejected', 'cancelled'])
     const { data, count } = await q
@@ -175,11 +268,7 @@ export default function MyJobOrders() {
     setOrders(rows)
     setTotal(count ?? rows.length)
     setLoading(false)
-    // Keep an open detail modal in sync on refresh (and close it if the order
-    // dropped out of the current view).
     setSelected((prev) => (prev ? rows.find((o) => o.id === prev.id) ?? null : null))
-    // Auto-open the detail modal for the order just filed (handed over from the
-    // New Job Order page).
     const filedId = sessionStorage.getItem('ktc_jo_filed_id')
     if (filedId) {
       sessionStorage.removeItem('ktc_jo_filed_id')
@@ -203,15 +292,15 @@ export default function MyJobOrders() {
   // button is rate-limited to one pull per 10s.
   const { refresh, cooling } = useAutoRefresh(load)
 
-  // Pay button label mirrors the JO's billing/payment state.
-  function payLabel(o: JobOrder): string {
-    if (hasOutstandingSupplements(o)) return t('Additional charge to pay')
-    if (o.service_invoice_no?.toUpperCase().startsWith('BI')) return t('✓ Billed · view charges')
-    if (o.payment_status === 'confirmed' || o.service_invoice_no) return t('✓ Paid · view charges')
-    if (o.payment_status === 'submitted') return t('Payment under review')
-    if (o.payment_status === 'rejected') return t('Payment issue — fix')
-    return t('View charges & pay')
+  // Action button on the pay link mirrors the unified balance state.
+  function payBtnLabel(o: JobOrder): string {
+    const s = joPaymentState(o)
+    if (s === 'balance') return t('Balances')
+    if (s === 'paid') return t('✓ Paid · view charges')
+    return t('View charges')
   }
+
+  function openOrder(o: JobOrder) { setSelected(o); setRespondingId(null); setCancelId(null); setError(null) }
 
   return (
     <Shell>
@@ -220,7 +309,7 @@ export default function MyJobOrders() {
           <div>
             <h1 className="ktc-title">{t('My Job Orders')}</h1>
             <p className="ktc-sub" style={{ marginBottom: 0 }}>
-              {t('Tap a row to open its full details.')}
+              {t('Tap a card to open its full details.')}
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -239,8 +328,8 @@ export default function MyJobOrders() {
           </div>
         )}
 
-        {/* Views — server-side filters, 10 per page */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
+        {/* Views — server-side filters, 10 per page; plus card/list toggle */}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14, marginTop: 14 }}>
           <span className="ktc-label" style={{ fontSize: 12.5, fontWeight: 600 }}>{t('Show')}</span>
           <select
             className="ktc-input"
@@ -253,6 +342,9 @@ export default function MyJobOrders() {
               <option key={f.key} value={f.key}>{t(f.label)}</option>
             ))}
           </select>
+
+          <ViewToggle view={view} onChange={changeView} />
+
           {!loading && total > 0 && (
             <span className="ktc-label" style={{ fontSize: 12, marginLeft: 'auto' }}>
               {t('{total} order(s)', { total })}
@@ -263,7 +355,7 @@ export default function MyJobOrders() {
         <div style={{ marginTop: 4 }}>
           {loading ? (
             <div style={{ display: 'grid', gap: 10 }} aria-label={t('Loading job orders')}>
-              {[52, 52, 52].map((h, i) => (
+              {[64, 64, 64].map((h, i) => (
                 <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 12 }} />
               ))}
             </div>
@@ -275,6 +367,30 @@ export default function MyJobOrders() {
               ) : (
                 <button type="button" className="ktc-link" onClick={() => changeFilter('all')}>{t('Show all orders')}</button>
               )}
+            </div>
+          ) : view === 'card' ? (
+            <div style={{ display: 'grid', gap: 10 }}>
+              {orders.map((o) => {
+                const count = o.lines?.length ?? 0
+                return (
+                  <button key={o.id} type="button" className="ktc-jo-zcard" onClick={() => openOrder(o)}>
+                    <div className="ktc-jo-zcard-head">
+                      <b className="ktc-mono" style={{ fontSize: 14 }}>{o.jo_number ?? o.entry_number ?? t('Draft')}</b>
+                      <StatusBadge status={o.status} />
+                      <PayPill o={o} />
+                    </div>
+                    <div className="ktc-label ktc-jo-zcard-meta">
+                      {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('No consignee')}
+                      {o.entry_number ? ` · ${t('Entry')} ${o.entry_number}` : ''}
+                    </div>
+                    <div className="ktc-jo-zcard-foot">
+                      <span className="ktc-label">{t('{count} cont.', { count })}</span>
+                      <span className="ktc-chip">{batchLabel(o.created_at, t)}</span>
+                      <span className="ktc-label" style={{ marginLeft: 'auto' }}>{fmtDate(o.created_at)}</span>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           ) : (
             <>
@@ -289,19 +405,12 @@ export default function MyJobOrders() {
                 {orders.map((o) => {
                   const count = o.lines?.length ?? 0
                   return (
-                    <button
-                      key={o.id}
-                      type="button"
-                      className="ktc-jo-row"
-                      onClick={() => { setSelected(o); setRespondingId(null); setCancelId(null); setError(null) }}
-                    >
+                    <button key={o.id} type="button" className="ktc-jo-row" onClick={() => openOrder(o)}>
                       <span className="ktc-jo-id" style={{ minWidth: 0 }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <b className="ktc-mono" style={{ fontSize: 13.5 }}>{o.entry_number ?? o.jo_number ?? t('Draft')}</b>
                           <StatusBadge status={o.status} />
-                          {hasOutstandingSupplements(o) && (
-                            <span className="ktc-chip ktc-chip--warning" title={t('An additional charge is awaiting payment')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><ClockIcon size={13} /> {t('Under review')}</span>
-                          )}
+                          <PayPill o={o} />
                         </span>
                         <span className="ktc-label" style={{ display: 'block', fontSize: 12, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('No consignee')}
@@ -345,9 +454,7 @@ export default function MyJobOrders() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', minWidth: 0 }}>
                   <b className="ktc-mono" style={{ fontSize: 15 }}>{o.jo_number ?? t('Draft (no number yet)')}</b>
                   <StatusBadge status={o.status} />
-                  {hasOutstandingSupplements(o) && (
-                    <span className="ktc-chip ktc-chip--warning" title={t('An additional charge is awaiting payment')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><ClockIcon size={13} /> {t('Under review')}</span>
-                  )}
+                  <PayPill o={o} />
                 </div>
                 <button type="button" aria-label={t('Close')} onClick={close}
                   style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))', flex: '0 0 auto' }}>✕</button>
@@ -390,10 +497,15 @@ export default function MyJobOrders() {
                       {o.admin_note && (
                         <div style={{ fontSize: 12.5, marginBottom: 10, lineHeight: 1.5, padding: '9px 12px', borderRadius: 9, background: 'var(--c-h40-90-96)', border: '1px solid var(--c-h35-85-84)', color: 'var(--c-h30-60-32)' }}>
                           <b>{t('Information needed:')}</b> {o.admin_note}
+                          {(o.needs_fields?.length ?? 0) > 0 && (
+                            <div style={{ marginTop: 6, fontSize: 12 }}>
+                              {t('Please re-enter:')} {o.needs_fields!.map((f) => t(FIELD_LABEL[f] ?? f)).join(', ')}
+                            </div>
+                          )}
                         </div>
                       )}
                       {respondingId === o.id ? (
-                        <ResubmitForm order={o} kind="on_hold" onError={setError}
+                        <NeedsInfoForm order={o} onError={setError}
                           onDone={() => { setRespondingId(null); setError(null); close(); void load() }} />
                       ) : (
                         <button type="button" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-flex', marginBottom: 12 }}
@@ -407,22 +519,12 @@ export default function MyJobOrders() {
                     <>
                       {o.admin_note && (
                         <div style={{ fontSize: 12.5, marginBottom: 10, lineHeight: 1.5, padding: '9px 12px', borderRadius: 9, background: 'var(--c-h0-75-97)', border: '1px solid var(--c-h0-70-88)', color: 'var(--c-h0-60-40)' }}>
-                          <b>{t('Rejected:')}</b> {o.admin_note}
+                          <b>{t('Not approved:')}</b> {o.admin_note}
                         </div>
                       )}
-                      {o.rejected_recoverable === false ? (
-                        <div className="ktc-label" style={{ fontSize: 12.5, marginBottom: 12 }}>
-                          {t('This order is closed. If needed, please')} <Link to="/job-order" className="ktc-link">{t('file a new job order')}</Link>.
-                        </div>
-                      ) : respondingId === o.id ? (
-                        <ResubmitForm order={o} kind="rejected" onError={setError}
-                          onDone={() => { setRespondingId(null); setError(null); close(); void load() }} />
-                      ) : (
-                        <button type="button" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-flex', marginBottom: 12 }}
-                          onClick={() => { setRespondingId(o.id); setError(null) }}>
-                          {t('Fix & resubmit')}
-                        </button>
-                      )}
+                      <div className="ktc-label" style={{ fontSize: 12.5, marginBottom: 12 }}>
+                        {t('This order is closed. If you still need it, please')} <Link to="/job-order" className="ktc-link">{t('file a new job order')}</Link>.
+                      </div>
                     </>
                   )}
                   {o.customer_note && (o.status === 'submitted' || o.status === 'processing') && (
@@ -445,7 +547,7 @@ export default function MyJobOrders() {
                     )}
                     {!['held', 'cancelled', 'rejected'].includes(o.status) && (
                       <Link to={`/job-order/${o.id}/pay`} className="ktc-btn-secondary ktc-btn--sm" style={{ display: 'inline-flex', textDecoration: 'none' }}>
-                        {payLabel(o)}
+                        {payBtnLabel(o)}
                       </Link>
                     )}
                   </div>
@@ -503,5 +605,23 @@ export default function MyJobOrders() {
         )
       })()}
     </Shell>
+  )
+}
+
+// Small segmented Cards/List toggle.
+function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
+  const { t } = useT()
+  const opt = (v: ViewMode, label: string) => (
+    <button type="button" onClick={() => onChange(v)} aria-pressed={view === v}
+      className={view === v ? 'ktc-btn ktc-btn--sm' : 'ktc-btn-secondary ktc-btn--sm'}
+      style={{ width: 'auto', padding: '6px 12px', fontSize: 12.5 }}>
+      {label}
+    </button>
+  )
+  return (
+    <span style={{ display: 'inline-flex', gap: 4 }} role="group" aria-label={t('View')}>
+      {opt('card', t('Cards'))}
+      {opt('list', t('List'))}
+    </span>
   )
 }

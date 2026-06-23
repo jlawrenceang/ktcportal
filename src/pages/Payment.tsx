@@ -173,7 +173,7 @@ export default function Payment() {
         <h2 style={{ margin: 0, fontSize: 16.5, fontWeight: 650 }}>{t('Charges')}</h2>
         {charges && (
           <>
-            {(charges.hasMissingRates || charges.adminFee == null || charges.printFee == null) && (
+            {(charges.hasMissingRates || charges.adminFee == null) && (
               <p className="ktc-label" style={{ fontSize: 12.5, marginTop: 8, color: 'var(--c-h30-70-36)' }}>
                 {t('Some rates aren’t set yet — please contact KTC. The total below may be incomplete; KTC will confirm the final amount.')}
               </p>
@@ -189,11 +189,9 @@ export default function Payment() {
                 ))}
                 <tr><td style={{ padding: '8px 0' }} className="ktc-label">{t('VAT ({pct}% of vatable services)', { pct: (cfg!.vatRate * 100).toFixed(0) })}</td>
                   <td className="ktc-mono" style={{ textAlign: 'right' }}>{peso(charges.vat)}</td></tr>
-                <tr><td style={{ padding: '8px 0' }} className="ktc-label">{t('Admin / service fee')}</td>
-                  <td className="ktc-mono" style={{ textAlign: 'right' }}>{charges.adminFee == null ? '—' : peso(charges.adminFee)}</td></tr>
                 <tr style={{ borderBottom: '1px solid hsl(var(--line-soft))' }}>
-                  <td style={{ padding: '8px 0' }} className="ktc-label">{t('Print fee')}</td>
-                  <td className="ktc-mono" style={{ textAlign: 'right' }}>{charges.printFee == null ? '—' : peso(charges.printFee)}</td></tr>
+                  <td style={{ padding: '8px 0' }} className="ktc-label">{t('Admin & print fee')}</td>
+                  <td className="ktc-mono" style={{ textAlign: 'right' }}>{charges.adminFee == null ? '—' : peso(charges.adminFee)}</td></tr>
                 <tr>
                   <td style={{ padding: '10px 0', fontWeight: 700, fontSize: 15 }}>{t('Total')}</td>
                   <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 16 }}>{peso(breakdown?.total ?? charges.total)}</td>

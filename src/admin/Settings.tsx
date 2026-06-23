@@ -10,7 +10,8 @@ import LangToggle from '../components/LangToggle'
 import TestPushCard from './TestPushCard'
 import TestEmailCard from './TestEmailCard'
 import { peso } from '../lib/pricing'
-import { SHIPPING_LINES, TERMINAL_CHARGE_SERVICES, CHARGE_RULE_ACTIONS } from '../lib/shippingLines'
+import { SHIPPING_LINES, TERMINAL_CHARGE_SERVICES, CHARGE_RULE_ACTIONS, tradeLabel, type Trade, type Origin } from '../lib/shippingLines'
+import OriginPill from '../components/OriginPill'
 import { LockIcon, PencilIcon } from '../components/icons'
 
 // Terminal tariff dimensions: service × trade × origin × size × fill × kind (0141).
@@ -127,6 +128,58 @@ export default function Settings() {
     setMrMsg(error ? error.message : t('✓ Move rates saved.'))
   }
 
+  // Additional charge types (0155) — feed the "Add charge" dropdown on a job
+  // order supplement. default_amount of null = "not set" (a placeholder),
+  // distinct from a real ₱0 — an empty input saves null through. Rows have a
+  // uuid PK, so a new type is inserted live (to mint its id); existing rows are
+  // upserted by id on Save. Deactivate is the safe retire path; hard delete is
+  // offered only once a row is already inactive (its label may be in use).
+  type ChargeType = { id: string; label: string; default_amount: number | null; active: boolean; sort: number }
+  const [chargeTypes, setChargeTypes] = useState<ChargeType[]>([])
+  const [ctBusy, setCtBusy] = useState(false)
+  const [ctMsg, setCtMsg] = useState<string | null>(null)
+  const [newCharge, setNewCharge] = useState('')
+  const [newChargeAmt, setNewChargeAmt] = useState('')
+  const [delCharge, setDelCharge] = useState<string | null>(null)
+  useEffect(() => {
+    void supabase.from('additional_charge_types').select('id, label, default_amount, active, sort').order('sort').order('label')
+      .then(({ data }) => setChargeTypes(((data ?? []) as ChargeType[]).map((x) => ({ ...x, default_amount: x.default_amount == null ? null : Number(x.default_amount) }))))
+  }, [])
+  function setCt(id: string, field: 'label' | 'default_amount' | 'active' | 'sort', v: string | number | boolean | null) {
+    setChargeTypes((xs) => xs.map((x) => (x.id === id ? { ...x, [field]: v } : x)))
+  }
+  async function saveChargeTypes() {
+    setCtBusy(true); setCtMsg(null)
+    const { error } = await supabase.from('additional_charge_types')
+      .upsert(chargeTypes.map((x) => ({ id: x.id, label: x.label.trim(), default_amount: x.default_amount, active: x.active, sort: x.sort })), { onConflict: 'id' })
+    setCtBusy(false)
+    setCtMsg(error ? error.message : t('✓ Charge types saved.'))
+  }
+  async function addChargeType() {
+    const label = newCharge.trim()
+    if (!label) { setCtMsg(t('Enter the charge type name first.')); return }
+    if (chargeTypes.some((c) => c.label.toLowerCase() === label.toLowerCase())) { setCtMsg(t('That charge type already exists.')); return }
+    setCtBusy(true); setCtMsg(null)
+    const amount = newChargeAmt.trim() === '' ? null : Number(newChargeAmt)
+    const { data, error } = await supabase.from('additional_charge_types')
+      .insert({ label, default_amount: amount, sort: chargeTypes.length + 1 })
+      .select('id, label, default_amount, active, sort').single()
+    setCtBusy(false)
+    if (error) { setCtMsg(error.message); return }
+    const row = data as ChargeType
+    setChargeTypes((xs) => [...xs, { ...row, default_amount: row.default_amount == null ? null : Number(row.default_amount) }])
+    setNewCharge(''); setNewChargeAmt('')
+    setCtMsg(t('"{label}" added.', { label }))
+  }
+  async function deleteChargeType(id: string) {
+    setCtBusy(true); setCtMsg(null)
+    const { error } = await supabase.from('additional_charge_types').delete().eq('id', id)
+    setCtBusy(false); setDelCharge(null)
+    if (error) { setCtMsg(error.message); return }
+    setChargeTypes((xs) => xs.filter((x) => x.id !== id))
+    setCtMsg(t('Charge type deleted.'))
+  }
+
   useEffect(() => {
     void supabase.from('payment_info').select('key, value, label').order('key')
       .then(({ data }) => setPayInfo((data ?? []) as PayInfo[]))
@@ -181,7 +234,8 @@ export default function Settings() {
       supabase.from('pricing_settings').select('key, value, label').order('key'),
     ])
     setRates((r ?? []) as Rate[])
-    setSettings((s ?? []) as Setting[])
+    // print_fee was merged into admin_fee ("Admin & print fee", 0156) — hide it.
+    setSettings(((s ?? []) as Setting[]).filter((x) => x.key !== 'print_fee'))
   }
   useEffect(() => { void loadPricing() }, [])
 
@@ -668,7 +722,10 @@ export default function Settings() {
               </div>
               {TERM_COMBOS.map(([trade, origin]) => (
                 <div key={`${trade}-${origin}`} style={{ display: 'grid', gap: 4, padding: '8px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
-                  <span style={{ fontSize: 12.5, fontWeight: 700, textTransform: 'capitalize' }}>{t(trade)} · {t(origin)}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 700 }}>
+                    <OriginPill origin={origin as Origin} size="sm" />
+                    {t(tradeLabel(trade as Trade, origin as Origin))}
+                  </span>
                   {TERM_FILLKIND.map(([fill, kind, fkLabel]) => {
                     const r20 = termRates.find((x) => x.service === svc && x.trade === trade && x.origin === origin && x.size === '20' && x.fill === fill && x.kind === kind)
                     const r40 = termRates.find((x) => x.service === svc && x.trade === trade && x.origin === origin && x.size === '40' && x.fill === fill && x.kind === kind)
@@ -866,6 +923,75 @@ export default function Settings() {
             {mrBusy ? t('Saving…') : t('Save move rates')}
           </button>
           {mrMsg && <span className="ktc-label" style={{ fontSize: 13, fontWeight: 600 }}>{mrMsg}</span>}
+        </div>
+      </div>
+
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Additional charge types')}</h2>
+        <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
+          {t('These feed the “Add charge” dropdown on a job order. The amount pre-fills, but staff can adjust it per charge. Leave an amount blank for “not set”. Deactivate to retire a type (it disappears from the dropdown); delete is only offered once inactive. Amounts in ₱.')}
+        </p>
+        <div style={{ display: 'grid', gap: 8, maxWidth: 600 }}>
+          <div className="ktc-label" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 11.5, paddingLeft: 2 }}>
+            <span style={{ flex: '1 1 180px', minWidth: 0 }}>{t('Label')}</span>
+            <span style={{ width: 130, textAlign: 'center' }}>{t('Default amount')}</span>
+            <span style={{ width: 70, textAlign: 'center' }}>{t('Sort')}</span>
+            <span style={{ width: 64, textAlign: 'center' }}>{t('Active')}</span>
+            <span style={{ width: 24 }} />
+          </div>
+          {chargeTypes.map((c) => (
+            <div key={c.id} style={{
+              display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 10,
+              background: c.active ? 'var(--c-w55)' : 'var(--c-w30)', border: '1px solid var(--glass-brd)', opacity: c.active ? 1 : 0.6,
+            }}>
+              <input className="ktc-input" value={c.label} onChange={(e) => setCt(c.id, 'label', e.target.value)}
+                style={{ flex: '1 1 180px', minWidth: 0, padding: '7px 10px', fontSize: 13, fontWeight: 600 }} aria-label={t('Label')} />
+              <span style={{ width: 130, display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}>
+                <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
+                <input className="ktc-input" type="number" step="0.01" min="0" value={c.default_amount ?? ''} placeholder={t('not set')}
+                  onChange={(e) => setCt(c.id, 'default_amount', e.target.value === '' ? null : Number(e.target.value))}
+                  style={{ width: 100, padding: '7px 10px' }} aria-label={t('Default amount')} />
+              </span>
+              <input className="ktc-input" type="number" min="0" value={c.sort}
+                onChange={(e) => setCt(c.id, 'sort', e.target.value === '' ? 0 : Number(e.target.value))}
+                style={{ width: 70, padding: '7px 10px', textAlign: 'center' }} aria-label={t('Sort')} />
+              <label className="ktc-label" style={{ width: 64, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, cursor: 'pointer' }}
+                title={c.active ? t('Untick to remove from the “Add charge” dropdown (existing charges unaffected)') : t('Tick to offer this charge type again')}>
+                <input type="checkbox" checked={c.active} onChange={(e) => setCt(c.id, 'active', e.target.checked)} />
+              </label>
+              {!c.active ? (
+                delCharge === c.id ? (
+                  <span style={{ width: 24, display: 'inline-flex', gap: 4, alignItems: 'center', fontSize: 12 }}>
+                    <button type="button" className="ktc-link" style={{ fontWeight: 700, color: 'var(--acc-2)' }} disabled={ctBusy}
+                      onClick={() => void deleteChargeType(c.id)}>{t('delete?')}</button>
+                    <button type="button" className="ktc-link" onClick={() => setDelCharge(null)}>{t('no')}</button>
+                  </span>
+                ) : (
+                  <button type="button" className="ktc-link" aria-label={t('Delete {label}', { label: c.label })} title={t('Delete this charge type')}
+                    style={{ width: 24, fontSize: 14, color: 'var(--acc-2)', opacity: 0.8 }} onClick={() => setDelCharge(c.id)}>✕</button>
+                )
+              ) : (
+                <span style={{ width: 24 }} />
+              )}
+            </div>
+          ))}
+          {chargeTypes.length === 0 && <p className="ktc-label" style={{ fontSize: 13 }}>{t('No charge types yet — add one below.')}</p>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, border: '1px dashed var(--glass-brd)' }}>
+            <input className="ktc-input" placeholder={t('New charge type name')} value={newCharge}
+              onChange={(e) => setNewCharge(e.target.value)} style={{ flex: '1 1 200px', padding: '7px 10px', fontSize: 13 }} />
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
+              <input className="ktc-input" type="number" step="0.01" min="0" value={newChargeAmt} placeholder={t('amount (optional)')}
+                onChange={(e) => setNewChargeAmt(e.target.value)} style={{ width: 130, padding: '7px 10px' }} aria-label={t('Default amount')} />
+            </span>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={ctBusy} onClick={() => void addChargeType()}>{t('+ Add type')}</button>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
+          <button className="ktc-btn" type="button" disabled={ctBusy} onClick={() => void saveChargeTypes()} style={{ width: 'auto', padding: '10px 20px' }}>
+            {ctBusy ? t('Saving…') : t('Save charge types')}
+          </button>
+          {ctMsg && <span className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600 }}>{ctMsg}</span>}
         </div>
       </div>
 
