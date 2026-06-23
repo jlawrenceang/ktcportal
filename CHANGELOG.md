@@ -6,7 +6,7 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## v1.6.4 — 2026-06-23 (consignee list polish + clickable detail)
 
-- **Admin consignee list polished + clickable:** rows are now clean, scannable cards (code · name + "customer-requested" chip + a "needs docs" hint + TIN preview + status pill). Clicking a row opens a **detail modal** showing the same fields the customer fills when requesting a consignee — **business address, TIN / VAT Reg #, BIR 2303 (view), BIR 2307 (view)** — plus status, note, dates, and **Print CIS**. The **Approve / Needs info / Reject / Edit / Delete** actions moved into the modal (review the documents + details together before deciding); "Approve all pending" bulk bar retained.
+- **Admin consignee list polished + clickable:** rows are now clean, scannable cards (code · name + "customer-requested" chip + a "needs docs" hint + TIN preview + status pill). Clicking a row opens a **detail modal** showing the same fields the customer fills when requesting a consignee — **business address, TIN / VAT Reg #, BIR 2303 (view), BIR 2307 (view)** — plus status, note, dates, the **requester's name + email** (for customer-requested ones), and **Print CIS**. The **Approve / Needs info / Reject / Edit / Delete** actions moved into the modal (review the documents + details together before deciding); "Approve all pending" bulk bar retained.
 
 ## v1.6.3 — 2026-06-23 (vessel de-dup + compact admin JO tiles)
 

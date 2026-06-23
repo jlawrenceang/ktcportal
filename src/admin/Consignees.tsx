@@ -113,6 +113,7 @@ export default function Consignees() {
   const [editDoc, setEditDoc] = useState<File | null>(null)
   // detail modal (clickable row)
   const [selected, setSelected] = useState<Consignee | null>(null)
+  const [requester, setRequester] = useState<{ full_name: string | null; email: string | null } | null>(null)
 
   async function load() {
     setLoading(true)
@@ -142,6 +143,15 @@ export default function Consignees() {
     void supabase.from('consignees').select('id', { count: 'exact', head: true }).eq('status', 'pending')
       .then(({ count }) => setPendingCount(count ?? 0))
   }, [list])
+
+  // When the detail modal opens a customer-requested consignee, look up who filed it.
+  useEffect(() => {
+    setRequester(null)
+    const id = selected?.requested_by
+    if (!id) return
+    void supabase.from('customers').select('full_name, email').eq('id', id).maybeSingle()
+      .then(({ data }) => setRequester((data as { full_name: string | null; email: string | null } | null) ?? { full_name: null, email: null }))
+  }, [selected?.requested_by])
 
   function changeQuery(v: string) { setQuery(v); setPage(0) }
   function changeFilter(v: Filter) { setFilter(v); setPage(0) }
@@ -391,6 +401,7 @@ export default function Consignees() {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '12px 16px', fontSize: 13, marginTop: 14 }}>
                       <Meta label={t('Business address')} value={c.address || '—'} span2 />
+                      {c.requested_by && <Meta label={t('Requested by')} value={requester ? [requester.full_name, requester.email].filter(Boolean).join(' · ') || '—' : t('Loading…')} span2 />}
                       <Meta label={t('TIN / VAT Reg #')} value={c.tin || '—'} />
                       <Meta label={t('Date added')} value={c.created_at ? fmtDate(c.created_at) : '—'} />
                       {c.requested_at && <Meta label={t('Requested')} value={fmtDate(c.requested_at)} />}
