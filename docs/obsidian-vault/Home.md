@@ -2,7 +2,7 @@
 title: Home
 tags: [index]
 type: home
-last_updated: 2026-06-22
+last_updated: 2026-06-23
 ---
 
 # KTC Portal Knowledge Home
@@ -13,13 +13,13 @@ KTC Container Terminal Corp. — the **KTC Online Portal** for port / container-
 
 | Metric | Value |
 |---|---|
-| Version | `v1.5.0` live on `portal.ktcterminal.com` (06-22/23 work shipped under it + new commits; bump to v1.6.0 next deploy) |
-| Migrations | **141 files** (`0001` … `0150`), all applied + tracked (split portal + fuel lanes) |
+| Version | `v1.6.12` live on `portal.ktcterminal.com` |
+| Migrations | **149 files** (`0001` … `0158`), all applied + tracked (split portal + fuel lanes) |
 | Staff roles | admin · operations · cashier · checker · csr (+ owner / root owner) — gated by `has_permission`. `purchaser` (fuel desk) exists in the DB but is **frontend-deferred** |
-| Completion | **two-gate** — all services + base payment + RPS (if needed) + every supplement, all confirmed |
+| Completion | **two-gate** — all services + base payment + RPS (if needed) + every supplement, all confirmed; derived "✓ Cleared for release" badge |
 | Active focus | portal / job orders. **Fuel monitoring** ([[ADR-0025]]) parked after Phase 0 (schema live, no UI) |
-| Go-live gate | ST02 closeout · Agreement counsel sign-off · launch call |
-| Prod data | wiped 2026-06-12 — first real order = `JO-000001` |
+| Go-live gate | ST05 closeout (Lanes A–K + Defect D-01) · Agreement counsel sign-off · launch call |
+| Prod data | test data purged 2026-06-23 — first real order = `JO-000001` (0 orders / 0 customers / 0 releases) |
 
 ## Where the rules and memory live
 

@@ -2,12 +2,20 @@
 title: Pending Items
 tags: [memory, pending, backlog]
 type: memory
-last_updated: 2026-06-22
+last_updated: 2026-06-23
 ---
 
 # 📋 Pending Items
 
 Detailed backlog. For sequencing, see [[Roadmap]]. (Completed items moved to [[Completed Milestones]] / `CHANGELOG.md`.)
+
+## ST05 smoke test — open items (NOW)
+
+Preflight **P1–P8 re-run green** through `0158` (2026-06-23; + new Lane L container rate matrix; server-side **Lane J-3** role-matrix check = **0 mismatch**, incl. `purchaser`/fuel + `review_consignee_requests` gates; read-only RPC backbone check of the release/JO guards).
+
+- [ ] **Run manual Lanes A–K** with the owner on `portal.ktcterminal.com`.
+- [ ] **Defect D-01 (Low, OPEN)** — the release-desk **hold/reject reason note is NOT server-enforced**: `verify_release_order`, `confirm_release_payment`, and `confirm_release_supplement_payment` accept a **blank** note, unlike the JO side which raises. Fix = raise on a blank reason to mirror the JO path.
+- [ ] **Tagalog copy for the newest admin strings** (JO lifecycle / storage tariff editor / consignee detail modal) currently **falls back to English** — owner review before go-live.
 
 ## Fuel monitoring — DEFERRED after Phase 0 ([[ADR-0025]])
 
@@ -24,11 +32,11 @@ Phase 0 (schema + derived views + `purchaser` role) is **live in prod and commit
 - [ ] **Set the 120 new `terminal_rates` cells** (empty/full × dry/reefer combos seeded `null`) with the owner — until then the calculator flags "rate not set" for them.
 - [ ] Pre-existing nit: the `Settings.tsx` "Current staff" label map omits **`csr`** (shows CSR staff as "Admin"); add `csr` (and `purchaser` when wired). Cosmetic.
 
-## ST02 / trial run (NOW)
+## ST05 / trial run (NOW)
 
-- [ ] **ST02 manual Lanes 1–8** on `portal.ktcterminal.com` (`docs/smoke-test-02-portal.md`). Preflight P1–P8 ✅ (P8 cleared 2026-06-13 after E2E key regen → Playwright 16/16). Owner walking lanes now.
-- [ ] **P9 / Lane 5.0 data entry:** real X-Ray rate + admin/print fees, bank/GCash details + QR upload (Settings, owner).
-- [ ] **ST02 teardown:** suspend/remove test accounts + orders, reset `jo_number_seq` / `broker_code_seq` (only safe at zero orders) so the first real order is `JO-000001`.
+- [ ] **Manual Lanes A–K** on `portal.ktcterminal.com` (see the ST05 section above; preflight P1–P8 ✅ through `0158`). Owner walking lanes now.
+- [ ] **P9 / data entry:** real X-Ray rate + the merged admin & print fee, bank/GCash details + QR upload (Settings, owner).
+- [x] **Teardown done (2026-06-23):** test orders purged to a clean slate, `jo_number_seq` reset (safe at zero orders) so the first real order is `JO-000001`; 0 releases.
 
 ## Go-live gate (NEXT)
 

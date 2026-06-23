@@ -2,12 +2,24 @@
 title: Completed Milestones
 tags: [memory, milestones]
 type: memory
-last_updated: 2026-06-16
+last_updated: 2026-06-23
 ---
 
 # 🏁 Completed Milestones
 
 Newest first.
+
+## 2026-06-23 — JO lifecycle overhaul, tiered storage, dropdown-only vessel, clickable consignees (v1.6.12)
+
+Portal migrations **0151–0158** (single contiguous lane, all applied to prod); `APP_VERSION` = **v1.6.12**. Session: [[2026-06-23 JO Lifecycle Overhaul + Storage Tiers + Consignee UI + Vessel Dedup]].
+
+- **JO lifecycle** (`0151`–`0156`) — **reject is terminal**; **on-hold is field-targeted** (`needs_fields`: staff tick which of consignee/entry/vessel/containers must be re-entered, `0154`); rejecting a **consignee** (`0152`) / suspending or rejecting a **customer** (`0153`) cancels open JOs **except** paid/invoiced; customer **serving-number notification retired** (`0151`); unified **Balance/Paid** payment pill; admin-seeded additional-charge **dropdown** (`additional_charge_types`, `0155`); admin + print fee **merged** (`0156`); **dual-view (Cards/List)** JO lists + admin compact tiles → detail modal; derived **"✓ Cleared for release"** badge.
+- **Rate calculator** (`0157`) — per-service granularity (`terminal_rate_config`) + **tiered foreign storage** (`storage_tiers`: cumulative per-day bands for Import/Export/Transhipment × size after free days; domestic flat per-day by size; empties use laden rates) + **Transhipment** trade option; Inbound/Outbound for domestic + colour-coded Foreign/Domestic origin pill; Settings tariff editor rebuilt.
+- **Vessel** (`0158`) — removed the manual-entry escape hatch app-wide (dropdown-only); **de-duplicated `vessel_schedule`** (vessel_visit key date↔week flip) + a trigger enforcing one row per (vessel_name, voyage_number).
+- **Consignees admin** — clickable rows → detail modal (address, TIN, BIR 2303/2307 viewers, requester name + email, dates, Print CIS); review/edit/delete in the modal.
+- **Settings** — tabbed (Pricing & tariff / Operations / Access & staff / System).
+- **ST05** — preflight P1–P8 re-run green through `0158` (+ Lane L container rate matrix; server-side Lane J-3 role-matrix = 0 mismatch); read-only RPC backbone check of the release/JO guards. Manual Lanes A–K + **Defect D-01** (blank release-desk reason) open — see [[Pending Items]].
+- **Data** — test orders purged to a clean slate; `jo_number_seq` reset (first real JO = `JO-000001`); 0 releases.
 
 ## 2026-06-22 — Consignee/vessel requests, CIS-as-accreditation, rate matrix, fuel Phase 0
 

@@ -2,7 +2,7 @@
 title: Roadmap
 tags: [memory, roadmap, planning]
 type: memory
-last_updated: 2026-06-22
+last_updated: 2026-06-23
 ---
 
 # 🧭 Roadmap (Phased)
@@ -24,8 +24,9 @@ Legend: **COMPLETED** · **NOW** · **NEXT** · **LATER** · **PARKED** · **NOR
 
 ## NOW 🎯 — Trial run → go-live
 
-1. **ST02 manual Lanes 1–8** on live (owner) + **P9** rates/payment-details entry. See [[Pending Items]] / `docs/smoke-test-02-portal.md`.
-2. **ST02 teardown** — reset `jo_number_seq`/`broker_code_seq` so the first real order is `JO-000001`.
+1. **ST05 manual Lanes A–K** on live (owner) + **P9** rates/payment-details entry; preflight P1–P8 green through `0158`. See [[Pending Items]].
+2. **Close Defect D-01** — blank release-desk hold/reject reason isn't server-enforced (mirror the JO side).
+3. ✅ **Teardown done (2026-06-23)** — test data purged + `jo_number_seq` reset so the first real order is `JO-000001`.
 
 ## NEXT — Launch gate
 

@@ -2,7 +2,7 @@
 title: System Scale
 tags: [memory, scale, metrics]
 type: memory
-last_updated: 2026-06-22
+last_updated: 2026-06-23
 ---
 
 # 📏 System Scale
@@ -11,10 +11,10 @@ last_updated: 2026-06-22
 
 | Metric | Count |
 |--------|-------|
-| App version | `src/version.ts` = **`v1.5.0`** (06-22/23 portal + fuel work shipped under it + new commits; bump to `v1.6.0` on the next tagged deploy). Footers show version + git commit + build date |
-| Migrations | **141 files**, `0001_init` … **`0150_purchaser_role`** — all applied + tracked in `public._migrations`. Numbering is split across a **portal lane** and a **fuel lane** (fuel = `0135`/`0140`/`0150`), so there are gaps; go forward portal `0142+`, fuel `0151+` |
-| Core tables | `customers` (renamed from `brokers`, 0021), `consignees` (+ request cols `requested_by/at`, `note`, `doc_2307_path`, `needs_info` status — 0132/0138/0139), `accreditations`, `release_orders`/`release_supplements` (0124/0125), `job_orders`, `job_order_lines` (+ per-van `xray_done_*`, + `size`/`fill`/`kind` 0141), `service_completions`, `serving_numbers`, `jo_supplements` (0101), `rps_moves`/`move_rates` (0062), `job_order_events`/`job_order_documents` (timeline), `support_tickets`/`support_messages` (0083), `staff_notifications`/`_reads` (0085), `role_permissions`, `terminal_rates` (× fill/kind, 0141)/`shipping_line_charge_rules` (0073/0080) + ops tables (`service_rates`, `pricing_settings`, `security_events`, `app_errors`, `outbound_requests`) · **Fuel module (0135, backend only):** `equipment`, `fuel_dispense`, `fuel_delivery`, `fuel_rates`, `fuel_settings`, `fuel_tank_reading`, `move_tally` + 7 derived views |
-| Job-order statuses | `held` · `submitted` · `processing` · `on_hold` · `completed` · `rejected` · `cancelled` ("under review" = completed bounced back by a supplement). Base + supplement payment: `unpaid`/`submitted`/`confirmed`/`rejected`; RPS: `not_assessed`/`not_needed`/`needed` + own payment status; invoice chip PAID (`OR-INV-`) / BILLED (`BI-INV-`) |
+| App version | `src/version.ts` = **`v1.6.12`** (live on `portal.ktcterminal.com`). Footers show version + git commit + build date |
+| Migrations | **149 files**, `0001_init` … **`0158_dedup_vessel_schedule`** — all applied + tracked in `public._migrations`. Numbering is split across a **portal lane** and a **fuel lane** (fuel = `0135`/`0140`/`0150`), so there are gaps; the portal lane now runs contiguously through `0158` |
+| Core tables | `customers` (renamed from `brokers`, 0021), `consignees` (+ request cols `requested_by/at`, `note`, `doc_2307_path`, `needs_info` status — 0132/0138/0139), `accreditations`, `release_orders`/`release_supplements` (0124/0125), `job_orders` (+ `needs_fields` field-targeted on-hold, 0154), `job_order_lines` (+ per-van `xray_done_*`, + `size`/`fill`/`kind` 0141), `service_completions`, `serving_numbers`, `jo_supplements` (0101), `additional_charge_types` (admin-seeded charge dropdown, 0155), `rps_moves`/`move_rates` (0062), `job_order_events`/`job_order_documents` (timeline), `support_tickets`/`support_messages` (0083), `staff_notifications`/`_reads` (0085), `role_permissions`, `terminal_rates` (× fill/kind, 0141) + `terminal_rate_config` (per-service granularity, 0157) + `storage_tiers` (tiered foreign storage, 0157) / `shipping_line_charge_rules` (0073/0080) + ops tables (`service_rates`, `pricing_settings`, `security_events`, `app_errors`, `outbound_requests`) · **Fuel module (0135, backend only):** `equipment`, `fuel_dispense`, `fuel_delivery`, `fuel_rates`, `fuel_settings`, `fuel_tank_reading`, `move_tally` + 7 derived views |
+| Job-order statuses | `held` · `submitted` · `processing` · `on_hold` (now **field-targeted** via `needs_fields`, 0154) · `completed` · `rejected` (**terminal** — no resubmit, 0154) · `cancelled` ("under review" = completed bounced back by a supplement). Base + supplement payment unified into one **Balance/Paid** pill (`unpaid`/`submitted`/`confirmed`/`rejected`); RPS: `not_assessed`/`not_needed`/`needed` + own payment status; invoice chip PAID (`OR-INV-`) / BILLED (`BI-INV-`). Rejecting a consignee (0152) / suspending or rejecting a customer (0153) cancels open JOs **except** paid/invoiced |
 | Staff roles | **owner / root owner · admin · operations · cashier · checker · csr · purchaser**, gated by the owner-tunable `role_permissions` matrix (`has_permission`; owner bypasses all). `purchaser` (0150) = the non-admin **fuel desk** (`view_fuel_reports`/`manage_fuel`/`log_fuel`) — **DB only, no frontend yet**. Split JO gates `accept_orders`/`hold_reject_orders`/`complete_orders`; X-ray confirm = checker only. TOTP 2FA for admin/owner (aal2). See [[Staff Roles & Gates]]. |
 | Routes | customer (`/`, `/account`, `/job-order`, `/job-order/:id/print`, `/job-order/:id/pay`, `/job-orders`, `/calculator`, `/vessels`, `/releases`, `/requests` (My Requests), `/support`, `/manual`, `/verify-id`, `/agreement`) + **public** `/verify/:id` + auth (`/login`, `/register`, `/confirmed`, `/forgot-password`, `/reset-password`) + mobile staff shell (`/app`, `/app/checker`, `/app/cashier`, `/app/support`, `/app/operations`) + admin (`/admin`, `/admin/approvals`, `/admin/customers[/:id]`, `/admin/consignees`, `/admin/job-orders`, `/admin/new-job-order`, `/admin/checker`, `/admin/cashier`, `/admin/releases`, `/admin/vessel-schedule`, `/admin/bulletin`, `/admin/support`, `/admin/logs`, `/admin/security`, `/admin/settings`, `/admin/manual`). Old `/irr` `/terms` `/privacy` → `/agreement`. **Fuel routes (`/admin/fuel`, `/app/fuel`) not built — deferred.** |
 | ADRs | `docs/adr/` — 0001–**0025** (latest: 0024 release/pull-out, 0025 fuel-monitoring) |
@@ -27,7 +27,7 @@ last_updated: 2026-06-22
 | Metric | Count |
 |--------|-------|
 | Consignees imported | **2,488** (from `Customer.csv`) |
-| Job orders / customers | **0 / 0** — prod wiped clean 2026-06-12 (session 10p) for go-live; first real order = `JO-000001` |
+| Job orders / customers / releases | **0 / 0 / 0** — prod test data purged to a clean slate 2026-06-23; `jo_number_seq` reset so the first real order = `JO-000001` |
 | Owner accounts | 1 (`jlawrenceang@gmail.com`, 2FA) + `jla.ktcport@gmail.com` as plain admin fallback |
 | Staff accounts | created on demand via Settings |
 

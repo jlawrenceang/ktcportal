@@ -2,12 +2,23 @@
 title: Current State
 tags: [memory, current]
 type: memory
-last_updated: 2026-06-22
+last_updated: 2026-06-23
 ---
 
 # 📌 Current State (Runtime-Aligned)
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
+
+## 2026-06-23 — JO lifecycle overhaul, tiered storage, dropdown-only vessel, clickable consignees (v1.6.12)
+
+**Migrations through `0158` applied to prod; `APP_VERSION` = `v1.6.12`.** A portal-focused day on a single contiguous lane (`0151`–`0158`). See [[2026-06-23 JO Lifecycle Overhaul + Storage Tiers + Consignee UI + Vessel Dedup]]. In one line each:
+
+- **JO lifecycle** (`0151`–`0156`) — **reject is terminal** (no resubmit) and **on-hold is field-targeted**: staff tick which fields (consignee/entry/vessel/containers) the customer must re-enter via `needs_fields` (`hold_job_order` + `resubmit_needs_info`, `0154`). Rejecting a **consignee** (`0152`) or suspending/rejecting a **customer** (`0153`) cancels their open JOs **except** paid/invoiced. The customer **serving-number notification is retired** (`0151`; ops X-ray queue keeps its #). A unified **Balance/Paid** payment pill; additional charges are an admin-seeded **dropdown** (`additional_charge_types`, `0155`); admin + print fee **merged** (`0156`). **Dual-view JO lists** (Cards/List) on customer + admin; admin compact tiles → detail modal; derived **"✓ Cleared for release"** badge (both gates met).
+- **Rate calculator** (`0157`) — per-service rate granularity (`terminal_rate_config` — each service varies by chosen dims or uniform) + **tiered foreign storage** (`storage_tiers`: cumulative per-day bands for Import/Export/Transhipment × size after free days; domestic stays flat per-day by size; empties use laden rates) + **Transhipment** trade option; **Inbound/Outbound** for domestic + colour-coded Foreign/Domestic origin pill; Settings tariff editor rebuilt.
+- **Vessel** (`0158`) — removed the "enter manually" escape hatch app-wide (dropdown-only; ops add to the schedule); **de-duplicated `vessel_schedule`** (the sync's `vessel_visit` key flipped date↔week when the sheet's week column was filled) + a trigger enforcing **one row per (vessel_name, voyage_number)**.
+- **Consignees admin** — clickable rows → detail modal (business address, TIN, BIR 2303/2307 viewers, requester name + email, dates, Print CIS); review/edit/delete moved into the modal.
+- **Settings** — tabbed (Pricing & tariff / Operations / Access & staff / System).
+- **Data** — test orders **purged to a clean slate**; `jo_number_seq` reset (first real JO = `JO-000001`); **0 releases**.
 
 ## 2026-06-22 — Self-service consignee/vessel requests, CIS-as-accreditation, rate matrix; fuel Phase 0 (deferred)
 
@@ -94,11 +105,11 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0150_purchaser_role`** (141 files; numbering split across a portal lane and a fuel lane) — **all applied + tracked** in `public._migrations`. RLS + role-permission matrix (`has_permission`) + `session_alive()` woven into all helpers; pg_cron jobs (see [[System Scale]]). Email (Resend) fully wired (consolidated nudge, `0099`).
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0158_dedup_vessel_schedule`** (149 files; numbering split across a portal lane and a fuel lane) — **all applied + tracked** in `public._migrations`. RLS + role-permission matrix (`has_permission`) + `session_alive()` woven into all helpers; pg_cron jobs (see [[System Scale]]). Email (Resend) fully wired (consolidated nudge, `0099`).
 
 ## In progress / not yet
 
-- **ST02 manual Lanes 1–8** on live (owner walking them now); P9 = real rates/fees + bank/GCash/QR entry in Settings.
+- **ST05 manual Lanes A–K** on live (owner); preflight P1–P8 re-run green through `0158` (+ new Lane L container rate matrix, server-side Lane J-3 role-matrix check = 0 mismatch). P9 = real rates/fees + bank/GCash/QR entry in Settings.
 - Customer Agreement v2 **counsel sign-off** (DPO designation, NPC registration, liability cap).
 - Per-customer accredited-consignee scoping (master-list typeahead stands, ADR-0007).
 - JO drafts, document attachments; BOC Sheets mirror (blocked on Google service-account creds); 4 Playwright mutation lanes (`fixme`). No Vitest unit suite.
@@ -106,4 +117,4 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## Immediate priorities
 
-**See [[Roadmap]] for authoritative sequencing.** Summary: (1) finish **ST02** manual lanes + teardown (reset `jo_number_seq`/`broker_code_seq` after); (2) counsel sign-off on Agreement v2; (3) go-live/public-launch call.
+**See [[Roadmap]] for authoritative sequencing.** Summary: (1) finish the **ST05** manual lanes A–K with the owner + close **Defect D-01** (blank release-desk reason not server-enforced); (2) counsel sign-off on Agreement v2; (3) go-live/public-launch call. (`jo_number_seq` reset + test-data purge are **done** as of 2026-06-23.)
