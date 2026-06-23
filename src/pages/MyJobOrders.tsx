@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import type { JobOrder } from '../lib/types'
 import { joPaymentState } from '../lib/joPayment'
+import { releaseState } from '../lib/release'
 import { usePageTour } from '../components/TourProvider'
 import { myJobOrdersSteps } from '../components/WelcomeTour'
 import { useBroker } from '../lib/useBroker'
@@ -91,6 +92,18 @@ function PayPill({ o }: { o: JobOrder }) {
   if (s === 'balance') return <span className="ktc-chip ktc-chip--warning">{t('Balance to pay')}</span>
   if (s === 'paid') return <span className="ktc-chip ktc-chip--success">{t('Paid')}</span>
   return null
+}
+
+// "Cleared for release" — lights up only when BOTH gates converge (all services
+// done AND payment confirmed). Derived via releaseState; never shown otherwise.
+function ClearedBadge({ o }: { o: JobOrder }) {
+  const { t } = useT()
+  if (!releaseState(o).cleared) return null
+  return (
+    <span className="ktc-chip ktc-chip--success" title={t('Services done and payment confirmed — ready for release / pull-out.')}>
+      ✓ {t('Cleared for release')}
+    </span>
+  )
 }
 
 // Compact payment pill for the dense one-line list rows.
@@ -387,6 +400,7 @@ export default function MyJobOrders() {
                         <b className="ktc-mono" style={{ fontSize: 14 }}>{o.jo_number ?? o.entry_number ?? t('Draft')}</b>
                         <StatusBadge status={o.status} />
                         <PayPill o={o} />
+                        <ClearedBadge o={o} />
                       </span>
                       <span className="ktc-label" style={{ fontSize: 12.5, whiteSpace: 'nowrap', flex: '0 0 auto' }}>{fmtDate(o.created_at)}</span>
                     </div>
@@ -443,6 +457,7 @@ export default function MyJobOrders() {
                   <b className="ktc-mono" style={{ fontSize: 15 }}>{o.jo_number ?? t('Draft (no number yet)')}</b>
                   <StatusBadge status={o.status} />
                   <PayPill o={o} />
+                  <ClearedBadge o={o} />
                 </div>
                 <button type="button" aria-label={t('Close')} onClick={close}
                   style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))', flex: '0 0 auto' }}>✕</button>
