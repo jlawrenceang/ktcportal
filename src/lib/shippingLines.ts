@@ -4,18 +4,20 @@
 // derived from the line (only MCC is domestic).
 
 export type Origin = 'domestic' | 'foreign'
-export type Trade = 'import' | 'export'
+export type Trade = 'import' | 'export' | 'transhipment'
 
-// Trade-direction label depends on origin: FOREIGN cargo is Import / Export;
-// DOMESTIC cargo is Inbound / Outbound. The stored value stays 'import'/'export'
-// (terminal_rates is keyed on it) — only the display label changes. Returns a raw
+// Trade-direction label depends on origin: FOREIGN cargo is Import / Export /
+// Transhipment; DOMESTIC cargo is Inbound / Outbound. The stored value stays
+// 'import'/'export'/'transhipment' — only the display label changes. Returns a raw
 // English string; callers wrap with t() (English-keyed fallback).
 export function tradeLabel(trade: Trade, origin: Origin): string {
+  if (trade === 'transhipment') return 'Transhipment'
   if (origin === 'domestic') return trade === 'import' ? 'Inbound' : 'Outbound'
   return trade === 'import' ? 'Import' : 'Export'
 }
 // The yard action behind each direction (same regardless of origin).
-export const tradeAction = (trade: Trade): string => (trade === 'import' ? 'Withdrawal' : 'Deposit')
+export const tradeAction = (trade: Trade): string =>
+  trade === 'import' ? 'Withdrawal' : trade === 'export' ? 'Deposit' : 'Transit'
 
 export const SHIPPING_LINES: { code: string; label: string; origin: Origin }[] = [
   { code: 'MAERSK', label: 'Maersk', origin: 'foreign' },

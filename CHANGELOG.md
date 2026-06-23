@@ -4,6 +4,13 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.6.1 — 2026-06-23 (rate calculator: per-service granularity + tiered foreign storage)
+
+### Terminal tariff / rate calculator (migration `0157`)
+- **Per-service rate granularity:** each terminal service (arrastre / wharfage / LoLo / weighing) configures which conditions its rate varies by — any subset of origin / size / fill / kind, or **uniform**. The Settings editor shows only the inputs for the ticked conditions and **fans the value out** to the underlying `terminal_rates` cells, so the calculator's full-key lookup is unchanged. `terminal_rate_config` seeded from the live data: arrastre = origin×size×fill, weighing/wharfage = size, LoLo = uniform. Existing rates were normalized to each service's granularity.
+- **Tiered foreign storage (`storage_tiers`):** foreign storage is a **progressive per-day band tariff** per trade direction (Import / Export / Transhipment) × size, charged **cumulatively** after the line's free days (each band's width from its day range, escalating). **Domestic** storage stays a flat per-day rate by size. The calculator computes the cumulative tiered total; **empty** containers use the laden rates. A dedicated storage editor in Settings edits the domestic flat rates + the foreign band rates.
+- **Transhipment** added as a foreign trade option in the calculator (with its own storage bands); domestic stays Inbound/Outbound only.
+
 ## v1.6.0 — 2026-06-23 (JO lifecycle overhaul, dual-view lists, unified payment, fee + terminology cleanups)
 
 ### Job-order lifecycle, payments & UX overhaul (migrations `0151`–`0156`)

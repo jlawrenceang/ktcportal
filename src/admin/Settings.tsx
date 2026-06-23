@@ -10,20 +10,35 @@ import LangToggle from '../components/LangToggle'
 import TestPushCard from './TestPushCard'
 import TestEmailCard from './TestEmailCard'
 import { peso } from '../lib/pricing'
-import { SHIPPING_LINES, TERMINAL_CHARGE_SERVICES, CHARGE_RULE_ACTIONS, tradeLabel, type Trade, type Origin } from '../lib/shippingLines'
+import { SHIPPING_LINES, TERMINAL_CHARGE_SERVICES, CHARGE_RULE_ACTIONS, tradeLabel, type Origin } from '../lib/shippingLines'
 import OriginPill from '../components/OriginPill'
 import { LockIcon, PencilIcon } from '../components/icons'
 
-// Terminal tariff dimensions: service × trade × origin × size × fill × kind (0141).
-const TERM_SERVICES: [string, string][] = [['arrastre', 'Arrastre'], ['wharfage', 'Wharfage'], ['lolo', 'LoLo'], ['weighing', 'Weighing scale (export)'], ['storage', 'Storage (per day)']]
-const TERM_COMBOS: [string, string][] = [['import', 'domestic'], ['import', 'foreign'], ['export', 'domestic'], ['export', 'foreign']]
-// The 4 container types per size column — empty/full × dry/reefer.
-const TERM_FILLKIND: [string, string, string][] = [
-  ['full', 'dry', 'Full · Dry'],
-  ['full', 'reefer', 'Full · Reefer'],
-  ['empty', 'dry', 'Empty · Dry'],
-  ['empty', 'reefer', 'Empty · Reefer'],
+// Per-service rate granularity (0157): each service's rate can vary by any subset
+// of these dimensions (or none = uniform). Storage is handled separately (tiered).
+const TERM_DIMS: { key: string; label: string; values: readonly [string, string] }[] = [
+  { key: 'origin', label: 'Origin (foreign / domestic)', values: ['foreign', 'domestic'] },
+  { key: 'size', label: 'Size (20 / 40)', values: ['20', '40'] },
+  { key: 'fill', label: 'Fill (empty / full)', values: ['empty', 'full'] },
+  { key: 'kind', label: 'Kind (dry / reefer)', values: ['dry', 'reefer'] },
 ]
+const DIM_VAL_LABEL: Record<string, string> = {
+  foreign: 'Foreign', domestic: 'Domestic', '20': '20ft', '40': '40ft',
+  empty: 'Empty', full: 'Full', dry: 'Dry', reefer: 'Reefer',
+}
+// Services edited via the per-dimension editor (storage has its own tiered editor).
+const GRANULAR_SERVICES: [string, string][] = [['arrastre', 'Arrastre'], ['wharfage', 'Wharfage'], ['lolo', 'LoLo'], ['weighing', 'Weighing scale (export)']]
+// Cartesian product of the values of the checked dimensions ([] -> one uniform combo).
+function dimCombos(dims: string[]): Record<string, string>[] {
+  let out: Record<string, string>[] = [{}]
+  for (const d of TERM_DIMS) {
+    if (!dims.includes(d.key)) continue
+    const next: Record<string, string>[] = []
+    for (const c of out) for (const v of d.values) next.push({ ...c, [d.key]: v })
+    out = next
+  }
+  return out
+}
 
 export default function Settings() {
   const { t } = useT()
@@ -300,24 +315,68 @@ export default function Settings() {
     setPricingLocked(true)
   }
 
-  // Terminal tariff (arrastre / LoLo / storage), keyed by trade × origin × size (0073).
+  // Terminal tariff — per-service dimension granularity (terminal_rate_config) +
+  // tiered foreign storage (storage_tiers), 0157. The physical terminal_rates grid
+  // is kept consistent (fan-out) so the calculator's full-key lookup is unchanged.
   type TermRate = { id: string; service: string; trade: string; origin: string; size: string; fill: string; kind: string; rate: number | null }
+  type StorageTier = { id: string; trade: string; size: string; day_from: number; day_to: number | null; rate: number | null }
   const [termRates, setTermRates] = useState<TermRate[]>([])
+  const [termConfig, setTermConfig] = useState<Record<string, string[]>>({})
+  const [storageTiers, setStorageTiers] = useState<StorageTier[]>([])
   const [termBusy, setTermBusy] = useState(false)
   const [termMsg, setTermMsg] = useState<string | null>(null)
   useEffect(() => {
-    void supabase.from('terminal_rates').select('id, service, trade, origin, size, fill, kind, rate')
-      .then(({ data }) => setTermRates(((data ?? []) as TermRate[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) }))))
+    void (async () => {
+      const [{ data: tr }, { data: tc }, { data: st }] = await Promise.all([
+        supabase.from('terminal_rates').select('id, service, trade, origin, size, fill, kind, rate'),
+        supabase.from('terminal_rate_config').select('service, dims'),
+        supabase.from('storage_tiers').select('id, trade, size, day_from, day_to, rate'),
+      ])
+      setTermRates(((tr ?? []) as TermRate[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) })))
+      setTermConfig(Object.fromEntries(((tc ?? []) as { service: string; dims: string[] }[]).map((x) => [x.service, x.dims ?? []])))
+      setStorageTiers(((st ?? []) as StorageTier[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) })))
+    })()
   }, [])
-  function setTermVal(id: string, rate: number | null) {
-    setTermRates((rs) => rs.map((x) => (x.id === id ? { ...x, rate } : x)))
+  const rowMatches = (r: TermRate, combo: Record<string, string>) =>
+    Object.entries(combo).every(([k, v]) => (r as unknown as Record<string, string>)[k] === v)
+  // Canonical rate for a service + partial dimension combo.
+  function comboRate(svc: string, combo: Record<string, string>): number | null {
+    return termRates.find((r) => r.service === svc && rowMatches(r, combo))?.rate ?? null
+  }
+  // Fan a rate out to EVERY physical cell matching the combo (irrelevant dims too).
+  function setComboRate(svc: string, combo: Record<string, string>, rate: number | null) {
+    setTermRates((rs) => rs.map((r) => (r.service === svc && rowMatches(r, combo) ? { ...r, rate } : r)))
+  }
+  function toggleDim(svc: string, dim: string) {
+    setTermConfig((m) => {
+      const cur = m[svc] ?? []
+      return { ...m, [svc]: cur.includes(dim) ? cur.filter((d) => d !== dim) : [...cur, dim] }
+    })
+  }
+  function setTierRate(id: string, rate: number | null) {
+    setStorageTiers((ts) => ts.map((x) => (x.id === id ? { ...x, rate } : x)))
   }
   async function saveTerm() {
     setTermBusy(true); setTermMsg(null)
-    const { error } = await supabase.from('terminal_rates')
-      .upsert(termRates.map((x) => ({ id: x.id, service: x.service, trade: x.trade, origin: x.origin, size: x.size, fill: x.fill, kind: x.kind, rate: x.rate })), { onConflict: 'id' })
+    // Normalize granular services: every physical cell takes its combo's canonical
+    // rate so the calculator's full-key lookup stays consistent.
+    const norm = termRates.map((r) => {
+      const dims = termConfig[r.service]
+      if (!dims) return r
+      const canon = termRates.find((x) => x.service === r.service
+        && dims.every((d) => (x as unknown as Record<string, string>)[d] === (r as unknown as Record<string, string>)[d])
+        && x.rate != null)
+      return { ...r, rate: canon ? canon.rate : null }
+    })
+    const [e1, e2, e3] = await Promise.all([
+      supabase.from('terminal_rates').upsert(norm.map((x) => ({ id: x.id, service: x.service, trade: x.trade, origin: x.origin, size: x.size, fill: x.fill, kind: x.kind, rate: x.rate })), { onConflict: 'id' }),
+      supabase.from('terminal_rate_config').upsert(Object.entries(termConfig).map(([service, dims]) => ({ service, dims })), { onConflict: 'service' }),
+      supabase.from('storage_tiers').upsert(storageTiers.map((x) => ({ id: x.id, trade: x.trade, size: x.size, day_from: x.day_from, day_to: x.day_to, rate: x.rate })), { onConflict: 'id' }),
+    ])
+    setTermRates(norm)
     setTermBusy(false)
-    setTermMsg(error ? error.message : t('✓ Terminal rates saved.'))
+    const err = e1.error || e2.error || e3.error
+    setTermMsg(err ? err.message : t('✓ Terminal rates saved.'))
   }
 
   // Per-shipping-line charge rules (0080): waive/discount/surcharge layered on
@@ -707,47 +766,82 @@ export default function Settings() {
       )}
 
       <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
-        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Terminal tariff (arrastre · wharfage · LoLo · weighing · storage)')}</h2>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Terminal tariff')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
-          {t('Per-container rates the Rate Calculator looks up by the customer’s combination — trade (import/export), origin (domestic/foreign) and container size. Import bills arrastre + wharfage + LoLo; export adds weighing. Weighing applies to export only; on export, Maersk/MCC waive LoLo (the line shoulders it). Storage is per container, per day past the Last Free Day. Amounts in ₱, VAT-exclusive (12% VAT is added on the subtotal).')}
+          {t('Per-container rates the Rate Calculator looks up. For each service, tick the conditions its rate depends on — leave all unticked for one uniform rate. Storage is special: domestic is a flat per-day rate by size; foreign is a progressive per-day band tariff. Amounts in ₱, VAT-exclusive (12% VAT is added on the subtotal).')}
         </p>
         <div style={{ display: 'grid', gap: 16 }}>
-          {TERM_SERVICES.map(([svc, svcLabel]) => (
-            <div key={svc} style={{ display: 'grid', gap: 6 }}>
-              <span style={{ fontSize: 13.5, fontWeight: 700 }}>{t(svcLabel)}</span>
-              <div className="ktc-label" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 11.5, paddingLeft: 2 }}>
-                <span style={{ flex: '1 1 150px', minWidth: 0 }}>{t('Trade · origin')}</span>
-                <span style={{ width: 120, textAlign: 'center' }}>{t('20ft')}</span>
-                <span style={{ width: 120, textAlign: 'center' }}>{t('40ft')}</span>
-              </div>
-              {TERM_COMBOS.map(([trade, origin]) => (
-                <div key={`${trade}-${origin}`} style={{ display: 'grid', gap: 4, padding: '8px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 700 }}>
-                    <OriginPill origin={origin as Origin} size="sm" />
-                    {t(tradeLabel(trade as Trade, origin as Origin))}
-                  </span>
-                  {TERM_FILLKIND.map(([fill, kind, fkLabel]) => {
-                    const r20 = termRates.find((x) => x.service === svc && x.trade === trade && x.origin === origin && x.size === '20' && x.fill === fill && x.kind === kind)
-                    const r40 = termRates.find((x) => x.service === svc && x.trade === trade && x.origin === origin && x.size === '40' && x.fill === fill && x.kind === kind)
+          {GRANULAR_SERVICES.map(([svc, svcLabel]) => {
+            const dims = termConfig[svc] ?? []
+            return (
+              <div key={svc} style={{ display: 'grid', gap: 8, padding: '12px 14px', borderRadius: 12, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                <span style={{ fontSize: 14, fontWeight: 700 }}>{t(svcLabel)}</span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+                  <span className="ktc-label" style={{ fontSize: 11.5 }}>{t('Rate varies by:')}</span>
+                  {TERM_DIMS.map((d) => (
+                    <label key={d.key} className="ktc-label" style={{ fontSize: 11.5, display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={dims.includes(d.key)} onChange={() => toggleDim(svc, d.key)} /> {t(d.label)}
+                    </label>
+                  ))}
+                  {dims.length === 0 && <span className="ktc-chip">{t('Uniform rate')}</span>}
+                </div>
+                <div style={{ display: 'grid', gap: 6 }}>
+                  {dimCombos(dims).map((combo) => {
+                    const label = dims.length === 0
+                      ? t('All containers')
+                      : TERM_DIMS.filter((d) => dims.includes(d.key)).map((d) => t(DIM_VAL_LABEL[combo[d.key]] ?? combo[d.key])).join(' · ')
                     return (
-                      <div key={`${fill}-${kind}`} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-                        <span style={{ flex: '1 1 130px', minWidth: 0, fontSize: 11.5 }}>{t(fkLabel)}</span>
-                        {[r20, r40].map((row, idx) => (
-                          <span key={idx} style={{ width: 110, display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}>
-                            <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
-                            <input className="ktc-input" type="number" step="0.01" min="0" value={row?.rate ?? ''}
-                              disabled={!row} placeholder={t('Enter rate')}
-                              onChange={(e) => row && setTermVal(row.id, e.target.value === '' ? null : Number(e.target.value))}
-                              style={{ width: 84, padding: '6px 8px' }} />
-                          </span>
-                        ))}
+                      <div key={JSON.stringify(combo)} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span style={{ flex: '1 1 180px', minWidth: 0, fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {dims.includes('origin') && <OriginPill origin={combo.origin as Origin} size="sm" />}
+                          {label}
+                        </span>
+                        <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
+                        <input className="ktc-input" type="number" step="0.01" min="0" value={comboRate(svc, combo) ?? ''} placeholder={t('not set')}
+                          onChange={(e) => setComboRate(svc, combo, e.target.value === '' ? null : Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
                       </div>
                     )
                   })}
                 </div>
+              </div>
+            )
+          })}
+
+          {/* Storage — domestic flat by size + foreign progressive bands */}
+          <div style={{ display: 'grid', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+            <span style={{ fontSize: 14, fontWeight: 700 }}>{t('Storage (per day)')}</span>
+            <div style={{ display: 'grid', gap: 6 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 600 }}><OriginPill origin="domestic" size="sm" /> {t('Flat per-day rate by size')}</span>
+              {(['20', '40'] as const).map((sz) => (
+                <div key={sz} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ flex: '1 1 120px', fontSize: 12 }}>{t(sz === '20' ? '20ft' : '40ft')}</span>
+                  <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
+                  <input className="ktc-input" type="number" step="0.01" min="0" value={comboRate('storage', { origin: 'domestic', size: sz }) ?? ''} placeholder={t('not set')}
+                    onChange={(e) => setComboRate('storage', { origin: 'domestic', size: sz }, e.target.value === '' ? null : Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
+                </div>
               ))}
             </div>
-          ))}
+            <div style={{ display: 'grid', gap: 8 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 600 }}><OriginPill origin="foreign" size="sm" /> {t('Progressive per-day bands (charged cumulatively after the free days)')}</span>
+              {(['import', 'export', 'transhipment'] as const).map((tr) => (
+                <div key={tr} style={{ display: 'grid', gap: 4 }}>
+                  <span className="ktc-label" style={{ fontSize: 11.5, fontWeight: 700 }}>{t(tradeLabel(tr, 'foreign'))}</span>
+                  {(['20', '40'] as const).map((sz) => (
+                    <div key={sz} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 40, fontSize: 11.5 }}>{t(sz === '20' ? '20ft' : '40ft')}</span>
+                      {storageTiers.filter((b) => b.trade === tr && b.size === sz).sort((a, b) => a.day_from - b.day_from).map((b) => (
+                        <span key={b.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11 }}>
+                          <span className="ktc-label" style={{ fontSize: 10.5, whiteSpace: 'nowrap' }}>{b.day_from}{b.day_to ? `–${b.day_to}` : '+'}</span>
+                          <input className="ktc-input ktc-mono" type="number" step="0.01" min="0" value={b.rate ?? ''} placeholder="—"
+                            onChange={(e) => setTierRate(b.id, e.target.value === '' ? null : Number(e.target.value))} style={{ width: 78, padding: '5px 6px' }} />
+                        </span>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
           <button className="ktc-btn" type="button" disabled={termBusy} onClick={() => void saveTerm()} style={{ width: 'auto', padding: '10px 20px' }}>

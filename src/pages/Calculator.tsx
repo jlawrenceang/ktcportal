@@ -8,7 +8,7 @@ import { peso } from '../lib/pricing'
 import { usePageTour } from '../components/TourProvider'
 import { calculatorSteps } from '../components/WelcomeTour'
 import { useT } from '../lib/i18n'
-import { SHIPPING_LINES, normLine, tradeLabel, tradeAction, type Origin } from '../lib/shippingLines'
+import { SHIPPING_LINES, normLine, tradeLabel, tradeAction, type Origin, type Trade } from '../lib/shippingLines'
 import OriginPill from '../components/OriginPill'
 
 // Rate calculator — a guided estimate. Flow (redesigned 2026-06-22):
@@ -29,6 +29,7 @@ type Kind = 'dry' | 'reefer'
 type Cell = { size: Size; fill: Fill; kind: Kind; qty: number }
 type Rule = { shipping_line: string; service: string; trade: string | null; action: string; value: number }
 type Svc = { service: string; rate: number | null; unit: string; vatable: boolean }
+type StorageTier = { trade: string; size: string; day_from: number; day_to: number | null; rate: number | null }
 
 const REEFER_KEY = '__reefer__'
 const emptyCell = (): Cell => ({ size: '20', fill: 'full', kind: 'dry', qty: 1 })
@@ -45,12 +46,13 @@ export default function Calculator() {
     { vat: 0.12, admin: null, reefer: null, reeferMin: 4, deposit: 10000 })
   const [vessels, setVessels] = useState<VesselOpt[]>([])
   const [rules, setRules] = useState<Rule[]>([])
+  const [storageTiers, setStorageTiers] = useState<StorageTier[]>([])
 
   // Inputs
   const [line, setLine] = useState('')
   const [vesselVisit, setVesselVisit] = useState('')
   const [origin, setOrigin] = useState<Origin>('foreign')
-  const [trade, setTrade] = useState<'import' | 'export'>('import')
+  const [trade, setTrade] = useState<Trade>('import')
   const [pickupDate, setPickupDate] = useState('')
   const [cells, setCells] = useState<Cell[]>([emptyCell()])
   const [addedSvcs, setAddedSvcs] = useState<string[]>([])
@@ -63,12 +65,13 @@ export default function Calculator() {
 
   useEffect(() => {
     void (async () => {
-      const [{ data: tr }, { data: sr }, { data: ps }, { data: v }, { data: cr }] = await Promise.all([
+      const [{ data: tr }, { data: sr }, { data: ps }, { data: v }, { data: cr }, { data: st }] = await Promise.all([
         supabase.from('terminal_rates').select('service, trade, origin, size, fill, kind, rate'),
         supabase.from('service_rates').select('service, rate, unit, vatable').eq('active', true).order('sort_order').order('service'),
         supabase.from('pricing_settings').select('key, value'),
         supabase.from('vessel_schedule_v').select('vessel_visit, vessel_name, voyage_number, last_free_day, shipping_line').eq('is_current', true).order('vessel_name'),
         supabase.from('shipping_line_charge_rules').select('shipping_line, service, trade, action, value').eq('active', true),
+        supabase.from('storage_tiers').select('trade, size, day_from, day_to, rate'),
       ])
       setTermRates(((tr ?? []) as TermRate[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) })))
       setServices(((sr ?? []) as { service: string; rate: number | string | null; unit: string; vatable: boolean }[])
@@ -80,6 +83,7 @@ export default function Calculator() {
       })
       setVessels((v ?? []) as VesselOpt[])
       setRules(((cr ?? []) as Rule[]).map((x) => ({ ...x, value: Number(x.value) })))
+      setStorageTiers(((st ?? []) as StorageTier[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) })))
     })()
   }, [])
 
@@ -93,7 +97,7 @@ export default function Calculator() {
   function chooseLine(code: string) {
     setLine(code)
     const o = SHIPPING_LINES.find((l) => l.code === code)?.origin
-    if (o) setOrigin(o)
+    if (o) { setOrigin(o); if (o === 'domestic' && trade === 'transhipment') setTrade('import') }
     setVesselVisit('')
   }
 
@@ -155,8 +159,42 @@ export default function Calculator() {
       const ms = new Date(pickupDate).getTime() - new Date(lfd).getTime()
       storageDays = ms > 0 ? Math.round(ms / 86_400_000) : 0
     }
-    const sizedStorage = sized('storage')
-    const storageR = applyRules('storage', sizedStorage == null ? null : sizedStorage * storageDays)
+    // FOREIGN storage is a progressive tiered per-day tariff: the chargeable days
+    // (past the line's last-free-day) walk through the bands in sequence (each
+    // band's width = its day range), escalating — cumulative. DOMESTIC storage is
+    // a flat per-day rate by size. Empty containers use the same (laden) rates.
+    let storageBase: number | null
+    if (origin === 'foreign') {
+      const tieredPerContainer = (size: string): number | null => {
+        const bands = storageTiers.filter((b) => b.trade === trade && b.size === size).sort((a, b) => a.day_from - b.day_from)
+        if (!bands.length) return null
+        let remaining = storageDays, total = 0
+        for (const b of bands) {
+          if (remaining <= 0) break
+          const width = b.day_to == null ? Infinity : b.day_to - b.day_from + 1
+          const d = Math.min(remaining, width)
+          if (b.rate == null) return null // band rate not configured
+          total += b.rate * d
+          remaining -= d
+        }
+        return total
+      }
+      if (storageDays <= 0) storageBase = 0
+      else {
+        let sum = 0, anyNull = false
+        for (const c of cells) {
+          if (c.qty <= 0) continue
+          const per = tieredPerContainer(c.size)
+          if (per == null) { anyNull = true; continue }
+          sum += per * c.qty
+        }
+        storageBase = anyNull ? null : sum
+      }
+    } else {
+      const sizedStorage = sized('storage')
+      storageBase = sizedStorage == null ? null : sizedStorage * storageDays
+    }
+    const storageR = applyRules('storage', storageBase)
     const storage = storageR.amount
     const storageTag = storageR.tag
 
@@ -191,7 +229,7 @@ export default function Calculator() {
     const vat = vatable * settings.vat
     const charges = vatable + vat + (settings.admin ?? 0) + ancillaryFlat
     return { basic, storage, storageTag, storageDays, ancillary, reeferOn, reefer, reeferHours, deposit, vatable, vat, charges, toPrepare: charges + deposit, hasUnconfigured }
-  }, [rateOf, basicServices, cells, totalQty, lfd, pickupDate, services, addedSvcs, svcCounts, settings, reeferVans, plugIn, plugOut, rules, line, trade, t])
+  }, [rateOf, basicServices, cells, totalQty, lfd, pickupDate, services, addedSvcs, svcCounts, settings, reeferVans, plugIn, plugOut, rules, line, trade, origin, storageTiers, t])
 
   const hasVessel = !!vesselVisit
   const canGenerate = hasVessel && totalQty > 0
@@ -307,8 +345,10 @@ export default function Calculator() {
               {fieldRow(
                 <>{t('Shipment')} *</>,
                 seg(trade, setTrade, [
-                  { v: 'import', label: `${tradeLabel('import', origin)} (${tradeAction('import')})` },
-                  { v: 'export', label: `${tradeLabel('export', origin)} (${tradeAction('export')})` },
+                  { v: 'import' as Trade, label: `${tradeLabel('import', origin)} (${tradeAction('import')})` },
+                  { v: 'export' as Trade, label: `${tradeLabel('export', origin)} (${tradeAction('export')})` },
+                  // Transhipment is foreign-only (its own storage bands).
+                  ...(origin === 'foreign' ? [{ v: 'transhipment' as Trade, label: tradeLabel('transhipment', origin) }] : []),
                 ]),
               )}
               {fieldRow(
