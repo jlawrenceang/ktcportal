@@ -386,6 +386,7 @@ export default function MyJobOrders() {
                       <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
                         <b className="ktc-mono" style={{ fontSize: 14 }}>{o.jo_number ?? o.entry_number ?? t('Draft')}</b>
                         <StatusBadge status={o.status} />
+                        <PayPill o={o} />
                       </span>
                       <span className="ktc-label" style={{ fontSize: 12.5, whiteSpace: 'nowrap', flex: '0 0 auto' }}>{fmtDate(o.created_at)}</span>
                     </div>
