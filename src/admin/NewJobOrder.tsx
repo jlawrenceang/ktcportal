@@ -32,13 +32,11 @@ export default function NewJobOrder() {
   const [filed, setFiled] = useState<Filed | null>(null)
   const submittingRef = useRef(false)
 
-  // Vessel + voyage from the current schedule (escape hatch for not-listed).
+  // Vessel + voyage from the current schedule (schedule-driven — add it to the
+  // vessel schedule first if it's missing; no manual entry).
   type VesselOpt = { vessel_visit: string; vessel_name: string; voyage_number: string }
   const [vessels, setVessels] = useState<VesselOpt[]>([])
   const [vesselVisit, setVesselVisit] = useState('')
-  const [notListed, setNotListed] = useState(false)
-  const [mVessel, setMVessel] = useState('')
-  const [mVoyage, setMVoyage] = useState('')
   useEffect(() => {
     void supabase.from('vessel_schedule_v').select('vessel_visit, vessel_name, voyage_number').eq('is_current', true).order('vessel_name')
       .then(({ data }) => setVessels((data ?? []) as VesselOpt[]))
@@ -49,7 +47,7 @@ export default function NewJobOrder() {
     setConsignee(null)
     setEntryNumber('')
     setLines([emptyLine()])
-    setVesselVisit(''); setNotListed(false); setMVessel(''); setMVoyage('')
+    setVesselVisit('')
     setFiled(null)
     setError(null)
   }
@@ -60,15 +58,9 @@ export default function NewJobOrder() {
     setError(null)
     if (!customer) { setError(t('Pick the customer this order is for.')); return }
     if (!consignee) { setError(t('Select a consignee from the list.')); return }
-    let vVisit: string | null = null, vName = '', vVoyage = ''
-    if (notListed) {
-      vName = mVessel.trim(); vVoyage = mVoyage.trim()
-      if (!vName || !vVoyage) { setError(t('Enter the vessel name and voyage number.')); return }
-    } else {
-      const sel = vessels.find((v) => v.vessel_visit === vesselVisit)
-      if (!sel) { setError(t('Select the vessel & voyage (or tick “not listed”).')); return }
-      vVisit = sel.vessel_visit; vName = sel.vessel_name; vVoyage = sel.voyage_number
-    }
+    const sel = vessels.find((v) => v.vessel_visit === vesselVisit)
+    if (!sel) { setError(t('Select the vessel & voyage from the list.')); return }
+    const vVisit: string | null = sel.vessel_visit, vName = sel.vessel_name, vVoyage = sel.voyage_number
     const filled = lines.filter((l) => l.container_number.trim())
     if (filled.length === 0) { setError(t('Add at least one container.')); return }
 
@@ -167,22 +159,15 @@ export default function NewJobOrder() {
 
             <div style={{ display: 'grid', gap: 6 }}>
               <label className="ktc-label" htmlFor="vessel">{t('Vessel & Voyage')}</label>
-              {!notListed ? (
-                <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
-                  <option value="">{t('Select a vessel…')}</option>
-                  {vessels.map((v) => (
-                    <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name} — {v.voyage_number}</option>
-                  ))}
-                </select>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <input className="ktc-input" placeholder={t('Vessel name')} value={mVessel} onChange={(e) => setMVessel(e.target.value)} />
-                  <input className="ktc-input" placeholder={t('Voyage number')} value={mVoyage} onChange={(e) => setMVoyage(e.target.value)} />
-                </div>
-              )}
-              <label className="ktc-label" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <input type="checkbox" checked={notListed} onChange={(e) => setNotListed(e.target.checked)} /> {t('Vessel not listed — enter manually')}
-              </label>
+              <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
+                <option value="">{t('Select a vessel…')}</option>
+                {vessels.map((v) => (
+                  <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name} — {v.voyage_number}</option>
+                ))}
+              </select>
+              <span className="ktc-label" style={{ fontSize: 11.5 }}>
+                {t('If the vessel isn’t listed, add it to the vessel schedule first.')}
+              </span>
             </div>
 
             <ContainerLinesEditor lines={lines} onChange={setLines} />

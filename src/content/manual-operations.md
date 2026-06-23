@@ -34,7 +34,7 @@ Customers can only file a job order against a **current** vessel/voyage, so keep
 - **Bulk update:** tap **⬇ Template**, fill the sheet (or paste from your own), then **⬆ Import** — it adds/updates by **vessel visit**, so re-importing the same sheet is safe (no duplicates).
 - **Calendar** view shows arrivals by month.
 - **Snapshot** makes a clean image of the **active vessels** — on a phone it shares straight to your **Viber group**; on a computer it downloads so you can attach it.
-- If a customer's vessel isn't listed yet, they file with **"not listed"** and type it in — add the call and it lines up.
+- If a customer's vessel isn't listed yet, they **can't file against it** — add the call to the schedule first, then they (or you, on their behalf) can file under it.
 
 ## 5 · The Job Orders tab
 

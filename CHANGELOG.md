@@ -4,6 +4,10 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.6.5 — 2026-06-23 (vessel is dropdown-only everywhere)
+
+- **Removed the "vessel not listed — enter manually" escape hatch app-wide** — the customer **edit-order** form (`EditJobOrderForm`) and the admin **file-on-behalf** form (`NewJobOrder`) are now **dropdown-only** (vessel is schedule-driven). If a vessel isn't listed, customers call KTC customer service and ops add it to the schedule first. (The customer filing form + on-hold resubmit were already dropdown-only.) Ops manual updated.
+
 ## v1.6.4 — 2026-06-23 (consignee list polish + clickable detail)
 
 - **Admin consignee list polished + clickable:** rows are now clean, scannable cards (code · name + "customer-requested" chip + a "needs docs" hint + TIN preview + status pill). Clicking a row opens a **detail modal** showing the same fields the customer fills when requesting a consignee — **business address, TIN / VAT Reg #, BIR 2303 (view), BIR 2307 (view)** — plus status, note, dates, the **requester's name + email** (for customer-requested ones), and **Print CIS**. The **Approve / Needs info / Reject / Edit / Delete** actions moved into the modal (review the documents + details together before deciding); "Approve all pending" bulk bar retained.

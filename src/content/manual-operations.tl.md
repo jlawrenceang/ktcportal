@@ -34,7 +34,7 @@ Makakapag-file lang ang mga customer ng Job Order kontra sa isang **current** na
 - **Bulk update:** i-tap ang **⬇ Template**, punan ang sheet (o i-paste mula sa sarili mo), tapos **⬆ Import** — magda-dagdag/mag-uupdate ito ayon sa **vessel visit**, kaya ligtas na i-re-import ang parehong sheet (walang mado-doble).
 - **Calendar** view ang nagpapakita ng mga arrival kada buwan.
 - **Snapshot** ay gumagawa ng malinis na imahe ng **active vessels** — sa phone, diretsong nai-share sa iyong **Viber group**; sa computer, nada-download ito para ma-attach mo.
-- Kung wala pa sa listahan ang vessel ng customer, mag-file sila gamit ang **"not listed"** at i-type ito — i-add mo lang ang call at maa-align ito.
+- Kung wala pa sa listahan ang vessel ng customer, **hindi sila makakapag-file dito** — i-add mo muna ang call sa schedule, tapos puwede na silang (o ikaw, para sa kanila) mag-file dito.
 
 ## 5 · Ang Job Orders tab
 
