@@ -111,13 +111,15 @@ export default function Consignees() {
   // edit
   const [editing, setEditing] = useState<EditState | null>(null)
   const [editDoc, setEditDoc] = useState<File | null>(null)
+  // detail modal (clickable row)
+  const [selected, setSelected] = useState<Consignee | null>(null)
 
   async function load() {
     setLoading(true)
     const s = query.replace(/[,()%*]/g, ' ').trim()
     let req = supabase
       .from('consignees')
-      .select('id, code, name, status, address, tin, doc_2303_path, doc_2307_path, requested_by, note', { count: 'exact' })
+      .select('id, code, name, status, address, tin, doc_2303_path, doc_2307_path, requested_by, note, created_at, requested_at, decided_at', { count: 'exact' })
       .order('code')
       .range(page * PAGE, page * PAGE + PAGE - 1)
     if (s) req = req.or(`name.ilike.*${s}*,code.ilike.*${s}*`)
@@ -221,6 +223,7 @@ export default function Consignees() {
     const status: AccreditationStatus = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'needs_info'
     if (filter === 'all') setList((l) => l.map((x) => (x.id === c.id ? { ...x, status, note: note ?? x.note } : x)))
     else setList((l) => l.filter((x) => x.id !== c.id))
+    setSelected((s) => (s && s.id === c.id ? { ...s, status, note: note ?? s.note } : s))
   }
 
   async function saveEdit() {
@@ -237,6 +240,7 @@ export default function Consignees() {
         .eq('id', editing.id)
       if (error) throw error
       await load()
+      setSelected((s) => (s && s.id === editing.id ? { ...s, code: cc, name: n, address: editing.address.trim() || null, tin: editing.tin.trim() || null, doc_2303_path: docPath } : s))
       setEditing(null); setEditDoc(null); setNotice(t('Saved.'))
     } catch (err) { setError(friendly(err, t)) }
     finally { setBusy(false) }
@@ -249,6 +253,7 @@ export default function Consignees() {
     setBusy(false)
     if (error) return setError(friendly(error, t))
     setList((l) => l.filter((x) => x.id !== c.id)); setTotal((n) => Math.max(0, n - 1)); setNotice(t('Deleted {code}.', { code: c.code }))
+    setSelected((s) => (s && s.id === c.id ? null : s))
   }
 
   const from = total === 0 ? 0 : page * PAGE + 1
@@ -318,55 +323,137 @@ export default function Consignees() {
           </span>
         </div>
 
-        {loading ? <span className="ktc-label">{t('Loading…')}</span> : list.length === 0 ? (
+        {loading ? (
+          <div style={{ display: 'grid', gap: 6 }}>{[0, 1, 2, 3, 4].map((i) => <div key={i} className="ktc-skeleton" style={{ height: 48, borderRadius: 11 }} />)}</div>
+        ) : list.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>{query || filter !== 'all' ? t('No matches.') : t('No consignees yet.')}</div>
         ) : (
-          <div style={{ display: 'grid', gap: 4 }}>
+          <div style={{ display: 'grid', gap: 6 }}>
             {list.map((c) => {
               const ss = STATUS_STYLE[c.status] ?? STATUS_STYLE.pending
               const complete = !!(c.address && c.tin && c.doc_2303_path)
-              if (editing?.id === c.id) {
-                return (
-                  <div key={c.id} style={{ padding: 14, borderRadius: 12, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)', margin: '4px 0' }}>
-                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                      <Field label={t('Code')} w={120}><input className="ktc-input" value={editing.code} onChange={(e) => setEditing({ ...editing, code: e.target.value })} /></Field>
-                      <Field label={t('Name')} w={220}><input className="ktc-input" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
-                      <Field label={t('Address')} w={240}><input className="ktc-input" value={editing.address} onChange={(e) => setEditing({ ...editing, address: e.target.value })} /></Field>
-                      <Field label={t('TIN')} w={150}><input className="ktc-input" value={editing.tin} onChange={(e) => setEditing({ ...editing, tin: e.target.value })} /></Field>
-                      <Field label={editing.doc_2303_path ? t('2303 (replace)') : t('2303')} w={200}><input className="ktc-input" type="file" accept="image/*,application/pdf" onChange={(e) => setEditDoc(e.target.files?.[0] ?? null)} style={{ padding: '9px 11px' }} /></Field>
-                    </div>
-                    <div style={{ display: 'flex', gap: 12, marginTop: 10, alignItems: 'center' }}>
-                      <button className="ktc-link" disabled={busy} onClick={saveEdit} style={{ fontSize: 13, fontWeight: 600 }}>{t('Save')}</button>
-                      <button className="ktc-link" onClick={() => { setEditing(null); setEditDoc(null) }} style={{ fontSize: 13 }}>{t('Cancel')}</button>
-                      {editing.doc_2303_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', editing.doc_2303_path, t('2303 — {name}', { name: editing.name }))} style={{ fontSize: 13 }}>{t('View current 2303')}</button>}
-                    </div>
-                  </div>
-                )
-              }
               return (
-                <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: '1px solid hsl(var(--line-soft))' }}>
-                  <span style={{ flex: 1, fontSize: 14 }}>
-                    <b>{c.code}</b> – {c.name}
-                    {c.requested_by && <span style={{ fontSize: 10.5, fontWeight: 700, marginLeft: 8, padding: '1px 7px', borderRadius: 999, background: 'var(--c-h40-90-94)', color: 'var(--c-h35-80-38)', verticalAlign: '1px' }}>{t('customer-requested')}</span>}
-                    {!complete && c.status !== 'approved' && <span className="ktc-label" style={{ fontSize: 11, marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 4, verticalAlign: '-1px' }}><AlertTriangleIcon size={11} /> {t('needs address/TIN/2303')}</span>}
+                <button key={c.id} type="button" className="ktc-cn-row" onClick={() => { setSelected(c); setEditing(null); setError(null) }}>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                      <b className="ktc-mono" style={{ fontSize: 12.5 }}>{c.code}</b>
+                      <span style={{ fontSize: 13.5, overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</span>
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
+                      {c.requested_by && <span className="ktc-chip ktc-chip--accent" style={{ fontSize: 10 }}>{t('customer-requested')}</span>}
+                      {!complete && c.status !== 'approved' && <span className="ktc-label" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--c-h30-70-38)' }}><AlertTriangleIcon size={11} /> {t('needs address/TIN/2303')}</span>}
+                      {c.tin && <span className="ktc-label" style={{ fontSize: 11 }}>{t('TIN')} {c.tin}</span>}
+                    </span>
                   </span>
-                  {c.doc_2303_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', c.doc_2303_path, t('2303 — {name}', { name: c.name }))} style={{ fontSize: 12 }}>{t('2303')}</button>}
-                  {c.doc_2307_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', c.doc_2307_path, t('2307 — {name}', { name: c.name }))} style={{ fontSize: 12 }}>{t('2307')}</button>}
-                  <a className="ktc-link" href={cisPrintUrl({ mode: 'update', trade_name: c.name, address1: c.address ?? '', tin: c.tin ?? '' })} target="_blank" rel="noopener" style={{ fontSize: 12 }}>{t('CIS')}</a>
-                  <span title={c.note ?? undefined} style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{t(c.status)}</span>
-                  {canReview && c.status !== 'approved' && <button className="ktc-link" disabled={busy} onClick={() => void review(c, 'approve')} style={{ fontSize: 13, color: 'var(--c-h150-60-32)' }}>{t('Approve')}</button>}
-                  {canReview && c.status !== 'needs_info' && <button className="ktc-link" disabled={busy} onClick={() => { const r = window.prompt(t('Ask the customer for more info — what’s needed:'), ''); if (r === null) return; if (!r.trim()) { setError(t('Add a note for the customer.')); return } void review(c, 'needs_info', r.trim()) }} style={{ fontSize: 13 }}>{t('Needs info')}</button>}
-                  {canReview && c.status !== 'rejected' && <button className="ktc-link" disabled={busy} onClick={() => { const r = window.prompt(t('Reason for rejecting (shown to the customer):'), ''); if (r === null) return; if (!r.trim()) { setError(t('Add a reason.')); return } void review(c, 'reject', r.trim()) }} style={{ fontSize: 13 }}>{t('Reject')}</button>}
-                  {canManage && <button className="ktc-link" onClick={() => setEditing({ id: c.id, code: c.code, name: c.name, address: c.address ?? '', tin: c.tin ?? '', doc_2303_path: c.doc_2303_path })} style={{ fontSize: 13 }}>{t('Edit')}</button>}
-                  {canManage && <button className="ktc-link" disabled={busy} onClick={() => remove(c)} style={{ fontSize: 13, color: 'var(--acc-2)' }}>{t('Delete')}</button>}
-                </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 999, background: ss.bg, color: ss.fg, whiteSpace: 'nowrap', flex: '0 0 auto' }}>{t(c.status)}</span>
+                  <span aria-hidden style={{ color: 'hsl(var(--ink-2))', fontSize: 17, flex: '0 0 auto', lineHeight: 1 }}>›</span>
+                </button>
               )
             })}
           </div>
         )}
       </div>
+      {selected && (() => {
+        const c = selected
+        const ss = STATUS_STYLE[c.status] ?? STATUS_STYLE.pending
+        const close = () => { setSelected(null); setEditing(null); setEditDoc(null) }
+        return (
+          <div className="ktc-modal-backdrop" onClick={close}>
+            <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()}
+              style={{ width: '100%', maxWidth: 520, maxHeight: '88vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '15px 20px', borderBottom: '1px solid var(--glass-brd)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', minWidth: 0 }}>
+                  <b className="ktc-mono" style={{ fontSize: 15 }}>{c.code}</b>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{t(c.status)}</span>
+                  {c.requested_by && <span className="ktc-chip ktc-chip--accent" style={{ fontSize: 10.5 }}>{t('customer-requested')}</span>}
+                </div>
+                <button type="button" aria-label={t('Close')} onClick={close} style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))', flex: '0 0 auto' }}>✕</button>
+              </div>
+
+              <div style={{ overflowY: 'auto', padding: '16px 20px' }}>
+                {error && <div style={{ marginBottom: 12, color: 'var(--acc-2)', fontSize: 12.5 }} role="alert">{error}</div>}
+
+                {editing && editing.id === c.id ? (
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    <ModalField label={t('Code')}><input className="ktc-input" value={editing.code} onChange={(e) => setEditing({ ...editing, code: e.target.value })} /></ModalField>
+                    <ModalField label={t('Consignee name')}><input className="ktc-input" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></ModalField>
+                    <ModalField label={t('Business address')}><input className="ktc-input" value={editing.address} onChange={(e) => setEditing({ ...editing, address: e.target.value })} /></ModalField>
+                    <ModalField label={t('TIN / VAT Reg #')}><input className="ktc-input" value={editing.tin} onChange={(e) => setEditing({ ...editing, tin: e.target.value })} /></ModalField>
+                    <ModalField label={editing.doc_2303_path ? t('Replace BIR 2303') : t('BIR 2303')}><input className="ktc-input" type="file" accept="image/*,application/pdf" onChange={(e) => setEditDoc(e.target.files?.[0] ?? null)} style={{ padding: '8px 11px' }} /></ModalField>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 2 }}>
+                      <button className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void saveEdit()} style={{ width: 'auto', padding: '8px 18px' }}>{busy ? t('Saving…') : t('Save changes')}</button>
+                      <button className="ktc-link" onClick={() => { setEditing(null); setEditDoc(null) }}>{t('Cancel')}</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 15.5, fontWeight: 600, lineHeight: 1.35 }}>{c.name}</div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '12px 16px', fontSize: 13, marginTop: 14 }}>
+                      <Meta label={t('Business address')} value={c.address || '—'} span2 />
+                      <Meta label={t('TIN / VAT Reg #')} value={c.tin || '—'} />
+                      <Meta label={t('Date added')} value={c.created_at ? fmtDate(c.created_at) : '—'} />
+                      {c.requested_at && <Meta label={t('Requested')} value={fmtDate(c.requested_at)} />}
+                      {c.decided_at && <Meta label={t('Reviewed')} value={fmtDate(c.decided_at)} />}
+                    </div>
+
+                    {c.note && (
+                      <div style={{ marginTop: 12, fontSize: 12.5, lineHeight: 1.5, padding: '9px 12px', borderRadius: 9, background: ss.bg, color: ss.fg }}>
+                        <b>{t('Note:')}</b> {c.note}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
+                      {c.doc_2303_path
+                        ? <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => void openFromStorage('consignee-docs', c.doc_2303_path, t('2303 — {name}', { name: c.name }))} style={{ width: 'auto', padding: '7px 13px' }}>{t('View BIR 2303')}</button>
+                        : <span className="ktc-label" style={{ fontSize: 12, alignSelf: 'center' }}>{t('No BIR 2303 on file')}</span>}
+                      {c.doc_2307_path && <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => void openFromStorage('consignee-docs', c.doc_2307_path, t('2307 — {name}', { name: c.name }))} style={{ width: 'auto', padding: '7px 13px' }}>{t('View BIR 2307')}</button>}
+                      <a className="ktc-btn-secondary ktc-btn--sm" href={cisPrintUrl({ mode: 'update', trade_name: c.name, address1: c.address ?? '', tin: c.tin ?? '' })} target="_blank" rel="noopener" style={{ width: 'auto', padding: '7px 13px', textDecoration: 'none' }}>{t('Print CIS')}</a>
+                    </div>
+
+                    {(canReview || canManage) && (
+                      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--glass-brd)' }}>
+                        {canReview && c.status !== 'approved' && <button className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void review(c, 'approve')} style={{ width: 'auto', padding: '8px 16px' }}>{t('Approve')}</button>}
+                        {canReview && c.status !== 'needs_info' && <button className="ktc-link" disabled={busy} onClick={() => { const r = window.prompt(t('Ask the customer for more info — what’s needed:'), ''); if (r === null) return; if (!r.trim()) { setError(t('Add a note for the customer.')); return } void review(c, 'needs_info', r.trim()) }}>{t('Needs info')}</button>}
+                        {canReview && c.status !== 'rejected' && <button className="ktc-link" disabled={busy} onClick={() => { const r = window.prompt(t('Reason for rejecting (shown to the customer):'), ''); if (r === null) return; if (!r.trim()) { setError(t('Add a reason.')); return } void review(c, 'reject', r.trim()) }} style={{ color: 'var(--acc-2)' }}>{t('Reject')}</button>}
+                        {canManage && <button className="ktc-link" onClick={() => setEditing({ id: c.id, code: c.code, name: c.name, address: c.address ?? '', tin: c.tin ?? '', doc_2303_path: c.doc_2303_path })} style={{ marginLeft: 'auto' }}>{t('Edit')}</button>}
+                        {canManage && <button className="ktc-link" disabled={busy} onClick={() => void remove(c)} style={{ color: 'var(--acc-2)' }}>{t('Delete')}</button>}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {viewerModal}
     </AdminShell>
+  )
+}
+
+// mm/dd/yyyy
+function fmtDate(iso: string): string {
+  const d = new Date(iso)
+  return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`
+}
+
+function Meta({ label, value, span2 }: { label: string; value: string; span2?: boolean }) {
+  return (
+    <div style={{ gridColumn: span2 ? '1 / -1' : undefined }}>
+      <div className="ktc-label" style={{ fontSize: 11, opacity: 0.7 }}>{label}</div>
+      <div style={{ fontWeight: 500, wordBreak: 'break-word' }}>{value}</div>
+    </div>
+  )
+}
+
+function ModalField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'grid', gap: 5 }}>
+      <label className="ktc-label" style={{ fontSize: 12 }}>{label}</label>
+      {children}
+    </div>
   )
 }
 

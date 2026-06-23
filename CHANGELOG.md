@@ -4,6 +4,10 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.6.4 — 2026-06-23 (consignee list polish + clickable detail)
+
+- **Admin consignee list polished + clickable:** rows are now clean, scannable cards (code · name + "customer-requested" chip + a "needs docs" hint + TIN preview + status pill). Clicking a row opens a **detail modal** showing the same fields the customer fills when requesting a consignee — **business address, TIN / VAT Reg #, BIR 2303 (view), BIR 2307 (view)** — plus status, note, dates, and **Print CIS**. The **Approve / Needs info / Reject / Edit / Delete** actions moved into the modal (review the documents + details together before deciding); "Approve all pending" bulk bar retained.
+
 ## v1.6.3 — 2026-06-23 (vessel de-dup + compact admin JO tiles)
 
 - **Vessel list de-duplicated (`0158`):** the sync derives `vessel_visit` as `<name> <voyage> <week-or-arrival-date>`, so when ops filled the sheet's week column for a row first synced without it, the key flipped (`…2026-06-21` → `…W26`) and a **second row** was inserted for the same visit — the duplicate entries. Migration collapses existing dupes (keep newest) and adds a trigger enforcing **one row per (vessel_name, voyage_number)** on every insert/update — duplicates can't recur regardless of key format.
