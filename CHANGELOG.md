@@ -4,6 +4,12 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.6.7 — 2026-06-23 (My Job Orders: distinct card vs list, batch gone everywhere)
+
+- **Card and list views are now distinct.** **Card:** header row = JO# · status · payment · date, then a stacked **Consignee / Vessel & Voyage / # of containers**. **List:** minimal stacked items — **C-number · date**, then **Consignee**, then **# of vans**.
+- **Batch chip removed everywhere** in My Job Orders (card, list, and the detail modal) — the date already conveys it.
+- Container count relabeled **"N container vans"** (was "N cont.").
+
 ## v1.6.6 — 2026-06-23 (My Job Orders: wider column, drop redundant batch pill)
 
 - **My Job Orders page widened** (760 → 960 column via a new `Shell wide` option) so the cards have more room.

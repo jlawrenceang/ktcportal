@@ -5,7 +5,6 @@ import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import type { JobOrder } from '../lib/types'
 import { joPaymentState } from '../lib/joPayment'
-import { batchLabel } from '../lib/batch'
 import { usePageTour } from '../components/TourProvider'
 import { myJobOrdersSteps } from '../components/WelcomeTour'
 import { useBroker } from '../lib/useBroker'
@@ -374,57 +373,44 @@ export default function MyJobOrders() {
                 const count = o.lines?.length ?? 0
                 return (
                   <button key={o.id} type="button" className="ktc-jo-zcard" onClick={() => openOrder(o)}>
-                    <div className="ktc-jo-zcard-head">
-                      <b className="ktc-mono" style={{ fontSize: 14 }}>{o.jo_number ?? o.entry_number ?? t('Draft')}</b>
-                      <StatusBadge status={o.status} />
-                      <PayPill o={o} />
+                    <div className="ktc-jo-zcard-head" style={{ justifyContent: 'space-between' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
+                        <b className="ktc-mono" style={{ fontSize: 14 }}>{o.jo_number ?? o.entry_number ?? t('Draft')}</b>
+                        <StatusBadge status={o.status} />
+                        <PayPill o={o} />
+                      </span>
+                      <span className="ktc-label" style={{ fontSize: 12.5, whiteSpace: 'nowrap', flex: '0 0 auto' }}>{fmtDate(o.created_at)}</span>
                     </div>
-                    <div className="ktc-label ktc-jo-zcard-meta">
-                      {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('No consignee')}
-                      {o.entry_number ? ` · ${t('Entry')} ${o.entry_number}` : ''}
-                    </div>
-                    <div className="ktc-jo-zcard-foot">
-                      <span className="ktc-label">{t('{count} cont.', { count })}</span>
-                      <span className="ktc-label" style={{ marginLeft: 'auto' }}>{fmtDate(o.created_at)}</span>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '3px 12px', marginTop: 9, fontSize: 13, alignItems: 'baseline' }}>
+                      <span className="ktc-label" style={{ fontSize: 11.5 }}>{t('Consignee')}</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('No consignee')}</span>
+                      <span className="ktc-label" style={{ fontSize: 11.5 }}>{t('Vessel & Voyage')}</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.vessel_name ? `${o.vessel_name}${o.voyage_number ? ' · ' + o.voyage_number : ''}` : '—'}</span>
+                      <span className="ktc-label" style={{ fontSize: 11.5 }}>{t('Containers')}</span>
+                      <span>{t('{count} container vans', { count })}</span>
                     </div>
                   </button>
                 )
               })}
             </div>
           ) : (
-            <>
-              {/* Column header (desktop only) */}
-              <div className="ktc-jo-head" aria-hidden>
-                <span>{t('Consignee · Entry')}</span>
-                <span>{t('Containers')}</span>
-                <span>{t('Date')}</span>
-                <span>{t('Batch')}</span>
-              </div>
-              <div style={{ display: 'grid', gap: 8 }}>
-                {orders.map((o) => {
-                  const count = o.lines?.length ?? 0
-                  return (
-                    <button key={o.id} type="button" className="ktc-jo-row" onClick={() => openOrder(o)}>
-                      <span className="ktc-jo-id" style={{ minWidth: 0 }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          <b className="ktc-mono" style={{ fontSize: 13.5 }}>{o.entry_number ?? o.jo_number ?? t('Draft')}</b>
-                          <StatusBadge status={o.status} />
-                          <PayPill o={o} />
-                        </span>
-                        <span className="ktc-label" style={{ display: 'block', fontSize: 12, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('No consignee')}
-                        </span>
-                      </span>
-                      <span className="ktc-jo-cont ktc-label">{t('{count} cont.', { count })}</span>
-                      <span className="ktc-jo-date ktc-label">{fmtDate(o.created_at)}</span>
-                      <span className="ktc-jo-prio">
-                        <span className="ktc-chip">{batchLabel(o.created_at, t)}</span>
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </>
+            <div style={{ display: 'grid', gap: 6 }}>
+              {orders.map((o) => {
+                const count = o.lines?.length ?? 0
+                return (
+                  <button key={o.id} type="button" className="ktc-jo-litem" onClick={() => openOrder(o)}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+                      <b className="ktc-mono" style={{ fontSize: 13.5 }}>{o.entry_number ?? o.jo_number ?? t('Draft')}</b>
+                      <span className="ktc-label" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(o.created_at)}</span>
+                    </div>
+                    <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('No consignee')}
+                    </div>
+                    <div className="ktc-label" style={{ fontSize: 12, marginTop: 1 }}>{t('{count} container vans', { count })}</div>
+                  </button>
+                )
+              })}
+            </div>
           )}
         </div>
 
@@ -478,7 +464,6 @@ export default function MyJobOrders() {
                   <Meta label={t('Entry Number')} value={o.entry_number ?? '—'} />
                   <Meta label={t('Vessel & Voyage')} value={o.vessel_name ? `${o.vessel_name}${o.voyage_number ? ' · ' + o.voyage_number : ''}` : '—'} />
                   <Meta label={t('Date filed')} value={fmtDate(o.created_at)} />
-                  <Meta label={t('Batch')} value={batchLabel(o.created_at, t)} />
                 </div>
 
                 {['submitted', 'processing', 'on_hold', 'completed'].includes(o.status) && (
@@ -553,7 +538,7 @@ export default function MyJobOrders() {
 
                   {/* Containers */}
                   <div style={{ marginTop: 16 }}>
-                    <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Containers')} · {t('{count} cont.', { count })}</span>
+                    <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Containers')} · {t('{count} container vans', { count })}</span>
                     {count === 0 ? (
                       <div className="ktc-label" style={{ fontSize: 13, marginTop: 6 }}>{t('No containers on this order.')}</div>
                     ) : (

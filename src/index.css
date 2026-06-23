@@ -1070,7 +1070,7 @@
   /* ---- My Job Orders: compact table rows (click → detail modal) ---- */
   .ktc-jo-head {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 84px 96px auto;
+    grid-template-columns: minmax(0, 1fr) 84px 96px;
     gap: 12px;
     padding: 2px 16px 6px;
     font-size: 10.5px;
@@ -1083,7 +1083,7 @@
   .ktc-jo-head > span + span { text-align: right; }
   .ktc-jo-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 84px 96px auto;
+    grid-template-columns: minmax(0, 1fr) 84px 96px;
     align-items: center;
     gap: 6px 12px;
     width: 100%;
@@ -1099,7 +1099,6 @@
   }
   .ktc-jo-row:hover { background: rgba(255, 255, 255, 0.85); border-color: var(--glass-brd-strong); }
   .ktc-jo-cont, .ktc-jo-date { text-align: right; font-size: 12.5px; white-space: nowrap; }
-  .ktc-jo-prio { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   /* Zoned card view (Cards toggle) — header / meta / footer zones. */
   .ktc-jo-zcard {
     display: grid;
@@ -1119,6 +1118,14 @@
   .ktc-jo-zcard-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .ktc-jo-zcard-meta { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ktc-jo-zcard-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12.5px; }
+  /* Compact stacked job-order list item (List view) — lighter than the card. */
+  .ktc-jo-litem {
+    display: block; width: 100%; text-align: left; font: inherit; color: hsl(var(--ink));
+    cursor: pointer; padding: 9px 13px; border-radius: 10px;
+    border: 1px solid var(--glass-brd); background: rgba(255, 255, 255, 0.45);
+    transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
+  }
+  .ktc-jo-litem:hover { background: rgba(255, 255, 255, 0.8); border-color: var(--glass-brd-strong); }
   /* Clickable consignee row (opens the detail modal). */
   .ktc-cn-row {
     display: flex; align-items: center; gap: 10px; width: 100%;
@@ -1226,11 +1233,10 @@
   .ktc-jo-head { display: none; }
   .ktc-jo-row {
     grid-template-columns: 1fr auto;
-    grid-template-areas: "id prio" "cont date";
+    grid-template-areas: "id date" "cont .";
     gap: 6px 10px;
   }
   .ktc-jo-id { grid-area: id; }
-  .ktc-jo-prio { grid-area: prio; justify-self: end; align-self: start; }
   .ktc-jo-cont { grid-area: cont; text-align: left; }
   .ktc-jo-date { grid-area: date; justify-self: end; }
 }
