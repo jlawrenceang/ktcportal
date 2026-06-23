@@ -36,11 +36,20 @@ Customers can only file a job order against a **current** vessel/voyage, so keep
 - **Snapshot** makes a clean image of the **active vessels** — on a phone it shares straight to your **Viber group**; on a computer it downloads so you can attach it.
 - If a customer's vessel isn't listed yet, they file with **"not listed"** and type it in — add the call and it lines up.
 
-## 5 · What's not yours
+## 5 · The Job Orders tab
 
-Processing job orders, holds, rejects, payments and invoices belong to **admin** and **cashier** — flag those rather than working around them.
+Your **Job Orders** tab is read-only by default — a **Cards / List** toggle (your choice is remembered) lets you browse the queue; in Cards view per-order actions sit behind a **⋯ Actions** menu. Each card shows a single **"Balance to pay" / "Paid"** pill (base + RPS + every additional charge), plus a "payment proof to review" cue and the ERP service-invoice chip.
 
-## 6 · Your session
+If the owner grants you the hold/reject gates, the same rules as admin apply:
+
+- **Hold for info** is field-targeted — tick which fields the customer must re-enter (**Consignee · Entry number · Vessel & Voyage · Containers**) and add a note; only those fields unlock for them.
+- **Reject is final** — a rejected order cannot be resubmitted (the customer files a new one). Use **Hold for info** for fixable issues.
+
+## 6 · What's not yours
+
+Processing job orders, payments and invoices otherwise belong to **admin** and **cashier** — flag those rather than working around them.
+
+## 7 · Your session
 
 - Signs out after **60 idle minutes** — an "Are you still there?" prompt appears a minute before; one tap keeps it alive.
 - **One active session per account** — signing in elsewhere signs this one out.

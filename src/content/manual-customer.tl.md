@@ -24,7 +24,8 @@ Lahat ng kailangan mo para mag-file at mag-track ng Job Orders para sa X-ray ins
 
 ## 2 · Pag-file ng Job Order
 
-- Buksan ang **New Job Order**. Piliin ang **consignee** (mag-type ng ilang letra para hanapin sa master list), ilagay ang **entry number** mo, at magdagdag ng containers.
+- Buksan ang **New Job Order**. Piliin ang **consignee** (mag-type ng ilang letra para hanapin sa master list), ilagay ang **entry number** mo, piliin ang **vessel & voyage**, at magdagdag ng containers.
+- **Wala sa listahan ang vessel?** Kung wala sa dropdown ang vessel mo, **tumawag sa KTC customer service** para idagdag ito sa schedule — hindi mo pwedeng idagdag mismo ang vessel.
 - Bawat container row ay may **service** na kailangan nito (X-Ray, DEA, OOG Stripping…).
 - **Bulk paste:** i-paste ang buong listahan ng container numbers nang sabay-sabay — isang row kada container ang gagawin at lalaktawan ang mga duplicate.
 - Pag na-submit (verified accounts) makakakuha ang order ng permanenteng **JO number** nito (JO-000123).
@@ -32,8 +33,9 @@ Lahat ng kailangan mo para mag-file at mag-track ng Job Orders para sa X-ray ins
 ### Mga order mo ayon sa batch
 
 - Naka-grupo ang mga order ayon sa **araw na ni-file mo sila** — batch ngayong araw, kahapon, at iba pa. Walang serving number na hihintayin.
-- Sa **My Job Orders**, bantayan ang **live status** ng bawat order para malaman kung kailan ang tamang punta mo sa terminal.
-- Kung i-on-hold ng KTC ang order mo at mag-resubmit ka, **mananatili ito sa orihinal na batch nito**. Kung na-reject ang order at mag-refile ka, ang na-refile na order ay sasama sa **batch ng kasalukuyang araw**.
+- Sa **My Job Orders**, pwede kang lumipat sa pagitan ng **Cards** view at **List** view — naaalala ang pinili mo.
+- Bantayan ang **live status** ng bawat order para malaman kung kailan ang tamang punta mo sa terminal.
+- Kung i-on-hold ng KTC ang order mo at mag-resubmit ka, **mananatili ito sa orihinal na batch nito**. Sarado na ang na-reject na order; kung mag-file ka ng bagong job order para palitan ito, sasama ang bagong order sa **batch ng kasalukuyang araw**.
 
 ---
 
@@ -43,9 +45,9 @@ Inililista ng **My Job Orders** lahat ng na-file mo. Filters: *Active* (default)
 
 - **Submitted** — nasa queue na ng KTC, naghihintay na ma-process.
 - **Processing** — approved na at ginagawa na; pwede mo nang i-print ang slip.
-- **On hold — info needed** — may kailangan ang KTC sa iyo; ipinapaliwanag ng note kung ano. Gamitin ang **Respond & resubmit**.
+- **On hold — info needed** — kailangan ng KTC na i-enter mo ulit ang ilang detalye. Buksan ang order: makikita mo ang note ng KTC at kung aling fields ang aayusin — **Consignee**, **Entry number**, **Vessel & Voyage**, o **Containers**. **Yung mga field na iyon lang ang pwedeng i-edit** (naka-lock ang lahat ng iba). Ayusin ang mga ito, magdagdag ng maikling reply, tapos i-tap ang **Resubmit to KTC**.
 - **Completed** — tapos na lahat ng services.
-- **Rejected** — tingnan ang note; kung recoverable, pwede mong ayusin at i-resubmit.
+- **Rejected** — sarado na ang order at **hindi mo na ito pwedeng i-resubmit**; ipinapakita ang dahilan. Kung kailangan mo pa rin ito, **mag-file ng bagong job order**.
 - **Cancelled** — ikaw ang nag-cancel nito.
 
 Pwede mong **i-cancel** ang sarili mong order mula sa card nito (may confirm prompt).
@@ -55,7 +57,8 @@ Pwede mong **i-cancel** ang sarili mong order mula sa card nito (may confirm pro
 ## 4 · Mga charges at bayad
 
 - **Rates** (calculator) ay nag-e-estimate ng charges anytime: X-Ray rate × bilang ng containers + 12% VAT sa service, plus flat admin at print fees (hindi VATable).
-- Pagkatapos mag-file, buksan ang **View charges & pay** sa order para sa eksaktong computation kasama ang **bank / GCash details at QR code** ng KTC.
+- Bawat order ay may iisang payment status: **"Balance to pay"** hangga't hindi pa bayad ang lahat (ang base charge, anumang RPS charge, at anumang additional charges), tapos **"Paid."**
+- Buksan ang **Balances** sa order para sa eksaktong computation kasama ang **bank / GCash details at QR code** ng KTC. Sa payment page, **nasa itaas ang base charges at nasa ibaba ang anumang additional charges**.
 - Magbayad via transfer o GCash, tapos **i-upload ang deposit slip mo** (photo o PDF — automatic na nico-compress ang malalaking image). Ire-review ito ng KTC at iko-confirm, o ire-reject na may note para makapag-upload ka ulit.
 - Pwede ka ring magbayad sa **KTC cashier** sa halip. Ang official na **Service Invoice** ay inilalabas ng KTC (BIR-registered) — ipinapakita ng portal ang number nito sa order mo kapag naitala na: **PAID** (cash/OR) o **Billed on account** (credit).
 

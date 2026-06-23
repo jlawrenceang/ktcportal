@@ -14,11 +14,19 @@ Your station is the **Job Orders** queue — you land there at sign-in. Two jobs
 Customers can pay by bank transfer or GCash and upload a deposit slip. Orders waiting for you show **"Payment proof to review."**
 
 - Open the slip — the viewer can **Print** or **Save** it for filing.
-- Check the amount against the order's charges (shown on the same card).
+- Check the amount against the card's **"Balance to pay" / "Paid"** pill — one figure covering base + RPS + every additional charge (no more separate payment chips).
 - **Confirm** if it matches. **Reject with a short note** (wrong amount, unclear photo…) if not — the customer is emailed your note and can re-upload.
 - A confirmed online payment still follows KTC's normal cashiering process for the official paperwork.
 
-## 3 · Recording the Service Invoice
+## 3 · Adding charges, holds & rejects
+
+If the owner has granted you these actions on an order card:
+
+- **Additional charges** are picked from a **dropdown of charge types** (managed by admin in **Settings → Additional charge types**); the amount pre-fills from the type but stays editable, or choose **"Other…"** for a one-off charge. New charges roll into the same "Balance to pay" pill.
+- **Hold for info** is field-targeted: tick exactly which fields the customer must re-enter (**Consignee · Entry number · Vessel & Voyage · Containers**) and add a note — only those fields unlock for them.
+- **Reject is final:** a rejected order cannot be resubmitted (the customer files a new one). Use **Hold for info** for anything fixable.
+
+## 4 · Recording the Service Invoice
 
 The official Service Invoice comes from KTC's ERP, only once paid. On the completed order, record **both** numbers:
 
@@ -31,11 +39,11 @@ Both are validated (garbage is rejected with a hint) and saved together. The ord
 
 This view lists completed orders that still have no invoice, with aging chips (*unpaid 3d*). Recording the invoice removes the order from the view.
 
-## 4 · Housekeeping
+## 5 · Housekeeping
 
 - **Archive paid & completed** tidies finished, invoiced orders out of the default views (also runs automatically on Mondays). Customer history is unaffected.
 
-## 5 · Your session
+## 6 · Your session
 
 - The station **signs out after 60 idle minutes**. An "Are you still there?" prompt appears one minute before — one tap keeps it alive.
 - **One active session per account:** if the same login is used on another device, this station is signed out with a notice. If that ever happens unexpectedly, tell the admin.

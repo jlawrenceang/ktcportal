@@ -15,6 +15,7 @@ The landing page shows live counts — pending approvals, the open job-order que
 - **Approve** → the customer is emailed, and any job orders they filed while waiting are released into the queue with real JO numbers.
 - **Reject** offers two paths: *recoverable* (ID unreadable / needs updated info — the customer sees a gentle "resubmit your details" panel and can fix + re-upload) or **Suspend** (terminal; their held orders are cancelled).
 - Unverified accounts that confirm email but upload no ID within **48 hours** are auto-rejected (hourly job).
+- **Cancellation cascades:** **suspending or rejecting a customer** cancels all their open job orders — **except** orders already paid or with an ERP service invoice recorded, which are left in place for manual handling. (Rejecting a **consignee** likewise cancels its open job orders — see Consignees below.)
 
 ### ID retention
 
@@ -24,9 +25,12 @@ Uploaded IDs are kept a guaranteed **24 hours** (review window — deletion is b
 
 The **Job Orders** queue shows live orders (held drafts from unverified accounts are excluded).
 
+- **Cards / List toggle:** switch between **Cards** (rich, action-heavy) and a compact **List** view; your choice is remembered. In Cards view the many per-order actions are tucked behind a **⋯ Actions** menu.
 - **Per-service completion:** tick ✓ on each service line as it's done. The first ✓ moves the order to *processing*; it completes only when **all** lines are done.
-- **Hold for info** (with a note): the customer sees the note, responds and resubmits in-app — **keeping their serving number**. Their reply is shown on the card.
-- **Reject** (with a note): recoverable rejections let the customer fix and refile — they rejoin at the **back of the line**; **↩ Restore #N** gives the original number back when justified.
+- **Hold for info** (field-targeted): tick exactly which fields the customer must re-enter — **Consignee · Entry number · Vessel & Voyage · Containers** — and add a note. Only the ticked fields unlock for the customer; everything else stays locked. Their reply is shown on the card.
+- **Reject is final:** rejecting a job order is terminal — the customer **cannot** resubmit it (they file a new one). Use **Hold for info** for anything fixable.
+- **One payment pill:** each card shows a single **"Balance to pay" / "Paid"** indicator covering base + RPS + every additional charge (no separate payment chips). A "payment proof to review" cue and the ERP service-invoice chip remain.
+- **Additional charges:** when adding a charge, pick from the seeded **charge types** (managed in **Settings → Additional charge types**) — the amount pre-fills but stays editable — or choose **"Other…"** for a one-off.
 - **History** on every card: filed / status changes / service-done events with actor names and timestamps.
 - **Serving numbers** are per service line, reset weekly (Monday 00:15 carry-over re-queues open orders at the front, in order). Cancel/reject vacates a number (burned, not reused).
 
@@ -44,12 +48,16 @@ For walk-ins: **New JO** files a job order for any customer — it goes **straig
 ## 6 · Customers & consignees
 
 - **Customers:** the master list (search, status, badges). Click a name for the profile — details, verification badges, and full job-order history.
-- **Consignees:** the master list used by the JO form's typeahead (any customer may pick any consignee — current policy).
+- **Consignees:** the master list used by the JO form's typeahead (any customer may pick any consignee — current policy). **Rejecting a consignee** cancels its open job orders, with the reason shown to the affected customers.
 
 ## 7 · Settings
 
-- **Service rates & fees:** locked by default — tap "Locked — unlock to edit". Per-service rates (₱, per container, VATable flag), flat admin and print fees. **VAT is fixed at the statutory 12%** (server-guarded). Drag rows (⠿) to set the display order everywhere. Saving re-locks.
+- **Service rates & fees:** locked by default — tap "Locked — unlock to edit". Per-service rates (₱, per container, VATable flag) plus one flat **Admin & print fee** (the former separate admin fee and print fee are now combined). **VAT is fixed at the statutory 12%** (server-guarded). Drag rows (⠿) to set the display order everywhere. Saving re-locks.
+- **Terminal tariff (per-service):** for each service, tick which conditions its rate varies by — **origin / size / fill / kind**, or none for a **uniform** rate. The editor then shows only the inputs you ticked, so a uniform service is a single cell while a fully-varied one expands into its matrix.
+- **Storage:** edited on its own. **Domestic** = a flat per-day rate by size. **Foreign** = progressive per-day **bands** (Import / Export / Transhipment × size); the bands are charged **cumulatively** once the line's free days are used up.
+- **Trade terminology:** **foreign** cargo is **Import / Export / Transhipment**; **domestic** is **Inbound / Outbound** — shown throughout with a colour-coded Foreign / Domestic pill.
 - **Service catalogue:** add a service (name + VATable — names are permanent, deactivate instead of rename), toggle active/inactive (inactive = hidden from new filings; existing orders keep their label and pricing), ✕ delete only if never used.
+- **Additional charge types:** the seeded list the cashier/admin pick from when adding a charge to an order (each with a default amount that pre-fills but stays editable). "Other…" on the order itself always allows a one-off charge.
 - **Payment details:** bank name / account / GCash and the QR image shown on the customer payment page. Blank fields are hidden.
 - **Staff accounts:** create cashier / checker logins (username + password, no email), reset passwords, and edit the **role-gate matrix** — what each role can see and do. Gates are enforced server-side.
 

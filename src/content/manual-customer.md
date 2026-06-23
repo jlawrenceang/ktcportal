@@ -24,7 +24,8 @@ Everything you need to file and track Job Orders for X-ray inspection, DEA exam,
 
 ## 2 · Filing a Job Order
 
-- Open **New Job Order**. Pick the **consignee** (type a few letters to search the master list), enter your **entry number**, and add containers.
+- Open **New Job Order**. Pick the **consignee** (type a few letters to search the master list), enter your **entry number**, pick the **vessel & voyage**, and add containers.
+- **Vessel not listed?** If your vessel isn't in the dropdown, **call KTC customer service** to have it added to the schedule — you can't add a vessel yourself.
 - Each container row gets the **service** it needs (X-Ray, DEA, OOG Stripping…).
 - **Bulk paste:** paste a whole list of container numbers at once — one row per container is created and duplicates are skipped.
 - On submit (verified accounts) the order gets its permanent **JO number** (JO-000123).
@@ -32,8 +33,9 @@ Everything you need to file and track Job Orders for X-ray inspection, DEA exam,
 ### Your orders by batch
 
 - Orders are grouped by the **day you filed them** — today's batch, yesterday's, and so on. There is no serving number to wait on.
-- On **My Job Orders**, track each order's **live status** to know when to time your trip to the terminal.
-- If KTC puts your order on hold and you resubmit, it **stays in its original batch**. If an order is rejected and you refile, the refiled order joins the **current day's batch**.
+- On **My Job Orders**, switch between a **Cards** view and a **List** view — your choice is remembered.
+- Track each order's **live status** to know when to time your trip to the terminal.
+- If KTC puts your order on hold and you resubmit, it **stays in its original batch**. A rejected order is closed; if you file a new job order to replace it, the new order joins the **current day's batch**.
 
 ---
 
@@ -43,9 +45,9 @@ Everything you need to file and track Job Orders for X-ray inspection, DEA exam,
 
 - **Submitted** — in KTC's queue, waiting for processing.
 - **Processing** — approved and being worked; you can print the slip.
-- **On hold — info needed** — KTC needs something from you; the note explains what. Use **Respond & resubmit**.
+- **On hold — info needed** — KTC needs you to re-enter specific details. Open the order: you'll see KTC's note and exactly which fields to fix — **Consignee**, **Entry number**, **Vessel & Voyage**, or **Containers**. **Only those fields are editable** (everything else is locked). Correct them, add a short reply, then tap **Resubmit to KTC**.
 - **Completed** — all services done.
-- **Rejected** — see the note; if it's recoverable you can fix and resubmit.
+- **Rejected** — the order is closed and you **can't resubmit it**; the reason is shown. If you still need it, **file a new job order**.
 - **Cancelled** — you cancelled it.
 
 You can **cancel** your own order from its card (with a confirm prompt).
@@ -55,7 +57,8 @@ You can **cancel** your own order from its card (with a confirm prompt).
 ## 4 · Charges and payment
 
 - **Rates** (calculator) estimates charges anytime: X-Ray rate × number of containers + 12% VAT on the service, plus flat admin and print fees (not VATable).
-- After filing, open **View charges & pay** on the order for the exact computation plus KTC's **bank / GCash details and QR code**.
+- Each order shows a single payment status: **"Balance to pay"** until everything is settled (the base charge, any RPS charge, and any additional charges), then **"Paid."**
+- Open **Balances** on the order for the exact computation plus KTC's **bank / GCash details and QR code**. On the payment page the **base charges are at the top and any additional charges below**.
 - Pay by transfer or GCash, then **upload your deposit slip** (photo or PDF — large images are compressed automatically). KTC reviews it and confirms, or rejects with a note so you can re-upload.
 - You can always pay at the **KTC cashier** instead. The official **Service Invoice** is issued by KTC (BIR-registered) — the portal shows its number on your order once recorded: **PAID** (cash/OR) or **Billed on account** (credit).
 

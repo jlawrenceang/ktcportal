@@ -36,11 +36,20 @@ Makakapag-file lang ang mga customer ng Job Order kontra sa isang **current** na
 - **Snapshot** ay gumagawa ng malinis na imahe ng **active vessels** — sa phone, diretsong nai-share sa iyong **Viber group**; sa computer, nada-download ito para ma-attach mo.
 - Kung wala pa sa listahan ang vessel ng customer, mag-file sila gamit ang **"not listed"** at i-type ito — i-add mo lang ang call at maa-align ito.
 
-## 5 · What's not yours
+## 5 · Ang Job Orders tab
 
-Ang pag-process ng Job Order, holds, rejects, payments at invoices ay para sa **admin** at **cashier** — i-flag mo na lang ang mga 'yon kaysa magkumahog ka para lusutan.
+Read-only by default ang **Job Orders** tab mo — may **Cards / List** toggle (tinatandaan ang pinili mo) para ma-browse ang queue; sa Cards view, ang per-order actions ay nasa **⋯ Actions** menu. Ang bawat card ay nagpapakita ng iisang **"Balance to pay" / "Paid"** pill (base + RPS + bawat additional charge), kasama ang "payment proof to review" cue at ang ERP service-invoice chip.
 
-## 6 · Your session
+Kung bibigyan ka ng owner ng hold/reject gates, pareho ang rules sa admin:
+
+- **Field-targeted ang Hold for info** — i-tsek kung aling mga field ang kailangang i-re-enter ng customer (**Consignee · Entry number · Vessel & Voyage · Containers**) at maglagay ng note; ang mga field lang na 'yon ang mabubuksan para sa kanila.
+- **Final ang Reject** — hindi na puwedeng i-resubmit ang isang na-reject na order (mag-fa-file ng bago ang customer). Gamitin ang **Hold for info** para sa puwedeng ayusin.
+
+## 6 · What's not yours
+
+Ang pag-process ng Job Order, payments at invoices ay para sa **admin** at **cashier** — i-flag mo na lang ang mga 'yon kaysa magkumahog ka para lusutan.
+
+## 7 · Your session
 
 - Magsi-sign out pagkatapos ng **60 idle minutes** — may lalabas na "Are you still there?" prompt isang minuto bago mag-sign out; isang tap lang at tuloy-tuloy pa.
 - **Isang active session kada account** — kapag nag-sign in ka sa ibang lugar, masa-sign out itong kasalukuyan.

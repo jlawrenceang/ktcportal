@@ -14,11 +14,19 @@ Ang station mo ay ang **Job Orders** queue — dito ka mismo dadalhin pagka-sign
 Pwedeng magbayad ang mga customer sa pamamagitan ng bank transfer o GCash at mag-upload ng deposit slip. Ang mga order na naghihintay sa iyo ay may nakalagay na **"Payment proof to review."**
 
 - Buksan ang slip — pwede itong **Print** o **Save** sa viewer para sa filing.
-- I-check ang amount laban sa mga charges ng order (nakalagay sa parehong card).
+- I-check ang amount laban sa **"Balance to pay" / "Paid"** pill ng card — iisang halaga na sakop ang base + RPS + bawat additional charge (wala nang hiwalay na payment chips).
 - **Confirm** kung tama ito. **Reject with a short note** (maling amount, malabong photo…) kung hindi — ipapadala sa customer ang note mo sa email at pwede silang mag-upload ulit.
 - Ang isang na-confirm na online payment ay susunod pa rin sa normal na cashiering process ng KTC para sa official paperwork.
 
-## 3 · Pag-record ng Service Invoice
+## 3 · Pagdagdag ng charges, holds & rejects
+
+Kung binigyan ka ng owner ng mga aksyong ito sa isang order card:
+
+- **Additional charges** ay pinipili mula sa **dropdown ng charge types** (mina-manage ng admin sa **Settings → Additional charge types**); pre-filled ang amount mula sa type pero puwede pa ring i-edit, o piliin ang **"Other…"** para sa one-off na charge. Ang mga bagong charge ay pumapasok sa parehong "Balance to pay" pill.
+- **Field-targeted ang Hold for info:** i-tsek kung aling mga field ang kailangang i-re-enter ng customer (**Consignee · Entry number · Vessel & Voyage · Containers**) at maglagay ng note — ang mga field lang na 'yon ang mabubuksan para sa kanila.
+- **Final ang Reject:** hindi na puwedeng i-resubmit ang isang na-reject na order (mag-fa-file ng bago ang customer). Gamitin ang **Hold for info** para sa anumang puwedeng ayusin.
+
+## 4 · Pag-record ng Service Invoice
 
 Ang official Service Invoice ay galing sa ERP ng KTC, kapag bayad na lang. Sa completed na order, i-record ang **parehong** number:
 
@@ -31,11 +39,11 @@ Parehong validated ang mga ito (tatanggihan ang basura na may hint) at sabay na 
 
 Ipinapakita ng view na ito ang mga completed order na wala pa ring invoice, kasama ang mga aging chip (*unpaid 3d*). Pag na-record na ang invoice, maaalis ang order sa view.
 
-## 4 · Housekeeping
+## 5 · Housekeeping
 
 - **Archive paid & completed** — nililinis nito ang mga tapos na, na-invoice na order palabas ng default views (tumatakbo rin ito nang automatic tuwing Lunes). Hindi ito nakakaapekto sa history ng customer.
 
-## 5 · Ang session mo
+## 6 · Ang session mo
 
 - Ang station ay **nagsa-sign out pagkatapos ng 60 idle minutes**. May lalabas na "Are you still there?" na prompt isang minuto bago iyon — isang tap lang para manatiling buhay.
 - **Isang active session kada account:** kung gagamitin ang parehong login sa ibang device, masa-sign out ang station na ito na may notice. Kung mangyari ito nang hindi inaasahan, sabihin sa admin.
