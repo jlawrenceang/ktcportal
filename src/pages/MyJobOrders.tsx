@@ -93,6 +93,15 @@ function PayPill({ o }: { o: JobOrder }) {
   return null
 }
 
+// Compact payment pill for the dense one-line list rows.
+function PayPillMini({ o }: { o: JobOrder }) {
+  const { t } = useT()
+  const s = joPaymentState(o)
+  if (s === 'balance') return <span className="ktc-chip ktc-chip--warning" style={{ fontSize: 10.5, padding: '1px 8px', flex: '0 0 auto' }}>{t('Balance')}</span>
+  if (s === 'paid') return <span className="ktc-chip ktc-chip--success" style={{ fontSize: 10.5, padding: '1px 8px', flex: '0 0 auto' }}>{t('Paid')}</span>
+  return null
+}
+
 // Small label/value pair for the detail modal's meta grid.
 function Meta({ label, value, span2 }: { label: string; value: string; span2?: boolean }) {
   return (
@@ -377,7 +386,6 @@ export default function MyJobOrders() {
                       <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
                         <b className="ktc-mono" style={{ fontSize: 14 }}>{o.jo_number ?? o.entry_number ?? t('Draft')}</b>
                         <StatusBadge status={o.status} />
-                        <PayPill o={o} />
                       </span>
                       <span className="ktc-label" style={{ fontSize: 12.5, whiteSpace: 'nowrap', flex: '0 0 auto' }}>{fmtDate(o.created_at)}</span>
                     </div>
@@ -398,6 +406,7 @@ export default function MyJobOrders() {
                   <button key={o.id} type="button" className="ktc-jo-litem" onClick={() => openOrder(o)} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <b className="ktc-mono" style={{ fontSize: 13, flex: '0 0 auto' }}>{o.entry_number ?? o.jo_number ?? t('Draft')}</b>
                     <span style={{ flex: 1, minWidth: 0, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.consignee ? o.consignee.name : t('No consignee')}</span>
+                    <PayPillMini o={o} />
                     <span title={t('{count} container vans', { count })} aria-label={t('{count} container vans', { count })}
                       style={{ flex: '0 0 auto', minWidth: 24, height: 22, padding: '0 8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 999, background: 'var(--c-w35)', border: '1px solid var(--glass-brd)', fontSize: 12, fontWeight: 700 }}>{count}</span>
                   </button>

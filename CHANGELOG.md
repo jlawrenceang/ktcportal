@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.6.10 — 2026-06-23 (My Job Orders: status split — ops on card, payment on list)
+
+- **List rows** gain a compact **Balance / Paid** accounting pill (before the count badge): `C# · consignee · Balance/Paid · [count]`.
+- **Card header** now shows the **operational status only** (the payment pill moved off the card — it's on the list rows, and both still show in the detail modal).
+
 ## v1.6.9 — 2026-06-23 (My Job Orders: one-line list rows)
 
 - **List view is now a true one-liner:** **C-number · consignee name · a count badge** (the container-van count). The date moved off the line (still on the card + in the detail modal).
