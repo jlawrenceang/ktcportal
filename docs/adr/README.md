@@ -4,7 +4,7 @@ ADRs in this folder preserve decision history for the KTC portal.
 
 ## Reading order
 
-1. `0001` to `0027` in numeric order.
+1. `0001` to `0029` in numeric order.
 2. Then check each ADR for **Current-State Addendum** sections.
 
 ## Log
@@ -38,6 +38,10 @@ ADRs in this folder preserve decision history for the KTC portal.
 | [0025](0025-fuel-monitoring-derived-variance-on-moves-spine.md) | Fuel monitoring as a derived variance module on the moves spine (estimate vs per-dispense actual, effective-dated rates) | Accepted | 2026-06-22 | Architecture \| Database \| Business Logic |
 | [0026](0026-terminal-reject-field-targeted-needs-info-and-cancel-cascades.md) | Reject is terminal; on-hold is field-targeted "needs info" (needs_fields); consignee-reject + customer suspend/reject cascade-cancel open JOs (except paid/invoiced) | Accepted | 2026-06-23 | Workflow \| Database |
 | [0027](0027-per-service-rate-granularity-and-tiered-foreign-storage.md) | Per-service rate granularity (terminal_rate_config, fan-out) + a tiered foreign storage tariff (storage_tiers, cumulative bands); calculator-only | Accepted | 2026-06-23 | Business Logic \| Database |
+| [0028](0028-rename-brokers-to-customers-single-pool.md) | Rename brokers to customers (single customer pool; `broker` kept as a code alias) | Accepted | 2026-06-25¹ | Database \| Workflow |
+| [0029](0029-customer-self-service-requests-and-consignee-cis.md) | Customer self-service consignee/vessel requests + consignee document model | Accepted | 2026-06-25¹ | Workflow \| Database |
+
+¹ Retroactively captured 2026-06-25; the decisions shipped earlier (0028 at migration 0021; 0029 across ~0132–0139).
 
 ## Governance
 

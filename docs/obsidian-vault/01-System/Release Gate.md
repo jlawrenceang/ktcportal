@@ -2,6 +2,7 @@
 title: Release Gate
 tags: [system, release, gate, pointer]
 type: system
+last_updated: 2026-06-25
 ---
 
 # 🚦 Release Gate

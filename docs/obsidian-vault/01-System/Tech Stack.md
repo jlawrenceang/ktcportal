@@ -2,6 +2,7 @@
 title: Tech Stack
 tags: [system, stack]
 type: system
+last_updated: 2026-06-25
 ---
 
 # 💻 Tech Stack

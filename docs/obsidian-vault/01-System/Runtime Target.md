@@ -2,6 +2,7 @@
 title: Runtime Target
 tags: [system, supabase, runtime, pointer]
 type: system
+last_updated: 2026-06-25
 ---
 
 # 🎯 Runtime Target

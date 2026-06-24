@@ -2,6 +2,7 @@
 title: Operational Invariants
 tags: [system, invariants, pointer]
 type: system
+last_updated: 2026-06-25
 ---
 
 # 🔒 Operational Invariants
