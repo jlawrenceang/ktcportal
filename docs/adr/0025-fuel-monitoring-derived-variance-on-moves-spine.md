@@ -14,12 +14,12 @@ The clunk is structural: the same container counts are re-keyed across six-plus 
 ## Decision Drivers
 
 * The same numbers must be **entered once** — container moves already exist (or will) as operational events; fuel should derive from them, not re-count them.
-* **Derived over hand-maintained; planned vs actual strictly separate** — the standing KTC/Pillar-2 principle (`CLAUDE.md`, [[ADR-0015]]).
+* **Derived over hand-maintained; planned vs actual strictly separate** — the standing KTC/Pillar-2 principle (`CLAUDE.md`, [ADR-0015](0015-modular-terminal-depot-operating-system-north-star.md)).
 * Variance must point at the **leaking machine**, not a single fleet-wide number — per-equipment-class reconciliation with class-appropriate drivers.
 * Rate/price changes must be **recorded and not retroactively re-price history** — a single global "₱50/L" cell (as in Excel) silently re-values past months when edited.
 * Reuse what exists: the config-table pattern ([0030] `service_rates`/`pricing_settings`), owner-tweakable role gates (`role_permissions` + `has_permission()`), SECURITY DEFINER RPCs, the audit-event pattern ([0040]/[0046]), and the mobile staff-PWA shell (checker app).
 * Ship value now: an Excel **stopgap** is already delivered; the DB module must be able to start before the live move logger ([[Yard Operations — Pillar 2 (Move Logger + Yard)]]) exists.
-* Stay operational, not the books of record — the ERP/accounting remains the AP authority (mirrors the JO/release stance, [[ADR-0024]]).
+* Stay operational, not the books of record — the ERP/accounting remains the AP authority (mirrors the JO/release stance, [ADR-0024](0024-customer-filed-online-release-pullout-payment.md)).
 
 ## Considered Options
 

@@ -2,7 +2,7 @@
 
 **Owner:** Lawrence (sole builder, no in-house IT). **Principle:** simple & maintainable beats clever; ship each phase before the next; prefer **derived data** over hand-maintained state; keep **planned vs actual** strictly separate.
 
-Source roadmap: owner upload `terminalyardsystemroadmap1.md` (2026-06-21). This is the second pillar of the KTC system, on the **same Supabase database** as the portal (Pillar 1). It is the concrete start of the container/EIR data spine ([[ADR-0015]] north star; [[ADR-0022]] gate pass = container/EIR, not the JO).
+Source roadmap: owner upload `terminalyardsystemroadmap1.md` (2026-06-21). This is the second pillar of the KTC system, on the **same Supabase database** as the portal (Pillar 1). It is the concrete start of the container/EIR data spine ([ADR-0015](../../adr/0015-modular-terminal-depot-operating-system-north-star.md) north star; [ADR-0022](../../adr/0022-gate-pass-is-container-eir-not-job-order.md) gate pass = container/EIR, not the JO).
 
 ## The one idea that makes it work
 `moves` is an **event log** and the single source of truth. **Current location, container aging, bay occupancy, per-equipment move counts are all DERIVED** (Postgres views) from the latest moves — never stored by hand. That kills most human error before it starts.
@@ -43,4 +43,4 @@ Tablet writes each move to **IndexedDB** immediately (operator never waits). Eac
 6. **Optimization** — use vessel schedules + berthing to suggest bay placements minimizing total moves. Advanced; only after 1–3 are solid.
 
 ## Relationship to Pillar 1 (the portal)
-Same Supabase DB. The portal handles customer-facing **Job Orders** (special services) + the **release/pull-out** flow ([[ADR-0024]]). The yard system is the **operational spine**: `job_order_id` on a billable move is the bridge — lift charges flow from real moves into the JO/billing instead of being re-counted by hand.
+Same Supabase DB. The portal handles customer-facing **Job Orders** (special services) + the **release/pull-out** flow ([ADR-0024](../../adr/0024-customer-filed-online-release-pullout-payment.md)). The yard system is the **operational spine**: `job_order_id` on a billable move is the bridge — lift charges flow from real moves into the JO/billing instead of being re-counted by hand.

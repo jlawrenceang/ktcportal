@@ -18,7 +18,7 @@ The KTC admin portal runs on a **single owner-tunable permission matrix**, not h
 - **cashier** — the money desk: review payments (online proof + walk-in), record the ERP invoice, complete once paid, hold/reject; edit JO headers. `/admin/cashier` station.
 - **checker** — **X-ray entry confirmation only** (BOC performs the X-ray; the checker confirms entry per van). View only otherwise. `/admin/checker`.
 - **csr** — customer-service desk: file JOs for customers + work the support inbox + **review consignee requests** (`review_consignee_requests`, `0138`). **Never** changes order status. `/admin/support`. All customer comms funnel through CSR (operations lost `manage_support` in `0086`).
-- **purchaser** *(DB only — frontend deferred)* — the **fuel desk** (procurement + fuel monitoring): non-admin, scoped, seeded with `view_fuel_reports` / `manage_fuel` / `log_fuel` only (`0135`/`0150`, [[ADR-0025]]). The React app has **no `purchaser` handling yet** (no route/label/nav), so don't assign it until [[Pending Items|Fuel Phase 1]] wires it.
+- **purchaser** *(DB only — frontend deferred)* — the **fuel desk** (procurement + fuel monitoring): non-admin, scoped, seeded with `view_fuel_reports` / `manage_fuel` / `log_fuel` only (`0135`/`0150`, [ADR-0025](../../adr/0025-fuel-monitoring-derived-variance-on-moves-spine.md)). The React app has **no `purchaser` handling yet** (no route/label/nav), so don't assign it until [[Pending Items|Fuel Phase 1]] wires it.
 - **owner / root owner** — superset; bypasses **every** gate in `has_permission` (see [[Owner Failsafe]], [[Multi-Owner & Root Grants]]).
 
 ## Permission matrix (seeded defaults — owner can re-tune)
@@ -45,7 +45,7 @@ The KTC admin portal runs on a **single owner-tunable permission matrix**, not h
 
 (Owner = all. `manage_*` admin-desk gates omitted for the restricted roles above default false.)
 
-**Fuel gates** (`0135`/`0150`, [[ADR-0025]]) — `view_fuel_reports` · `manage_fuel` · `log_fuel`, seeded **on for `admin` + `purchaser`** only. Omitted from the table above (own module, not wired into the UI matrix yet).
+**Fuel gates** (`0135`/`0150`, [ADR-0025](../../adr/0025-fuel-monitoring-derived-variance-on-moves-spine.md)) — `view_fuel_reports` · `manage_fuel` · `log_fuel`, seeded **on for `admin` + `purchaser`** only. Omitted from the table above (own module, not wired into the UI matrix yet).
 
 ## Split processing gates (`0086`)
 

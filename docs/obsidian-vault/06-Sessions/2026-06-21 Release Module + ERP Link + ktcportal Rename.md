@@ -6,10 +6,10 @@ type: session
 
 # 2026-06-21 — Release / Pull-out Module, ERP Link, ktcportal Rename
 
-Build day for the **customer-filed release / pull-out** flow ([[ADR-0024]]) and its follow-ons (migrations **0123–0126**, all applied to prod), plus a project de-Jotform + rename. Built with parallel subagents + adversarial review (owner granted [[agent-tooling-authority|standing full-agent authority]] this session).
+Build day for the **customer-filed release / pull-out** flow ([ADR-0024](../../adr/0024-customer-filed-online-release-pullout-payment.md)) and its follow-ons (migrations **0123–0126**, all applied to prod), plus a project de-Jotform + rename. Built with parallel subagents + adversarial review (owner granted [[agent-tooling-authority|standing full-agent authority]] this session).
 
 ## Release / pull-out module (`0124`, ADR-0024)
-- New **`release_orders`** entity, separate from `job_orders` (release applies to *every* container; the JO is a service overlay — [[ADR-0022]]). Flow: customer files (consignee picker + **BL no.** + **DO/BL** upload to `release-docs`) → **CSR documents desk** verifies (`verify_release_docs`) → staff enter charges → customer pays (QRPH proof to `payment-slips`) → **cashier** confirms (`review_payments`) → record OR → `released`.
+- New **`release_orders`** entity, separate from `job_orders` (release applies to *every* container; the JO is a service overlay — [ADR-0022](../../adr/0022-gate-pass-is-container-eir-not-job-order.md)). Flow: customer files (consignee picker + **BL no.** + **DO/BL** upload to `release-docs`) → **CSR documents desk** verifies (`verify_release_docs`) → staff enter charges → customer pays (QRPH proof to `payment-slips`) → **cashier** confirms (`review_payments`) → record OR → `released`.
 - Statuses `submitted → docs_verified → payable → paid → released` (+ `on_hold`/`cancelled`). All writes via SECURITY DEFINER RPCs; customers SELECT own only. UI: `src/pages/Releases.tsx` (customer) + `src/admin/Releases.tsx` (two desks) + nav `anyPerm`.
 - This made **DO verification LIVE** (was the deferred "DO at online payment" gate). EIR/gate still external.
 

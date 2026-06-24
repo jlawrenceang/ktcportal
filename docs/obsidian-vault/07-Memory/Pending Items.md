@@ -17,7 +17,7 @@ Preflight **P1–P8 re-run green** through `0158` (2026-06-23; + new Lane L cont
 - [ ] **Defect D-01 (Low, OPEN)** — the release-desk **hold/reject reason note is NOT server-enforced**: `verify_release_order`, `confirm_release_payment`, and `confirm_release_supplement_payment` accept a **blank** note, unlike the JO side which raises. Fix = raise on a blank reason to mirror the JO path.
 - [ ] **Tagalog copy for the newest admin strings** (JO lifecycle / storage tariff editor / consignee detail modal) currently **falls back to English** — owner review before go-live.
 
-## Fuel monitoring — DEFERRED after Phase 0 ([[ADR-0025]])
+## Fuel monitoring — DEFERRED after Phase 0 ([ADR-0025](../../adr/0025-fuel-monitoring-derived-variance-on-moves-spine.md))
 
 Phase 0 (schema + derived views + `purchaser` role) is **live in prod and committed** (`9407d39`); the build is **paused** — portal/job-orders takes priority. The DB is ahead of the frontend, so:
 

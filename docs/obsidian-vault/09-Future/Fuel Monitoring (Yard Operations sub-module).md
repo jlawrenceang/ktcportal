@@ -2,7 +2,7 @@
 
 > **Status (2026-06-22): Phase 0 done, module PARKED.** The schema + effective-dated config + 7 derived views + the `purchaser` role are **live in prod and committed** (`9407d39`; migrations `0135`/`0140`/`0150`). There is **no frontend yet**, and the build is paused — the portal / job-orders lane has priority. Resume per [[Pending Items]] (wire the role/permissions → `/admin/fuel` desk → pump logger). ⚠️ Don't create a `purchaser` account until the UI is wired.
 
-**Owner:** Lawrence (sole builder). **Principle:** derived over hand-maintained; planned vs actual strictly separate; ship each phase before the next; the ERP stays the books of record (the app is operational). Decision: [[ADR-0025]].
+**Owner:** Lawrence (sole builder). **Principle:** derived over hand-maintained; planned vs actual strictly separate; ship each phase before the next; the ERP stays the books of record (the app is operational). Decision: [ADR-0025](../../adr/0025-fuel-monitoring-derived-variance-on-moves-spine.md).
 
 Source: sister-company **CSH** model `FUEL MONITORING_FEBRUARY 2026.xlsx` (2026-06-22) + this session's analysis. On the **same Supabase DB** as the portal; draws equipment + container moves from the [[Yard Operations — Pillar 2 (Move Logger + Yard)]] spine. An interim **Excel stopgap** (`KTC FUEL MONITORING (template).xlsx`) is already in use; this module supersedes it.
 
