@@ -7,24 +7,28 @@ last_updated: 2026-06-25
 
 # 🎯 Objectives (OKR-lite)
 
-The repo's measurable goals — 2–4 **Objectives** (what we're trying to achieve this period), each with 2–4 **Key Results** (falsifiable, numeric where possible). Owner-owned; keep it short. KRs are evals on the business — they pair with the `evals` skill. Execution lives in [[Roadmap]] / [[Pending Items]] (link, don't restate); the qualitative "what success looks like" is in [[Business Context]].
+Measurable goals — 3 Objectives from launch to the **north-star endpoint** (a Navis-class terminal + depot operating system). KRs are falsifiable and double as `evals` targets. Execution detail + sequencing live in [[Roadmap]] / [[Pending Items]] — link, don't restate. The qualitative "what success looks like" + the north star are in [[Business Context]].
 
-> **OWNER: fill this in.** The structure below is a placeholder — replace with the real period objectives.
+> Owner-owned. Re-cut when the active phase turns over.
 
-## Period: <e.g. 2026 Q3 — to launch>
+## O1 — Launch the portal publicly *(NOW)*
+- **KR1** — **ST05 closeout PASS** (Lanes A–K + Defect D-01 fixed) on live.
+- **KR2** — **Payment details entered** (P9: bank / GCash / QR) → real online payment works end-to-end.
+- **KR3** — **Customer Agreement v2 counsel sign-off** (DPO / NPC registration / liability cap).
+- **KR4** — Prod-testing restriction removed; **first real external Job Order** (JO-000001+).
 
-### Objective 1 — <a clear qualitative aim, e.g. "Ship the portal to production">
-- **KR1** — <measurable, e.g. "ST05 closeout PASS (Lanes A–K + Defect D-01)">
-- **KR2** — <measurable, e.g. "Customer Agreement v2 counsel sign-off">
-- **KR3** — <measurable, e.g. "first real Job Order processed end-to-end">
+## O2 — Harden for real traffic *(post-launch)*
+- **KR1** — 4 Playwright mutation `fixme` lanes implemented + Playwright wired into **CI**.
+- **KR2** — Defect D-01 **server-enforced**; status-change notifications + JO drafts / document attachments shipped (or explicitly deferred).
+- **KR3** — Per-customer accredited-consignee scoping live.
 
-### Objective 2 — <…>
-- **KR1** — <…>
-- **KR2** — <…>
+## O3 — Lay the first stone of the Navis-class TOS/ERP *(endpoint / north star)*
+- **KR1** — Answer the gating question — **what is KTC's *existing* TOS today** (create vs upgrade) — recorded as an ADR.
+- **KR2** — **Pillar 2 container/EIR move-logger spine**: Phase 1 (logger) go/no-go decided + scoped ([ADR-0015](../../adr/0015-modular-terminal-depot-operating-system-north-star.md) / [ADR-0022](../../adr/0022-gate-pass-is-container-eir-not-job-order.md)).
+- **KR3** — Fuel monitoring (Phase 0 done) resumed, or consciously kept parked with a **dated** decision.
 
 ## Scoring
-
 At period end, score each KR 0.0–1.0 (or hit/miss) with the evidence that proves it. Carry misses into the next period or [[Roadmap]].
 
 ## Related
-- [[Roadmap]] · [[Pending Items]] · [[Business Context]] (what success looks like)
+- [[Roadmap]] · [[Pending Items]] · [[Business Context]] (what success looks like + the north star)
