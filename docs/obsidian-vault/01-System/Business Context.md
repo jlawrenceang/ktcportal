@@ -27,9 +27,10 @@ order through a backend-enforced workflow.
 ### The company
 
 - **Legal entity:** KTC Container Terminal Corp.
-- **Line of business:** container-terminal / port-services / container-depot operator.
-- **Location / context:** Davao-area port, Philippines (operates under the Data Privacy
-  Act, R.A. 10173).
+- **Line of business:** a **port terminal, container depot, and various port operations**
+  (container handling, ancillary cargo services, depot / yard, release / pull-out).
+- **Location / context:** **Davao, southern Mindanao, Philippines** (operates under the Data
+  Privacy Act, R.A. 10173).
 - **Tenancy:** **single-company / single-tenant by construction.** There is no
   `src/lib/company.ts` and no tenancy primitives anywhere — no `tenant_id` / `org_id` /
   `company_id` columns; the app is hardwired to one Supabase project. Do **not** introduce
