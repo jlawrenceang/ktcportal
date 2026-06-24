@@ -19,46 +19,42 @@ npm run dev
 ### Supabase setup (one time)
 
 1. Create a **KTC-exclusive Supabase project** (separate free account).
-2. SQL Editor → paste [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) → Run.
+2. Apply the migrations in `supabase/migrations/` (forward-only; the schema is the full migration history, not a single init file).
 3. Copy the project URL + anon/publishable key into `.env.local`.
 
-## Data model
+## Data model / domain
 
-| Table | Purpose |
-|---|---|
-| `consignees` | master list (code, name) — uploaded later |
-| `brokers` | broker profile, 1:1 with an auth user |
-| `accreditations` | broker ⇄ consignee links (pending/approved/rejected) |
-| `job_orders` | a submission (auto `X-#####`, broker, entry #) |
-| `job_order_lines` | the repeating container rows (number + service) |
-
-RLS ensures each broker only sees their own data. The per-broker consignee dropdown is just
-`accreditations` filtered to `status = 'approved'`.
+The MVP table sketch that used to live here is retired. For the current domain and what's
+being built, see `docs/obsidian-vault/01-System/Business Context.md`; for the layer map see
+`docs/obsidian-vault/01-System/Architecture.md`. The authoritative schema is the
+forward-only migration history under `supabase/migrations/`. Access is backend-enforced via
+RLS + SECURITY DEFINER RPCs. (Terminology: code/DB say `broker`; newer docs/UI say
+`customer` — same actor, one pool.)
 
 ## Layout
 
 ```
 src/
   lib/        supabase client + AuthContext
-  pages/      Login, Home (Job Order / Accreditation UIs next)
-  components/ ProtectedRoute
+  pages/      customer portal (under Shell.tsx)
+  admin/      staff portal (under AdminShell.tsx)
+  components/ shared UI + route guards
   styles/     v2-tokens.css (visionOS design tokens)
 supabase/migrations/  schema
 assets/, scripts/, docs/   logo, ops scripts, project docs (ADRs + obsidian-vault)
 ```
 
-## Status / next
+## Status
 
-- [x] App scaffold, auth (Supabase), branded login + home shell
-- [x] Schema + RLS migration (`0001`)
-- [x] Registration: full name + valid-ID upload (Supabase Storage, `0002`)
-- [x] Job Order form with per-broker approved-consignee dropdown
-- [x] Accreditation request + **admin approval** screen (`is_admin` framework)
-- [ ] Consignees uploader (Excel → `consignees`)
-- [ ] Deploy to Vercel
+Live and deployed (the MVP checklist that used to live here is retired). For the current
+version, migration count, prod-data state, and what's next, see
+`docs/obsidian-vault/07-Memory/Current State.md` and `Roadmap.md` — those are kept fresh
+every session, so this README doesn't duplicate them.
 
-### Admin setup
+### Staff & owner
 
-After a user signs up, make them an admin: run `supabase/seed-admin.sql` (with their
-email) in the SQL Editor. Admins get an **Admin** nav tab to approve/reject
-accreditation requests and view brokers' uploaded IDs.
+Staff are **invite-only** (no admin self-signup); the server-only **owner failsafe**
+(`jlawrenceang@gmail.com`) cannot be locked out. Roles (admin / operations / cashier /
+checker / csr) are gated by `has_permission` in the backend. See
+`docs/obsidian-vault/01-System/Business Context.md` and the Administration core. (The old
+`seed-admin.sql` / `is_admin` MVP flow is retired.)

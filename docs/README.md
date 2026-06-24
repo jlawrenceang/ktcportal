@@ -1,6 +1,6 @@
 # Documentation Map (Current-State First)
 
-Last updated: 2026-06-13
+Last updated: 2026-06-24
 
 This repository uses **runtime-first documentation governance** (governing rules: `docs/agent/doc-governance.md`):
 
@@ -20,7 +20,7 @@ This repository uses **runtime-first documentation governance** (governing rules
 
 ## 2) Decision records
 
-- `docs/adr/README.md` + `docs/adr/0001…0014` — Architecture Decision Records. ADRs preserve historical decisions; divergences are tracked via dated addenda, not history rewrites.
+- `docs/adr/README.md` + `docs/adr/0001…0027` — Architecture Decision Records. ADRs preserve historical decisions; divergences are tracked via dated addenda, not history rewrites.
 - `docs/adr/template.md` — ADR template. Write new ones with the `/adr` command.
 
 ## 3) Live memory (Obsidian vault)
