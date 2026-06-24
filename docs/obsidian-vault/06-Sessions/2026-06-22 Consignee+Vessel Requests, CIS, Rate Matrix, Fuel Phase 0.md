@@ -27,7 +27,7 @@ A multi-track build day (migrations **0132–0141** on the portal, **0135/0140/0
 - **Admin tariff editor** gains the empty/full × dry/reefer grid; **calculator redesigned** (merged section, container types, ancillary dropdown).
 - **Reverted** the JO container size/fill/kind *filing* UI (`086a989`) — the **X-ray JO is operational, not priced**, so pricing dimensions don't belong on it. **Live billing unchanged**: payment still uses `service_rates`; `terminal_rates` is the quote/calculator tariff only.
 
-### Fuel monitoring — Phase 0, then DEFERRED ([[ADR-0025]])
+### Fuel monitoring — Phase 0, then DEFERRED ([ADR-0025](../../adr/0025-fuel-monitoring-derived-variance-on-moves-spine.md))
 - Backend-only **derived-variance fuel module** on the [[Yard Operations — Pillar 2 (Move Logger + Yard)|moves]] spine: `equipment` + two append-only ledgers (`fuel_dispense` OUT / `fuel_delivery` IN), effective-dated `fuel_rates`/`fuel_settings`, interim `move_tally`, **7 derived views**, RLS (`view_fuel_reports`/`manage_fuel`/`log_fuel`), config audit triggers, CSH-model seeds (`0135`).
 - New non-admin **`purchaser`** staff role = the fuel desk (`0150`), seeded with the 3 fuel gates.
 - `0140` — revoke PUBLIC EXECUTE on the `0132` consignee-decision trigger fn (`0105`/`0117` definer-ACL invariant; behaviour-neutral).
@@ -49,5 +49,5 @@ A multi-track build day (migrations **0132–0141** on the portal, **0135/0140/0
 - Confirm the new container-rate cells (120 nulls) with the owner as real tariffs are set.
 
 ## Related
-- [[Consignees]] · [[Job Orders]] · [[Staff Roles & Gates]] · [[ADR-0025]] · [[Fuel Monitoring (Yard Operations sub-module)]]
+- [[Consignees]] · [[Job Orders]] · [[Staff Roles & Gates]] · [ADR-0025](../../adr/0025-fuel-monitoring-derived-variance-on-moves-spine.md) · [[Fuel Monitoring (Yard Operations sub-module)]]
 - [[Current State]] · [[Completed Milestones]] · [[Pending Items]]

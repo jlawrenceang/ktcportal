@@ -17,7 +17,7 @@ KTC Container Terminal Corp. — the **KTC Online Portal** for port / container-
 | Migrations | **149 files** (`0001` … `0158`), all applied + tracked (split portal + fuel lanes) |
 | Staff roles | admin · operations · cashier · checker · csr (+ owner / root owner) — gated by `has_permission`. `purchaser` (fuel desk) exists in the DB but is **frontend-deferred** |
 | Completion | **two-gate** — all services + base payment + RPS (if needed) + every supplement, all confirmed; derived "✓ Cleared for release" badge |
-| Active focus | portal / job orders. **Fuel monitoring** ([[ADR-0025]]) parked after Phase 0 (schema live, no UI) |
+| Active focus | portal / job orders. **Fuel monitoring** ([ADR-0025](../adr/0025-fuel-monitoring-derived-variance-on-moves-spine.md)) parked after Phase 0 (schema live, no UI) |
 | Go-live gate | ST05 closeout (Lanes A–K + Defect D-01) · Agreement counsel sign-off · launch call |
 | Prod data | test data purged 2026-06-23 — first real order = `JO-000001` (0 orders / 0 customers / 0 releases) |
 
