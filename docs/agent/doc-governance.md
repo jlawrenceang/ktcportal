@@ -18,7 +18,7 @@ When a doc conflicts with runtime, runtime wins. Fix or archive the stale doc in
 
 | Layer | File(s) | What it holds |
 |---|---|---|
-| Constitution | `CLAUDE.md` | Mission, non-negotiables, runtime authority, release-gate pointer, supporting-doc index. **One screen (~220 words).** |
+| Constitution | `CLAUDE.md` | Mission, non-negotiables, runtime authority, release-gate pointer, supporting-doc index. **≤150w soft / 200 hard** (owner-confirmed at 198); narrative → Business Context. |
 | Codex mirror | `AGENTS.md` | Short pointer into the constitution + Codex operating stances. No duplicate rules. |
 | Modular reference | `docs/agent/*` | One concern per file. Detail behind the constitution. Stable; retrievable by path. |
 | Live memory | `docs/obsidian-vault/` | Current state, roadmap, sessions, per-core pages. Changes every session. |
@@ -54,12 +54,12 @@ What does NOT belong in instruction docs:
 2. If behavior or policy shifts materially, add or update an ADR (`/adr`).
 3. Update `CHANGELOG.md` under `[Unreleased]`.
 4. Verify no rule now lives in more than one file.
-5. Keep `CLAUDE.md` to one screen (~220 words). It runs a little longer than jta-sys's 188 because KTC carries a third business pillar (depot) in its mission and one extra non-negotiable (the jta-sys-MCP cross-wiring warning). If it creeps past ~230, move detail into `docs/agent/*` — do not let the constitution sprawl.
+5. Keep `CLAUDE.md` ≤150 words (soft cap); 150–200 requires explicit owner confirmation; never exceed 200 (hard cap, per the global bible). The mission, two-pillar roadmap, and background now live in `docs/obsidian-vault/01-System/Business Context.md`, not the constitution — that move brought `CLAUDE.md` to 198 words (owner-confirmed). If new content can't live there or in `docs/agent/*`, question whether it belongs in the constitution at all.
 
 ## Review checklist (before merging doc changes)
 
 - [ ] No rule duplicated across files.
-- [ ] `CLAUDE.md` still one screen (~220 words).
+- [ ] `CLAUDE.md` within cap (≤150 soft / 200 hard).
 - [ ] All new rules live in an owning file under `docs/agent/*` or the vault.
 - [ ] Stale docs updated or archived, not silently contradicted.
 - [ ] ADR added/updated if a policy shifted.
