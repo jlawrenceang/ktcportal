@@ -5,10 +5,12 @@ type: core
 wave: 1
 status: complete
 owner: Admin
-last_updated: 2026-06-07
+last_updated: 2026-06-25
 ---
 
 # 🧑‍💼 Brokers Core
+
+> ⚠️ **STALE (2026-06-07) — superseded; read for history only.** The `brokers` table was renamed **`customers`** (migration 0021); the `is_admin`/`is_owner` MVP flow is retired in favor of the owner-tunable role matrix (0104); and this predates the single customer-pool + consignee-CIS model (0136). Read **broker = customer** throughout. Current model: [[Business Context]] (who/personas), [[Administration]] (role matrix), [[Current State]] (live state).
 
 > **Maturity:** COMPLETE
 

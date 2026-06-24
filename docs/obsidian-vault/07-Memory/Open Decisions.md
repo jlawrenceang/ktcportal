@@ -2,12 +2,14 @@
 title: Open Decisions
 tags: [memory, decisions, register]
 type: memory
-last_updated: 2026-06-13
+last_updated: 2026-06-25
 ---
 
 # 🗳️ Open Decisions Register
 
 Decisions/questions awaiting the OWNER, grouped by what they unblock. Each has a **recommendation** so most can be confirmed quickly. Mark answers inline; move resolved items to the relevant ADR / spec.
+
+> ⚠️ **Partially stale (last full pass 2026-06-13).** Go-live gate is now **ST05** (not ST02 — see [[Current State]]). Several rate/storage questions (B4/B5 rates, C7/D3 storage) are now addressed by **ADR-0024** (release/pull-out pricing) and **ADR-0027** (per-service rate granularity + tiered foreign storage). Re-confirm the still-open `(Owner: ___)` items; move resolved ones to their ADR.
 
 ## A. Blocking the current build (operations role + vessel schedule) — ✅ ANSWERED 2026-06-13
 
@@ -40,7 +42,7 @@ Decisions/questions awaiting the OWNER, grouped by what they unblock. Each has a
 - **D2. After this slice, which pillar next** — terminal ops / depot M&R / billing? *(Owner: ___)*
 - **D3. Storage/demurrage** — now that `last_free_day` is computed: surface the free-storage countdown to customers now? Bill demurrage after it later? Rec: **surface now (free, useful), bill later**. *(Owner: ___)*
 
-## E. Go-live / ST02
+## E. Go-live / ST05
 
 - **E1. Plan** — build the modernization wave, *then* run ST02 on the final system? Rec: **yes** (we paused ST02 to build). *(Owner: ___)*
 - **E2. Payment details** — bank / account / GCash / QR are still blank; needed for real payments + ST02 Lane 5. *(Owner: ___)*

@@ -36,6 +36,7 @@ Thumbs.db
 
 # local screenshot capture (not committed)
 docs/screenshots/
+docs/ktc-screenshots/
 docs/ktc-screenshots.zip
 
 # Android signing keystore + secrets (never commit)

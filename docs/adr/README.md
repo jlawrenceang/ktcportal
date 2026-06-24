@@ -1,10 +1,10 @@
 # Architecture Decision Records (ADRs)
 
-ADRs in this folder preserve decision history for the KTC broker portal.
+ADRs in this folder preserve decision history for the KTC portal.
 
 ## Reading order
 
-1. `0001` to `0024` in numeric order.
+1. `0001` to `0027` in numeric order.
 2. Then check each ADR for **Current-State Addendum** sections.
 
 ## Log
