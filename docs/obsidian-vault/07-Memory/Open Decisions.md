@@ -44,8 +44,8 @@ Decisions/questions awaiting the OWNER, grouped by what they unblock. Each has a
 
 ## E. Go-live / ST05
 
-- **E1. Plan** — build the modernization wave, *then* run ST02 on the final system? Rec: **yes** (we paused ST02 to build). *(Owner: ___)*
-- **E2. Payment details** — bank / account / GCash / QR are still blank; needed for real payments + ST02 Lane 5. *(Owner: ___)*
+- **E1. Plan** — build the modernization wave, *then* run ST05 on the final system? Rec: **yes** (we paused ST02 to build). *(Owner: ___)*
+- **E2. Payment details** — bank / account / GCash / QR are still blank; needed for real payments + ST05 Lane E. *(Owner: ___)*
 - **E3. Counsel sign-off** on Customer Agreement v2 (DPO, NPC registration, liability cap) — go-live gate. *(Owner: ___)*
 
 ## Related

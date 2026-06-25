@@ -10,7 +10,7 @@ last_updated: 2026-06-25
 
 # 🧑‍💼 Brokers Core
 
-> ⚠️ **STALE (2026-06-07) — superseded; read for history only.** The `brokers` table was renamed **`customers`** (migration 0021); the `is_admin`/`is_owner` MVP flow is retired in favor of the owner-tunable role matrix (0104); and this predates the single customer-pool + consignee-CIS model (0136). Read **broker = customer** throughout. Current model: [[Business Context]] (who/personas), [[Administration]] (role matrix), [[Current State]] (live state).
+> ⚠️ **STALE (2026-06-07) — historical reference; current staffing via [[Administration]].** The `brokers` table was renamed to **`customers`** (migration 0021). Staff roles now run on an **owner-tunable permission matrix** (migration 0035: `role_permissions` table + `has_permission()` gates); `is_admin`/`is_owner` columns remain for backward compat and owner/admin detection. The system is now a **single customer pool** with **consignee-based CIS accreditation** (migration 0136 reverted the broker-level gate). Read **broker = customer**. For current staffing, roles, and access control, see [[Administration]] (role matrix), [[Staff Roles & Gates]] (gates detail), and [[Current State]] (live snapshot).
 
 > **Maturity:** COMPLETE
 

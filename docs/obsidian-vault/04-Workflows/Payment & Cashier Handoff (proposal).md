@@ -8,9 +8,11 @@ last_updated: 2026-06-11
 
 # 💳 Payment & Cashier Handoff — proposal (P2, parked for audit)
 
-> Status: **proposal only** — parked 2026-06-11 for a dedicated discussion with
-> KTC ops/cashier staff. Nothing here is built. The goal of this doc is to give
-> that discussion a concrete starting point and a checklist of what to audit.
+> **⚠️ SUPERSEDED & IMPLEMENTED** — All proposals in this document were **built and deployed**.
+> See [[Job Order Lifecycle]] **§F (Pricing & payment)** for the current authoritative specification.
+> This document is **retained as historical audit context** (parked 2026-06-11; implemented through 2026-06-16 migrations 0035+0091).
+> \n
+> **Previous status (2026-06-11)**: proposal only — parked for a dedicated discussion with KTC ops/cashier staff.
 
 ## The gap
 

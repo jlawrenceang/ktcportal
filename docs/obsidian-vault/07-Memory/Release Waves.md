@@ -2,7 +2,7 @@
 title: Release Waves
 tags: [memory, waves, maturity]
 type: memory
-last_updated: 2026-06-07
+last_updated: 2026-06-25
 ---
 
 # 🌊 Release Waves (Per-Core Maturity)
@@ -20,7 +20,7 @@ Orthogonal to [[Roadmap]] (which sequences feature lanes). This view describes *
 | [[Authentication]] | 1 | ✅ Complete (email confirmation deferred to W3) |
 | [[Brokers]] | 1 | ✅ Complete |
 | [[Consignees]] | 1 | ✅ Complete (mass accreditation ongoing) |
-| [[Job Orders]] | 1→2 | 🟡 Submission live; admin processing in progress |
+| [[Job Orders]] | 1→2 | ✅ Complete (lifecycle: file, hold/reject, two-gate completion, supplements, payments, verify-QR) |
 | [[Administration]] | 1→2 | 🟡 Core controls done; dashboard/processing maturing |
 
 ## Wave summary

@@ -2,10 +2,10 @@
 title: Process Flow Map & Gap Analysis
 tags: [workflow, process, gaps, map]
 type: workflow
-last_updated: 2026-06-11
+last_updated: 2026-06-25
 ---
 
-# 🗺️ Process Flow Map & Gap Analysis (2026-06-11)
+# 🗺️ Process Flow Map & Gap Analysis (2026-06-25)
 
 End-to-end flow as **built today**, then the gaps. Diagrams are Mermaid —
 they render on GitHub and in Obsidian.
@@ -35,11 +35,10 @@ flowchart TD
   F -->|approved account| SUB[submitted<br/>JO-###### + serving № per line]
   H -->|account approved| SUB
   SUB -->|admin approve| PR[processing<br/>printable slip]
-  SUB & PR -->|admin hold + note| OH[on_hold]
-  OH -->|customer responds + resubmits<br/>keeps serving №| SUB
-  SUB & PR & OH -->|admin reject + note<br/>serving № burned| RJ[rejected]
-  RJ -->|recoverable: fix & resubmit<br/>back of line, admin can restore №| SUB
-  RJ -->|terminal| X2[closed — file new JO]
+  SUB & PR -->|admin hold: staff flag<br/>which fields to fix| OH[on_hold<br/>needs_fields set]
+  OH -->|customer responds<br/>with flagged fields only<br/>keeps serving №| SUB
+  SUB & PR & OH -->|admin reject<br/>serving № burned| RJ[rejected<br/>terminal]
+  RJ -->|no recovery| X2[closed — file new JO]
   H & SUB & OH -->|customer cancel<br/>serving № burned| C[cancelled]
   PR -->|checker confirms X-ray<br/>stamps date/time| DONE[completed]
   SUB -->|emails: on_hold + rejected only| SUB

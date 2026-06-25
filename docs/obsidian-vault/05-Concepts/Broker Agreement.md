@@ -10,7 +10,7 @@ The single master legal document brokers accept at registration — fuses the fo
 
 ## Where it lives
 
-- **Content (single source):** `src/content/broker-agreement.md` (Markdown). Edit here.
+- **Content (single source):** `src/content/customer-agreement.md` (Markdown). Edit here.
 - **Version:** `src/content/legal.ts` → `AGREEMENT_VERSION` (+ `AGREEMENT_VERSION_LABEL`). Bump on material change.
 - **Page:** `src/pages/Agreement.tsx` at the **public** `/agreement` route (shared `MarkdownDoc` renderer). The old `/irr`, `/terms`, `/privacy` routes **redirect** here.
 

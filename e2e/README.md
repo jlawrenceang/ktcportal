@@ -22,7 +22,7 @@ First-time setup (already done once): `npx playwright install chromium`.
 
 ## Layout
 
-- `smoke.spec.ts` — **Phase 1, active (11 tests).** Unauthenticated smoke: routing, login render, protected-route redirects, SPA rewrite, public `/agreement` page (+ `/irr` `/terms` `/privacy` redirects), registration consent gate (inline Agreement + two ticks), Turnstile mounts. Runs without logging in, so the server-side CAPTCHA doesn't block it.
+- `smoke.spec.ts` — **Phase 1, active (14 tests).** Unauthenticated smoke: routing, login render, protected-route redirects, SPA rewrite, release routes (`/releases` + `/admin/releases`), public `/agreement` page (+ `/irr` `/terms` `/privacy` redirects), registration consent gate (inline Agreement + one consolidated tick), Turnstile mounts. Runs without logging in, so the server-side CAPTCHA doesn't block it.
 - `authenticated.spec.ts` — **Phase 2.** Authenticated flows (ST01 Lanes 1–5). **Skips by default**; runs when the env below is set. Mutation-heavy lanes are `test.fixme` until pointed at a seeded test project.
 - `helpers/session.ts` — `mintSession(page, email)`: logs a role in **without a UI login** (service-role magic link), so CAPTCHA is never in the way and never disabled. See ADR-0010.
 

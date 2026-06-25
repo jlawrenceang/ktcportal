@@ -9,7 +9,7 @@ last_updated: 2026-06-16
 # 🔄 Job Order Lifecycle (source of truth)
 
 > Status legend: ✅ built · 🔸 decided, not yet built · ❓ open decision.
-> Reflects migrations through **0104** (all applied to prod). For the staff role
+> Reflects migrations through **0156** (all applied to prod). For the staff role
 > model see [[Staff Roles & Gates]]; for the completion rule see [[Two-Gate Completion]].
 
 ## Actors
@@ -35,9 +35,9 @@ last_updated: 2026-06-16
 | `held` ✅ | Filed by a **pending** (unverified) customer | Queue-hidden; ≤10; **no JO number yet** ("Draft") |
 | `submitted` ✅ | Live in the admin queue | JO number assigned; **gets a priority number** (one per JO, see §D) |
 | `processing` ✅ | Being worked (accepted, or partially X-rayed) | Printable slip; "ON PROCESS" / PENDING watermark |
-| `on_hold` ✅ | Staff needs info | Customer-visible `admin_note`; customer can respond + resubmit |
+| `on_hold` ✅ | Staff needs info | Customer-visible `admin_note`; `needs_fields` array flags which fields (consignee/entry/vessel/containers) customer must re-enter; customer responds via field-targeted resubmit |
 | `completed` ✅ | Done — **passes the two-gate** (all services + all payments) | Clean slip with COMPLETED watermark + verify QR |
-| `rejected` ✅ | Staff declined | Customer-visible `admin_note`; recoverable vs terminal |
+| `rejected` ✅ | Staff declined — **terminal** | Customer-visible `admin_note`; final (no customer resubmit; use `on_hold` → field-targeted path instead) |
 | `cancelled` ✅ | Customer-cancelled or auto on account suspend/reject | |
 
 **Under review** ✅ (`0101`) is not a separate state — it is a `completed` order bounced back to `processing` (with `completed_at` cleared + `has_open_supplement = true`, `0104`) because an additional charge ([[Additional-Charge Supplements]]) was tagged after completion. It auto-re-completes once the charge is paid.
@@ -50,14 +50,15 @@ The explicit staff actions go through **`staff_transition_order(p_id, p_status, 
 - **File on behalf** (operations/CSR/admin) → `submitted`. ✅ (`/admin/new-job-order`, `file_job_orders`; staff filings bypass caps.)
 - **Account approved** → that customer's `held` → `submitted` (release trigger). ✅
 - **Accept** → `submitted` / `on_hold` → `processing`. Gate **`accept_orders`** (operations / admin).
-- **Hold for info** (+note) → `submitted` / `processing` / `on_hold` → `on_hold`. Gate **`hold_reject_orders`** (operations / cashier / admin).
-- **Reject** (+note) → open → `rejected`. Gate **`hold_reject_orders`**; staff picks **recoverable** (default) vs **terminal** (`rejected_recoverable`).
+- **Hold for info** (+note, +field list) → `submitted` / `processing` / `on_hold` → `on_hold`. Gate **`hold_reject_orders`** (operations / cashier / admin). **`hold_job_order()`** sets `needs_fields` (subset of consignee/entry/vessel/containers) to flag which fields the customer must re-enter; empty set = general hold (note only).
+- **Reject** (+note) → open → `rejected`. Gate **`hold_reject_orders`**; **always terminal** (`rejected_recoverable = false`). ✅ (`0154`)
 - **Complete** → open → `completed`. Gate **`complete_orders`** (operations / cashier / admin) **AND** the [[Two-Gate Completion]] readiness must hold; otherwise raises. Usually auto-fired (see D/E) rather than clicked.
-- **Resubmit after reject** (customer) → `rejected` → `submitted`. ✅ (recoverable only; re-checks the open-order cap.)
-- **Respond to hold** (customer) → `on_hold` → `submitted`. ✅ (required reply note; can correct the entry number.)
+- **Respond to hold with field-targeted resubmit** (customer) → `on_hold` → `submitted`. ✅ **`resubmit_needs_info()`** enforces field-lock server-side (only updates flagged fields in `needs_fields`; other values ignored). (`0154`)
 - **Edit own order** (customer) → content change while `held`/`submitted`. ✅ (`update_job_order`; locks at `processing`+.)
 - **Staff edit header** (`0103`) → consignee / entry / vessel / voyage / vessel-visit on any non-cancelled/-rejected order. Gate `process_job_orders OR review_payments OR manage_support` (operations / cashier / CSR — **checker excluded**, **customers excluded**). `staff_edit_job_order`.
 - **Cancel** (customer) → `held` / `submitted` / `on_hold` → `cancelled`. ✅ (not once `processing`.)
+- **Cascade-cancel on consignee reject** → When a consignee is rejected (`0152`), all open JOs referencing it (`held`/`submitted`/`processing`/`on_hold`) are auto-cancelled **except** those already paid or invoiced (financial integrity). Customer-visible reason in `admin_note`.
+- **Cascade-cancel on customer suspend/reject** → When a customer is suspended or rejected (`0153`), all their open JOs (`held`/`submitted`/`processing`/`on_hold`) are auto-cancelled **except** those already paid or invoiced. Customer-visible reason in `admin_note`.
 
 ## D. Numbering & priority
 
@@ -108,5 +109,5 @@ JO comments live in `job_order_events` (`event = 'comment'`), surfaced only thro
 ## Related
 - [[Job Orders]] · [[Administration]] · [[Brokers]] · [[Pending Items]] · [[Current State]]
 - [[Staff Roles & Gates]] · [[Two-Gate Completion]] · [[Additional-Charge Supplements]] · [[Verify-QR Anti-Forgery]] · [[Comment Visibility & Escalation]]
-- ADR-0012 (held lifecycle) · ADR-0013 (account self-service) · ADR-0014 (processing + slip)
-- Migrations `0062` (RPS), `0086` (CSR + split gates), `0087`/`0088`/`0095` (per-van X-ray), `0089`/`0090` (verify-QR), `0091` (office payment), `0100` (queue), `0101`/`0104` (supplements), `0102` (comments), `0103` (staff edit)
+- ADR-0012 (held lifecycle) · ADR-0013 (account self-service) · ADR-0014 (processing + slip) · ADR-0026 (reject terminal + field-targeted needs-info + cascades)
+- Migrations `0062` (RPS), `0086` (CSR + split gates), `0087`/`0088`/`0095` (per-van X-ray), `0089`/`0090` (verify-QR), `0091` (office payment), `0100` (queue), `0101`/`0104` (supplements), `0102` (comments), `0103` (staff edit), `0152`–`0154` (reject terminal + field-targeted needs-info + cascades)

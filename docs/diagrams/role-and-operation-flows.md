@@ -11,7 +11,7 @@ Detailed flowcharts of **every path each role can take**, the two operational sp
 (render in GitHub, Obsidian, and most Markdown viewers).
 
 **Source of truth:** synthesized from the live code + the **live `role_permissions`
-table** (queried 2026-06-21) and the SECURITY DEFINER RPC guards. Migrations through **0130**.
+table** (queried 2026-06-25) and the SECURITY DEFINER RPC guards. Migrations through **0158**.
 
 ## How to read these
 
@@ -34,31 +34,36 @@ table** (queried 2026-06-21) and the SECURITY DEFINER RPC guards. Migrations thr
 | **operations** | `/admin/job-orders` | Intake/accept + RPS + service completion + vessels; **monitors** X-ray (no confirm); no money |
 | **cashier** | `/admin/cashier` | Payments + ERP invoice/OR; can complete/hold-reject; **cannot** see the X-ray queue |
 | **checker** | `/admin/checker` | **Only** confirms each van's X-ray entry (the spotter) |
-| **csr** | `/admin/support` | Support inbox + file-on-behalf + **release document verification** |
+| **csr** | `/admin/support` | Support inbox + file-on-behalf + **release document verification** + **consignee request review** |
+| **purchaser** | (appmap pending) | Fuel module: procurement + monitoring; **scoped, non-admin** |
 | **customer** | `/` | Files/pays own Job Orders & Releases; sees only own data |
 
 Permission matrix (`✓` allowed · blank = denied · owner = `✓` on all):
 
-| Permission | admin | operations | cashier | checker | csr |
-|---|:--:|:--:|:--:|:--:|:--:|
-| view_job_orders | ✓ | ✓ | ✓ | ✓ | ✓ |
-| view_xray_queue | ✓ | ✓ |  | ✓ | ✓ |
-| file_job_orders | ✓ |  |  |  | ✓ |
-| accept_orders | ✓ | ✓ |  |  |  |
-| process_job_orders | ✓ | ✓ |  |  |  |
-| complete_orders | ✓ | ✓ | ✓ |  |  |
-| hold_reject_orders | ✓ | ✓ | ✓ |  |  |
-| confirm_xray |  |  |  | ✓ |  |
-| assess_rps | ✓ | ✓ |  |  |  |
-| review_payments | ✓ |  | ✓ |  |  |
-| record_invoice | ✓ |  | ✓ |  |  |
-| verify_release_docs | ✓ |  |  |  | ✓ |
-| manage_vessel_schedule | ✓ | ✓ |  |  |  |
-| manage_support | ✓ |  |  |  | ✓ |
-| manage_approvals | ✓ |  |  |  |  |
-| manage_customers | ✓ |  |  |  |  |
-| manage_consignees | ✓ |  |  |  |  |
-| manage_pricing | ✓ |  |  |  |  |
+| Permission | admin | operations | cashier | checker | csr | purchaser |
+|---|:--:|:--:|:--:|:--:|:--:|:--:|
+| view_job_orders | ✓ | ✓ | ✓ | ✓ | ✓ |  |
+| view_xray_queue | ✓ | ✓ |  | ✓ | ✓ |  |
+| view_fuel_reports | ✓ |  |  |  |  | ✓ |
+| file_job_orders | ✓ |  |  |  | ✓ |  |
+| accept_orders | ✓ | ✓ |  |  |  |  |
+| process_job_orders | ✓ | ✓ |  |  |  |  |
+| complete_orders | ✓ | ✓ | ✓ |  |  |  |
+| hold_reject_orders | ✓ | ✓ | ✓ |  |  |  |
+| confirm_xray |  |  |  | ✓ |  |  |
+| assess_rps | ✓ | ✓ |  |  |  |  |
+| review_payments | ✓ |  | ✓ |  |  |  |
+| record_invoice | ✓ |  | ✓ |  |  |  |
+| log_fuel | ✓ |  |  |  |  | ✓ |
+| manage_fuel | ✓ |  |  |  |  | ✓ |
+| verify_release_docs | ✓ |  |  |  | ✓ |  |
+| review_consignee_requests | ✓ |  |  |  | ✓ |  |
+| manage_vessel_schedule | ✓ | ✓ |  |  |  |  |
+| manage_support | ✓ |  |  |  | ✓ |  |
+| manage_approvals | ✓ |  |  |  |  |  |
+| manage_customers | ✓ |  |  |  |  |  |
+| manage_consignees | ✓ |  |  |  |  |  |
+| manage_pricing | ✓ |  |  |  |  |  |
 
 ---
 
@@ -337,6 +342,6 @@ flowchart TD
 | Release charges set / supplements | csr/admin | `verify_release_docs` |
 | Support handled | csr/admin | `manage_support` |
 
-> Verified 2026-06-21 against the live `role_permissions` table + the RPC guards in
-> `supabase/migrations/**`. If a gate is re-toggled in **Settings → Roles & Gates**, this
+> Verified 2026-06-25 against the live `role_permissions` table + the RPC guards in
+> `supabase/migrations/**` through 0158. If a gate is re-toggled in **Settings → Roles & Gates**, this
 > matrix and these flows change with it — the server enforces the live matrix, not this doc.
