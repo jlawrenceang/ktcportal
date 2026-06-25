@@ -7,7 +7,7 @@ last_updated: 2026-06-25
 
 # 🏗️ Architecture
 
-> **Terminology:** code/DB say `broker`, but the entity was renamed **`customers`** (migration 0021) and the model is now a single customer pool — read **broker = customer** throughout. This page also predates the **staff mobile shell** (`/app`, `/app/checker|cashier|csr|operations`) and the **release/pull-out + QRPH** surfaces — see [[Business Context]] for the current model and [[System Scale]] for the full live route map.
+> **Terminology:** code/DB say `broker`, but the entity was renamed **`customers`** (migration 0021) and the model is now a single customer pool — read **broker = customer** throughout. This page also predates the **staff mobile shell** (`/app`, `/app/checker|cashier|csr|operations`) and the **release/pull-out + QRPH** surfaces — see [[Business Context]] for the current model and [[System Scale]] for the full live route map. For a current **one-screen system map** (topology, backend-enforced access model, the two operational spines, full route map) see `docs/architecture-overview.md` — this vault page is the **domain/core map**; the overview is the **structural map**.
 
 ## Overview
 

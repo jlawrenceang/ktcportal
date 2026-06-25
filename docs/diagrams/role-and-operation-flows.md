@@ -11,7 +11,7 @@ Detailed flowcharts of **every path each role can take**, the two operational sp
 (render in GitHub, Obsidian, and most Markdown viewers).
 
 **Source of truth:** synthesized from the live code + the **live `role_permissions`
-table** (queried 2026-06-25) and the SECURITY DEFINER RPC guards. Migrations through **0158**.
+table** (queried 2026-06-25) and the SECURITY DEFINER RPC guards. Migrations through **0159**.
 
 ## How to read these
 
@@ -343,5 +343,5 @@ flowchart TD
 | Support handled | csr/admin | `manage_support` |
 
 > Verified 2026-06-25 against the live `role_permissions` table + the RPC guards in
-> `supabase/migrations/**` through 0158. If a gate is re-toggled in **Settings → Roles & Gates**, this
+> `supabase/migrations/**` through 0159. If a gate is re-toggled in **Settings → Roles & Gates**, this
 > matrix and these flows change with it — the server enforces the live matrix, not this doc.

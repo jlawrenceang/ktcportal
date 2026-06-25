@@ -15,6 +15,7 @@ This repository uses **runtime-first documentation governance** (governing rules
 
 - `CLAUDE.md` — top-level constitution.
 - `AGENTS.md` — short Codex-oriented mirror.
+- `docs/architecture-overview.md` — one-screen system map (stack, topology, backend-enforced access model, the two operational spines, module/route map). Read this first for a structural orientation; it links out to live figures + detailed flows.
 - `docs/obsidian-vault/01-System/Business Context.md` — canonical business background (who we are / who uses it) + product scope (what we're building). Read this first for domain orientation.
 - `docs/agent/` — modular instruction reference (one concern per file). Start at `docs/agent/README.md`. Doc governance itself: `docs/agent/doc-governance.md`.
 
@@ -37,7 +38,7 @@ This repository uses **runtime-first documentation governance** (governing rules
 ## 4) Smoke tests
 
 - `docs/smoke-test-template-canonical.md` — canonical structure for all smoke tests.
-- `docs/smoke-test-01-portal.md` … `docs/smoke-test-05-portal.md` — ST01–ST05. **ST05 is the current go-live gate** (closeout: Lanes A–K + Defect D-01); ST01–ST04 are prior runs.
+- `docs/smoke-test-01-portal.md` … `docs/smoke-test-05-portal.md` — ST01–ST05. **ST05 is the current go-live gate** (closeout: manual Lanes A–K; Defect D-01 closed in `0159`); ST01–ST04 are prior runs.
 
 ## 5) Other
 

@@ -2,7 +2,7 @@
 title: Home
 tags: [index]
 type: home
-last_updated: 2026-06-23
+last_updated: 2026-06-25
 ---
 
 # KTC Portal Knowledge Home
@@ -13,12 +13,12 @@ KTC Container Terminal Corp. — the **KTC Online Portal** for port / container-
 
 | Metric | Value |
 |---|---|
-| Version | `v1.6.12` live on `portal.ktcterminal.com` |
-| Migrations | **149 files** (`0001` … `0158`), all applied + tracked (split portal + fuel lanes) |
+| Version | `v1.6.13` live on `portal.ktcterminal.com` |
+| Migrations | **150 files** (`0001` … `0159`), all applied + tracked (split portal + fuel lanes) |
 | Staff roles | admin · operations · cashier · checker · csr (+ owner / root owner) — gated by `has_permission`. `purchaser` (fuel desk) exists in the DB but is **frontend-deferred** |
 | Completion | **two-gate** — all services + base payment + RPS (if needed) + every supplement, all confirmed; derived "✓ Cleared for release" badge |
 | Active focus | portal / job orders. **Fuel monitoring** ([ADR-0025](../adr/0025-fuel-monitoring-derived-variance-on-moves-spine.md)) parked after Phase 0 (schema live, no UI) |
-| Go-live gate | ST05 closeout (Lanes A–K + Defect D-01) · Agreement counsel sign-off · launch call |
+| Go-live gate | ST05 closeout (manual Lanes A–K; Defect D-01 closed `0159`) · Agreement counsel sign-off · launch call |
 | Prod data | test data purged 2026-06-23 — first real order = `JO-000001` (0 orders / 0 customers / 0 releases) |
 
 ## Where the rules and memory live
@@ -26,6 +26,7 @@ KTC Container Terminal Corp. — the **KTC Online Portal** for port / container-
 KTC uses a layered documentation system:
 
 - **Repo constitution** — `CLAUDE.md` + `AGENTS.md` (Codex mirror). Immutable top-level rules.
+- **System map** — `docs/architecture-overview.md`: one-screen structural overview (topology, backend-enforced access model, the two spines, module/route map). Links out to live figures + detailed flows.
 - **Modular instruction reference** — `docs/agent/*` (in the repo). Durable, path-retrievable detail: release gate, runtime data safety, workflow invariants, coding guardrails, testing, tooling, memory policy, doc governance.
 - **Decision history** — `docs/adr/*`.
 - **Live memory (this vault)** — current state, roadmap, pending items, per-core pages, sessions, milestones.
