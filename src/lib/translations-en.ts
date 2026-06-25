@@ -621,4 +621,161 @@ export const enSimple: Record<string, string> = {
     "Please enter the charge type name first.",
   "Per-container rates the Rate Calculator looks up. For each service, tick the conditions its rate depends on — leave all unticked for one uniform rate. Storage is special: domestic is a flat per-day rate by size; foreign is a progressive per-day band tariff. Amounts in ₱, VAT-exclusive (12% VAT is added on the subtotal).":
     "Per-container rates that the Rate Calculator looks up. For each service, tick the conditions its rate depends on; leave all unticked for one uniform rate. Storage is a special case: domestic is a flat per-day rate by size, while foreign is a progressive per-day band tariff. Amounts in ₱, VAT-exclusive (12% VAT is added on the subtotal).",
+
+  // --- Formal overrides for the previously-untranslated strings (added 2026-06-25;
+  //     release/supplement desk, bulletin, JO lifecycle). ---
+  "Tags an additional charge onto this order. The customer pays it separately; the order can’t complete until it’s settled.":
+    "Adds an additional charge to this order. The customer pays it separately; the order cannot be completed until it is settled.",
+  "Only admins can manage the bulletin board.":
+    "Only administrators may manage the bulletin board.",
+  "Announcements shown on every customer’s Home. Each post is a topic customers tap to read in full — attach a memo file and they can open it from the post.":
+    "Announcements shown on every customer's Home. Each post is a topic that customers tap to read in full. Attach a memo file and they can open it from the post.",
+  "Enter both the invoice control number and the pad/serial number.":
+    "Please enter both the invoice control number and the pad or serial number.",
+  "Online payment slips waiting for your confirmation.":
+    "Online payment slips awaiting your confirmation.",
+  "Nothing to review.":
+    "There is nothing to review.",
+  "Accepted orders still unpaid. Encourage customers to pay online (upload a slip) to skip the cashier line.":
+    "Accepted orders that remain unpaid. Please encourage customers to pay online by uploading a slip to skip the cashier line.",
+  "No walk-in collections pending.":
+    "No walk-in collections are pending.",
+  "No invoices to record.":
+    "There are no invoices to record.",
+  "Extra charges tagged onto orders — review the customer’s proof or collect at the window. The order stays under review until it’s settled.":
+    "Extra charges added to orders. Please review the customer's proof or collect at the window. The order remains under review until it is settled.",
+  "No additional charges outstanding.":
+    "There are no additional charges outstanding.",
+  "Mark {label} as PAID at the cashier window. This confirms payment in the system (and completes the order if every service is done).":
+    "Mark {label} as PAID at the cashier window. This confirms payment in the system and completes the order once every service is done.",
+  "and become visible to customers once approved. Address, TIN, and the 2303 can be filled in later — they’re no longer required to approve.":
+    "and become visible to customers once approved. Address, TIN, and the 2303 may be filled in later, as they are no longer required for approval.",
+  "Select the vessel & voyage from the list.":
+    "Please select the vessel and voyage from the list.",
+  "If the vessel isn’t listed, add it to the vessel schedule first.":
+    "If the vessel is not listed, please add it to the vessel schedule first.",
+  "Enter a valid charge amount.":
+    "Please enter a valid charge amount.",
+  "Enter a label for the additional charge.":
+    "Please enter a label for the additional charge.",
+  "Enter the OR number.":
+    "Please enter the OR number.",
+  "Enter the ERP control no.":
+    "Please enter the ERP control number.",
+  "No access to the release desk.":
+    "You do not have access to the release desk.",
+  "Check the delivery order / bill of lading, then set the charges.":
+    "Check the delivery order or bill of lading, then set the charges.",
+  "Nothing waiting for a document check.":
+    "There is nothing waiting for a document check.",
+  "No verified releases waiting for charges.":
+    "No verified releases are waiting for charges.",
+  "No releases ready for an additional charge.":
+    "No releases are ready for an additional charge.",
+  "No payment proofs waiting for review.":
+    "No payment proofs are waiting for review.",
+  "No additional-charge payments waiting for review.":
+    "No additional-charge payments are waiting for review.",
+  "No paid releases waiting for an OR number.":
+    "No paid releases are waiting for an OR number.",
+  "Additional charge unpaid — OR blocked until the cashier confirms every charge.":
+    "Additional charge unpaid. The OR is blocked until the cashier confirms every charge.",
+  "Records the official receipt number and releases the shipment":
+    "Records the official receipt number and releases the shipment.",
+  "Invite sent to {addr} ({suRole}). They’ll set their password via the email link.":
+    "Invite sent to {addr} ({suRole}). They will set their password via the email link.",
+  "Switch the portal between English and Filipino. Also available as EN / FIL in the side menu.":
+    "Switch the portal between English and Filipino. This is also available as EN / FIL in the side menu.",
+  "We email them a secure invite link to set their own password — this is the only way to grant staff access. For a shared/kiosk device, use a dedicated inbox (e.g. gate1@ktcterminal.com).":
+    "We will email them a secure invite link to set their own password. This is the only way to grant staff access. For a shared or kiosk device, please use a dedicated inbox (e.g. gate1@ktcterminal.com).",
+  "You are the root owner. You can grant or revoke OWNER access for other admin accounts. A secondary owner has every owner power EXCEPT minting owners — only you (root) can create owners. The root owner can’t be changed here.":
+    "You are the root owner. You may grant or revoke OWNER access for other admin accounts. A secondary owner has every owner power EXCEPT creating owners — only you, the root owner, may create owners. The root owner cannot be changed here.",
+  "No other admins yet — create an admin first, then grant owner here.":
+    "There are no other administrators yet. Please create an administrator first, then grant owner access here.",
+  "In-house line — hide its vessels from customers":
+    "In-house line — hides its vessels from customers.",
+  "This ticket is closed. Reopen it to send a message.":
+    "This ticket is closed. Please reopen it to send a message.",
+  "Enter a valid recipient email address.":
+    "Please enter a valid recipient email address.",
+  "Test email sent to {to} — check the inbox (and spam).":
+    "A test email was sent to {to}. Please check the inbox, as well as the spam folder.",
+  "Send a real test of the branded portal email to any address to check rendering + delivery.":
+    "Send a real test of the branded portal email to any address to check its rendering and delivery.",
+  "Sent to {n} device(s) — it should arrive shortly.":
+    "Sent to {n} device(s). It should arrive shortly.",
+  "This user has no notification devices yet — they haven’t enabled notifications anywhere.":
+    "This user has no notification devices yet, as they have not enabled notifications anywhere.",
+  "Send a real test notification to any account’s subscribed devices to confirm delivery.":
+    "Send a real test notification to any account's subscribed devices to confirm delivery.",
+  "Vessel sync isn’t configured yet — contact the owner.":
+    "Vessel sync is not configured yet. Please contact the owner.",
+  "Syncing from the Google Sheet… the list refreshes in a few seconds.":
+    "Syncing from the Google Sheet. The list will refresh in a few seconds.",
+  "Pull the latest edits from the Google Sheet now and refresh the Last Free Day mirror":
+    "Pull the latest edits from the Google Sheet now and refresh the Last Free Day mirror.",
+  "No calls. Add one above or sync from the Google Sheet.":
+    "There are no calls. Please add one above or sync from the Google Sheet.",
+  "No current calls. Add one above or sync from the Google Sheet.":
+    "There are no current calls. Please add one above or sync from the Google Sheet.",
+  "Camera — point at the slip QR":
+    "Camera — point it at the slip QR.",
+  "Enter the consignee name.":
+    "Please enter the consignee name.",
+  "Enter the business address.":
+    "Please enter the business address.",
+  "Enter the TIN / VAT Reg #.":
+    "Please enter the TIN / VAT Reg #.",
+  "Can’t find your consignee? Request a new one":
+    "Cannot find your consignee? Request a new one",
+  "Submitted: {code} – {name}. It’s been sent to KTC for review — you can keep filing in the meantime.":
+    "Submitted: {code} – {name}. It has been sent to KTC for review. You may continue filing in the meantime.",
+  "Fill in the consignee’s details and attach their BIR documents. It’s created right away so you can keep filing — KTC verifies it (needs approval).":
+    "Please fill in the consignee's details and attach their BIR documents. The consignee is created right away so you may continue filing, and KTC will verify it; approval is required.",
+  "Internal note (staff only — not shown to the customer)":
+    "Internal note (staff only — not shown to the customer).",
+  "No pressure — you can turn notifications on or off anytime from the 🔔 bell or in Settings.":
+    "There is no pressure — you may turn notifications on or off at any time from the 🔔 bell or in Settings.",
+  "KTC's servers are busy right now — please try again in a moment.":
+    "KTC's servers are busy right now. Please try again in a moment.",
+  "Thanks — your email address is verified. This window will close shortly; then sign in at portal.ktcterminal.com to continue and upload your valid ID.":
+    "Thank you. Your email address is verified. This window will close shortly; then please sign in at portal.ktcterminal.com to continue and upload your valid ID.",
+  "You can now close this tab and sign in at portal.ktcterminal.com.":
+    "You may now close this tab and sign in at portal.ktcterminal.com.",
+  "This confirmation link has already been used or has expired. If you’ve already confirmed your email, just sign in. Otherwise sign in to send yourself a fresh confirmation link.":
+    "This confirmation link has already been used or has expired. If you have already confirmed your email, simply sign in. Otherwise, sign in to send yourself a fresh confirmation link.",
+  "Services done and payment confirmed — ready for release / pull-out.":
+    "Services completed and payment confirmed — ready for release or pull-out.",
+  "KTC added an additional charge to this order. Please settle it below; the order can’t be completed until it’s paid.":
+    "KTC added an additional charge to this order. Please settle it below; the order cannot be completed until it is paid.",
+  "Some rates aren’t set yet — please contact KTC. The total below may be incomplete; KTC will confirm the final amount.":
+    "Some rates are not set yet. Please contact KTC. The total below may be incomplete; KTC will confirm the final amount.",
+  "Enter the Bill of Lading (BL) number.":
+    "Please enter the Bill of Lading (BL) number.",
+  "Your account must be approved before you can file a release / pull-out request.":
+    "Your account must be approved before you can file a release or pull-out request.",
+  "Optional now — KTC verifies the document before assessing the charges.":
+    "Optional for now — KTC verifies the document before assessing the charges.",
+  "No releases yet. File one above to get started.":
+    "There are no releases yet. Please file one above to get started.",
+  "Choose the corrected document first.":
+    "Please choose the corrected document first.",
+  "Choose your payment slip first.":
+    "Please choose your payment slip first.",
+  "KTC is verifying your document. You’ll see the charges here once it’s checked.":
+    "KTC is verifying your document. The charges will appear here once it is checked.",
+  "Documents verified. KTC is computing your charges — check back shortly.":
+    "Documents verified. KTC is computing your charges — please check back shortly.",
+  "Payment proof under review.":
+    "Payment proof is under review.",
+  "Your payment proof wasn’t accepted":
+    "Your payment proof was not accepted",
+  "Charges KTC added after assessment. Pay to the same account / QR above. All additional charges must be settled before your Official Receipt (OR) can be released.":
+    "Charges KTC added after assessment. Please pay to the same account or QR above. All additional charges must be settled before your Official Receipt (OR) can be released.",
+  "Paid — claim your Official Receipt (OR) at the KTC office for pull-out.":
+    "Paid — please claim your Official Receipt (OR) at the KTC office for pull-out.",
+  "Cancel this request? This can’t be undone.":
+    "Cancel this request? This cannot be undone.",
+  "Pay to the same account / QR above, then upload your receipt.":
+    "Please pay to the same account or QR above, then upload your receipt.",
 }
