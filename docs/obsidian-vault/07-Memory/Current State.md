@@ -2,12 +2,16 @@
 title: Current State
 tags: [memory, current]
 type: memory
-last_updated: 2026-06-23
+last_updated: 2026-06-25
 ---
 
 # 📌 Current State (Runtime-Aligned)
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
+
+## 2026-06-25 — Release-desk reason now server-enforced (v1.6.13)
+
+**Migration `0159` applied to prod; `APP_VERSION` = `v1.6.13`.** Closed ST05 **Defect D-01**: the release-desk RPCs `verify_release_order`, `confirm_release_payment`, and `confirm_release_supplement_payment` now **RAISE on a blank hold/reject reason** (on the `p_ok = false` branch), mirroring the JO side's `hold_job_order` guard. Backend-only defense-in-depth — the UI already disabled the buttons on a blank note; this stops a scripted client from holding/rejecting a customer's release with no explanation. See [[Pending Items]].
 
 ## 2026-06-23 — JO lifecycle overhaul, tiered storage, dropdown-only vessel, clickable consignees (v1.6.12)
 
@@ -105,7 +109,7 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0158_dedup_vessel_schedule`** (149 files; numbering split across a portal lane and a fuel lane) — **all applied + tracked** in `public._migrations`. RLS + role-permission matrix (`has_permission`) + `session_alive()` woven into all helpers; pg_cron jobs (see [[System Scale]]). Email (Resend) fully wired (consolidated nudge, `0099`).
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0159_release_desk_reason_required`** (150 files; numbering split across a portal lane and a fuel lane) — **all applied + tracked** in `public._migrations`. RLS + role-permission matrix (`has_permission`) + `session_alive()` woven into all helpers; pg_cron jobs (see [[System Scale]]). Email (Resend) fully wired (consolidated nudge, `0099`).
 
 ## In progress / not yet
 

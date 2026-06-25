@@ -9,6 +9,10 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.13 — 2026-06-25 (Release desk: hold/reject reason now server-enforced)
+
+- **Closed ST05 Defect D-01 (`0159`):** the release-desk RPCs `verify_release_order`, `confirm_release_payment`, and `confirm_release_supplement_payment` now **RAISE on a blank hold/reject reason** (on the `p_ok = false` branch), mirroring the JO side's `hold_job_order` guard. Before, a blank reason was silently stored as NULL — the UI disabled the buttons, but a scripted client could hold/reject a customer's release with no explanation. Backend-only (defense-in-depth); the approve branch and the frontend are unchanged.
+
 ## v1.6.12 — 2026-06-23 (My Job Orders: "Cleared for release" badge)
 
 - Added a green **"✓ Cleared for release"** badge (on the card + detail modal) that lights up only when **both gates converge** — all services done **and** payment confirmed — derived from `releaseState()` (the two-gate model), never stored.
