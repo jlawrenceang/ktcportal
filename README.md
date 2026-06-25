@@ -12,7 +12,7 @@ modular Navis-style terminal + depot operating system (see `docs/obsidian-vault/
 
 ```bash
 npm install
-cp .env.example .env.local   # fill from your KTC Supabase project (Settings -> API)
+# create .env.local with your KTC Supabase URL + anon/publishable key (see "Supabase setup" below)
 npm run dev
 ```
 
