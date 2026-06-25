@@ -25,7 +25,7 @@ export const CheckCircleIcon = (p: IconProps) => (<Svg {...p}><path d="M22 11.08
 export const CreditCardIcon = (p: IconProps) => (<Svg {...p}><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></Svg>)
 export const ReceiptIcon = (p: IconProps) => (<Svg {...p}><path d="M5 2v20l2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1z" /><path d="M8 7h8M8 11h8M8 15h6" /></Svg>)
 export const MegaphoneIcon = (p: IconProps) => (<Svg {...p}><path d="m3 11 18-5v12L3 14v-3z" /><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" /></Svg>)
-export const TicketIcon = (p: IconProps) => (<Svg {...p}><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z" /><path d="M13 5v2M13 11v2M13 17v2" /></Svg>)
+
 export const ClockIcon = (p: IconProps) => (<Svg {...p}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></Svg>)
 export const SparkleIcon = (p: IconProps) => (<Svg {...p}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /></Svg>)
 export const IdCardIcon = (p: IconProps) => (<Svg {...p}><rect x="2" y="5" width="20" height="14" rx="2" /><circle cx="8" cy="11" r="2" /><path d="M5 16c.4-1.4 1.8-2 3-2s2.6.6 3 2" /><path d="M15 10h4M15 14h3" /></Svg>)
