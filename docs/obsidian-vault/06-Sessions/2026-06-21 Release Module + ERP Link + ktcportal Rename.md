@@ -6,7 +6,7 @@ type: session
 
 # 2026-06-21 — Release / Pull-out Module, ERP Link, ktcportal Rename
 
-Build day for the **customer-filed release / pull-out** flow ([ADR-0024](../../adr/0024-customer-filed-online-release-pullout-payment.md)) and its follow-ons (migrations **0123–0126**, all applied to prod), plus a project de-Jotform + rename. Built with parallel subagents + adversarial review (owner granted [[agent-tooling-authority|standing full-agent authority]] this session).
+Build day for the **customer-filed release / pull-out** flow ([ADR-0024](../../adr/0024-customer-filed-online-release-pullout-payment.md)) and its follow-ons (migrations **0123–0126**, all applied to prod), plus a project de-Jotform + rename. Built with parallel subagents + adversarial review (owner granted standing full-agent authority this session).
 
 ## Release / pull-out module (`0124`, ADR-0024)
 - New **`release_orders`** entity, separate from `job_orders` (release applies to *every* container; the JO is a service overlay — [ADR-0022](../../adr/0022-gate-pass-is-container-eir-not-job-order.md)). Flow: customer files (consignee picker + **BL no.** + **DO/BL** upload to `release-docs`) → **CSR documents desk** verifies (`verify_release_docs`) → staff enter charges → customer pays (QRPH proof to `payment-slips`) → **cashier** confirms (`review_payments`) → record OR → `released`.
@@ -14,7 +14,7 @@ Build day for the **customer-filed release / pull-out** flow ([ADR-0024](../../a
 - This made **DO verification LIVE** (was the deferred "DO at online payment" gate). EIR/gate still external.
 
 ## X-ray queue = ops view (`0123`)
-- `/admin/checker` reframed **"X-ray Queue"**; dedicated **`view_xray_queue`** permission (admin/operations/checker/csr true, **cashier false**) so CS can view but the cashier can't. Sortable worklist extracted to `src/components/XrayQueueTable.tsx`. Confirm stays `confirm_xray` (checker = spotter). Customer queue is **daily Batch + working-hours aging** (aging admin-only, 09:00–19:00 Manila) — see [[release-gates-roadmap]].
+- `/admin/checker` reframed **"X-ray Queue"**; dedicated **`view_xray_queue`** permission (admin/operations/checker/csr true, **cashier false**) so CS can view but the cashier can't. Sortable worklist extracted to `src/components/XrayQueueTable.tsx`. Confirm stays `confirm_xray` (checker = spotter). Customer queue is **daily Batch + working-hours aging** (aging admin-only, 09:00–19:00 Manila).
 
 ## Additional charges (`0125`)
 - Base charge is **set once** (no revise — `set_release_charges` only on `docs_verified`). Missed charges → **`release_supplements`** lines (mirror JO supplements [0101]): `add_release_charge`, customer `submit_release_supplement_payment`, cashier `confirm_release_supplement_payment`. **OR blocked until every supplement confirmed.**
@@ -39,4 +39,4 @@ Owner directive: numbers need a minimum / series, and **defaults must be empty (
 - **`docs/smoke-test-04-portal.md`** (NEW, ST04) — canonical blind-walkthrough of the release/pull-out spine + the no-zero number rules (migrations through 0130).
 
 ## Verification
-- Migrations 0123–0128 applied via the Management API ([[ktc-db-ops-via-mgmt-api]]) + verified (columns, function signatures, `normalize_erp_invoice_no('or-inv-1323')` → `OR-INV-00001323`; `OR-INV-0` raises). `tsc --noEmit` + `vite build` clean. Adversarial subagent reviews on the base module, supplements, 0126 contracts, and the NULL-safety pass.
+- Migrations 0123–0128 applied via the Management API + verified (columns, function signatures, `normalize_erp_invoice_no('or-inv-1323')` → `OR-INV-00001323`; `OR-INV-0` raises). `tsc --noEmit` + `vite build` clean. Adversarial subagent reviews on the base module, supplements, 0126 contracts, and the NULL-safety pass.

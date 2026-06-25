@@ -250,7 +250,7 @@ Findings (W19–W30) from an on-device mobile blind test, with the fix made the 
 
 ## Closeout (2026-06-16)
 
-**Final status:** CLOSED — superseded by **ST03** (`docs/smoke-test-03-portal.md`).
+**Final status:** CLOSED — superseded by **ST03** (`docs/archive/smoke-test-03-portal.md`).
 **Environment of record:** live `https://portal.ktcterminal.com`, DB migrations through **0104**, Vercel commit **1b2e824**.
 
 ### What ST02 was for

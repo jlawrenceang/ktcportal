@@ -3,7 +3,7 @@
 The APK is a **Trusted Web Activity (TWA)**: a thin Android wrapper that opens
 `https://portal.ktcterminal.com` full-screen (no URL bar). Same site, same code,
 auto-updates on every deploy — you only rebuild the APK if the wrapper config
-(icon/name/colors/package) changes. See `docs/plans/staff-app-plan.md` for the why.
+(icon/name/colors/package) changes. See `docs/archive/staff-app-plan.md` for the why.
 
 **This repo already ships everything the build needs:**
 - `public/manifest.webmanifest` + `public/app-icon.svg` (installable PWA)

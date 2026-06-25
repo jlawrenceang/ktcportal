@@ -25,7 +25,7 @@ Multi-agent review of the v2 work: **15 confirmed findings**. Fixed the high/med
 - Lows deferred (sync time/week coercion, optimistic "Sync now", `internal` flag readable).
 
 ## Pro-tier load test (prod)
-300 customers + full staff roster → 3000 `file_job_order` @ 300 in-flight + approvals, then scoped cleanup. **~136 successful filings/sec, p50 856ms / p99 5.2s, INTEGRITY CLEAN** (0 dup serving numbers / JO numbers, cap enforced exactly). The only ceiling was **GoTrue session-minting** (Pro doesn't raise it) — a synthetic-harness limit, not a production concern. See [[loadtest-and-prelaunch-hardening-2026-06-16]].
+300 customers + full staff roster → 3000 `file_job_order` @ 300 in-flight + approvals, then scoped cleanup. **~136 successful filings/sec, p50 856ms / p99 5.2s, INTEGRITY CLEAN** (0 dup serving numbers / JO numbers, cap enforced exactly). The only ceiling was **GoTrue session-minting** (Pro doesn't raise it) — a synthetic-harness limit, not a production concern.
 
 ## Reliability — "servers are busy" banner
 Wrapped the Supabase fetch to flag overload (429/502/503/504/network) → a debounced global **banner + Refresh button** instead of a raw error (`ServerBusyBanner`). A manual reload can't double-submit a filing; a true idempotency guard for auto-retry of writes is a future item.
