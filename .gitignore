@@ -1,14 +1,19 @@
 # Secrets — never commit API keys, Google/Supabase creds
 .env
 .env.*
-!.env.example
 *.key
+*.pem
+*.crt
+*.p12
+*.p8
+*.pfx
 service-account*.json
 
 # Node (Phase 2)
 node_modules/
 dist/
 npm-debug.log*
+*.tsbuildinfo
 
 # build artifact from scripts/apply-theme.sh (logo inlined into CSS)
 .theme-combined.css
@@ -31,8 +36,14 @@ Thumbs.db
 
 .vercel
 
-# agent worktrees (transient)
+# agent worktrees (transient) + local agent config
+# (settings.local.json can hold API keys; settings.json is a personal plugin toggle)
 .claude/worktrees/
+.claude/settings.json
+.claude/settings.local.json
+
+# throwaway local debug script (reads .env.local); reusable _apply_one/_ledger_rename stay tracked
+scripts/_pushadmin.mjs
 
 # local screenshot capture (not committed)
 docs/screenshots/
