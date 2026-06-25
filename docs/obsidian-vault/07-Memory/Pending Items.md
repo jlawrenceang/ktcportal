@@ -15,7 +15,7 @@ Preflight **P1–P8 re-run green** through `0158` (2026-06-23; + new Lane L cont
 
 - [ ] **Run manual Lanes A–K** with the owner on `portal.ktcterminal.com`.
 - [x] **Defect D-01 (Low) — CLOSED 2026-06-25 (`0159`, v1.6.13):** the release-desk **hold/reject reason note is now server-enforced** — `verify_release_order`, `confirm_release_payment`, and `confirm_release_supplement_payment` RAISE on a blank reason on the reject/hold branch (`p_ok = false`), mirroring the JO side. Verified live: all three function bodies carry the guard.
-- [ ] **Tagalog copy for the newest admin strings** (JO lifecycle / storage tariff editor / consignee detail modal) currently **falls back to English** — owner review before go-live.
+- [x] **Tagalog copy for previously-untranslated strings DONE 2026-06-25 (v1.6.15):** 174 entries added (release desk, supplements, bulletin, JO lifecycle) — the strings that fell back to English are now translated (tl ~1,469 keys). English was first re-toned formal (v1.6.14). **Owner still reviews the wording before go-live** (both the formal English and the Tagalog).
 
 ## Fuel monitoring — DEFERRED after Phase 0 ([ADR-0025](../../adr/0025-fuel-monitoring-derived-variance-on-moves-spine.md))
 
