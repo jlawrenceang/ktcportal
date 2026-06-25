@@ -1206,6 +1206,8 @@ export default function Settings() {
                         : b.staff_role === 'operations' ? t('Operations')
                         : b.staff_role === 'cashier' ? t('Cashier')
                         : b.staff_role === 'checker' ? t('Checker')
+                        : b.staff_role === 'csr' ? t('CSR')
+                        : b.staff_role === 'purchaser' ? t('Purchaser')
                         : t('Admin')}
                     </span>
                   </div>

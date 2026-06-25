@@ -30,7 +30,7 @@ Phase 0 (schema + derived views + `purchaser` role) is **live in prod and commit
 ## Rate matrix follow-ups
 
 - [ ] **Set the 120 new `terminal_rates` cells** (empty/full × dry/reefer combos seeded `null`) with the owner — until then the calculator flags "rate not set" for them.
-- [ ] Pre-existing nit: the `Settings.tsx` "Current staff" label map omits **`csr`** (shows CSR staff as "Admin"); add `csr` (and `purchaser` when wired). Cosmetic.
+- [x] **DONE 2026-06-25 (v1.6.14):** the `Settings.tsx` "Current staff" label map now renders **`csr`** and **`purchaser`** correctly (previously fell through to "Admin").
 
 ## ST05 / trial run (NOW)
 
