@@ -6,7 +6,6 @@ import { useIdleLogout } from '../lib/useIdleLogout'
 import { useSessionGuard } from '../lib/useSessionGuard'
 import IdleWarning from '../components/IdleWarning'
 import StaffNotificationBell from '../components/StaffNotificationBell'
-import PushPrompt from '../components/PushPrompt'
 import { useTour } from '../components/TourProvider'
 import { useT } from '../lib/i18n'
 import { LockIcon } from '../components/icons'
@@ -78,7 +77,6 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
       </footer>
 
       {idleWarning && <IdleWarning />}
-      <PushPrompt />
     </div>
   )
 }

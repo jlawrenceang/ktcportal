@@ -8,6 +8,7 @@ import { VERSION_LABEL, VERSION_FULL } from '../version'
 import { MarkdownBody } from '../components/MarkdownDoc'
 import Notice from '../components/Notice'
 import LangToggle from '../components/LangToggle'
+import NeedHelp from '../components/NeedHelp'
 import PasswordInput from '../components/PasswordInput'
 import PasswordStrength from '../components/PasswordStrength'
 import { passwordIssue } from '../lib/validation'
@@ -272,7 +273,7 @@ export default function Login() {
 
         {!isSignup && (
           <div className="ktc-label" style={{ marginBottom: 22, fontSize: 12.5, lineHeight: 1.6, padding: '12px 14px', borderRadius: 11, background: 'var(--c-w50)', border: '1px solid var(--glass-brd)' }}>
-            {t('This portal is for accredited customs brokers and KTC staff — to file and track Job Orders, container releases, and payments. New broker? Create an account below to begin accreditation. For assistance with access, please contact KTC customer service or visit the KTC office.')}
+            {t('For accredited customers, consignees, and KTC staff. New here? Create an account below to begin accreditation.')}
           </div>
         )}
 
@@ -385,11 +386,7 @@ export default function Login() {
           </button>
         </p>
 
-        <p style={{ marginTop: 14, fontSize: 12, textAlign: 'center' }}>
-          <a href="/customer-info-sheet.html" target="_blank" rel="noopener" className="ktc-link">
-            {t('Customer Information Sheet (print / download)')}
-          </a>
-        </p>
+        <NeedHelp align="center" style={{ marginTop: 14, fontSize: 12 }} />
         <p className="ktc-label" style={{ marginTop: 8, fontSize: 12, opacity: 0.7, textAlign: 'center' }}>
           {t('KTC Online Portal')} <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.
         </p>

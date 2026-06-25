@@ -324,7 +324,7 @@
     border: 0;
     border-radius: var(--radius-sm);
     padding: 11px 22px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 15px;
     cursor: pointer;
     box-shadow: var(--shadow-md), 0 8px 22px -6px rgb(var(--acc-rgb) / 0.45);
@@ -1158,6 +1158,71 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .ktc-skeleton::after { animation: none; }
+  }
+
+  /* ---- Branded route loader (Suspense fallback + auth/role resolve) ----
+     The KTC mark over a thin indeterminate progress bar. Replaces the plain
+     "Loading…" text so the first paint of any lazy route stays on-brand. */
+  .ktc-loader {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 16px;
+    height: 100%;
+    min-height: 320px;
+    padding: 24px;
+  }
+  .ktc-loader-logo {
+    height: 56px;
+    width: auto;
+    animation: ktc-loader-pulse 1.8s var(--ease-spring) infinite;
+  }
+  .ktc-loader-bar {
+    position: relative;
+    width: 160px;
+    height: 3px;
+    border-radius: 999px;
+    background: rgb(var(--acc-rgb) / 0.14);
+    overflow: hidden;
+  }
+  .ktc-loader-bar > span {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    display: block;
+    width: 40%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--acc), var(--acc-2));
+    animation: ktc-loader-slide 1.15s var(--ease-spring) infinite;
+  }
+  .ktc-loader-text { font-size: 12.5px; letter-spacing: 0.01em; }
+  @keyframes ktc-loader-slide {
+    from { left: -45%; }
+    to { left: 105%; }
+  }
+  @keyframes ktc-loader-pulse {
+    0%, 100% { opacity: 0.82; transform: scale(0.985); }
+    50% { opacity: 1; transform: scale(1.035); }
+  }
+
+  /* ---- Page transition — a gentle fade-in on each route change ----
+     Restarted per navigation by RouteFade in App.tsx (via reflow, not a React
+     key) so a fresh enter animation fires. OPACITY ONLY — a transform here would make the page's fixed /
+     sticky chrome (bottom tab bar, modals) resolve against this wrapper instead
+     of the viewport. The "slide" comes from each page's own .ktc-rise /
+     .ktc-stagger content reveal, which this fade ties together. */
+  .ktc-route { animation: ktc-route-in var(--dur) var(--ease-spring) both; }
+  @keyframes ktc-route-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ktc-loader-logo,
+    .ktc-loader-bar > span { animation: none; }
+    .ktc-loader-bar > span { left: 0; width: 100%; opacity: 0.55; }
+    .ktc-route { animation: none; }
   }
 }
 

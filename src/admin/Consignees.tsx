@@ -123,7 +123,7 @@ export default function Consignees() {
       .select('id, code, name, status, address, tin, doc_2303_path, doc_2307_path, requested_by, note, created_at, requested_at, decided_at', { count: 'exact' })
       .order('code')
       .range(page * PAGE, page * PAGE + PAGE - 1)
-    if (s) req = req.or(`name.ilike.*${s}*,code.ilike.*${s}*`)
+    if (s) req = req.or(`name.ilike.*${s}*,code.ilike.*${s}*,address.ilike.*${s}*`)
     if (filter !== 'all') req = req.eq('status', filter)
     const { data, count, error } = await req
     if (error) setError(error.message)
@@ -311,7 +311,7 @@ export default function Consignees() {
             <option value="approved">{t('Approved')}</option>
             <option value="rejected">{t('Rejected')}</option>
           </select>
-          <input className="ktc-input ktc-input--compact" placeholder={t('Search code or name…')} value={query} onChange={(e) => changeQuery(e.target.value)} style={{ maxWidth: 240, width: '100%' }} />
+          <input className="ktc-input ktc-input--compact" placeholder={t('Search code, name, or address…')} value={query} onChange={(e) => changeQuery(e.target.value)} style={{ maxWidth: 260, width: '100%' }} />
         </div>
 
         {canManage && pendingCount > 0 && (

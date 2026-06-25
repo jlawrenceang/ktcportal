@@ -1,13 +1,14 @@
-import { Suspense, type ReactNode } from 'react'
+import { Suspense, useEffect, useRef, type ReactNode } from 'react'
 import { lazyWithReload } from './lib/lazyWithReload'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './lib/AuthContext'
 import { I18nProvider } from './lib/i18n'
 import TourProvider from './components/TourProvider'
-import LanguageGate from './components/LanguageGate'
+import FirstRunSetup from './components/FirstRunSetup'
 import ProtectedRoute from './components/ProtectedRoute'
 import SessionSupersededOverlay from './components/SessionSupersededOverlay'
 import ServerBusyBanner from './components/ServerBusyBanner'
+import RouteLoader from './components/RouteLoader'
 import { useBroker } from './lib/useBroker'
 import { hasAdminAccess } from './lib/types'
 import Login from './pages/Login'
@@ -69,13 +70,7 @@ function Admin({ children }: { children: ReactNode }) {
 // Staff land where their role works; customers see the broker home.
 function RoleLanding() {
   const { broker, loading } = useBroker()
-  if (loading) {
-    return (
-      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-        <span className="ktc-label">Loading…</span>
-      </div>
-    )
-  }
+  if (loading) return <RouteLoader />
   // Operational roles land on their FOCUSED single-purpose screen (web + app);
   // the full portal is one tap away via "Open full portal".
   if (broker?.staff_role === 'checker') return <Navigate to="/app/checker" replace />
@@ -90,15 +85,29 @@ function RoleLanding() {
 // goes straight to its role landing (no landing detour, no forced accept gate).
 function RootGate() {
   const { session, loading } = useAuth()
-  if (loading) {
-    return (
-      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-        <span className="ktc-label">Loading…</span>
-      </div>
-    )
-  }
+  if (loading) return <RouteLoader />
   if (!session) return <Landing />
   return <Protected><RoleLanding /></Protected>
+}
+
+// Replays a gentle fade on each navigation. height:100% keeps the viewport-height
+// chain intact (the public Landing/Login center via minHeight:100%, and RouteLoader
+// fills the viewport) — without it, the inserted wrapper collapses to content height.
+// Opacity-only animation (see .ktc-route) — NO transform, so a page's fixed/sticky
+// chrome resolves against the viewport. We restart the animation by REFLOW, not a
+// React key: a key would remount the whole routed subtree and discard in-page state
+// on param-only navigation (e.g. /job-order/1/pay → /job-order/2/pay).
+function RouteFade({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation()
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.classList.remove('ktc-route')
+    void el.offsetWidth // force reflow so the fade animation can replay
+    el.classList.add('ktc-route')
+  }, [pathname])
+  return <div ref={ref} className="ktc-route" style={{ height: '100%' }}>{children}</div>
 }
 
 export default function App() {
@@ -107,16 +116,11 @@ export default function App() {
     <I18nProvider>
       <BrowserRouter>
         <TourProvider>
-        <LanguageGate />
+        <FirstRunSetup />
         <SessionSupersededOverlay />
         <ServerBusyBanner />
-        <Suspense
-          fallback={
-            <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-              <span className="ktc-label">Loading…</span>
-            </div>
-          }
-        >
+        <Suspense fallback={<RouteLoader />}>
+        <RouteFade>
         <Routes>
           <Route path="/login" element={<Login />} />
           {/* Walk-in QR target — opens Login straight in sign-up mode */}
@@ -178,6 +182,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </RouteFade>
         </Suspense>
         </TourProvider>
       </BrowserRouter>

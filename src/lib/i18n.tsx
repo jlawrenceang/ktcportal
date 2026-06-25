@@ -18,20 +18,24 @@ import { useAuth } from './AuthContext'
 export type Lang = 'en' | 'tl'
 const KEY = 'ktc_lang'                                       // language value — per browser
 const chosenKeyFor = (uid: string) => `ktc_lang_chosen_${uid}` // "has this account picked?" — per account
+const setupDoneKeyFor = (uid: string) => `ktc_setup_done_${uid}` // "has this account finished first-run setup?" — per account
 
 export type TFunc = (en: string, vars?: Record<string, string | number>) => string
 
 interface I18nCtx {
   lang: Lang
   setLang: (l: Lang) => void
-  // True once the user has explicitly picked a language (via the first-run
-  // chooser or the nav toggle). Drives the one-time language prompt and gates
-  // the first-run tour until a language is set.
+  // True once the user has explicitly picked a language (via first-run setup or
+  // the nav toggle). Used by the nav toggle / login screen.
   langChosen: boolean
+  // True once the account has finished the one-time first-run SETUP modal
+  // (language + notifications). Gates the demo tour so it runs AFTER setup.
+  setupDone: boolean
+  completeSetup: () => void
   t: TFunc
 }
 
-const Ctx = createContext<I18nCtx>({ lang: 'en', setLang: () => {}, langChosen: false, t: (s) => s })
+const Ctx = createContext<I18nCtx>({ lang: 'en', setLang: () => {}, langChosen: false, setupDone: false, completeSetup: () => {}, t: (s) => s })
 
 export function useT() { return useContext(Ctx) }
 
@@ -61,6 +65,13 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     try { return localStorage.getItem(chosenKeyFor(uid)) === '1' } catch { return true }
   }, [uid, tick])
 
+  // Has THIS account finished first-run setup (language + notifications)? No
+  // session (login / confirm screens) → treat as done so we never gate those.
+  const setupDone = useMemo(() => {
+    if (!uid) return true
+    try { return localStorage.getItem(setupDoneKeyFor(uid)) === '1' } catch { return true }
+  }, [uid, tick])
+
   const setLang = useCallback((l: Lang) => {
     try {
       localStorage.setItem(KEY, l)
@@ -70,11 +81,18 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setTick((n) => n + 1)
   }, [uid])
 
+  // Mark the one-time first-run setup as finished for this account; the tour
+  // (gated on setupDone) then runs next.
+  const completeSetup = useCallback(() => {
+    try { if (uid) localStorage.setItem(setupDoneKeyFor(uid), '1') } catch { /* ignore */ }
+    setTick((n) => n + 1)
+  }, [uid])
+
   const t = useCallback<TFunc>((en, vars) => {
     // tl: Tagalog/Taglish → simplified-English fallback → raw key.
     // en: simplified English → raw key. (Override files keyed by the raw key.)
     const out = lang === 'tl' ? (tl[en] ?? enSimple[en] ?? en) : (enSimple[en] ?? en)
     return interpolate(out, vars)
   }, [lang])
-  return <Ctx.Provider value={{ lang, setLang, langChosen, t }}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ lang, setLang, langChosen, setupDone, completeSetup, t }}>{children}</Ctx.Provider>
 }

@@ -66,7 +66,7 @@ export default function TourProvider({ children }: { children: ReactNode }) {
 // registered so the help (?) icon can replay it on demand.
 export function usePageTour(key: string, steps: TourStep[], onDone?: () => void) {
   const { broker } = useBroker()
-  const { langChosen } = useT()
+  const { setupDone } = useT()
   const { startTour, active, registerPageTour } = useTour()
   useEffect(() => {
     registerPageTour(key, steps, onDone)
@@ -74,12 +74,12 @@ export function usePageTour(key: string, steps: TourStep[], onDone?: () => void)
   }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!broker || steps.length === 0) return
-    // Wait for the first-run language choice — the demo should run in the
-    // language the user just picked, not flash in English first.
-    if (!langChosen) return
+    // Wait for first-run setup (language + notifications) to finish — the demo
+    // runs in the chosen language and never stacks on the setup modal.
+    if (!setupDone) return
     const seen = (broker.tours_seen ?? []).includes(key)
     if (seen || pageTourShownThisSession(key) || active) return
     markPageTourSeen(key)
     startTour({ steps, onDone })
-  }, [broker, langChosen]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [broker, setupDone]) // eslint-disable-line react-hooks/exhaustive-deps
 }

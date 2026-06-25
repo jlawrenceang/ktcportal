@@ -6,7 +6,6 @@ import { purgeExpiredIds } from '../lib/idPurge'
 import { useIdleLogout } from '../lib/useIdleLogout'
 import { useSessionGuard } from '../lib/useSessionGuard'
 import IdleWarning from '../components/IdleWarning'
-import PushPrompt from '../components/PushPrompt'
 import StaffNotificationBell from '../components/StaffNotificationBell'
 import AccountMenu from '../components/AccountMenu'
 import AdminBottomNav from './AdminBottomNav'
@@ -89,7 +88,6 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
       </footer>
 
       {idleWarning && <IdleWarning />}
-      <PushPrompt />
     </div>
   )
 }
