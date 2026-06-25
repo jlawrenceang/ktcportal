@@ -50,6 +50,10 @@ docs/screenshots/
 docs/ktc-screenshots/
 docs/ktc-screenshots.zip
 
+# generated translation-review export (regenerate via scripts/export-translations.mjs)
+docs/translations-review.csv
+docs/translations-review.md
+
 # Android signing keystore + secrets (never commit)
 android-keystore.jks
 *.jks

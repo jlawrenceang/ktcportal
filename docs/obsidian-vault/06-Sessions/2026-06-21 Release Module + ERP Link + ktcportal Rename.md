@@ -6,7 +6,7 @@ type: session
 
 # 2026-06-21 — Release / Pull-out Module, ERP Link, ktcportal Rename
 
-Build day for the **customer-filed release / pull-out** flow ([ADR-0024](../../adr/0024-customer-filed-online-release-pullout-payment.md)) and its follow-ons (migrations **0123–0126**, all applied to prod), plus a project de-Jotform + rename. Built with parallel subagents + adversarial review (owner granted standing full-agent authority this session).
+Build day for the **customer-filed release / pull-out** flow ([ADR-0024](../../adr/0024-customer-filed-online-release-pullout-payment.md)) and its follow-ons (migrations **0123–0126**, all applied to prod), plus a package + repo rename. Built with parallel subagents + adversarial review (owner granted standing full-agent authority this session).
 
 ## Release / pull-out module (`0124`, ADR-0024)
 - New **`release_orders`** entity, separate from `job_orders` (release applies to *every* container; the JO is a service overlay — [ADR-0022](../../adr/0022-gate-pass-is-container-eir-not-job-order.md)). Flow: customer files (consignee picker + **BL no.** + **DO/BL** upload to `release-docs`) → **CSR documents desk** verifies (`verify_release_docs`) → staff enter charges → customer pays (QRPH proof to `payment-slips`) → **cashier** confirms (`review_payments`) → record OR → `released`.
@@ -24,8 +24,8 @@ Build day for the **customer-filed release / pull-out** flow ([ADR-0024](../../a
 - **Cancel:** `cancel_release_order(p_id, p_reason)` — owning customer OR staff (`verify_release_docs`/`review_payments`), only while `submitted|docs_verified|payable|on_hold`. Makes the dead `cancelled` status live.
 - **Upfront approval gate:** customer release page hides the file form for non-`approved` accounts (`useBroker` + `BrokerStatusBanner`); releases REQUIRE full approval (unlike JOs).
 
-## De-Jotform + rename to ktcportal
-- The portal is a custom React app — Jotform was long gone. Deleted the dead Jotform theme/script, renamed the package to **ktcportal**, retitled the README, scrubbed live doc refs. Kept the historical records (ADR-0003 = the pivot decision; `docs/archive/*`) per doc-governance. **GitHub repo renamed `ktc-joborderform` → `jlawrenceang/ktcportal`** (remote updated).
+## Rename to ktcportal
+- The portal is a custom React app. Deleted a dead legacy theme/script, renamed the package to **ktcportal**, retitled the README, scrubbed stale doc refs. **GitHub repo renamed → `jlawrenceang/ktcportal`** (remote updated).
 
 ## No-zero number rules (`0127`, `0128`)
 Owner directive: numbers need a minimum / series, and **defaults must be empty (NULL), never 0 — because a 0 can't be cleared**.

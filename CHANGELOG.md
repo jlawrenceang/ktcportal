@@ -127,7 +127,7 @@ The work below also ships under v1.6.0 — it was already live on `main` / Verce
 - **Demo tours fixed:** the **checker tour now fires** on `/app/checker` (was only wired on the desktop route a checker never visits); an **app-mode ✨ replay button**; retired "serving number / Now serving" copy reworded; a new **Release / Pull-out** step in the customer home tour.
 
 ### Project rename + docs
-- **Jotform → ktcportal:** removed the dead Jotform theme/script, renamed the package + README, scrubbed live doc refs, and **renamed the GitHub repo** to `jlawrenceang/ktcportal` (history kept per doc-governance). The portal is a custom React app — Jotform was long gone.
+- **Package + repo rename to ktcportal:** removed a dead legacy theme/script, renamed the package + README, scrubbed stale doc refs, and **renamed the GitHub repo** to `jlawrenceang/ktcportal`. The portal is a custom React app.
 - **Docs:** per-role + whole-operation **Mermaid flowcharts** (`docs/diagrams/role-and-operation-flows.md`, verified against the live `role_permissions` matrix), **ST04** smoke test (release/pull-out + no-zero), ADR-0024 addendum.
 
 ### Verification
@@ -198,7 +198,7 @@ The work below also ships under v1.6.0 — it was already live on `main` / Verce
 
 ### 2026-06-13 (session 11 — doc governance hardened + vault resync; ST02 P8 cleared)
 - **Doc governance strengthened to jta-sys parity** (`docs/agent/doc-governance.md`): freshness directive (no stale docs ever — update or archive in the same change; deletion is OWNER-only; vault navigational layer always current), what-belongs-where rules, ≤200-word constitution cap, deferred-folder registry (`plans/`, `audits/`, `operator-guide/`, `flows/` created on first need).
-- **`docs/archive/` created** (holding pen per the new directive) — Jotform/Sheets-era docs moved in (`branding.md`, `form-spec.md`, `sheet-schema.md`, `migration-to-supabase.md`) plus the original ST02 lifecycle script (superseded by `smoke-test-02-portal.md`). `docs/README.md` map refreshed.
+- **`docs/archive/` created** (holding pen per the new directive) — legacy/superseded docs moved in, plus the original ST02 lifecycle script (superseded by `smoke-test-02-portal.md`). `docs/README.md` map refreshed.
 - **`docs/agent/tooling-inventory.md` completed:** all 11 `scripts/` entries documented with purpose + env needs; flagged that `SUPABASE_ACCESS_TOKEN` currently holds a secret API key (not a `sbp_` PAT), so the 4 Management-API scripts are broken until a PAT is generated; `apply-theme.sh` marked legacy.
 - **Vault resynced to v1.1.0 reality:** `System Scale` (29→55 migrations, roles, crons, buckets, routes), `Current State` (2026-06-13 snapshot of sessions 10a–10s), `Pending Items` (rewritten around ST02/go-live gate), `Home` (new at-a-glance metrics block). `workflow-invariants.md` gained the brokers→customers naming note (migration `0021`).
 - **ST02 P8 cleared:** test-project API keys regenerated (new `sb_publishable_`/`sb_secret_` format) → Playwright **16/16** against the localhost test build. Preflight now P1–P8 green; P9 + manual lanes with the owner.

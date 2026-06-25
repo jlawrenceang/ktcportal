@@ -62,7 +62,7 @@ migrations). Logged here so the ST02 record is complete.
 | W8 | Footer showed commit hash + build date | Footer now shows just **v1.1.0**; commit+date moved to a hover tooltip (still traceable) | `f65861b` |
 | W9 | Forgot-password could be requested repeatedly (Lane 7.4 area) | **5-min per-email resend cooldown** with a `m:ss` countdown ("Resend in 4:07") + spam-folder hint. (Supabase server-side rate-limit + CAPTCHA were already the real backstops; this is UX) | _2026-06-14_ |
 | W10 | Home demo-tour copy (Lane 1.3) — reword for clarity | Rewrote all 6 home-tour steps (EN + FIL): "container terminal services from the comfort of your home", clearer verify/held wording, dropped "Your main action", "Track your orders", simpler account step. Later: "Madayaw!" greeting (EN+FIL), "Get verified", and per-step FIL tweaks | _2026-06-14_ |
-| W11 | Translation review hard to do in a CSV | Built `scripts/export-translations.mjs` → `docs/translations-review.{md,csv}` (829 strings); switched to an in-app blind walkthrough for review | _2026-06-14_ |
+| W11 | Translation review hard to do in a CSV | Built `scripts/export-translations.mjs` (regenerate on demand; export not committed); switched to an in-app blind walkthrough for review | _2026-06-14_ |
 | W12 | Tour: featured tile sat at the bottom | Tour scrolls the featured element to the **top** (hero) and pins the helper card to the **bottom** | _2026-06-14_ |
 | W13 | Mobile top bar doesn't scale (Lane chrome) | **Hamburger → slide-in drawer** on phones (both shells); desktop top bar unchanged. Portaled to body to fix a backdrop-filter containing-block bug | _2026-06-14_ |
 | W14 | "Select valid ID" banner too big | BrokerStatusBanner compacted to a single line + inline "Upload valid ID →" | _2026-06-14_ |

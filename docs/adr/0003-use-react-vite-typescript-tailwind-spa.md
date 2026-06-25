@@ -7,11 +7,11 @@
 
 ## Context and Problem Statement
 
-The portal began as a Jotform form but pivoted to a custom app because per-broker accredited-consignee dropdowns and real login cannot be done natively in Jotform. We need a frontend stack for a small, auth-gated CRUD portal that can reuse the jta-sys visual language.
+This is a small, auth-gated CRUD portal that needs per-broker accredited-consignee dropdowns, real login, and role-gated routes — requirements that call for a real frontend stack — and that reuses the jta-sys visual language.
 
 ## Decision Drivers
 
-* Need real authentication, role-gated routes, and dynamic per-broker data — beyond Jotform's capability.
+* Need real authentication, role-gated routes, and dynamic per-broker data.
 * Reuse the jta-sys v2 "visionOS" design tokens for a consistent KTC look.
 * Fast builds, simple hosting on Vercel, minimal moving parts for a small team.
 * TypeScript for safety on the auth/role contracts.
@@ -20,7 +20,7 @@ The portal began as a Jotform form but pivoted to a custom app because per-broke
 
 * **Option A** — Vite + React 18 + TypeScript + Tailwind 3 + react-router-dom, plain hooks + `@supabase/supabase-js`.
 * **Option B** — Next.js (SSR/app router).
-* **Option C** — Continue with Jotform + Google Sheets.
+* **Option C** — A no-code form builder + Google Sheets.
 
 ## Decision Outcome
 
@@ -49,9 +49,9 @@ Chosen option: **Option A — a Vite React SPA**, because the portal is a client
 * Good, because batteries-included (routing, SSR, API routes).
 * Bad, because SSR/app-router complexity is unwarranted for a small gated SPA.
 
-### Option C: Jotform + Sheets
+### Option C: No-code form + Sheets
 
-* Bad, because cannot do real login or per-broker dynamic dropdowns — the reason for the pivot.
+* Bad, because it cannot do real login or per-broker dynamic dropdowns.
 
 ## Related ADRs
 

@@ -11,7 +11,7 @@ type: session
 - **ST02 preflight finished green:** owner regenerated the test project's API keys (new `sb_publishable_`/`sb_secret_` format) → **P8 Playwright 16/16** vs the localhost test-project build. Preflight now **P1–P8 PASS**; P9 (rates + payment-details entry) + manual Lanes 1–8 in the owner's hands. Verified all 6 pg_cron jobs green and Vault already holds `service_role_key`/`project_url` (ID purge ACTIVE — the ST02 8.4 setup note was stale).
 - **Doc governance hardened to jta-sys parity** after a two-agent structural audit of the jta-sys docs system vs ours (verdict: structure sound, content drifted). [[Current State]] now reflects v1.1.0.
   - `docs/agent/doc-governance.md`: freshness directive (no stale docs — fix or archive in the same change; **deletion is OWNER-only**; vault map always current), what-belongs-where, ≤200-word constitution cap, review checklist, deferred-folder registry.
-  - `docs/archive/` created — Jotform/Sheets-era docs + the superseded original ST02 script moved in, with a manifest README.
+  - `docs/archive/` created — legacy/superseded docs + the original ST02 script moved in, with a manifest README.
   - `docs/agent/tooling-inventory.md`: all 11 scripts documented; **`SUPABASE_ACCESS_TOKEN` is a secret key, not a `sbp_` PAT** — Management-API scripts broken until regenerated.
   - Vault resync: [[System Scale]] (55 migrations, v1.1.0, 6 crons), [[Current State]] (sessions 10a–10s snapshot), [[Pending Items]] (rewritten), [[Home]] (at-a-glance metrics block). `workflow-invariants.md` gained the brokers→customers naming note.
 
