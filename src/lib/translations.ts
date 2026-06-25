@@ -1501,4 +1501,5 @@ export const tl: Record<string, string> = {
   "Cancel this request": "Kanselahin ang request na ito",
   "Paid.": "Bayad na.",
   "Pay to the same account / QR above, then upload your receipt.": "Bayaran sa parehong account / QR sa itaas, tapos i-upload ang inyong resibo.",
+  "This portal is for accredited customs brokers and KTC staff — to file and track Job Orders, container releases, and payments. New broker? Create an account below to begin accreditation. For assistance with access, please contact KTC customer service or visit the KTC office.": "Ang portal na ito ay para sa accredited na customs brokers at KTC staff — para mag-file at mag-track ng Job Orders, container releases, at payments. Bagong broker? Gumawa ng account sa ibaba para simulan ang accreditation. Para sa tulong sa access, mangyaring makipag-ugnayan sa KTC customer service o pumunta sa KTC office.",
 }

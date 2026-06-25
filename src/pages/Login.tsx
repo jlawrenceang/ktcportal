@@ -266,9 +266,15 @@ export default function Login() {
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em' }}>
           {isSignup ? t('Create account') : t('Sign in')}
         </h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 24 }}>
+        <p className="ktc-label" style={{ marginTop: 6, marginBottom: isSignup ? 24 : 16 }}>
           {t('KTC Online Portal — Container Terminal Services')}
         </p>
+
+        {!isSignup && (
+          <div className="ktc-label" style={{ marginBottom: 22, fontSize: 12.5, lineHeight: 1.6, padding: '12px 14px', borderRadius: 11, background: 'var(--c-w50)', border: '1px solid var(--glass-brd)' }}>
+            {t('This portal is for accredited customs brokers and KTC staff — to file and track Job Orders, container releases, and payments. New broker? Create an account below to begin accreditation. For assistance with access, please contact KTC customer service or visit the KTC office.')}
+          </div>
+        )}
 
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 14 }}>
           {isSignup && (
