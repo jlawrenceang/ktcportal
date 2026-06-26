@@ -52,16 +52,12 @@ export default function VerifyId() {
     const path = `${broker.user_id}/valid-id.${ext}`
     const { error: upErr } = await supabase.storage.from('valid-ids').upload(path, file, { upsert: true })
     if (upErr) { setBusy(false); return setError(upErr.message) }
-    // Record the valid ID + capture the DPA / Terms consent at the moment of submission.
-    const now = new Date().toISOString()
-    const { error: updErr } = await supabase.from('customers').update({
-      valid_id_path: path,
-      terms_version: AGREEMENT_VERSION,
-      terms_accepted_at: now,
-      privacy_consent_version: AGREEMENT_VERSION,
-      privacy_consented_at: now,
-    }).eq('id', broker.id)
+    // Record the valid ID path (client-writable), then server-stamp the DPA / Terms
+    // consent — the consent columns aren't client-writable (see migration 0162).
+    const { error: updErr } = await supabase.from('customers').update({ valid_id_path: path }).eq('id', broker.id)
     if (updErr) { setBusy(false); return setError(updErr.message) }
+    const { error: consentErr } = await supabase.rpc('record_agreement_consent', { p_version: AGREEMENT_VERSION })
+    if (consentErr) { setBusy(false); return setError(consentErr.message) }
     navigate('/', { replace: true })
   }
 

@@ -10,6 +10,13 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.24 — 2026-06-26 (Customer Agreement consent — enforced server-side)
+
+Closes the audit's L1 + L2 (the one go-live gate). Customer Agreement / DPA consent is now enforced in the **database**, not just the UI:
+- **No transaction without recorded consent.** `file_job_order` and `open_ticket` — the real SECURITY DEFINER write paths — now refuse to run unless `has_recorded_consent()` is true (the RLS `WITH CHECK` is kept as defense-in-depth, but the gate lives where it actually fires). A naive RLS-only fix would have been bypassed, since those functions bypass RLS.
+- **Consent can't be spoofed.** The six consent columns are server-stamped only — a raw client UPDATE is pinned back to the old value by the `customers` guard trigger, gated by a transaction-local `ktc.allow_consent_write` flag that only the consent RPCs set (mirroring the existing `ktc.allow_owner_change` pattern). A column-level REVOKE was rejected as a no-op against the table-level grant.
+- **One server-stamped writer.** Every consent path — email/password signup, the pending-customer banner sync, the valid-ID page, and the OAuth finish-registration — now records through `record_agreement_consent` (or `complete_oauth_registration`). Migration `0162`. Zero lockout (the 2 existing customers already have consent).
+
 ## v1.6.23 — 2026-06-26 (Audit polish — Lara a11y + view-switch + landing)
 
 Fixes from the scoped post-launch audit (0 critical / 0 high; all medium + low). Mostly accessibility on the new Lara widget:

@@ -13,18 +13,17 @@ export default function BrokerStatusBanner({ broker, onRefresh, refreshCooling }
   const { t } = useT()
   const synced = useRef(false)
 
-  // Sync consent (captured in auth metadata at sign-up) onto the customer row if it
+  // Record consent (captured in auth metadata at sign-up) onto the customer row if it
   // wasn't written then (the email-confirmation-on path has no session at sign-up).
+  // The consent columns aren't client-writable — server-stamp them via the RPC (0162).
   useEffect(() => {
     if (synced.current || broker.terms_version) return
     synced.current = true
     void (async () => {
       const { data } = await supabase.auth.getUser()
       const m = (data.user?.user_metadata ?? {}) as Record<string, unknown>
-      const keys = ['irr_version', 'irr_accepted_at', 'terms_version', 'terms_accepted_at', 'privacy_consent_version', 'privacy_consented_at']
-      const updates: Record<string, unknown> = {}
-      for (const k of keys) if (m[k]) updates[k] = m[k]
-      if (Object.keys(updates).length) await supabase.from('customers').update(updates).eq('user_id', broker.user_id)
+      const version = (m.terms_version ?? m.irr_version ?? m.privacy_consent_version) as string | undefined
+      if (version) await supabase.rpc('record_agreement_consent', { p_version: version })
     })()
   }, [broker.terms_version, broker.user_id])
 

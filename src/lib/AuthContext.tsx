@@ -186,9 +186,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: 'This email already has an account. Please sign in instead — or reset your password if you’ve forgotten it.' }
     }
 
-    // With a session (email confirmation off), persist the valid ID + IRR
-    // acceptance onto the broker row for admin visibility. Best-effort: the
-    // brokers update silently no-ops if the 0011 columns aren't applied yet.
+    // With a session (email confirmation off), persist the valid ID + contact
+    // number onto the customer row for admin visibility. Consent is recorded
+    // separately via the server-stamped RPC below (the consent columns are not
+    // client-writable — see migration 0162). Best-effort.
     if (data.session && data.user) {
       const updates: Record<string, unknown> = {}
       if (extras?.contactNumber) updates.contact_number = extras.contactNumber
@@ -200,20 +201,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .upload(path, extras.idFile, { upsert: true })
         if (!upErr) updates.valid_id_path = path
       }
-      if (extras?.irrVersion) {
-        updates.irr_version = extras.irrVersion
-        updates.irr_accepted_at = acceptedAt
-      }
-      if (extras?.termsVersion) {
-        updates.terms_version = extras.termsVersion
-        updates.terms_accepted_at = acceptedAt
-      }
-      if (extras?.privacyVersion) {
-        updates.privacy_consent_version = extras.privacyVersion
-        updates.privacy_consented_at = acceptedAt
-      }
       if (Object.keys(updates).length > 0) {
         await supabase.from('customers').update(updates).eq('user_id', data.user.id)
+      }
+      // Server-stamp the Customer Agreement consent (IRR + Terms + Privacy) in one
+      // call; the consent columns are revoked from client UPDATE in 0162.
+      const consentVersion = extras?.termsVersion ?? extras?.irrVersion ?? extras?.privacyVersion
+      if (consentVersion) {
+        await supabase.rpc('record_agreement_consent', { p_version: consentVersion })
       }
     }
     return { error: null }
