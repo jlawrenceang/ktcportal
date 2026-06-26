@@ -15,6 +15,7 @@ import NotificationBell from './NotificationBell'
 import AccountMenu from './AccountMenu'
 import BottomNav from './BottomNav'
 import Clock from './Clock'
+import ChatWidget from './chat/ChatWidget'
 
 const IDLE_LOGOUT_MS = 15 * 60 * 1000 // auto sign-out after 15 min of inactivity (warning at 14)
 
@@ -84,6 +85,8 @@ export default function Shell({ children, wide }: { children: ReactNode; wide?: 
       </footer>
 
       {!locked && <BottomNav />}
+      {/* Lara — customer help assistant; hidden on the locked (rejected/suspended) screen */}
+      {!locked && <ChatWidget />}
       {idleWarning && <IdleWarning />}
     </div>
   )
