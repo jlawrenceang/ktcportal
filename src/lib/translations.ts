@@ -1842,4 +1842,6 @@ export const tl: Record<string, string> = {
   "SSL-encrypted connection": "Naka-encrypt na koneksyon (SSL)",
   "Privacy & Terms": "Privacy at mga Tuntunin",
   "Email us": "Mag-email sa amin",
+  "Secure": "Ligtas",
+  "SSL-encrypted": "Naka-encrypt (SSL)",
 }

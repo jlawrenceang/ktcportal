@@ -40,24 +40,18 @@ export default function NeedHelp({
   if (!phone && !email) return null
 
   return (
-    <div style={{ textAlign: align, ...style }}>
-      <span
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-          justifyContent: 'center', padding: '6px 14px', borderRadius: 999,
-          border: '1px solid var(--glass-brd)', background: 'var(--c-w55)',
-          fontSize: 12, lineHeight: 1.4,
-        }}
-      >
-        <span className="ktc-label" style={{ fontWeight: 600 }}>{t('Need help?')}</span>
-        {phone && (
-          <a className="ktc-link" href={`tel:${phone.replace(/[^+0-9]/g, '')}`}>{t('Call')} {phone}</a>
-        )}
-        {phone && email && <span style={{ opacity: 0.4 }}>·</span>}
-        {email && (
-          <a className="ktc-link" href={`mailto:${email}`}>{t('Email us')}</a>
-        )}
-      </span>
-    </div>
+    <p className="ktc-label" style={{ margin: 0, fontSize: 12, lineHeight: 1.6, textAlign: align, ...style }}>
+      <span style={{ fontWeight: 600 }}>{t('Need help?')}</span>{' '}
+      {phone && (
+        <>
+          {t('Call')}{' '}
+          <a className="ktc-link" href={`tel:${phone.replace(/[^+0-9]/g, '')}`}>{phone}</a>
+        </>
+      )}
+      {phone && email && <span style={{ opacity: 0.5 }}> · </span>}
+      {email && (
+        <a className="ktc-link" href={`mailto:${email}`}>{t('Email us')}</a>
+      )}
+    </p>
   )
 }
