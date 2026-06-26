@@ -89,7 +89,7 @@ Phase 0 (schema + derived views + `purchaser` role) is **live in prod and commit
 
 ## Docs backlog
 
-- [ ] **Write the 5 recommended ADRs** (flagged in the 2026-06-26 doc-sync) for this run's non-obvious, easy-to-naively-undo decisions: Lara's **non-LLM** choice, **server-side agreement-consent enforcement** (`0162`), **pending → verify-only lockdown** (`0163`), the **disposable-email block** (`0164`), and **Google-OAuth + the scoped `FinishRegistration` consent gate** (`0161`). Docs-only; protects the patterns from a naive undo.
+- [x] **DONE 2026-06-26 — 5 ADRs written (ADR-0030–0034):** Lara non-LLM ([0030](../../adr/0030-lara-non-llm-deterministic-customer-assistant.md)), server-side consent enforcement ([0031](../../adr/0031-server-side-agreement-consent-enforcement.md), `0162`), pending → verify-only lockdown ([0032](../../adr/0032-pending-accounts-verify-only-lockdown.md), `0163`), disposable-email block ([0033](../../adr/0033-block-disposable-email-domains.md), `0164`), Google-OAuth + scoped `FinishRegistration` gate ([0034](../../adr/0034-google-oauth-signin-scoped-finish-registration-gate.md), `0161`).
 
 ## Related
 

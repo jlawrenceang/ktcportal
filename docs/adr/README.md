@@ -4,7 +4,7 @@ ADRs in this folder preserve decision history for the KTC portal.
 
 ## Reading order
 
-1. `0001` to `0029` in numeric order.
+1. `0001` to `0034` in numeric order.
 2. Then check each ADR for **Current-State Addendum** sections.
 
 ## Log
@@ -40,6 +40,11 @@ ADRs in this folder preserve decision history for the KTC portal.
 | [0027](0027-per-service-rate-granularity-and-tiered-foreign-storage.md) | Per-service rate granularity (terminal_rate_config, fan-out) + a tiered foreign storage tariff (storage_tiers, cumulative bands); calculator-only | Accepted | 2026-06-23 | Business Logic \| Database |
 | [0028](0028-rename-brokers-to-customers-single-pool.md) | Rename brokers to customers (single customer pool; `broker` kept as a code alias) | Accepted | 2026-06-25¹ | Database \| Workflow |
 | [0029](0029-customer-self-service-requests-and-consignee-cis.md) | Customer self-service consignee/vessel requests + consignee document model | Accepted | 2026-06-25¹ | Workflow \| Database |
+| [0030](0030-lara-non-llm-deterministic-customer-assistant.md) | Build Lara as a deterministic (non-LLM) customer assistant | Accepted | 2026-06-26 | Frontend \| Architecture |
+| [0031](0031-server-side-agreement-consent-enforcement.md) | Enforce Customer Agreement / DPA consent in the database, not the UI | Accepted | 2026-06-26 | Security \| Database |
+| [0032](0032-pending-accounts-verify-only-lockdown.md) | Lock pending accounts to verify-only (a data-exposure boundary) | Accepted | 2026-06-26 | Security |
+| [0033](0033-block-disposable-email-domains.md) | Block disposable / temporary email domains at signup (server-side) | Accepted | 2026-06-26 | Security |
+| [0034](0034-google-oauth-signin-scoped-finish-registration-gate.md) | Google OAuth sign-in + a scoped post-OAuth consent/contact gate | Accepted | 2026-06-26 | Security \| Frontend |
 
 ¹ Retroactively captured 2026-06-25; the decisions shipped earlier (0028 at migration 0021; 0029 across ~0132–0139).
 
