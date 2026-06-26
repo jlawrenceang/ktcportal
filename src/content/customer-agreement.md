@@ -1,12 +1,13 @@
 # KTC Customer Agreement
 
-**Version 2.0 — Effective June 15 2026**
+**Version 4.0 — Effective June 26, 2026**
 
 This Agreement governs your use of the KTC Container Terminal Corp. ("KTC", "we") online portal (the "Portal"). It covers the **terms of use**, your **confidentiality / non-disclosure** obligations, and your **data-privacy consent** under the **Data Privacy Act of 2012 (R.A. 10173)** ("DPA"). By ticking the acceptance box at registration, you ("Customer", "you") agree to all of it.
 
 ## 1. Acceptance, Eligibility, and Account Security
 
 - The Portal is for KTC-accredited customers (including customs brokers) and their authorized representatives. You warrant that you are authorized to act for every consignee you transact for.
+- **Authority to bind.** If you register for or on behalf of a brokerage firm or company, "**Customer**" means that firm, and you warrant that you are authorized to enter into this Agreement and to bind it. You and that firm are jointly responsible under this Agreement.
 - You must give true, accurate information and upload a valid government-issued ID. KTC may approve, defer, suspend, or reject any registration at its discretion.
 - **Your credentials are personal and your responsibility.** Do not share, sell, or transfer them. You are solely responsible for safeguarding your password, devices, and authentication codes, and for **all activity under your account**, which is deemed yours. Notify KTC immediately if you suspect your account is compromised; KTC may freeze the account to protect you and others.
 - To the maximum extent permitted by law, KTC is not responsible for loss arising from unauthorized use of your account caused by your failure to keep your credentials or devices secure, or by your sharing of access.
@@ -36,9 +37,9 @@ You must not:
 
 ## 4. Data Privacy (R.A. 10173)
 
-KTC processes your personal data as Personal Information Controller in accordance with the Data Privacy Act of 2012, its IRR, and National Privacy Commission ("NPC") issuances.
+KTC processes your personal data as a Personal Information Controller and is committed to handling it in line with the Data Privacy Act of 2012 (R.A. 10173) and its Implementing Rules and Regulations.
 
-- **Data Protection Officer (DPO):** **Jan Lawrence Ang**, reachable at **jla.ktcport@gmail.com**.
+- **Privacy contact:** for any data-privacy request or concern, contact KTC at **jla.ktcport@gmail.com**. KTC will appoint a Data Protection Officer and complete the applicable National Privacy Commission registration as required by law, and will update this contact accordingly.
 - **Data we collect:** your name, contact number, email, account credentials, **a valid government-issued ID you upload**, customer/company details, and the job-order and payment data you submit.
 - **Purposes:** to register and **verify your identity**, decide accreditation, process job orders and provide terminal services, compute and record charges, communicate with you, maintain security and prevent fraud, and comply with legal and lawful government requirements.
 - **Legal basis:** your **consent** (for identity verification using your uploaded ID and related processing), performance of this Agreement, and compliance with legal obligations.
@@ -48,14 +49,14 @@ KTC processes your personal data as Personal Information Controller in accordanc
 - **International transfer:** our providers may process data on servers outside the Philippines; KTC takes steps consistent with the DPA to keep it protected.
 - **Breach notification:** where a personal-data breach requires notification under the DPA and NPC rules, KTC will notify the NPC and affected data subjects within the periods required by law.
 - **Retention:** your **uploaded valid ID and any supporting documents are held only briefly — for identity verification — and are automatically and securely deleted no later than 3 days after upload**. Other account and job-order data is kept while your account is active and as required by law (including customs and tax record-keeping rules), then securely deleted or anonymized.
-- **Your rights:** to be informed, to access, rectify, erase/block, object, withdraw consent, and to data portability; and to **lodge a complaint with the NPC** and seek damages as provided by the DPA. To exercise these or withdraw consent, contact the DPO (withdrawal may end your Portal access and does not affect prior processing).
+- **Your rights:** to be informed, to access, rectify, erase/block, object, withdraw consent, and to data portability; and to **lodge a complaint with the NPC** and seek damages as provided by the DPA. To exercise these or withdraw consent, contact KTC at **jla.ktcport@gmail.com** (withdrawal may end your Portal access and does not affect prior processing).
 - **Consent:** by accepting this Agreement you **consent to KTC's collection and processing of your personal data, including the valid government-issued ID you upload**, for the purposes above.
 
 ## 5. Service, Liability, and Indemnity
 
 - The Portal is provided **"as is" and "as available"**; KTC does not warrant uninterrupted or error-free operation and may modify, suspend, or discontinue features. The Portal facilitates the filing and tracking of job orders; the terminal services themselves remain governed by KTC's terminal service terms and tariffs.
 - **Third-party and customer-side incidents:** provided KTC has complied with its security obligations under the DPA, and to the maximum extent permitted by law, KTC is **not liable** for loss or damage caused by **(a)** criminal or unlawful acts of third parties (including hacking, interception, or fraud) that occur despite KTC's compliant safeguards, **(b)** unauthorized use of your account resulting from your failure to safeguard credentials or devices, or **(c)** your own or your representatives' acts, omissions, or misuse of data.
-- **Limitation of liability:** to the maximum extent permitted by law, KTC is not liable for indirect, incidental, special, or consequential damages, or lost profits or business; and KTC's total aggregate liability arising from or related to the Portal is **limited to the fees actually paid to KTC for the job order(s) giving rise to the claim**. **Nothing in this Agreement excludes or limits liability for fraud, willful misconduct, gross negligence, or any liability that cannot be excluded or limited under the DPA or other Philippine law.**
+- **Limitation of liability:** to the maximum extent permitted by law, KTC is not liable for indirect, incidental, special, or consequential damages, or lost profits or business; and KTC's total aggregate liability arising from or related to the Portal is **limited to the greater of (i) the total charges invoiced by KTC to the Customer, via the Service Invoice(s) for the services giving rise to the claim, during the six (6) months preceding the claim, or (ii) One Hundred Thousand Pesos (₱100,000.00)**. **Nothing in this Agreement excludes or limits liability for fraud, willful misconduct, gross negligence, or any liability that cannot be excluded or limited under the DPA or other Philippine law.**
 - **Your indemnity:** you will **indemnify, defend, and hold harmless** KTC, its directors, officers, and employees from and against any claims, investigations, penalties, damages, losses, and costs (including reasonable attorney's fees) arising from: **(a)** your inaccurate, false, or fraudulent submissions; **(b)** your acting for a consignee or party without authority; **(c)** your breach of the confidentiality obligations in Section 3, or your unauthorized use, disclosure, or exploitation of data accessed through the Portal; **(d)** unauthorized use of your account caused by your failure to safeguard it; or **(e)** your violation of law or of this Agreement.
 - **Force majeure:** KTC is not liable for failure or delay caused by events beyond its reasonable control (calamity, war, government act, power or telecommunications failure, or failures of third-party infrastructure).
 - KTC may suspend or terminate access for breach, suspected fraud or security abuse, or as required by law. Sections 3, 4, 5, and 6 survive termination.
@@ -63,12 +64,13 @@ KTC processes your personal data as Personal Information Controller in accordanc
 ## 6. General Provisions
 
 - **Governing law and venue:** this Agreement is governed by the laws of the Republic of the Philippines; any dispute shall be brought **exclusively in the proper courts of Davao City**, to the exclusion of all other venues.
-- **Amendments:** KTC may amend this Agreement; material changes will be posted with an updated version number, and KTC may require re-acceptance. Continued use after notice constitutes acceptance.
+- **Amendments:** KTC may update this Agreement. For **material changes** — including to Section 4 (Data Privacy) or Section 5 (Liability) — KTC **will require your affirmative re-acceptance**, with an updated version number and effective date, before you continue using the Portal. For minor, non-material updates, KTC will post the revised version with notice, and continued use after such notice constitutes acceptance.
 - **Severability:** if any provision is held invalid, the remainder stays in force, and the invalid provision is deemed replaced by a valid one closest to its intent.
 - **No waiver:** KTC's failure to enforce a provision is not a waiver of it.
+- **Notices:** KTC may give notices under this Agreement through the Portal or to the email address on your account; such notices are deemed received when posted or sent. You must keep your contact details current.
 - **Assignment:** you may not assign this Agreement; KTC may assign it to a successor or affiliate.
 - **Entire agreement:** this Agreement is the entire agreement on Portal use and supersedes prior understandings on that subject; it supplements (and does not replace) KTC's terminal service terms and tariffs.
-- Questions: **jla.ktcport@gmail.com**.
+- Questions: contact KTC via the Portal's **Support** page or at **jla.ktcport@gmail.com**.
 
 ---
 

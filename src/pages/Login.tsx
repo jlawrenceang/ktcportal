@@ -48,6 +48,20 @@ function clearFails(em: string) {
   try { localStorage.removeItem(LOCK_KEY(em)) } catch { /* ignore */ }
 }
 
+// Instant client-side hint only — NOT the real check. The wall is server-side in
+// handle_new_user (migration 0164) against the full disposable-domain blocklist.
+// This just flags the most common throwaway domains as the user types.
+const COMMON_DISPOSABLE = new Set([
+  'mailinator.com', 'guerrillamail.com', 'guerrillamailblock.com', 'sharklasers.com', 'grr.la',
+  '10minutemail.com', 'temp-mail.org', 'temp-mail.io', 'tempmail.com', 'yopmail.com',
+  'throwawaymail.com', 'getnada.com', 'trashmail.com', 'maildrop.cc', 'dispostable.com',
+  'fakeinbox.com', 'mailnesia.com', 'mohmal.com', 'mintemail.com', 'spam4.me',
+])
+function isLikelyDisposable(em: string): boolean {
+  const at = em.indexOf('@')
+  return at >= 0 && COMMON_DISPOSABLE.has(em.slice(at + 1).trim().toLowerCase())
+}
+
 export default function Login() {
   const { t } = useT()
   const { signIn, signUp, session } = useAuth()
@@ -241,6 +255,7 @@ export default function Login() {
   }
 
   const isSignup = mode === 'signup'
+  const showDisposableHint = isSignup && isLikelyDisposable(email)
 
   // Already signed in → don't show the login page; send to the role landing (/).
   if (session) return <Navigate to="/" replace />
@@ -312,6 +327,11 @@ export default function Login() {
             <label className="ktc-label" htmlFor="email">{isSignup ? t('Email') : t('Email or username')}</label>
             <input id="email" className="ktc-input" type={isSignup ? 'email' : 'text'} required value={email}
               onChange={(e) => setEmail(e.target.value)} autoComplete="username" />
+            {showDisposableHint && (
+              <p className="ktc-label" style={{ margin: 0, fontSize: 12, color: 'var(--c-h30-80-34)' }}>
+                {t('Please use a permanent business email — temporary / disposable email addresses aren’t accepted.')}
+              </p>
+            )}
           </div>
 
           <div style={{ display: 'grid', gap: 6 }}>

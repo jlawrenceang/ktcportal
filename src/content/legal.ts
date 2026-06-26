@@ -4,6 +4,6 @@ import agreementBody from './customer-agreement.md?raw'
 // confidentiality/NDA + Data Privacy Act consent). Bump AGREEMENT_VERSION on any
 // material change; the version a customer accepted is recorded at registration so a
 // new version can later require re-acceptance.
-export const AGREEMENT_VERSION = 'v3'
-export const AGREEMENT_VERSION_LABEL = 'Version 3.0'
+export const AGREEMENT_VERSION = 'v4'
+export const AGREEMENT_VERSION_LABEL = 'Version 4.0'
 export const AGREEMENT_BODY = agreementBody

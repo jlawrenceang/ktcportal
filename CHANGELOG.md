@@ -10,6 +10,16 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.27 — 2026-06-26 (Customer Agreement v4 + disposable-email block)
+
+**Customer Agreement → v4.0** — redlined after a PH-legal-framework review (DPA, e-Commerce Act, Civil Code, fairness) caught three blockers, all fixed:
+- **Privacy section made truthful** — removed the false NPC-compliance + designated-DPO claims; now a genuine commitment, a real contact, and a promise to appoint a DPO + register with the NPC.
+- **Liability cap re-pegged to the Service Invoice** (the Job Order carries no fee, so the old cap was illusory and severability would have left KTC *uncapped*): "the greater of trailing-6-months Service-Invoice charges or ₱100,000."
+- **Amendments** now require affirmative re-acceptance for material changes, not passive "continued use."
+- Plus version reconciled (2.0/v3 drift → **v4.0**), an authority-to-bind clause, and a Notices clause. Remaining real-world items (NPC/DPO registration, final counsel pass, the ₱100k floor) tracked in `docs/go-live-todo.md`.
+
+**Disposable-email block (`0164`)** — signups from throwaway/temporary email domains are rejected **server-side** in `handle_new_user`, using the full **7,578-domain** maintained blocklist (gmail/outlook/etc. pass; mailinator/etc. blocked). An optional inline hint flags obvious throwaways on the signup form. From the owner's anti-abuse research; the DB trigger is the real wall (the frontend can't bypass it).
+
 ## v1.6.26 — 2026-06-26 (Landing: 5-photo hero slideshow + responsive rework)
 
 - **The public landing hero is now a 5-photo auto-advancing slideshow** of the real terminal (crossfade ~5s; pauses on hover and when the tab is hidden; respects `prefers-reduced-motion` → a single static still, with the other four never downloaded). Each slide has a tuned focal point so the cranes / yard / waterline stay in frame across crops.
