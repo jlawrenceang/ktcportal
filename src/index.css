@@ -1578,3 +1578,48 @@
   .ktc-landing__service-chev { display: none; }
   .ktc-landing__service-head { cursor: default; }
 }
+
+/* Sign-in / create-account card. Mobile: a single frosted panel (brand aside hidden,
+   the panel logo shows). Desktop (>=860px): a two-column card — brand left, form right —
+   so auth gets the landing's intentional desktop treatment, not a phone-sized tile. */
+.ktc-auth {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 440px;
+}
+.ktc-auth__brand { display: none; }
+.ktc-auth__panel { padding: 34px 34px 30px; }
+.ktc-auth__panel-logo { height: 60px; margin-bottom: 18px; display: block; }
+
+@media (min-width: 860px) {
+  .ktc-auth {
+    max-width: 860px;
+    display: grid;
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  }
+  .ktc-auth__brand {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    padding: 44px 40px;
+    border-right: 1px solid var(--glass-brd);
+  }
+  .ktc-auth__brand-logo { height: 56px; align-self: flex-start; }
+  .ktc-auth__brand-title {
+    margin: 4px 0 0;
+    font-size: clamp(22px, 2.2vw, 30px);
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    line-height: 1.14;
+  }
+  .ktc-auth__brand-lede {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: hsl(var(--ink-2));
+  }
+  .ktc-auth__panel { padding: 40px 44px 34px; }
+  .ktc-auth__panel-logo { display: none; }
+}

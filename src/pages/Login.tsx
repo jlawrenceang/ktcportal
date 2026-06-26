@@ -267,14 +267,24 @@ export default function Login() {
       {/* Backdrop — carries the landing's terminal slideshow over into sign-in / create-account. */}
       <HeroSlideshow />
       <div className="ktc-landing__scrim" aria-hidden="true" />
-      <div className="ktc-glass ktc-rise" style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 440, padding: '36px 36px 32px' }}>
+      <div className="ktc-glass ktc-rise ktc-auth">
+        {/* Desktop-only brand panel — gives sign-in / create-account the same intentional
+            two-column treatment as the landing (hidden on phone, where the panel logo shows). */}
+        <aside className="ktc-auth__brand">
+          <img src="/ktc-logo.png" alt="" className="ktc-auth__brand-logo" />
+          <h2 className="ktc-auth__brand-title">{t('KTC Online Portal')}</h2>
+          <p className="ktc-auth__brand-lede">
+            {t('The online service desk of KTC Container Terminal Corp. — file and track your terminal and port-services work.')}
+          </p>
+        </aside>
+        <div className="ktc-auth__panel">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 7, marginBottom: 10 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="Language" role="img" style={{ color: 'hsl(var(--ink-2))' }}>
             <circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
           </svg>
           <LangToggle />
         </div>
-        <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 64, marginBottom: 20 }} />
+        <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" className="ktc-auth__panel-logo" />
         {notice && <Notice tone="success" style={{ marginBottom: 14 }}>{notice}</Notice>}
         {isLocked && (
           <Notice tone="warning" style={{ marginBottom: 14 }}>
@@ -305,7 +315,7 @@ export default function Login() {
 
         {!isSignup && (
           <div className="ktc-label" style={{ marginBottom: 22, fontSize: 12.5, lineHeight: 1.6, padding: '12px 14px', borderRadius: 11, background: 'var(--c-w50)', border: '1px solid var(--glass-brd)' }}>
-            {t('For accredited customers, consignees, and KTC staff. New here? Create an account below to begin accreditation.')}
+            {t('Create an account to begin accreditation.')}
           </div>
         )}
 
@@ -439,9 +449,13 @@ export default function Login() {
         </p>
 
         <NeedHelp align="center" style={{ marginTop: 14, fontSize: 12 }} />
-        <p className="ktc-label" style={{ marginTop: 8, fontSize: 12, opacity: 0.7, textAlign: 'center' }}>
-          {t('KTC Online Portal')} <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.
+        <p className="ktc-label" style={{ marginTop: 8, fontSize: 11.5, opacity: 0.72, textAlign: 'center', lineHeight: 1.7, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: '0 0 auto' }}>
+            <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          <span>{t('Secure access')} · <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.</span>
         </p>
+        </div>
       </div>
 
       {showAgreement && (
