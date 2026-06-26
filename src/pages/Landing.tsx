@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useT } from '../lib/i18n'
 import LangToggle from '../components/LangToggle'
 import NeedHelp from '../components/NeedHelp'
-import HeroSlideshow from '../components/HeroSlideshow'
+import OrgInfo from '../components/OrgInfo'
 import { VERSION_LABEL, VERSION_FULL } from '../version'
 import { ORG } from '../lib/org'
 
@@ -45,21 +45,15 @@ export default function Landing() {
   const [openSvc, setOpenSvc] = useState<string | null>(null)
   return (
     <div className="ktc-landing">
-      {/* Backdrop — the owner's KTC terminal aerials, crossfading ~5s/slide,
-          under a dark gradient scrim so the glass card + its CTAs stay AA. */}
-      <HeroSlideshow />
-      <div className="ktc-landing__scrim" aria-hidden="true" />
-
+      {/* The terminal-photo backdrop is rendered once at the app level (PublicBackdrop)
+          so it persists across landing <-> sign-in; this page is just the glass card. */}
       <main className="ktc-glass ktc-rise ktc-landing__card">
         {/* Header — logo + language (full width above the split) */}
         <div className="ktc-landing__top">
           <div className="ktc-landing__brand">
             <img src="/ktc-logo.png" alt={ORG.name} style={{ height: 50 }} />
-            <div className="ktc-landing__org">
-              <div>TIN {ORG.tin}</div>
-              <div>{ORG.address}</div>
-              <NeedHelp style={{ marginTop: 3 }} />
-            </div>
+            <OrgInfo />
+            <NeedHelp />
           </div>
           <LangToggle />
         </div>

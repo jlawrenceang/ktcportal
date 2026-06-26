@@ -1383,6 +1383,16 @@
    two-column split — intro | access, hairline-divided — from 900px up, so the
    hero reads as an intentional desktop landing instead of a lost phone tile.
    ============================================================ */
+/* Persistent terminal-photo backdrop for the public auth pages — rendered once at the
+   app level (PublicBackdrop) so it stays put while only the card content fades on
+   navigation. Fixed + behind the routed content. */
+.ktc-public-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #0c101c;
+}
 .ktc-landing {
   position: relative;
   min-height: 100%;
@@ -1391,9 +1401,6 @@
      pushed down by its margin); desktop re-centers the wide card (below). */
   place-items: start center;
   padding: 24px;
-  /* Dark base so first paint (before the photo decodes) matches the scrim mood
-     rather than flashing the light canvas. */
-  background: #0c101c;
 }
 /* Slideshow image stack — fills the hero, sits beneath the scrim + card. */
 .ktc-landing__media {
@@ -1439,7 +1446,7 @@
   gap: 9px;
   min-width: 0;
 }
-.ktc-landing__org {
+.ktc-org {
   font-size: 11.5px;
   line-height: 1.5;
   color: hsl(var(--ink-2));
@@ -1595,6 +1602,7 @@
 .ktc-auth__brand { display: none; }
 .ktc-auth__panel { padding: 34px 34px 30px; }
 .ktc-auth__panel-logo { height: 60px; margin-bottom: 18px; display: block; }
+.ktc-auth__panel-org { display: block; }
 
 @media (min-width: 860px) {
   .ktc-auth {
@@ -1626,4 +1634,5 @@
   }
   .ktc-auth__panel { padding: 40px 44px 34px; }
   .ktc-auth__panel-logo { display: none; }
+  .ktc-auth__panel-org { display: none; }
 }

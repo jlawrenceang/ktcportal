@@ -10,7 +10,7 @@ import Notice from '../components/Notice'
 import LangToggle from '../components/LangToggle'
 import NeedHelp from '../components/NeedHelp'
 import PasswordInput from '../components/PasswordInput'
-import HeroSlideshow from '../components/HeroSlideshow'
+import OrgInfo from '../components/OrgInfo'
 import PasswordStrength from '../components/PasswordStrength'
 import { passwordIssue } from '../lib/validation'
 import { useT } from '../lib/i18n'
@@ -263,10 +263,9 @@ export default function Login() {
 
 
   return (
-    <div style={{ position: 'relative', display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24, background: '#0c101c' }}>
-      {/* Backdrop — carries the landing's terminal slideshow over into sign-in / create-account. */}
-      <HeroSlideshow />
-      <div className="ktc-landing__scrim" aria-hidden="true" />
+    <div style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24 }}>
+      {/* The terminal-photo backdrop is rendered once at the app level (PublicBackdrop)
+          so it persists from the landing into sign-in / create-account. */}
       <div className="ktc-glass ktc-rise ktc-auth">
         {/* Desktop-only brand panel — gives sign-in / create-account the same intentional
             two-column treatment as the landing (hidden on phone, where the panel logo shows). */}
@@ -276,6 +275,7 @@ export default function Login() {
           <p className="ktc-auth__brand-lede">
             {t('The online service desk of KTC Container Terminal Corp. — file and track your terminal and port-services work.')}
           </p>
+          <OrgInfo style={{ marginTop: 4 }} />
         </aside>
         <div className="ktc-auth__panel">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 7, marginBottom: 10 }}>
@@ -285,6 +285,7 @@ export default function Login() {
           <LangToggle />
         </div>
         <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" className="ktc-auth__panel-logo" />
+        <OrgInfo className="ktc-auth__panel-org" style={{ marginBottom: 16, marginTop: -8 }} />
         {notice && <Notice tone="success" style={{ marginBottom: 14 }}>{notice}</Notice>}
         {isLocked && (
           <Notice tone="warning" style={{ marginBottom: 14 }}>

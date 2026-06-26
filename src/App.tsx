@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import SessionSupersededOverlay from './components/SessionSupersededOverlay'
 import ServerBusyBanner from './components/ServerBusyBanner'
 import RouteLoader from './components/RouteLoader'
+import HeroSlideshow from './components/HeroSlideshow'
 import { useBroker } from './lib/useBroker'
 import { hasAdminAccess } from './lib/types'
 import Login from './pages/Login'
@@ -110,6 +111,21 @@ function RouteFade({ children }: { children: ReactNode }) {
   return <div ref={ref} className="ktc-route" style={{ height: '100%' }}>{children}</div>
 }
 
+// Persistent terminal-photo backdrop for the public auth flow. Rendered ONCE at the
+// app level (outside RouteFade), shown only on landing / sign-in / create-account — so
+// navigating between them just fades the card content over the SAME photo (no backdrop
+// re-fade, no page-reload feel). On every other route it renders nothing.
+function PublicBackdrop() {
+  const { pathname } = useLocation()
+  if (pathname !== '/' && pathname !== '/login' && pathname !== '/register') return null
+  return (
+    <div className="ktc-public-bg" aria-hidden="true">
+      <HeroSlideshow />
+      <div className="ktc-landing__scrim" />
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -119,6 +135,7 @@ export default function App() {
         <FirstRunSetup />
         <SessionSupersededOverlay />
         <ServerBusyBanner />
+        <PublicBackdrop />
         <Suspense fallback={<RouteLoader />}>
         <RouteFade>
         <Routes>
