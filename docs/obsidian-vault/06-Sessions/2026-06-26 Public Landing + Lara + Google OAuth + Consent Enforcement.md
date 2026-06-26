@@ -7,7 +7,7 @@ date: 2026-06-26
 
 # 2026-06-26 — Public Landing + Lara + Google OAuth + Consent Enforcement
 
-A long public-facing + access-hardening run (`APP_VERSION` **v1.6.18 → v1.6.30**; migrations **`0160`–`0164`**, all applied to prod). Themes: give the signed-out URL a **real public landing** (then redesign it around real terminal photos), ship **Lara** — a deterministic, non-LLM customer help assistant — add **"Continue with Google"** sign-in, and close the launch-blocking access gaps with a **server-side consent-enforcement layer**, a **pending → verify-only lockdown**, and a **disposable-email block**. Customer Agreement bumped to **v4** after a PH-legal redline. Authoritative per-change list: `CHANGELOG.md` (v1.6.18 → v1.6.30).
+A long public-facing + access-hardening run (`APP_VERSION` **v1.6.18 → v1.6.31**; migrations **`0160`–`0164`**, all applied to prod). Themes: give the signed-out URL a **real public landing** (then redesign it around real terminal photos), ship **Lara** — a deterministic, non-LLM customer help assistant — add **"Continue with Google"** sign-in, and close the launch-blocking access gaps with a **server-side consent-enforcement layer**, a **pending → verify-only lockdown**, and a **disposable-email block**. Customer Agreement bumped to **v4** after a PH-legal redline. Capped with a **demo-tour refresh** (a "Meet Lara" step + the admin work-surface step, v1.6.31) and this docs wrap. Authoritative per-change list: `CHANGELOG.md` (v1.6.18 → v1.6.31).
 
 ## What shipped
 

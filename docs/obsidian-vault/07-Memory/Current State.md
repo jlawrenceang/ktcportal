@@ -9,9 +9,9 @@ last_updated: 2026-06-26
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
 
-## 2026-06-26 — Public landing, Lara, Google OAuth, consent enforcement, pending lockdown (v1.6.30)
+## 2026-06-26 — Public landing, Lara, Google OAuth, consent enforcement, pending lockdown (v1.6.31)
 
-**Migrations through `0164` applied to prod; `APP_VERSION` = `v1.6.30`.** A long public-facing + access-hardening run (`v1.6.18`–`v1.6.30`). See [[2026-06-26 Public Landing + Lara + Google OAuth + Consent Enforcement]]. In one line each:
+**Migrations through `0164` applied to prod; `APP_VERSION` = `v1.6.31`.** A long public-facing + access-hardening run (`v1.6.18`–`v1.6.31`). See [[2026-06-26 Public Landing + Lara + Google OAuth + Consent Enforcement]]. In one line each:
 
 - **Public landing** — signed-out `/` is now a real **Landing** page (orientation, **no forced accept gate**) via a `RootGate`; redesigned around real terminal photos (5-photo `HeroSlideshow`, responsive desktop card / mobile photo band, login + signup carry the same backdrop). `src/pages/Landing.tsx`.
 - **Lara** ([[Lara (Customer Assistant)]]) — a deterministic **non-LLM** customer help assistant (93-node rule tree + keyword matcher), an RLS-scoped track-order action, and a `open_ticket` two-strike fallback. Customer Shell only; **no new route/table/migration**.

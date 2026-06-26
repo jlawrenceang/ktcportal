@@ -73,7 +73,7 @@ Phase 0 (schema + derived views + `purchaser` role) is **live in prod and commit
 - [ ] Per-customer accredited-consignee scoping (ADR-0007 keeps the open master list; revisit on chokepoints).
 - [ ] JO draft persistence (document attachments now exist via the JO timeline).
 - [ ] **Guard gate-scan module** — log gate-in/gate-out from the verify-QR screen (`gate_events`). Foundation laid in `0089`/`0090`; deferred. See [[Gate Module (gate-in-out)]], [[Verify-QR Anti-Forgery]].
-- [ ] Refresh AdminTour fully for the bottom-nav (role tours added; polish pending).
+- [ ] Refresh AdminTour fully for the bottom-nav (role tours added; **Lara + dashboard work-surface steps added v1.6.31**; bottom-nav polish pending).
 
 ## Testing / CI (LATER)
 
@@ -86,6 +86,10 @@ Phase 0 (schema + derived views + `purchaser` role) is **live in prod and commit
 - Turnstile secret lives only in Supabase; site key in Vercel env (`VITE_TURNSTILE_SITE_KEY`). Env changes need a redeploy.
 - Session pooler (`:5432`) can exhaust mid-session → use transaction pooler (`:6543`) for one-off scripts.
 - ID purge cron is ACTIVE (Vault has `service_role_key` + `project_url`; verified 2026-06-13). All 6 crons green.
+
+## Docs backlog
+
+- [ ] **Write the 5 recommended ADRs** (flagged in the 2026-06-26 doc-sync) for this run's non-obvious, easy-to-naively-undo decisions: Lara's **non-LLM** choice, **server-side agreement-consent enforcement** (`0162`), **pending → verify-only lockdown** (`0163`), the **disposable-email block** (`0164`), and **Google-OAuth + the scoped `FinishRegistration` consent gate** (`0161`). Docs-only; protects the patterns from a naive undo.
 
 ## Related
 
