@@ -1374,3 +1374,165 @@
   body .ktc-protected-doc { display: none !important; }
   body .ktc-print-only { display: block !important; padding: 64px 24px; text-align: center; font-size: 16px; font-weight: 600; }
 }
+
+/* ============================================================
+   Public landing hero — full-bleed crossfade slideshow (HeroSlideshow) behind
+   a dark scrim, with the glass card carrying all the copy. Unlayered so these
+   win over the @layer-component base (.ktc-title, .ktc-btn width, etc.).
+   ONE single-column card on phone/tablet (the loved glass tile); a wider
+   two-column split — intro | access, hairline-divided — from 900px up, so the
+   hero reads as an intentional desktop landing instead of a lost phone tile.
+   ============================================================ */
+.ktc-landing {
+  position: relative;
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  /* Dark base so first paint (before the photo decodes) matches the scrim mood
+     rather than flashing the light canvas. */
+  background: #0c101c;
+}
+/* Slideshow image stack — fills the hero, sits beneath the scrim + card. */
+.ktc-landing__media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+/* Dark gradient scrim — lighter through the middle so the picture stays
+   highlighted, deeper at the foot to seat the CTAs/footer. The card text gets
+   its legibility from the frosted glass, not this scrim, so it can stay light
+   enough to let the terminal read clearly (incl. the phone photo strips). */
+.ktc-landing__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 14, 24, 0.46) 0%,
+    rgba(10, 14, 24, 0.40) 46%,
+    rgba(10, 14, 24, 0.66) 100%
+  );
+}
+.ktc-landing__card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 620px;
+  padding: 32px 34px 28px;
+}
+.ktc-landing__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.ktc-landing__grid {
+  display: grid;
+  gap: 22px;
+}
+.ktc-landing__title {
+  margin: 0;
+  font-size: clamp(26px, 3.4vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.024em;
+  line-height: 1.12;
+}
+.ktc-landing__lede {
+  margin: 10px 0 0;
+  font-size: clamp(14px, 1.05vw, 16px);
+  line-height: 1.55;
+  color: hsl(var(--ink-2));
+}
+.ktc-landing__services {
+  list-style: none;
+  margin: 24px 0 4px;
+  padding: 0;
+  border-top: 1px solid var(--glass-brd);
+}
+.ktc-landing__service {
+  display: flex;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--glass-brd);
+}
+.ktc-landing__service-bar {
+  flex: 0 0 auto;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--acc), var(--acc-2));
+}
+.ktc-landing__service-title {
+  font-size: 14.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.ktc-landing__service-body {
+  margin-top: 3px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: hsl(var(--ink-2));
+}
+.ktc-landing__access {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+.ktc-landing__cta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ktc-landing__cta > .ktc-btn,
+.ktc-landing__cta > .ktc-btn-secondary {
+  flex: 1 1 160px;
+  text-align: center;
+}
+.ktc-landing__secure {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: hsl(var(--ink-2));
+}
+.ktc-landing__foot {
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--glass-brd);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Desktop split — wider card, intro | access two-up with a hairline divider.
+   The access rail's CTAs stack full-width so the two paths in read as a clear,
+   intentional sign-in panel rather than a cramped button row. */
+@media (min-width: 900px) {
+  .ktc-landing__card {
+    max-width: 1040px;
+    padding: 40px 46px 32px;
+  }
+  .ktc-landing__grid {
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+    column-gap: 0;
+    row-gap: 0;
+  }
+  .ktc-landing__intro {
+    padding-right: 46px;
+  }
+  .ktc-landing__access {
+    padding-left: 46px;
+    border-left: 1px solid var(--glass-brd);
+  }
+  .ktc-landing__cta {
+    flex-direction: column;
+  }
+  .ktc-landing__services {
+    margin-bottom: 0;
+  }
+}
