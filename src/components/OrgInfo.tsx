@@ -7,8 +7,7 @@ import { ORG } from '../lib/org'
 export default function OrgInfo({ style, className }: { style?: CSSProperties; className?: string }) {
   return (
     <div className={className ? `ktc-org ${className}` : 'ktc-org'} style={style}>
-      <div>TIN {ORG.tin}</div>
-      <div>{ORG.address}</div>
+      {ORG.address}
     </div>
   )
 }

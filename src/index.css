@@ -1442,9 +1442,19 @@
 }
 .ktc-landing__brand {
   display: flex;
-  flex-direction: column;
-  gap: 9px;
+  flex-direction: column;   /* phone: stacked under the logo (the address is long) */
+  gap: 8px;
   min-width: 0;
+}
+.ktc-landing__brand-side {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+@media (min-width: 900px) {
+  /* desktop: address + "Need help?" sit to the RIGHT of the logo */
+  .ktc-landing__brand { flex-direction: row; align-items: center; gap: 14px; }
 }
 .ktc-org {
   font-size: 11.5px;

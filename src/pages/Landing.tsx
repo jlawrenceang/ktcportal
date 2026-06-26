@@ -52,8 +52,10 @@ export default function Landing() {
         <div className="ktc-landing__top">
           <div className="ktc-landing__brand">
             <img src="/ktc-logo.png" alt={ORG.name} style={{ height: 50 }} />
-            <OrgInfo />
-            <NeedHelp />
+            <div className="ktc-landing__brand-side">
+              <OrgInfo />
+              <NeedHelp />
+            </div>
           </div>
           <LangToggle />
         </div>
