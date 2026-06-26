@@ -52,6 +52,11 @@ export default function Dashboard() {
 
   return (
     <AdminShell>
+      <div
+        className="ktc-photo-banner ktc-photo-banner--tight"
+        style={{ backgroundImage: "url('/photos/dash-admin.jpg')" }}
+        aria-hidden="true"
+      />
       <div className="ktc-home-head">
         <span className="ktc-home-eyebrow">{t('Admin')}</span>
         <h1 className="ktc-home-greet">{t('Dashboard')}</h1>

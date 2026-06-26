@@ -49,6 +49,11 @@ export default function Home() {
 
   return (
     <Shell>
+      <div
+        className="ktc-photo-banner"
+        style={{ backgroundImage: "url('/photos/dash-customer.jpg')" }}
+        aria-hidden="true"
+      />
       <div className="ktc-home-head">
         <span className="ktc-home-eyebrow">{t('Dashboard')}</span>
         <h1 className="ktc-home-greet">

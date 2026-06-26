@@ -751,6 +751,46 @@
   }
   .ktc-foot-logo { height: 15px; opacity: 0.7; }
 
+  /* ---- Terminal photo banner — slim identity strip atop the dashboards.
+     The owner's real KTC terminal photos. A thin accent header; the data
+     below stays the hero. Decorative only (background image set inline). ---- */
+  .ktc-photo-banner {
+    position: relative;
+    height: 150px;
+    margin: 16px 0 0;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--glass-brd);
+    background-color: var(--cc-canvas-strong);
+    background-size: cover;
+    background-position: center 42%;
+    box-shadow: var(--shadow-sm), var(--edge);
+  }
+  /* Soft scrim — adds depth and keeps the strip from competing with the data. */
+  .ktc-photo-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(12, 16, 28, 0.06) 0%, rgba(12, 16, 28, 0.30) 100%);
+  }
+  /* Bottom brand-accent hairline — the one accent. */
+  .ktc-photo-banner::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    z-index: 1;
+    background: linear-gradient(90deg, var(--acc), var(--acc-2));
+  }
+  /* Admin variant — tighter band, denser operational feel; cranes in frame. */
+  .ktc-photo-banner--tight { height: 124px; background-position: center 30%; }
+  @media (max-width: 640px) {
+    .ktc-photo-banner { height: 112px; margin: 10px 0 0; border-radius: 16px; }
+    .ktc-photo-banner--tight { height: 100px; }
+  }
+
   /* ---- Customer home: greeting + service tiles ---- */
   .ktc-home-head {
     margin: 16px 0 22px;

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { hasAdminAccess } from '../lib/types'
@@ -23,13 +23,21 @@ export default function Shell({ children, wide }: { children: ReactNode; wide?: 
   const { signOut } = useAuth()
   const { broker, refresh } = useBroker()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const { t } = useT()
 
   // Locked out entirely: rejected / suspended (non-admin) brokers get a message only.
   const locked = !!broker && !hasAdminAccess(broker) && (broker.status === 'rejected' || broker.status === 'suspended')
-  // Pending (confirmed) brokers get the full portal + a status banner; submit is
-  // gated server-side (job_orders insert requires broker_is_approved()).
+  // Pending (unapproved) brokers are VERIFY-ONLY: they may upload a valid ID, see
+  // their status, read the Customer Agreement, manage account basics, and sign out —
+  // every other customer surface is blocked until an admin approves them. The real
+  // wall is backend RLS + file_job_order (approved-only, migration 0163); this is UX.
   const pending = !!broker && !hasAdminAccess(broker) && broker.status === 'pending'
+  // Routes a pending customer may still open inside the Shell. /verify-id (ID upload)
+  // is a standalone non-Shell page and stays reachable on its own; the Agreement is
+  // also a public route. Everything else is replaced by the verify-only panel.
+  const pendingAllowed = pathname === '/account' || pathname === '/agreement'
+  const verifyOnly = pending && !pendingAllowed
 
   // While pending, auto-pull the account status every 60s (visible tab only)
   // so approval shows up without a reload; manual ↻ is limited to one per 10s.
@@ -66,6 +74,21 @@ export default function Shell({ children, wide }: { children: ReactNode; wide?: 
         <div className="ktc-rise">
           <PendingPanel broker={broker!} />
         </div>
+      ) : verifyOnly ? (
+        <div className="ktc-rise">
+          <div data-tour="id-banner"><BrokerStatusBanner broker={broker!} onRefresh={pullStatus} refreshCooling={cooling} /></div>
+          <div className="ktc-glass" style={{ padding: 18, marginTop: 12 }}>
+            <h1 className="ktc-title">{t('Finish verifying your account')}</h1>
+            <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6 }}>
+              {t('Your account is awaiting approval. Upload a valid ID for verification — once a KTC admin approves you, the full portal unlocks. In the meantime you can manage your account and read the Customer Agreement.')}
+            </p>
+            <div style={{ display: 'flex', gap: 12, marginTop: 18, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Link to="/verify-id" className="ktc-btn" style={{ textDecoration: 'none' }}>{t('Upload valid ID')}</Link>
+              <Link to="/account" className="ktc-link">{t('My Account')}</Link>
+              <Link to="/agreement" className="ktc-link">{t('Customer Agreement')}</Link>
+            </div>
+          </div>
+        </div>
       ) : (
         <div className="ktc-stagger">
           {pending && <div data-tour="id-banner"><BrokerStatusBanner broker={broker!} onRefresh={pullStatus} refreshCooling={cooling} /></div>}
@@ -84,9 +107,10 @@ export default function Shell({ children, wide }: { children: ReactNode; wide?: 
         </div>
       </footer>
 
-      {!locked && <BottomNav />}
-      {/* Lara — customer help assistant; hidden on the locked (rejected/suspended) screen */}
-      {!locked && <ChatWidget />}
+      {/* Bottom tabs link into the (now-blocked) portal — hide them while pending too. */}
+      {!locked && !pending && <BottomNav />}
+      {/* Lara — customer help assistant; not for the locked or verify-only (pending) screens */}
+      {!locked && !pending && <ChatWidget />}
       {idleWarning && <IdleWarning />}
     </div>
   )

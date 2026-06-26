@@ -76,3 +76,7 @@ android/
 .gradle/
 /build/
 *.idsig
+
+# KTC terminal source photos — huge originals (~13MB each, ~290MB total); only the
+# optimized hero.jpg / dash-customer.jpg / dash-admin.jpg are committed + shipped.
+public/photos/[0-9]*.jpg

@@ -36,7 +36,18 @@ const SERVICES: { key: string; title: string; body: string }[] = [
 export default function Landing() {
   const { t } = useT()
   return (
-    <div style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24 }}>
+    <div
+      style={{
+        display: 'grid',
+        placeItems: 'center',
+        minHeight: '100%',
+        padding: 24,
+        // Owner's real KTC terminal aerial as the backdrop, under a dark gradient
+        // overlay (~0.55) so the glass card + its headline/CTAs stay crisp and AA.
+        background:
+          "linear-gradient(180deg, rgba(12,16,28,0.50) 0%, rgba(12,16,28,0.58) 55%, rgba(12,16,28,0.72) 100%), url('/photos/hero.jpg') center / cover no-repeat",
+      }}
+    >
       <main className="ktc-glass ktc-rise" style={{ width: '100%', maxWidth: 620, padding: '32px 34px 28px' }}>
         {/* Header — logo + language */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 22 }}>
