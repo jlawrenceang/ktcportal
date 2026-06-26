@@ -10,6 +10,7 @@ import Notice from '../components/Notice'
 import LangToggle from '../components/LangToggle'
 import NeedHelp from '../components/NeedHelp'
 import PasswordInput from '../components/PasswordInput'
+import HeroSlideshow from '../components/HeroSlideshow'
 import PasswordStrength from '../components/PasswordStrength'
 import { passwordIssue } from '../lib/validation'
 import { useT } from '../lib/i18n'
@@ -262,8 +263,11 @@ export default function Login() {
 
 
   return (
-    <div style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24 }}>
-      <div className="ktc-glass ktc-rise" style={{ width: '100%', maxWidth: 440, padding: '36px 36px 32px' }}>
+    <div style={{ position: 'relative', display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24, background: '#0c101c' }}>
+      {/* Backdrop — carries the landing's terminal slideshow over into sign-in / create-account. */}
+      <HeroSlideshow />
+      <div className="ktc-landing__scrim" aria-hidden="true" />
+      <div className="ktc-glass ktc-rise" style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 440, padding: '36px 36px 32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 7, marginBottom: 10 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="Language" role="img" style={{ color: 'hsl(var(--ink-2))' }}>
             <circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
