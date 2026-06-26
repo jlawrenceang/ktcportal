@@ -1519,4 +1519,5 @@ export const tl: Record<string, string> = {
   "Need help?": "Kailangan ng tulong?",
   "Secure access · official KTC Container Terminal Corp. portal": "Ligtas na access · opisyal na portal ng KTC Container Terminal Corp.",
   "For accredited customers, consignees, and KTC staff. New here? Create an account below to begin accreditation.": "Para sa accredited na customers, consignees, at KTC staff. Bago dito? Gumawa ng account sa ibaba para simulan ang accreditation.",
+  "Not yet arrived": "Hindi pa dumarating",
 }
