@@ -287,8 +287,8 @@ export default function Checker() {
             {t('To X-ray — {count} container(s)', { count: loading ? '…' : vanRows.length })}
           </h2>
           <div style={{ display: 'inline-flex', gap: 4, marginLeft: 'auto' }}>
-            <button type="button" className={`ktc-btn ktc-btn--sm ${view === 'table' ? '' : 'ktc-btn-ghost'}`} onClick={() => setView('table')}>{t('Table')}</button>
-            <button type="button" className={`ktc-btn ktc-btn--sm ${view === 'cards' ? '' : 'ktc-btn-ghost'}`} onClick={() => setView('cards')}>{t('Cards')}</button>
+            <button type="button" className={`ktc-btn ktc-btn--sm ${view === 'table' ? '' : 'ktc-btn-ghost'}`} aria-pressed={view === 'table'} onClick={() => setView('table')}>{t('Table')}</button>
+            <button type="button" className={`ktc-btn ktc-btn--sm ${view === 'cards' ? '' : 'ktc-btn-ghost'}`} aria-pressed={view === 'cards'} onClick={() => setView('cards')}>{t('Cards')}</button>
           </div>
         </div>
         {loading ? (

@@ -410,6 +410,25 @@
   .ktc-btn-secondary:active { transform: translateY(0); }
   .ktc-btn-secondary:disabled { opacity: 0.6; cursor: default; }
 
+  /* Ghost button — layered over .ktc-btn (must come AFTER it in source so it wins)
+     to strip the orange gradient back to a quiet frosted pill. Used as the
+     INACTIVE state of segmented view switchers (Cards / Table / Calendar): the
+     selected toggle keeps the gradient, the rest go ghost. */
+  .ktc-btn-ghost {
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(var(--glass-blur-thin)) saturate(1.5);
+    backdrop-filter: blur(var(--glass-blur-thin)) saturate(1.5);
+    color: hsl(var(--ink-2));
+    border: 1px solid var(--glass-brd);
+    box-shadow: none;
+    font-weight: 600;
+  }
+  .ktc-btn-ghost:hover:not(:disabled) {
+    color: hsl(var(--ink));
+    border-color: var(--glass-brd-strong);
+    filter: none;
+  }
+
   /* Compact button size — for inline actions ("Print slip", row actions) */
   .ktc-btn--sm {
     width: auto;

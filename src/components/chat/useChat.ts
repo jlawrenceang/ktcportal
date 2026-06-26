@@ -175,6 +175,11 @@ export function useChat() {
   // Tapping any quick-reply / tile / cancel option.
   const tapOption = useCallback((opt: ChatOption) => {
     dispatch({ type: 'PUSH_USER', text: opt.label })   // keyed → translates
+    // Clear stale free-text so a tap-reached ticket node can't inherit an earlier,
+    // unrelated line as its subject/body. Legit carry-in flows (talk.input,
+    // feedback.*, vessel.add_input) set lastUserText right before navigating, so
+    // they're unaffected.
+    dispatch({ type: 'SET_LASTUSER', text: '' })
     goTo(opt.to)
   }, [goTo])
 
@@ -223,6 +228,9 @@ export function useChat() {
     if (!text) return
     dispatch({ type: 'PUSH_USER', text, literal: true })
     dispatch({ type: 'SET_LASTUSER', text })
+    // The composer only STAGES the body here — the real send is the separate
+    // confirm button. Nudge so a customer who taps "Add" doesn't think it sent.
+    dispatch({ type: 'PUSH_BOT', text: 'Got it — tap the button above to send this to KTC.' })
   }, [])
 
   // Confirm a ticket node → the real open_ticket RPC (single, well-understood write).

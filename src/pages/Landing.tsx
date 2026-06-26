@@ -37,7 +37,7 @@ export default function Landing() {
   const { t } = useT()
   return (
     <div style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24 }}>
-      <div className="ktc-glass ktc-rise" style={{ width: '100%', maxWidth: 620, padding: '32px 34px 28px' }}>
+      <main className="ktc-glass ktc-rise" style={{ width: '100%', maxWidth: 620, padding: '32px 34px 28px' }}>
         {/* Header — logo + language */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 22 }}>
           <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 52 }} />
@@ -53,17 +53,17 @@ export default function Landing() {
         </p>
 
         {/* Services — the hero content, hairline-separated */}
-        <div style={{ margin: '24px 0 4px', borderTop: '1px solid var(--glass-brd)' }}>
+        <ul style={{ listStyle: 'none', margin: '24px 0 4px', padding: 0, borderTop: '1px solid var(--glass-brd)' }}>
           {SERVICES.map((s) => (
-            <div key={s.key} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: '1px solid var(--glass-brd)' }}>
+            <li key={s.key} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: '1px solid var(--glass-brd)' }}>
               <span aria-hidden style={{ flex: '0 0 auto', width: 3, borderRadius: 2, background: 'linear-gradient(180deg, var(--acc), var(--acc-2))' }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 14.5, fontWeight: 650, letterSpacing: '-0.01em' }}>{t(s.title)}</div>
                 <div style={{ marginTop: 3, fontSize: 13, lineHeight: 1.5, color: 'hsl(var(--ink-2))' }}>{t(s.body)}</div>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
 
         {/* Access — two clear paths in */}
         <div style={{ marginTop: 22, display: 'grid', gap: 12 }}>
@@ -89,11 +89,11 @@ export default function Landing() {
 
         {/* Footer */}
         <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px solid var(--glass-brd)', display: 'flex', flexWrap: 'wrap', gap: '4px 16px', alignItems: 'center', justifyContent: 'flex-end' }}>
-          <span className="ktc-label" style={{ fontSize: 12, opacity: 0.7 }}>
+          <span className="ktc-label" style={{ fontSize: 12 }}>
             <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.
           </span>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

@@ -35,8 +35,11 @@ function VesselCards({ rows }: { rows: VesselRow[] }) {
   const groups = useMemo(() => {
     const map = new Map<string, { key: string; pending: boolean; label: string; sort: number; rows: VesselRow[] }>()
     for (const r of rows) {
-      const d = r.actual_arrival ? new Date(r.actual_arrival) : null
-      const key = d ? d.toISOString().slice(0, 10) : 'pending'
+      // Parse date-only the same way fmt() does (local 'T00:00:00') so the group
+      // header agrees with each card's Arrival fact for west-of-UTC viewers. Key
+      // off the raw date-only string to keep grouping timezone-independent.
+      const d = r.actual_arrival ? new Date(r.actual_arrival.slice(0, 10) + 'T00:00:00') : null
+      const key = r.actual_arrival ? r.actual_arrival.slice(0, 10) : 'pending'
       if (!map.has(key)) {
         map.set(key, {
           key,
@@ -121,9 +124,9 @@ export default function Vessels() {
       <div data-tour="vessels-view" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
         <strong style={{ fontSize: 14 }}>{t('{count} {scope} call(s)', { count: visible.length, scope: t(showAll ? 'total' : 'current') })}</strong>
         <div style={{ display: 'inline-flex', gap: 4 }}>
-          <button className={`ktc-btn ktc-btn--sm ${view === 'cards' ? '' : 'ktc-btn-ghost'}`} type="button" onClick={() => setView('cards')}>{t('Cards')}</button>
-          <button className={`ktc-btn ktc-btn--sm ${view === 'table' ? '' : 'ktc-btn-ghost'}`} type="button" onClick={() => setView('table')}>{t('Table')}</button>
-          <button className={`ktc-btn ktc-btn--sm ${view === 'calendar' ? '' : 'ktc-btn-ghost'}`} type="button" onClick={() => setView('calendar')}>{t('Calendar')}</button>
+          <button className={`ktc-btn ktc-btn--sm ${view === 'cards' ? '' : 'ktc-btn-ghost'}`} type="button" aria-pressed={view === 'cards'} onClick={() => setView('cards')}>{t('Cards')}</button>
+          <button className={`ktc-btn ktc-btn--sm ${view === 'table' ? '' : 'ktc-btn-ghost'}`} type="button" aria-pressed={view === 'table'} onClick={() => setView('table')}>{t('Table')}</button>
+          <button className={`ktc-btn ktc-btn--sm ${view === 'calendar' ? '' : 'ktc-btn-ghost'}`} type="button" aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}>{t('Calendar')}</button>
         </div>
         <span style={{ flex: 1 }} />
         {view !== 'calendar' && (

@@ -349,8 +349,8 @@ export default function VesselSchedule() {
         <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" onClick={() => void snapshot()} title={t('Share a snapshot of active vessels to your Viber group')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><CameraIcon size={15} /> {t('Snapshot')}</button>
         <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" disabled={syncing} onClick={() => void syncNow()} title={t('Pull the latest edits from the Google Sheet now and refresh the Last Free Day mirror')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{syncing ? t('Syncing…') : <><RefreshIcon size={15} /> {t('Sync sheet')}</>}</button>
         <div style={{ display: 'inline-flex', gap: 4 }}>
-          <button className={`ktc-btn ktc-btn--sm ${view === 'table' ? '' : 'ktc-btn-ghost'}`} type="button" onClick={() => setView('table')}>{t('Table')}</button>
-          <button className={`ktc-btn ktc-btn--sm ${view === 'calendar' ? '' : 'ktc-btn-ghost'}`} type="button" onClick={() => setView('calendar')}>{t('Calendar')}</button>
+          <button className={`ktc-btn ktc-btn--sm ${view === 'table' ? '' : 'ktc-btn-ghost'}`} type="button" aria-pressed={view === 'table'} onClick={() => setView('table')}>{t('Table')}</button>
+          <button className={`ktc-btn ktc-btn--sm ${view === 'calendar' ? '' : 'ktc-btn-ghost'}`} type="button" aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}>{t('Calendar')}</button>
         </div>
         <span style={{ flex: 1 }} />
         {view === 'table' && (

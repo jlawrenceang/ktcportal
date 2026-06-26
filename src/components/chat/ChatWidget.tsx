@@ -23,6 +23,9 @@ export default function ChatWidget() {
   const navigate = useNavigate()
   const { state, open, close, tapOption, submitText, submitInput, submitTicketText, confirmTicket } = useChat()
   const scrollRef = useRef<HTMLDivElement>(null)
+  const composerRef = useRef<HTMLInputElement>(null)
+  const launcherRef = useRef<HTMLButtonElement>(null)
+  const wasOpenRef = useRef(false)
   const [draft, setDraft] = useState('')
   const [pulse, setPulse] = useState(false)
 
@@ -30,6 +33,16 @@ export default function ChatWidget() {
   useEffect(() => {
     try { if (!sessionStorage.getItem('ktc_chat_seen')) setPulse(true) } catch { /* ignore */ }
   }, [])
+
+  // Focus management (WCAG 2.4.3). Non-modal dialog: on open, move focus into the
+  // panel (the composer); on close, restore it to the now-remounted launcher.
+  // No Tab trap / aria-modal on purpose — Tab must stay free to leave a non-modal
+  // dialog (ARIA APG). Tracks prior open so we don't grab focus on first mount.
+  useEffect(() => {
+    if (state.open) composerRef.current?.focus()
+    else if (wasOpenRef.current) launcherRef.current?.focus()
+    wasOpenRef.current = state.open
+  }, [state.open])
 
   // Keep the transcript pinned to the latest message.
   useEffect(() => {
@@ -146,7 +159,7 @@ export default function ChatWidget() {
     <>
       {/* Launcher — hidden while the panel is open (the panel has its own close). */}
       {!state.open && (
-        <button type="button" aria-label={t('Open KTC assistant (Lara)')} onClick={launcherClick}
+        <button ref={launcherRef} type="button" aria-label={t('Open KTC assistant (Lara)')} onClick={launcherClick}
           style={{
             position: 'fixed', right: 16, bottom: FAB_BOTTOM, zIndex: 60,
             width: 56, height: 56, borderRadius: 999, border: '1px solid var(--glass-brd)', cursor: 'pointer',
@@ -167,6 +180,7 @@ export default function ChatWidget() {
       {/* Panel */}
       {state.open && (
         <div className="ktc-glass" role="dialog" aria-label={t('KTC assistant — Lara')}
+          onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); close() } }}
           style={{
             position: 'fixed', right: 16, bottom: FAB_BOTTOM, zIndex: 60,
             width: 'min(380px, calc(100vw - 24px))',
@@ -188,8 +202,10 @@ export default function ChatWidget() {
               style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))' }}>✕</button>
           </div>
 
-          {/* Transcript */}
-          <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Transcript — a polite live region so appended bot bubbles + the ticket
+              success/failure confirmation are announced to screen readers. */}
+          <div ref={scrollRef} aria-live="polite" aria-atomic="false"
+            style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             {state.messages.map((m) => (
               <div key={m.id} style={{ display: 'flex', justifyContent: m.from === 'user' ? 'flex-end' : 'flex-start' }}>
                 <div style={{
@@ -213,11 +229,15 @@ export default function ChatWidget() {
 
           {/* Composer — always-on; runs the matcher, or the current input node */}
           <form onSubmit={onSubmit} style={{ display: 'flex', gap: 8, padding: '10px 12px', borderTop: '1px solid var(--glass-brd)' }}>
-            <input className="ktc-input" value={draft} onChange={(e) => setDraft(e.target.value)}
+            <input ref={composerRef} className="ktc-input" value={draft} onChange={(e) => setDraft(e.target.value)}
               placeholder={placeholder} aria-label={t('Type a message')} disabled={state.busy}
-              style={{ flex: 1, minWidth: 0, fontSize: 13 }} />
+              style={{ flex: 1, minWidth: 0 }} />
             <button type="submit" className="ktc-btn ktc-btn--sm" disabled={state.busy || !draft.trim()}
-              style={{ flex: '0 0 auto' }}>{isInput && node?.kind === 'input' ? t(node.submitLabel) : t('Send')}</button>
+              style={{ flex: '0 0 auto' }}>{
+                isInput && node?.kind === 'input' ? t(node.submitLabel)
+                : node?.kind === 'ticket' ? t('Add')
+                : t('Send')
+              }</button>
           </form>
         </div>
       )}

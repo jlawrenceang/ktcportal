@@ -41,6 +41,7 @@ export const tl: Record<string, string> = {
   "Open Vessel Schedule": "Buksan ang Vessel Schedule",
   "Open Release / Pull-out": "Buksan ang Release / Pull-out",
   "Talk to KTC": "Kausapin ang KTC",
+  "Got it — tap the button above to send this to KTC.": "Sige — i-tap ang button sa itaas para ipadala ito sa KTC.",
   "Done — ticket #{ref} is open. KTC will reply in your Support tab; I’ll take you there.": "Ayos — bukas na ang ticket #{ref}. Sasagot ang KTC sa Support tab mo; dadalhin kita doon.",
   "I couldn't create the ticket. You can reach KTC directly:": "Hindi ko nagawa ang ticket. Pwede mong direktang i-contact ang KTC:",
   "Help request": "Tulong na kahilingan",
