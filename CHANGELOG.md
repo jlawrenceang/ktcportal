@@ -10,6 +10,10 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.59 — 2026-06-27 (Ops overhaul phase 1 — CSR can approve / hold / reject)
+
+- **CSR (customer service)** now has **Approve & process / Hold for info / Reject** on job orders (alongside admin + operations), via a `role_permissions` grant (migration **0170**). First of the seven-phase job-order ops overhaul — design on record in **ADR-0035** (auto-queue, priority + re-X-ray lanes, auto-complete, invoice-gated payment).
+
 ## v1.6.58 — 2026-06-27 (Admin Actions menu no longer clipped on mobile)
 
 - The job-order **Actions** dropdown (admin / ops) is now portaled to the page body with fixed positioning, so it's no longer clipped by the scrollable order-detail panel on mobile. It clamps to the viewport, flips above the button when there's no room below, scrolls if the action list is long, and closes on scroll/resize.
