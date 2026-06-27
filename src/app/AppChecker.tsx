@@ -26,14 +26,15 @@ const SELECT =
 const isXray = (s: string) => s.toLowerCase().includes('x-ray')
 function one<T>(v: T | T[] | null | undefined): T | null { return Array.isArray(v) ? (v[0] ?? null) : (v ?? null) }
 function shape(o: Order): Order { return { ...o, broker: one(o.broker), consignee: one(o.consignee) } }
-const servingNo = (o: Order) => o.serving?.find((s) => !s.vacated_at)?.serving_no ?? null
+const activeServing = (o: Order) => o.serving?.find((s) => !s.vacated_at) ?? null
 // Priority lane is served AHEAD of the regular queue, then re-X-ray. Each lane numbers
 // from 1 independently, so fold the lane rank in front of the number for the sort.
 const LANE_RANK: Record<string, number> = { priority: 0, rexray: 2 }
-const servingKey = (o: Order) => {
-  const s = o.serving?.find((x) => !x.vacated_at)
-  return s ? (LANE_RANK[s.service_line] ?? 1) * 1_000_000 + s.serving_no : Infinity
-}
+const servingKey = (o: Order) => { const s = activeServing(o); return s ? (LANE_RANK[s.service_line] ?? 1) * 1_000_000 + s.serving_no : Infinity }
+// Lane-tagged display: P-1 (priority), R-1 (re-X-ray), #1 (regular queue) — so the checker
+// can tell the lanes apart instead of seeing three identical "#1"s.
+const LANE_TAG: Record<string, string> = { priority: 'P', rexray: 'R' }
+const servingTag = (o: Order) => { const s = activeServing(o); return s ? (LANE_TAG[s.service_line] ? `${LANE_TAG[s.service_line]}-${s.serving_no}` : `#${s.serving_no}`) : null }
 
 // Map the raw DB status token to a friendly, translatable label (mirrors the
 // other pages so the chip never shows a bare lowercase token).
@@ -201,7 +202,7 @@ export default function AppChecker() {
           {active && (
             <div className="ktc-glass" style={{ padding: 18, marginTop: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                {servingNo(active) != null && <span className="ktc-mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--acc-2)' }}>#{servingNo(active)}</span>}
+                {servingTag(active) != null && <span className="ktc-mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--acc-2)' }}>{servingTag(active)}</span>}
                 <b className="ktc-mono" style={{ fontSize: 18 }}>{active.jo_number ?? '—'}</b>
                 <span className="ktc-chip">{statusChip(active.status)}</span>
                 <button type="button" className="ktc-btn-secondary ktc-btn--sm" style={{ marginLeft: 'auto', padding: '8px 14px' }} onClick={() => setActive(null)}>{t('Close')}</button>
@@ -242,7 +243,7 @@ export default function AppChecker() {
                 : queue.map((o) => (
                   <button key={o.id} type="button" onClick={() => setActive(o)}
                     style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', padding: '12px 14px', borderRadius: 12, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)', cursor: 'pointer', font: 'inherit', color: 'hsl(var(--ink))' }}>
-                    {servingNo(o) != null && <span className="ktc-mono" style={{ fontSize: 17, fontWeight: 700, color: 'var(--acc-2)' }}>#{servingNo(o)}</span>}
+                    {servingTag(o) != null && <span className="ktc-mono" style={{ fontSize: 17, fontWeight: 700, color: 'var(--acc-2)' }}>{servingTag(o)}</span>}
                     <b className="ktc-mono" style={{ fontSize: 14.5 }}>{o.jo_number ?? '—'}</b>
                     <span className="ktc-label" style={{ fontSize: 12, marginLeft: 'auto' }}>
                       {(o.lines ?? []).filter((l) => isXray(l.service_request) && !l.xray_done_at).length} {t('van(s)')}

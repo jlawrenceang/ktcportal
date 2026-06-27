@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 import { usePermissions } from '../lib/usePermissions'
 import { useFileViewer } from '../components/FileViewerModal'
 import JoTimeline from '../components/JoTimeline'
-import { SERVICE_LINE_LABEL, serviceLineOf, type JobOrder, type ServiceLine, type ServingNumber } from '../lib/types'
+import { SERVICE_LINE_LABEL, serviceLineOf, type JobOrder, type ServiceLine } from '../lib/types'
 import { isCreditInvoice } from '../lib/eventLabels'
 import { usePageTour } from '../components/TourProvider'
 import { operationsSteps } from './AdminTour'
@@ -91,29 +91,6 @@ const VIEW_KEY = 'ktc_jo_view'
 
 const agingDays = (iso: string | null | undefined) =>
   iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400_000) : null
-
-// A resubmitted order went to the back of the line; the admin can restore its
-// original (lower, same-week) number. Returns the restorable options.
-function restorable(o: JobOrder): { line: ServingNumber['service_line']; no: number }[] {
-  const out: { line: ServingNumber['service_line']; no: number }[] = []
-  if (!['submitted', 'processing', 'on_hold'].includes(o.status)) return out
-  const byLine = new Map<string, ServingNumber[]>()
-  for (const s of o.serving ?? []) {
-    if (!byLine.has(s.service_line)) byLine.set(s.service_line, [])
-    byLine.get(s.service_line)!.push(s)
-  }
-  for (const [line, rows] of byLine) {
-    const active = rows.find((r) => !r.vacated_at)
-    const week = active?.week_start
-    const oldBest = rows
-      .filter((r) => r.vacated_at && (!week || r.week_start === week))
-      .sort((a, b) => a.serving_no - b.serving_no)[0]
-    if (oldBest && active && oldBest.serving_no < active.serving_no) {
-      out.push({ line: line as ServingNumber['service_line'], no: oldBest.serving_no })
-    }
-  }
-  return out
-}
 
 // Plain-text status message for chat apps (Viber / SMS / Messenger). Composed
 // per order; staff send it from their own device via the share buttons.
@@ -420,14 +397,6 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
     await load()
   }
 
-  async function restoreNumber(id: string, line: string) {
-    setBusyId(id)
-    const { error } = await supabase.rpc('restore_serving_number', { p_jo: id, p_line: line })
-    setBusyId(null)
-    if (error) { alert(error.message); return }
-    await load()
-  }
-
   async function reviewPayment(id: string, confirm: boolean, note?: string, kind: 'base' | 'rps' = 'base') {
     setBusyId(id)
     const { error } = await supabase.rpc('review_payment', { p_id: id, p_confirm: confirm, p_note: note ?? null, p_kind: kind })
@@ -674,16 +643,6 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
 
     // The remaining actions, grouped into the dropdown.
     const menu: ReactNode[] = []
-
-    if (can('process_job_orders')) {
-      restorable(o).forEach((r) => menu.push(
-        <button key={`restore-${r.line}`} style={btn('ghost')} disabled={isBusy}
-          title={t('This order was resubmitted and went to the back of the line — restore its original number')}
-          onClick={() => void restoreNumber(o.id, r.line)}>
-          ↩ {t('Restore {line} #{no}', { line: t(SERVICE_LINE_LABEL[r.line]), no: r.no })}
-        </button>
-      ))
-    }
 
     if (can('process_job_orders') && ['submitted', 'processing', 'on_hold'].includes(o.status) && serviceProgress(o).length > 1) {
       serviceProgress(o).filter((p) => !p.done).forEach((p) => menu.push(

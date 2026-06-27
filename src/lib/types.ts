@@ -68,10 +68,10 @@ export function isStaff(b: Pick<Broker, 'is_admin' | 'is_owner' | 'staff_role'> 
 // removed 2026-06-11; the DB table remains — see the ADR-0007 addendum).
 export type AccreditationStatus = 'pending' | 'approved' | 'rejected' | 'needs_info'
 
-export type ServiceLine = 'xray' | 'dea' | 'oog' | 'other' | 'queue'
+export type ServiceLine = 'xray' | 'dea' | 'oog' | 'other' | 'queue' | 'priority' | 'rexray'
 
 export const SERVICE_LINE_LABEL: Record<ServiceLine, string> = {
-  xray: 'X-ray', dea: 'DEA', oog: 'OOG', other: 'Other', queue: 'Priority',
+  xray: 'X-ray', dea: 'DEA', oog: 'OOG', other: 'Other', queue: 'Queue', priority: 'Priority', rexray: 'Re-X-ray',
 }
 
 /** Which queue/line a service label belongs to (mirrors SQL service_line_of). */
@@ -120,7 +120,7 @@ export interface JoSupplement {
 export function hasOutstandingSupplements(
   o: { supplements?: JoSupplement[] | null },
 ): boolean {
-  return (o.supplements ?? []).some((s) => s.payment_status !== 'confirmed')
+  return (o.supplements ?? []).some((s) => s.amount > 0 && s.payment_status !== 'confirmed')
 }
 
 export interface JobOrderEvent {

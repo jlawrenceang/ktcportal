@@ -11,7 +11,9 @@ export function joPaymentState(o: Pick<JobOrder,
   'status' | 'payment_status' | 'rps_status' | 'rps_payment_status' | 'supplements'>): JoPaymentState {
   const baseDue = o.payment_status !== 'confirmed'
   const rpsDue = o.rps_status === 'needed' && o.rps_payment_status !== 'confirmed'
-  const suppDue = (o.supplements ?? []).some((s) => s.payment_status !== 'confirmed')
+  // Only a BILLED charge (amount set by the cashier) counts as owed — a 'requested',
+  // not-yet-priced charge is internal staff queue work, not a customer balance.
+  const suppDue = (o.supplements ?? []).some((s) => s.amount > 0 && s.payment_status !== 'confirmed')
   const anyDue = baseDue || rpsDue || suppDue
 
   // The base charge is collectible once KTC accepts the order (processing+). Before
@@ -20,7 +22,7 @@ export function joPaymentState(o: Pick<JobOrder,
   const billable =
     o.status === 'processing' || o.status === 'completed' ||
     o.payment_status === 'submitted' || o.payment_status === 'confirmed' ||
-    (o.supplements?.length ?? 0) > 0
+    (o.supplements ?? []).some((s) => s.amount > 0)
 
   if (!billable) return 'none'
   return anyDue ? 'balance' : 'paid'
