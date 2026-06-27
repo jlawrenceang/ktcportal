@@ -10,6 +10,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.66 — 2026-06-27 (Follow-up: hide internal re-X-ray + un-billed charges from customers)
+
+- **Re-X-ray child orders** (internal KTC ops) are hidden from the customer's **My Job Orders** — no more phantom `JO-…A` submitted order.
+- **Un-billed (requested) charges** no longer show on the customer's **Payment** page as a null-amount payable — only cashier-billed charges appear.
+
 ## v1.6.65 — 2026-06-27 (Ops overhaul phases 6–7 — billing flow · ADR-0035 complete)
 
 - **Phase 6 — additional-service request (ops → cashier).** Operations now **Request** an extra charge (label only); the **cashier Bills** it (sets the amount → payable + notifies the customer). Direct add-and-bill is re-gated from operations to the cashier's money lane. New `request_supplement` (ops) + `bill_supplement` (cashier) RPCs/permissions; supplements carry a `bill_status` (requested / billed). Migration **0176**.

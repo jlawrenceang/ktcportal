@@ -130,7 +130,7 @@ export default function Payment() {
   const rpsDue = order.rps_status === 'needed' && (breakdown?.rpsAmount ?? 0) > 0
   const rpsConfirmed = order.rps_payment_status === 'confirmed'
   const fullySettled = !!breakdown && breakdown.total > 0 && breakdown.balance <= 0.005
-  const supplements = order.supplements ?? []
+  const supplements = (order.supplements ?? []).filter((s) => s.amount != null)   // un-billed (requested) charges aren't payable yet
   const outstandingSupps = supplements.filter((s) => s.payment_status !== 'confirmed')
   const clearedForRelease = !!order.xray_performed_at && fullySettled && outstandingSupps.length === 0
   const anythingToPay = !fullySettled || outstandingSupps.length > 0
