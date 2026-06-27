@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import RoleShell from '../app/RoleShell'
 import { supabase } from '../lib/supabase'
@@ -146,31 +147,66 @@ const btn = (variant: 'solid' | 'ghost' | 'danger'): CSSProperties => ({
 
 // A self-closing dropdown wrapper for the per-order "⋯ Actions" menu. Closes on
 // outside click / Escape; shared by both card + list views.
+// The menu is PORTALED to <body> with fixed positioning so it can't be clipped by a
+// scrollable/overflow ancestor (the detail modal body is overflowY:auto) — that was
+// cutting the menu off on mobile. It's clamped to the viewport (left + maxWidth),
+// flips above the button when there's no room below, scrolls if the list is long,
+// and closes on scroll/resize so it never floats detached.
 function ActionsMenu({ label, children }: { label: string; children: ReactNode }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement | null>(null)
+  const [pos, setPos] = useState<{ left: number; top?: number; bottom?: number; maxH: number } | null>(null)
+  const btnRef = useRef<HTMLButtonElement | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
+
+  function place() {
+    const r = btnRef.current?.getBoundingClientRect()
+    if (!r) return
+    const W = 230
+    const left = Math.max(12, Math.min(r.right - W, window.innerWidth - W - 12))
+    const below = window.innerHeight - r.bottom - 12
+    const above = r.top - 12
+    if (below >= 240 || below >= above) setPos({ left, top: r.bottom + 6, maxH: below })
+    else setPos({ left, bottom: window.innerHeight - r.top + 6, maxH: above })
+  }
+  function toggle() { if (open) { setOpen(false); return } place(); setOpen(true) }
+
   useEffect(() => {
     if (!open) return
-    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    const onDown = (e: MouseEvent) => {
+      const n = e.target as Node
+      if (btnRef.current?.contains(n) || menuRef.current?.contains(n)) return
+      setOpen(false)
+    }
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    const onMove = () => setOpen(false)
     document.addEventListener('mousedown', onDown)
     document.addEventListener('keydown', onKey)
-    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey) }
+    window.addEventListener('scroll', onMove, true)
+    window.addEventListener('resize', onMove)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+      window.removeEventListener('scroll', onMove, true)
+      window.removeEventListener('resize', onMove)
+    }
   }, [open])
+
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
-      <button type="button" style={{ ...btn('ghost'), display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => setOpen((v) => !v)}>
+    <div style={{ display: 'inline-flex' }}>
+      <button ref={btnRef} type="button" style={{ ...btn('ghost'), display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={toggle}>
         <DotsGlyph size={15} /> {label}
       </button>
-      {open && (
-        <div onClick={() => setOpen(false)} style={{
-          position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 20, minWidth: 210,
+      {open && pos && createPortal(
+        <div ref={menuRef} onClick={() => setOpen(false)} style={{
+          position: 'fixed', left: pos.left, top: pos.top, bottom: pos.bottom, zIndex: 1000,
+          minWidth: 210, maxWidth: 'calc(100vw - 24px)', maxHeight: Math.max(160, pos.maxH), overflowY: 'auto',
           display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6, padding: 8,
           borderRadius: 12, background: 'var(--c-w70, var(--c-w60))', border: '1px solid var(--glass-brd)',
           boxShadow: '0 12px 32px rgba(0,0,0,0.16)', backdropFilter: 'blur(14px)',
         }}>
           {children}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )
