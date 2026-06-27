@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import Shell from '../components/Shell'
 import ProtectedDoc from '../components/ProtectedDoc'
 import ManualFlow from '../components/ManualFlow'
+import { WatchWalkthroughButton } from '../components/Walkthrough'
 import { useT } from '../lib/i18n'
 
 // Customer Guide — the customer's journey as a two-phase flow overview with a
@@ -38,6 +39,8 @@ export default function Manual() {
           <p className="ktc-sub" style={{ marginTop: 0 }}>
             {t('How the KTC Online Portal works — from sign-up to claiming your service, step by step.')}
           </p>
+
+          <WatchWalkthroughButton className="ktc-btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, width: 'auto', marginBottom: 6 }} />
 
           {/* Flow overview — highlighted window, two left-to-right phases */}
           <ManualFlow steps={STEPS} phases={PHASES} />

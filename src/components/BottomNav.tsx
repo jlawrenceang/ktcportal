@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { useTour } from './TourProvider'
+import { useWalkthrough, PlayIcon } from './Walkthrough'
 import { useT } from '../lib/i18n'
 import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
@@ -47,6 +48,7 @@ export default function BottomNav() {
   const navigate = useNavigate()
   const loc = useLocation()
   const { replayPageTour, hasPageTour } = useTour()
+  const { open: openWalkthrough } = useWalkthrough()
   const [sheet, setSheet] = useState<null | 'orders' | 'menu'>(null)
   const [attention, setAttention] = useState(0)
 
@@ -147,6 +149,10 @@ export default function BottomNav() {
                   <span style={{ flex: 1 }}>{t('Quick tour')}</span>
                 </button>
               )}
+              <button type="button" className="ktc-menu-setting" onClick={() => { setSheet(null); openWalkthrough() }}>
+                <PlayIcon />
+                <span style={{ flex: 1 }}>{t('Watch walkthrough')}</span>
+              </button>
               <div className="ktc-menu-setting">
                 <span style={{ flex: 1 }}>{t('Language')}</span>
                 <LangToggle />

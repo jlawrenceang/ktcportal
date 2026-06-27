@@ -8,6 +8,7 @@ import { homeSteps } from '../components/WelcomeTour'
 import { usePageTour } from '../components/TourProvider'
 import BulletinBoard from '../components/BulletinBoard'
 import { useT } from '../lib/i18n'
+import { useWalkthrough, PlayIcon } from '../components/Walkthrough'
 
 // Home is an at-a-glance OVERVIEW: KTC's bulletin board + light order counts.
 // Unread notifications live ONLY in the top-bar bell now (the old inline
@@ -17,6 +18,7 @@ export default function Home() {
   const { session } = useAuth()
   const { broker } = useBroker()
   const { t } = useT()
+  const { open: openWalkthrough } = useWalkthrough()
   const firstName = (broker?.full_name || session?.user.email || '').split(' ')[0]
 
   // Light at-a-glance counts (own orders via RLS). "Active" = orders actually in
@@ -79,6 +81,14 @@ export default function Home() {
           <span className="ktc-stat-label">{t('Need your attention')}</span>
         </Link>
       </div>
+
+      <button type="button" className="ktc-glass ktc-walkthrough-card" onClick={openWalkthrough}>
+        <span className="ktc-walkthrough-card-play"><PlayIcon size={18} /></span>
+        <span style={{ minWidth: 0 }}>
+          <span style={{ display: 'block', fontWeight: 700, fontSize: 14.5 }}>{t('Watch a quick walkthrough')}</span>
+          <span className="ktc-sub" style={{ display: 'block', fontSize: 12.5, margin: 0 }}>{t('See the portal in action in about a minute.')}</span>
+        </span>
+      </button>
 
       <BulletinBoard />
     </Shell>

@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './lib/AuthContext'
 import { I18nProvider } from './lib/i18n'
 import TourProvider from './components/TourProvider'
+import { WalkthroughProvider } from './components/Walkthrough'
 import FirstRunSetup from './components/FirstRunSetup'
 import ProtectedRoute from './components/ProtectedRoute'
 import SessionSupersededOverlay from './components/SessionSupersededOverlay'
@@ -138,6 +139,7 @@ export default function App() {
     <I18nProvider>
       <BrowserRouter>
         <TourProvider>
+        <WalkthroughProvider>
         <FirstRunSetup />
         <SessionSupersededOverlay />
         <ServerBusyBanner />
@@ -213,6 +215,7 @@ export default function App() {
         </Routes>
         </RouteFade>
         </Suspense>
+        </WalkthroughProvider>
         </TourProvider>
       </BrowserRouter>
     </I18nProvider>

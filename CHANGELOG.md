@@ -10,6 +10,12 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.46 — 2026-06-27 (Video walkthrough embedded in the app)
+
+- New **"Watch walkthrough"** — a short captioned video tour of the customer portal — opens in a modal player. It complements the interactive **Quick tour** (take the tour hands-on, or watch the video).
+- Placed in three spots, as chosen: the **Menu** (beside Quick tour), the **Customer Manual**, and a **card on Home**.
+- Asset: `public/customer-walkthrough.webm` (its first frame is the title card, so it doubles as the poster). The player is structured to take an **MP4 source** too — to be added for older iOS/Safari (needs ffmpeg; blocked on this arm64 machine for now).
+
 ## v1.6.45 — 2026-06-27 (Sign-in declutter + glass + mobile letterhead fixes)
 
 - Removed the "Create an account to begin accreditation." box from the **sign-in** form (it's on the menu, and the "Create one" toggle is at the bottom).
