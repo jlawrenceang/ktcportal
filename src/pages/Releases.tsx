@@ -518,9 +518,15 @@ function ReleaseDetail({ release, uid, info, qrUrl, onQrOpen, uploadDoc, onClose
             )}
 
             {r.status === 'paid' && (
-              <Notice tone="success" title={t('Paid')}>
-                {t('Paid — claim your Official Receipt (OR) at the KTC office for pull-out.')}
-              </Notice>
+              (r.supplements ?? []).some((s) => s.payment_status !== 'confirmed') ? (
+                <Notice tone="warning" title={t('Almost there')}>
+                  {t('Base payment confirmed — settle the additional charge(s) above before you can claim the Official Receipt (OR).')}
+                </Notice>
+              ) : (
+                <Notice tone="success" title={t('Paid')}>
+                  {t('Paid — claim your Official Receipt (OR) at the KTC office for pull-out.')}
+                </Notice>
+              )
             )}
 
             {r.status === 'released' && (

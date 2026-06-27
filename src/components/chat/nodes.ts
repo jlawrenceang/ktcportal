@@ -134,7 +134,7 @@ export const NODES: NodeRegistry = {
 
   'file.pending': {
     kind: 'message', ticketCategory: 'account',
-    body: 'Yes — you can file Job Orders while your account is still pending. They’re saved as held (“Draft — no number yet”, up to 10) and sent to KTC automatically the moment you’re approved. But held orders can’t be processed until you pass final verification — upload a valid ID. Heads up: upload it within 48 hours of confirming your email, or the account closes and you re-register.',
+    body: 'No — you must wait until a KTC admin approves your account before you can file any Job Orders. Upload a valid ID to start that review. Heads up: upload it within 48 hours of confirming your email, or the account closes and you re-register.',
     then: [
       { label: 'How do I upload my valid ID?', to: 'acct.upload_id' },
       { label: 'Back to menu', to: 'root' },

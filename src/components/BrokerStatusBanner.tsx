@@ -48,7 +48,7 @@ export default function BrokerStatusBanner({ broker, onRefresh, refreshCooling }
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <span style={{ flex: 1, minWidth: 200, fontWeight: 500 }}>
           {needsId
-            ? t('Upload a valid ID to get verified — you can file now, but orders are held until a KTC admin approves your account.')
+            ? t('Upload a valid ID to get verified — orders can’t be filed until a KTC admin approves your account.')
             : t('A KTC admin is verifying your account. Orders stay held until you’re verified.')}
           {refreshBtn && <> {refreshBtn}</>}
         </span>

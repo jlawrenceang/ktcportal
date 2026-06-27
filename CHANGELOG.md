@@ -10,6 +10,22 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.73 — 2026-06-27 (Audit closure B+C: notifications, re-X-ray/consignee/vessel guards, copy)
+
+Migration **0183**:
+- **Staff are pinged on a request** — `request_supplement` notifies the cashier, `request_rexray` notifies the admin (was: the request sat in limbo). (#437.)
+- **Billing a charge on a completed order no longer reopens it** — `bill_supplement`/`add_supplement` leave the order completed (the `has_open_supplement` gate handles the release), killing a wrong "approved / now processing" notice + a spurious serving number. (#426.)
+- **Re-X-ray hardening** — a customer can't edit a re-X-ray child (#258); `request_rexray` takes an advisory lock so concurrent requests can't collide on the suffix (#514).
+- **Pending accounts can't request consignees** (verify-only lockdown, #481); resubmit shows a friendly name-collision message (#492).
+- **Priority grant requires a pending request** + raises on not-found (was a silent no-op on any/nonexistent order). (#525.)
+- **Vessel free-day join is case/whitespace-insensitive** — a shipping-line spelling variant no longer keeps a stale call in the picker forever. (#327.)
+
+Frontend:
+- Pending-account copy now says orders **can't** be filed until approved (banner + Lara chat), matching the 0163 backend lock. (#393.)
+- The release "Paid" notice shows a "settle the charges first" warning when an additional charge is unpaid, instead of telling the customer to claim the OR. (#503.)
+
+Deferred to the **Phase-1 fuel desk** (parked module, no live UI): fuel reconciliation / source-filter / write-RPCs / rate-uniqueness (#316/#547/#558/#569) + the purchaser-role UI (#305).
+
 ## v1.6.72 — 2026-06-27 (Audit closure A: cashier-crash regression + checker/payment hardening)
 
 - **Fixed a CashierStation crash** — a *requested* (un-priced) charge made the cashier's "Additional charges" render `peso(null)` and throw; the list now counts only billed charges, with a defensive "—" fallback. (Regression introduced in batch 3, caught by the closure workflow.)
