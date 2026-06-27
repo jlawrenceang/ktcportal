@@ -96,6 +96,12 @@ export default function NotificationBell() {
     void supabase.rpc('mark_notifications_read', { p_ids: null }).then(() => undefined, () => undefined)
   }
 
+  // Clear (delete) the already-read notifications, keeping unread ones. Optimistic.
+  async function clearRead() {
+    setItems((prev) => prev.filter((x) => !x.read_at))
+    void supabase.rpc('clear_read_notifications').then(() => undefined, () => undefined)
+  }
+
   return (
     <span ref={wrapRef} style={{ position: 'relative', display: 'inline-flex', flex: '0 0 auto' }}>
       <button
@@ -121,11 +127,18 @@ export default function NotificationBell() {
             <span style={{ fontSize: 13.5, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 7 }}>
               <BellIcon size={15} /> {t('Notifications')}
             </span>
-            {unread > 0 && (
-              <button type="button" className="ktc-link" style={{ fontSize: 12, marginLeft: 'auto' }} onClick={() => void markAll()}>
-                {t('Mark all read')}
-              </button>
-            )}
+            <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 12, flex: '0 0 auto' }}>
+              {unread > 0 && (
+                <button type="button" className="ktc-link" style={{ fontSize: 12 }} onClick={() => void markAll()}>
+                  {t('Mark all read')}
+                </button>
+              )}
+              {items.some((x) => x.read_at) && (
+                <button type="button" className="ktc-link" style={{ fontSize: 12 }} onClick={() => void clearRead()}>
+                  {t('Clear read')}
+                </button>
+              )}
+            </span>
           </div>
 
           {items.length === 0 ? (
