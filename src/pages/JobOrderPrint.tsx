@@ -7,6 +7,8 @@ interface PrintOrder {
   id: string
   jo_number: string | null
   entry_number: string | null
+  vessel_name: string | null
+  voyage_number: string | null
   status: string
   created_at: string
   customer?: { full_name: string | null; customer_code: string | null } | null
@@ -48,7 +50,7 @@ export default function JobOrderPrint() {
     if (!id) return
     supabase
       .from('job_orders')
-      .select('id, jo_number, entry_number, status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, vacated_at)')
+      .select('id, jo_number, entry_number, vessel_name, voyage_number, status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, vacated_at)')
       .eq('id', id)
       .maybeSingle()
       .then(({ data }) => {
@@ -60,9 +62,16 @@ export default function JobOrderPrint() {
       })
   }, [id])
 
-  const approved = order && (order.status === 'processing' || order.status === 'completed')
+  // Printable from filing onward; only the dead-end states have no slip.
+  const BLOCKED = ['held', 'rejected', 'cancelled']
+  const printable = !!order && !BLOCKED.includes(order.status)
   const processing = !!order && order.status === 'processing'
   const completed = !!order && order.status === 'completed'
+  const submitted = !!order && order.status === 'submitted'
+  const onHold = !!order && order.status === 'on_hold'
+  const wmText = completed ? 'COMPLETED' : processing ? 'PENDING' : onHold ? 'ON HOLD' : 'SUBMITTED'
+  const wmColor = completed ? '#1a8a3c' : processing ? '#e0341d' : '#d98314'
+  const STATUS_LABEL: Record<string, string> = { submitted: 'Submitted', processing: 'Approved (processing)', on_hold: 'On hold', completed: 'Completed' }
   const count = order?.lines?.length ?? 0
   // X-rayed vans carry the confirming checker's e-signature (name + time).
   const xrayDone = (order?.lines ?? []).filter((l) => /x-?ray/i.test(l.service_request) && l.xray_done_at)
@@ -73,7 +82,7 @@ export default function JobOrderPrint() {
 
       <div className="no-print" style={{ maxWidth: 420, margin: '0 auto 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
         <Link to="/job-orders" className="ktc-link" style={{ fontSize: 13 }}>← Back</Link>
-        {approved && (
+        {printable && (
           <button className="ktc-btn" onClick={() => window.print()} style={{ width: 'auto', padding: '9px 18px', fontSize: 13 }}>
             Print / Save as PDF
           </button>
@@ -84,9 +93,13 @@ export default function JobOrderPrint() {
         <p className="ktc-label" style={{ textAlign: 'center' }}>Loading…</p>
       ) : !order ? (
         <p className="ktc-label" style={{ textAlign: 'center' }}>Job order not found.</p>
-      ) : !approved ? (
+      ) : !printable ? (
         <p className="ktc-label" style={{ textAlign: 'center', maxWidth: 380, margin: '0 auto' }}>
-          This job order isn’t approved yet. A printable slip is available once a KTC admin approves it (status “processing”).
+          {order.status === 'rejected'
+            ? 'This job order was rejected, so no slip is available.'
+            : order.status === 'cancelled'
+            ? 'This job order was cancelled, so no slip is available.'
+            : 'This job order is still a draft — a printable slip is available once it’s filed.'}
         </p>
       ) : (
         <div
@@ -99,13 +112,11 @@ export default function JobOrderPrint() {
             WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact',
           }}
         >
-          {(processing || completed) && (
-            <div aria-hidden style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', zIndex: 1 }}>
-              <span style={{ transform: 'rotate(-30deg)', fontSize: 54, fontWeight: 800, letterSpacing: '0.10em', color: processing ? '#e0341d' : '#1a8a3c', opacity: 0.17, whiteSpace: 'nowrap' }}>
-                {processing ? 'PENDING' : 'COMPLETED'}
-              </span>
-            </div>
-          )}
+          <div aria-hidden style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', zIndex: 1 }}>
+            <span style={{ transform: 'rotate(-30deg)', fontSize: 54, fontWeight: 800, letterSpacing: '0.10em', color: wmColor, opacity: 0.17, whiteSpace: 'nowrap' }}>
+              {wmText}
+            </span>
+          </div>
 
           <div style={{ position: 'relative', zIndex: 2, padding: 12 }}>
             {/* Header: company (left) + JOB ORDER (right) */}
@@ -135,6 +146,16 @@ export default function JobOrderPrint() {
               </div>
             </div>
 
+            {submitted && (
+              <div style={{ marginTop: 7, fontSize: 9, fontWeight: 800, letterSpacing: '0.06em', textAlign: 'center', color: '#92560a', background: '#fef3e2', border: '1px solid #f3d3a0', borderRadius: 4, padding: '5px 6px' }}>
+                SUBMITTED — AWAITING KTC ACCEPTANCE
+              </div>
+            )}
+            {onHold && (
+              <div style={{ marginTop: 7, fontSize: 9, fontWeight: 800, letterSpacing: '0.06em', textAlign: 'center', color: '#92560a', background: '#fef3e2', border: '1px solid #f3d3a0', borderRadius: 4, padding: '5px 6px' }}>
+                ON HOLD — KTC NEEDS MORE INFO
+              </div>
+            )}
             {processing && (
               <div style={{ marginTop: 7, fontSize: 9, fontWeight: 800, letterSpacing: '0.06em', textAlign: 'center', color: '#a31708', background: '#fdecea', border: '1px solid #f3b6ad', borderRadius: 4, padding: '5px 6px' }}>
                 PENDING — NOT YET COMPLETED
@@ -157,7 +178,9 @@ export default function JobOrderPrint() {
                   <InfoRow label="Customer ID" value={order.customer?.customer_code ?? '—'} />
                   <InfoRow label="Consignee" value={order.consignee ? `${order.consignee.code} – ${order.consignee.name}` : '—'} />
                   <InfoRow label="Entry No." value={order.entry_number || '—'} />
-                  <InfoRow label="Status" value={order.status === 'completed' ? 'Completed' : 'Approved'} last />
+                  <InfoRow label="Vessel" value={order.vessel_name || '—'} />
+                  <InfoRow label="Voyage" value={order.voyage_number || '—'} />
+                  <InfoRow label="Status" value={STATUS_LABEL[order.status] ?? order.status} last />
                 </tbody>
               </table>
             </div>

@@ -626,7 +626,7 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
   // list views render this. Every action / gate is preserved verbatim.
   function OrderActions({ o }: { o: AdminJobOrder }) {
     const isBusy = busyId === o.id
-    const printable = o.status === 'processing' || o.status === 'completed'
+    const printable = !['held', 'rejected', 'cancelled'].includes(o.status)
 
     // Primary direct buttons (the 1–2 most important contextual actions).
     const primary: ReactNode[] = []

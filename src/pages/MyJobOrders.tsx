@@ -543,7 +543,7 @@ export default function MyJobOrders() {
                         {t('Edit order')}
                       </button>
                     )}
-                    {(o.status === 'processing' || o.status === 'completed') && (
+                    {!['held', 'rejected', 'cancelled'].includes(o.status) && (
                       <Link to={`/job-order/${o.id}/print`} target="_blank" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-flex', textDecoration: 'none' }}>
                         {t('Print slip')} ↗
                       </Link>

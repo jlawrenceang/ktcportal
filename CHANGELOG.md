@@ -11,6 +11,12 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.74 — 2026-06-28 (Job-order slip: printable from filing + vessel/voyage)
+
+- **A just-filed JO is now viewable & printable** — the printable slip and the "Print slip" link (customer **and** staff) now appear from `submitted` onward, not only at `processing`/`completed`. So a broker can print a copy the moment they file, before KTC accepts it. (`JobOrderPrint.tsx`, `MyJobOrders.tsx:546`, `AllJobOrders.tsx:629`.)
+- **Status-aware slip stamp** — the slip shows a watermark + banner per state: **SUBMITTED — AWAITING KTC ACCEPTANCE** / **ON HOLD — KTC NEEDS MORE INFO** / **PENDING** / **COMPLETED**; only `held`/`rejected`/`cancelled` have no slip. Status row now reads the real status (was hard-coded "Approved").
+- **Slip now shows Vessel & Voyage** — added to the job-order slip header (the filing form captures them, but the slip had omitted them).
+
 ## v1.6.73 — 2026-06-27 (Audit closure B+C: notifications, re-X-ray/consignee/vessel guards, copy)
 
 Migration **0183**:
