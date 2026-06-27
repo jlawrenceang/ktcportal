@@ -56,7 +56,7 @@ last_updated: 2026-06-27
 The explicit staff actions go through **`staff_transition_order(p_id, p_status, p_note, p_recoverable)`** (`0086`/`0097`), which checks the split gate for the target status. The old admin-only direct UPDATE is gone.
 
 - **File** (customer / CSR) → `held` (pending) or `submitted` (approved). ✅ Filing is atomic (`0098` — no orphan orders).
-- **File on behalf** (operations/CSR/admin) → `submitted`. ✅ (`/admin/new-job-order`, `file_job_orders`; staff filings bypass caps.)
+- **File on behalf** (CSR/admin) → `submitted`. ✅ (`/admin/new-job-order`, `file_job_orders` — **operations does NOT have it**, revoked in `0060`; staff filings bypass caps.)
 - **Account approved** → that customer's `held` → `submitted` (release trigger). ✅
 - **Accept** → `submitted` / `on_hold` → `processing`. Gate **`accept_orders`** (operations / admin).
 - **Hold for info** (+note, +field list) → `submitted` / `processing` / `on_hold` → `on_hold`. Gate **`hold_reject_orders`** (operations / cashier / admin). **`hold_job_order()`** sets `needs_fields` (subset of consignee/entry/vessel/containers) to flag which fields the customer must re-enter; empty set = general hold (note only).

@@ -2,7 +2,7 @@
 title: Architecture Overview
 tags: [architecture, reference, system-map]
 type: reference
-last_updated: 2026-06-26
+last_updated: 2026-06-27
 ---
 
 # KTC Online Portal — Architecture Overview
@@ -37,8 +37,10 @@ tools point at jta-sys; never use them here — see `docs/agent/runtime-data-saf
 
 All are the **same React bundle** (route-code-split); a **`RootGate`** at `/` sends a signed-out visitor
 to the public `Landing` (orientation + Sign-in / Create-account, **no forced accept gate**) and a signed-in
-session to `RoleLanding` (`src/App.tsx`), which routes each role to where it works. One Supabase backend
-serves all surfaces.
+session to `RoleLanding` (`src/App.tsx`): **operational roles land on their focused staff-PWA screen**
+(`operations → /app/operations`, `cashier → /app/cashier`, `checker → /app/checker`, `csr → /app/support`),
+**owner/admin → `/admin`**, customers → the broker home — the full back office is one tap away. One Supabase
+backend serves all surfaces.
 
 ## Access model — backend-enforced (the load-bearing invariant)
 
@@ -49,6 +51,14 @@ serves all surfaces.
   locked out; owner *grants* are **root-owner-only** (`set_owner_access`).
 - **Staff are invite-only** (`create_staff`) — no admin self-signup. Roles are **data-driven** on the
   `role_permissions` matrix, editable in **Settings → Roles & Gates**.
+- **Separation of duties + maker-checker lanes** (ADR-0035, `0171`–`0177`). Order approval is
+  **operations/admin** only — CSR is intake + comms (`0171` pulled accept/hold-reject back off CSR to
+  close a file-on-behalf-and-approve gap); the **cashier is money-only** (`review_payments` ·
+  `record_invoice` · `bill_supplement`). Three job-order escalations run a **request → admin-approve**
+  split, each a *distinct* permission so the requester can never self-approve: **priority**
+  (`request_priority` → `review_priority`), **re-X-ray** (`request_rexray` → `review_rexray`), and
+  **additional charges** (`request_supplement` → cashier `bill_supplement`). Confirming a **base payment
+  requires the ERP service-invoice + BIR pad serial on file** (`record_service_invoice`, `0177`/`0178`).
 - **One session per account** (`claim_session` + `session_alive()` woven into the RLS helpers),
   **idle auto-logout** (customer 15 min / staff 60 min), **server-side CAPTCHA** (Managed Turnstile).
 - **Pending customers are locked to verify-only** (`0163`) — until an admin approves them, **RLS** hides
@@ -66,9 +76,12 @@ One customer account and one back office drive two independent spines (state mac
 flows: [Role & Operation Flows](diagrams/role-and-operation-flows.md)):
 
 - **Job Order spine** — special / value-added services (X-Ray · DEA · OOG …).
-  `held → submitted → processing → completed` (+ `on_hold` · `rejected` · `cancelled`). Completion is
-  **two-gated**: all services done **and** base + RPS + every supplement paid (`jo_ready_to_complete`).
-  Most containers have **no** JO — it's a service overlay.
+  `submitted → processing → completed` (+ `on_hold` · `rejected` · `cancelled`; `held` is **legacy** now
+  that pending customers are **verify-only**, `0163`). Completion is **automatic** the moment both gates
+  pass — all services done **and** base + RPS + every **billed** supplement confirmed (`jo_ready_to_complete`;
+  the manual complete button retired, ADR-0035). The serving queue runs **three lanes** — regular, a
+  **priority** lane served ahead, and a **re-X-ray** child lane (`JO-000001A`) — assigned/vacated automatically
+  on status (`0173`). Most containers have **no** JO — it's a service overlay.
 - **Release / Pull-out spine** — billing for **every** container (ADR-0024).
   `submitted → docs_verified → payable → paid → released`. **Approved customers only**; the OR is
   blocked until every supplement is confirmed.
@@ -89,8 +102,9 @@ elsewhere as contracts.
 
 ## Core data spine
 
-`customers` · `consignees` · `accreditations` · `job_orders` + `job_order_lines` (+ supplements,
-`rps_moves`, per-van X-ray) · `release_orders` + `release_supplements` · `vessel_schedule` →
+`customers` · `consignees` · `accreditations` · `job_orders` + `job_order_lines` (+ supplements with
+`bill_status`, `rps_moves`, per-van X-ray, **re-X-ray parent/child**, **serving-number lanes**
+queue/priority/re-X-ray) · `release_orders` + `release_supplements` · `vessel_schedule` →
 derived `vessel_visit` · `role_permissions` · audit (`security_events` + change logs) · **fuel
 module** (Phase 0 schema only). All applied + tracked in `public._migrations`.
 

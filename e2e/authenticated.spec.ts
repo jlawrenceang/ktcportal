@@ -59,11 +59,13 @@ test.describe('KTC portal — authenticated (Phase 2)', () => {
     await expect(box).toHaveValue('aa')
   })
 
-  test('staff (minted) lands on the Admin Portal', async ({ page }) => {
+  test('staff (minted) lands on its role home (/admin or the /app/* staff PWA)', async ({ page }) => {
     test.skip(!STAFF, 'set E2E_STAFF_EMAIL (e.g. <username>@ktc-staff.local) to run')
     await mintSession(page, STAFF!)
     await page.goto('/')
-    await expect(page).toHaveURL(/\/admin$/)
+    // RoleLanding (src/App.tsx): admin/owner → /admin; operational roles
+    // (operations/cashier/checker/csr) now land on their focused staff-PWA screen.
+    await expect(page).toHaveURL(/\/(admin|app(\/(operations|cashier|checker|support))?)$/)
   })
 
   // Mutation-heavy ST01 lanes — implement against the seeded TEST project once
@@ -81,4 +83,14 @@ test.describe('KTC portal — authenticated (Phase 2)', () => {
   test.fixme('customer pays → cashier confirms → paid (ST04 Lane D)', async () => {})
   test.fixme('record OR: BIR OR ≤6 digits + ERP OR-INV cash-only → released; OR blocked by unpaid supplement (ST04 Lane E)', async () => {})
   test.fixme('cancel a pre-payment release (customer + staff) (ST04 Lane F)', async () => {})
+
+  // Job-order ops overhaul (ADR-0035) — the automated counterpart to ST06. Run against
+  // the seeded TEST project; do not mutate prod. Each maps to an ST06 lane.
+  test.fixme('roles re-split: each role lands on its /app/* screen; cashier money-only; CSR no approval (ST06 Lane A)', async () => {})
+  test.fixme('serving number auto-assigns on submitted, vacates on exit, new tail on re-entry (ST06 Lane B)', async () => {})
+  test.fixme('priority lane: ops/CSR request_priority → admin review_priority → served ahead (ST06 Lane C)', async () => {})
+  test.fixme('re-X-ray: checker/ops request_rexray on a completed JO → child JO-####A → admin review_rexray; child is internal (ST06 Lane D)', async () => {})
+  test.fixme('charges request→bill: ops request_supplement (label only) → cashier bill_supplement (amount) → pay → confirm (ST06 Lane E)', async () => {})
+  test.fixme('payment requires invoice: record_service_invoice before review_payment confirms base (online + walk-in) (ST06 Lane F)', async () => {})
+  test.fixme('automatic completion: no manual button; auto-completes from services-last and payment-last (ST06 Lane G)', async () => {})
 })

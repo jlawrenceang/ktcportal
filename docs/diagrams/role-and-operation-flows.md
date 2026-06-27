@@ -11,7 +11,8 @@ Detailed flowcharts of **every path each role can take**, the two operational sp
 (render in GitHub, Obsidian, and most Markdown viewers).
 
 **Source of truth:** synthesized from the live code + the **live `role_permissions`
-table** (queried 2026-06-25) and the SECURITY DEFINER RPC guards. Migrations through **0159**.
+table** and the SECURITY DEFINER RPC guards. Migrations through **0183** (the ADR-0035
+job-order ops overhaul + the whole-app audit closure; verified 2026-06-27).
 
 ## How to read these
 
@@ -30,13 +31,17 @@ table** (queried 2026-06-25) and the SECURITY DEFINER RPC guards. Migrations thr
 | Role | Lands on | Essence |
 |---|---|---|
 | **owner** | `/admin` | Failsafe — bypasses all gates; can edit the matrix itself |
-| **admin** | `/admin` | Full back office; everything **except `confirm_xray`** |
-| **operations** | `/admin/job-orders` | Intake/accept + RPS + service completion + vessels; **monitors** X-ray (no confirm); no money |
-| **cashier** | `/admin/cashier` | Payments + ERP invoice/OR; can complete/hold-reject; **cannot** see the X-ray queue |
-| **checker** | `/admin/checker` | **Only** confirms each van's X-ray entry (the spotter) |
-| **csr** | `/admin/support` | Support inbox + file-on-behalf + **release document verification** + **consignee request review** |
+| **admin** | `/admin` | Full back office; everything **except `confirm_xray`**; **approves** priority + re-X-ray; bills charges |
+| **operations** | `/app/operations` | Accept orders + RPS + service completion + vessels; **monitors** X-ray (no confirm); **requests** priority / re-X-ray / charges; **no money, no file-on-behalf** |
+| **cashier** | `/app/cashier` | **Money lane only** — payments + ERP invoice + **bills charges**; **no** accept/hold-reject/complete (dropped `0171`); **cannot** see the X-ray queue |
+| **checker** | `/app/checker` | Confirms each van's X-ray entry (the spotter); **requests** re-X-ray |
+| **csr** | `/app/support` | Support inbox + file-on-behalf + release doc verification + consignee request review + **requests** priority; **never** changes order status |
 | **purchaser** | (appmap pending) | Fuel module: procurement + monitoring; **scoped, non-admin** |
 | **customer** | `/` | Files/pays own Job Orders & Releases; sees only own data |
+
+> **Landing change (current):** operational roles now land on their **focused staff-PWA screen** (`/app/*`),
+> not the `/admin/*` page — the full back office is one tap away via "Open full portal". Only **owner/admin**
+> land on `/admin`. (`RoleLanding`, `src/App.tsx`.)
 
 Permission matrix (`✓` allowed · blank = denied · owner = `✓` on all):
 
@@ -48,9 +53,15 @@ Permission matrix (`✓` allowed · blank = denied · owner = `✓` on all):
 | file_job_orders | ✓ |  |  |  | ✓ |  |
 | accept_orders | ✓ | ✓ |  |  |  |  |
 | process_job_orders | ✓ | ✓ |  |  |  |  |
-| complete_orders | ✓ | ✓ | ✓ |  |  |  |
-| hold_reject_orders | ✓ | ✓ | ✓ |  |  |  |
+| complete_orders | ✓ | ✓ |  |  |  |  |
+| hold_reject_orders | ✓ | ✓ |  |  |  |  |
 | confirm_xray |  |  |  | ✓ |  |  |
+| request_priority | ✓ | ✓ |  |  | ✓ |  |
+| approve_priority | ✓ |  |  |  |  |  |
+| request_rexray | ✓ | ✓ |  | ✓ |  |  |
+| approve_rexray | ✓ |  |  |  |  |  |
+| request_supplement | ✓ | ✓ |  |  |  |  |
+| bill_supplement | ✓ |  | ✓ |  |  |  |
 | assess_rps | ✓ | ✓ |  |  |  |  |
 | review_payments | ✓ |  | ✓ |  |  |  |
 | record_invoice | ✓ |  | ✓ |  |  |  |
@@ -65,6 +76,15 @@ Permission matrix (`✓` allowed · blank = denied · owner = `✓` on all):
 | manage_consignees | ✓ |  |  |  |  |  |
 | manage_pricing | ✓ |  |  |  |  |  |
 
+**ADR-0035 maker-checker gates** (`0171`–`0177`): the six request/approve rows —
+`request_priority`/`approve_priority`, `request_rexray`/`approve_rexray`,
+`request_supplement`/`bill_supplement` — split *propose* from *approve/bill* so a requester can
+never self-approve. **`0171` separation of duties:** CSR lost `accept_orders` / `hold_reject_orders`
+(intake + comms only); cashier lost `hold_reject_orders` / `complete_orders` (money lane only).
+**Completion is now automatic** — no role clicks "complete"; the order self-completes when the last
+gate (services *or* payment) lands. **Confirming a base payment requires the ERP invoice + BIR pad
+serial on file** (`record_service_invoice`, `0177`/`0178`).
+
 ---
 
 ## 1. Whole-operation overview
@@ -77,24 +97,24 @@ flowchart TD
     REG["Customer registers → confirms email → uploads valid ID"]
     APPROVE{"Account approved?<br/>(admin · manage_approvals)"}
     REG --> APPROVE
-    APPROVE -->|"no — pending/rejected/suspended"| GATEC["Limited: JO saved as HELD;<br/>Release filing BLOCKED"]
+    APPROVE -->|"no — pending/rejected/suspended"| GATEC["Verify-only (0163): every business surface<br/>hidden — no JO or Release filing until approved"]
     APPROVE -->|"yes"| HUB["Approved customer"]
 
     HUB --> JO0["File Job Order<br/>(special services: X-ray/DEA/OOG)"]
     HUB --> RL0["File Release / Pull-out<br/>(every container)"]
 
     subgraph JOSPINE["JOB ORDER spine — special services"]
-      JO1["submitted"] -->|"accept [operations/admin]"| JO2["processing"]
+      JO1["submitted<br/>(serving no. — regular · priority · re-X-ray lane)"] -->|"accept [operations/admin]"| JO2["processing"]
       JO2 --> JOX["X-ray per van CONFIRMED<br/>[checker · confirm_xray]"]
       JO2 --> JODEA["DEA/OOG service done<br/>[operations · process_job_orders]"]
       JO2 --> JORPS["RPS assessed (none/needed)<br/>[operations/admin · assess_rps]"]
-      JO2 --> JOPAY["base + RPS + supplement payments<br/>[cashier · review_payments]"]
+      JO2 --> JOINV["cashier records ERP invoice + BIR pad no.<br/>[record_invoice] — REQUIRED before confirming base pay"]
+      JOINV --> JOPAY["base + RPS + billed-supplement payments confirmed<br/>[cashier · review_payments]"]
       JOX --> JOGATE{{"Two-gate met?<br/>all services + all payments"}}
       JODEA --> JOGATE
       JORPS --> JOPAY
       JOPAY --> JOGATE
-      JOGATE -->|"yes (auto)"| JODONE["completed"]
-      JODONE -->|"cashier records ERP invoice no.<br/>[record_invoice]"| JOINV["completed + invoiced"]
+      JOGATE -->|"yes — AUTO-completes<br/>(no manual click)"| JODONE["completed"]
     end
     JO0 --> JO1
 
@@ -121,42 +141,73 @@ States: `held · submitted · processing · on_hold · completed · rejected · 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> held: pending customer files
-    [*] --> submitted: approved customer files (jo_number assigned)
-    held --> submitted: broker approved (release_held_job_orders trigger)
-    held --> cancelled: cancel_job_order [customer]
+    [*] --> submitted: approved customer / CSR-on-behalf files (jo_number + serving no. assigned)
     submitted --> processing: accept_orders [operations/admin]
-    submitted --> on_hold: hold_reject_orders [ops/cashier/admin]
-    submitted --> rejected: hold_reject_orders [ops/cashier/admin]
+    submitted --> on_hold: hold_reject_orders [ops/admin]
+    submitted --> rejected: hold_reject_orders [ops/admin]
     submitted --> cancelled: cancel_job_order [customer]
-    processing --> on_hold: hold_reject_orders
-    processing --> rejected: hold_reject_orders
-    on_hold --> submitted: respond_to_hold [customer]
+    processing --> on_hold: hold_reject_orders [ops/admin]
+    processing --> rejected: hold_reject_orders [ops/admin]
+    on_hold --> submitted: resubmit_needs_info [customer, field-targeted]
     on_hold --> cancelled: cancel_job_order [customer]
-    rejected --> submitted: resubmit_rejected [customer, if recoverable]
-    processing --> completed: TWO-GATE met (auto on last gate, or complete_orders)
-    completed --> processing: add_supplement reverts [ops/admin]
-    rejected --> [*]: terminal if not recoverable
+    processing --> completed: TWO-GATE met — AUTO (services + payments)
+    rejected --> [*]: terminal (no resubmit; use the on_hold path)
     cancelled --> [*]
     completed --> [*]
+    note right of submitted
+      held is legacy — pending customers are now
+      verify-only (0163) and can no longer file
+    end note
+    note right of completed
+      a charge billed after completion does NOT
+      revert it (0183) — stays completed, flagged
+      has_open_supplement until the charge is paid
+    end note
 ```
 
-**TWO-GATE completion** (`jo_ready_to_complete` + `complete_on_payment_confirmed` trigger +
-`enforce_two_gate_complete` backstop) — `processing → completed` only when **all** hold:
+**TWO-GATE completion** (`jo_ready_to_complete` + the `complete_on_payment_confirmed` /
+`complete_on_service_done` triggers + `enforce_two_gate_complete` backstop) — `processing → completed`
+fires **automatically** (no role clicks "complete") when **all** hold:
 
 ```mermaid
 flowchart LR
     G1["All service lines done<br/>X-ray: every van confirmed [checker]<br/>DEA/OOG: [operations]"]
-    G2["Base payment confirmed<br/>[cashier · review_payments]"]
+    G2["Base payment confirmed<br/>[cashier · review_payments]<br/>(ERP invoice + BIR pad recorded first)"]
     G3["RPS cleared<br/>not needed, OR paid+confirmed"]
-    G4["Every supplement confirmed<br/>JO-####-A/B/C…"]
+    G4["Every BILLED supplement confirmed<br/>JO-####-A/B/C… (un-priced 'requested' don't block)"]
     G1 --> DONE{{"all true?"}}
     G2 --> DONE
     G3 --> DONE
     G4 --> DONE
-    DONE -->|"yes"| C["completed + completed_at stamped"]
+    DONE -->|"yes — auto"| C["completed + completed_at stamped"]
     DONE -->|"any open"| P["stays processing"]
 ```
+
+### 2a. Serving lanes + escalations — priority & re-X-ray (ADR-0035)
+
+The serving number is assigned/vacated **automatically** on status (`serving_numbers_on_status`, `0173`):
+it lands on `submitted`/`processing` and vacates (→ off the board) on `on_hold`/`rejected`/`cancelled`/`completed`.
+Returning to the line gets a **new tail number** (the manual `restore_serving_number` queue-jump was dropped,
+`0182`). Three lanes run in parallel — **regular**, a **priority** lane served first, and a **re-X-ray** child
+lane — each numbered independently; the checker/operations queue sorts **priority → regular → re-X-ray**.
+
+```mermaid
+flowchart TD
+    SUB["submitted / processing<br/>(regular lane)"]
+    SUB -->|"request_priority [csr/ops]"| PREQ["priority: requested"]
+    PREQ -->|"review_priority approve [admin]"| PGR["priority: granted<br/>→ priority lane (served ahead)"]
+    PREQ -->|"review_priority deny [admin]"| SUB
+
+    DONE2["completed order"]
+    DONE2 -->|"request_rexray [checker/ops]<br/>builds child JO-####A"| RREQ["child: rexray_status=requested<br/>(customer-invisible, can't cancel/edit)"]
+    RREQ -->|"review_rexray approve [admin]<br/>(+ billable?)"| RAP["child processing → re-X-ray lane<br/>own per-van X-ray + lifecycle"]
+    RREQ -->|"review_rexray deny [admin]"| RCAN["child cancelled"]
+    RAP -->|"free (default): services-done completes<br/>billable: + payment"| RDONE["child completed"]
+```
+
+> A re-X-ray child can't be X-rayed before admin approval (`record_van_xray` guard, `0181`), can't be
+> accepted via the generic `accept_orders` path (`0178`), and emits **no** customer notifications (it's
+> internal); `request_rexray`/`request_supplement` instead **ping staff** by gate (`notify_staff`, `0183`).
 
 ---
 
@@ -210,20 +261,19 @@ flowchart TD
     CONF -->|"no"| AWAIT["Awaiting confirmation (resend)"]
     CONF -->|"yes"| VID["/verify-id — upload ID or skip"]
     VID --> ST{"account status"}
-    ST -->|"pending"| PEND["Full portal + banner:<br/>JO files as HELD · Release BLOCKED"]
+    ST -->|"pending"| PEND["Verify-only — every business surface hidden<br/>until an admin approves (0163)"]
     ST -->|"rejected"| REJ["PendingPanel — fix + resubmit details/ID"]
     ST -->|"suspended"| SUS["PendingPanel — terminal, contact support"]
     ST -->|"approved"| OK["Full access"]
 
     OK --> FJO["/job-order — file JO → submitted"]
-    PEND --> FJOH["/job-order — file JO → held"]
+    PEND --> NOFILE["✗ Cannot file — verify-only until approved"]
     OK --> FRL["/releases — file Release → submitted"]
 
     OK --> MJO["/job-orders — manage"]
-    MJO --> EDIT["Edit (held/submitted)"]
-    MJO --> RESP["Respond to hold → submitted"]
-    MJO --> RESUB["Resubmit rejected (if recoverable) → submitted"]
-    MJO --> CAN["Cancel (held/submitted/on_hold) → cancelled"]
+    MJO --> EDIT["Edit (submitted; locks at processing)"]
+    MJO --> RESP["Respond to field-targeted hold → submitted"]
+    MJO --> CAN["Cancel (submitted/on_hold) → cancelled"]
     MJO --> PAY["Pay base / RPS / supplements (upload proof)"]
     MJO --> PRINT["Print slip (processing/completed)"]
 
@@ -238,9 +288,10 @@ flowchart TD
     OK --> BROWSE["/vessels · /calculator · /manual (read-only)"]
 ```
 
-**Customer is blocked from:** editing an order once `processing`; cancelling once
-`processing` (JO) or once `paid` (release); adding supplements; confirming any payment;
-filing a Release while not `approved`.
+**Customer is blocked from:** filing anything while **pending** (verify-only, `0163`); editing an order
+once `processing`; cancelling once `processing` (JO) or once `paid` (release); resubmitting a `rejected`
+order (terminal — use the field-targeted `on_hold` path); touching an internal **re-X-ray** child;
+requesting or pricing charges; confirming any payment; filing a Release while not `approved`.
 
 ### 4.2 Owner
 
@@ -259,14 +310,15 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    AD["/admin — Dashboard"] --> AP["Approvals — approve/reject customers & consignees<br/>[manage_approvals] → unblocks held JOs & release filing"]
+    AD["/admin — Dashboard"] --> AP["Approvals — approve/reject customers & consignees<br/>[manage_approvals] → unblocks the verify-only customer (filing + releases)"]
     AD --> CU["Customers — suspend/edit [manage_customers]"]
     AD --> CO["Consignees — manage master list [manage_consignees]"]
     AD --> PR["Settings — rates/fees/pricing [manage_pricing]"]
     AD --> VE["Vessel schedule [manage_vessel_schedule]"]
-    AD --> JOA["Job Orders — accept/hold/reject/complete [accept/hold_reject/complete_orders]"]
+    AD --> JOA["Job Orders — accept/hold/reject [accept/hold_reject_orders] · complete is AUTO"]
+    AD --> APRX["Approve priority + re-X-ray requests<br/>[approve_priority / approve_rexray]"]
     AD --> RPSa["Assess RPS [assess_rps]"]
-    AD --> PAYa["Confirm payments + record ERP invoice/OR [review_payments/record_invoice]"]
+    AD --> PAYa["Confirm payments + record ERP invoice (req. before base confirm) + bill charges<br/>[review_payments / record_invoice / bill_supplement]"]
     AD --> RELa["Release docs desk: verify + set charges [verify_release_docs]"]
     AD --> SUPa["Support inbox [manage_support]"]
     AD --> LOGS["Logs / audit [manage_approvals]"]
@@ -277,40 +329,41 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    OP["/admin/job-orders"] --> ACC["Accept submitted → processing [accept_orders]"]
+    OP["/app/operations (full portal one tap away)"] --> ACC["Accept submitted → processing [accept_orders]"]
     OP --> HR["Hold / reject [hold_reject_orders]"]
     OP --> SVC["Mark DEA/OOG/other service done [process_job_orders]"]
     OP --> RPS["Assess RPS — none / per-move [assess_rps]"]
-    OP --> COMP["Complete (when two-gate met) [complete_orders]"]
+    OP --> REQ["Request priority / re-X-ray / charge<br/>[request_priority · request_rexray · request_supplement] → admin/cashier acts"]
     OP --> XV["X-ray Queue — MONITOR only [view_xray_queue]"]
     XV --> NOC["✗ No Confirm button (no confirm_xray)"]
     OP --> VES["Vessel schedule [manage_vessel_schedule]"]
-    OP --> NOM["✗ No payments · no release docs · no file-on-behalf"]
+    OP --> NOM["✗ No payments/billing · no release docs · no file-on-behalf · completion is AUTO (no Complete button)"]
 ```
 
 ### 4.5 Cashier
 
 ```mermaid
 flowchart TD
-    CA["/admin/cashier"] --> Q1["Review online payment proofs — confirm/reject [review_payments]"]
-    CA --> Q2["Record walk-in / office payment [review_payments]"]
-    CA --> Q3["Record ERP Service Invoice no. (JO) [record_invoice]"]
+    CA["/app/cashier (full portal one tap away)"] --> Q3["Record ERP invoice + BIR pad no. (JO)<br/>[record_invoice] — REQUIRED before confirming base pay"]
+    Q3 --> Q1["Review online payment proofs — confirm/reject [review_payments]"]
+    CA --> Q2["Record walk-in / office payment [review_payments] (also invoice-gated)"]
+    CA --> QB["Bill a requested charge — set amount → payable [bill_supplement]"]
     CA --> Q4["Confirm/reject release payments + supplements [review_payments]"]
     CA --> Q5["Record release OR + ERP control no. → released [review_payments/record_invoice]"]
-    CA --> Q6["Complete / hold / reject orders [complete/hold_reject_orders]"]
-    CA --> NOQ["✗ Cannot see X-ray queue · ✗ no accept/RPS · ✗ no release-doc verify"]
+    CA --> NOQ["✗ No X-ray queue · ✗ no accept/RPS · ✗ no hold-reject/complete (dropped 0171) · ✗ no release-doc verify"]
 ```
 
 ### 4.6 Checker (X-ray spotter)
 
 ```mermaid
 flowchart TD
-    CK["/admin/checker — X-ray Queue"] --> SCAN["Open a JO's container vans (sorted by JO no. / age)"]
+    CK["/app/checker — X-ray Queue (full portal one tap away)"] --> SCAN["Open a JO's container vans<br/>(queue sorts priority → regular → re-X-ray lane)"]
     SCAN --> CONF["Confirm X-ray entry per van [confirm_xray] → record_van_xray"]
     CONF --> SIG["Stamps e-signature (name+time) per van"]
     CONF --> LAST{"last van?"}
     LAST -->|"yes"| ROLL["X-ray service rolls up to done → may auto-complete if paid"]
     LAST -->|"no"| SCAN
+    CK --> RRX["Request re-X-ray on a completed order [request_rexray] → admin approves"]
     CK --> ONLY["✗ No accept/hold/reject/complete · ✗ no edit · ✗ no payments"]
 ```
 
@@ -318,12 +371,14 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    CS["/admin/support — inbox"] --> TIX["Open/read/reply/close tickets, escalate (call/email/SMS/Viber) [manage_support]"]
+    CS["/app/support — inbox (full portal one tap away)"] --> TIX["Open/read/reply/close tickets, escalate (call/email/SMS/Viber) [manage_support]"]
     CS --> FILE["File a Job Order on behalf of a customer [file_job_orders]"]
     CS --> RVER["Release documents desk — verify / hold DO/BL [verify_release_docs]"]
     CS --> RCHG["Set release charges (once) + add charge [verify_release_docs]"]
+    CS --> RCQ["Review consignee requests [review_consignee_requests]"]
+    CS --> RPRI["Request priority on an order [request_priority] → admin approves"]
     CS --> XV["View X-ray queue (read) [view_xray_queue]"]
-    CS --> NONE["✗ No order status changes (accept/hold/reject/complete) · ✗ no payments · ✗ no confirm X-ray"]
+    CS --> NONE["✗ No order status changes (accept/hold/reject) · ✗ no payments · ✗ no confirm X-ray"]
 ```
 
 ---
@@ -337,11 +392,15 @@ flowchart TD
 | X-ray confirmed per van | checker | `confirm_xray` |
 | DEA/OOG done · RPS assessed | operations/admin | `process_job_orders` · `assess_rps` |
 | Payments confirmed (JO + release) | cashier/admin | `review_payments` |
-| ERP invoice / OR recorded | cashier/admin | `record_invoice` / `review_payments` |
+| ERP invoice recorded (**required before base-pay confirm**) / release OR recorded | cashier/admin | `record_invoice` / `review_payments` |
+| Priority granted | csr/ops request → admin approve | `request_priority` → `approve_priority` |
+| Re-X-ray approved | checker/ops request → admin approve | `request_rexray` → `approve_rexray` |
+| Charge billed (ops never bills directly) | ops request → cashier bill | `request_supplement` → `bill_supplement` |
 | Release documents verified | csr/admin | `verify_release_docs` |
 | Release charges set / supplements | csr/admin | `verify_release_docs` |
 | Support handled | csr/admin | `manage_support` |
 
-> Verified 2026-06-25 against the live `role_permissions` table + the RPC guards in
-> `supabase/migrations/**` through 0159. If a gate is re-toggled in **Settings → Roles & Gates**, this
-> matrix and these flows change with it — the server enforces the live matrix, not this doc.
+> Verified 2026-06-27 against the live `role_permissions` table + the RPC guards in
+> `supabase/migrations/**` through 0183 (ADR-0035 ops overhaul + audit closure). If a gate is re-toggled
+> in **Settings → Roles & Gates**, this matrix and these flows change with it — the server enforces the
+> live matrix, not this doc.

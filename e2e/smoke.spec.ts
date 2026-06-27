@@ -6,10 +6,14 @@ import { test, expect } from '@playwright/test'
 // and the SPA rewrite. See docs/smoke-test-01-portal.md.
 
 test.describe('KTC portal — unauthenticated smoke', () => {
-  test('root redirects unauthenticated users to /login', async ({ page }) => {
+  // Signed-out "/" now renders the public access menu (AuthRail) inside the shared
+  // PublicShell — orientation + the three ways in — NOT a redirect to /login (the
+  // public Landing shipped 2026-06-26).
+  test('root shows the public access menu (AuthRail) when logged out', async ({ page }) => {
     await page.goto('/')
-    await expect(page).toHaveURL(/\/login$/)
-    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
+    await expect(page).toHaveURL(/\/$/) // stays at the root, not bounced to /login
+    await expect(page.getByRole('link', { name: 'Sign in' }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Create an account' }).first()).toBeVisible()
   })
 
   test('login page renders core elements', async ({ page }) => {
@@ -52,9 +56,21 @@ test.describe('KTC portal — unauthenticated smoke', () => {
     expect(res?.status()).toBe(200)
   })
 
-  test('unknown route falls through to /login', async ({ page }) => {
+  // Staff PWA (/app/*) — the focused single-purpose screens that operational roles now
+  // land on by default (ADR-0035 era). They're admin-gated, so a logged-out hit redirects.
+  test('protected staff-PWA routes redirect to /login when logged out', async ({ page }) => {
+    for (const path of ['/app', '/app/operations', '/app/cashier', '/app/checker', '/app/support']) {
+      await page.goto(path)
+      await expect(page).toHaveURL(/\/login$/)
+    }
+  })
+
+  // App.tsx's catch-all route now navigates to "/" (the RootGate); for a signed-out
+  // visitor that renders the AuthRail access menu (it no longer lands on /login).
+  test('unknown route falls through to the root access menu', async ({ page }) => {
     await page.goto('/this-route-does-not-exist')
-    await expect(page).toHaveURL(/\/login$/)
+    await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByRole('link', { name: 'Create an account' }).first()).toBeVisible()
   })
 
   test('can switch to Create account (valid ID moved to post-confirmation)', async ({ page }) => {

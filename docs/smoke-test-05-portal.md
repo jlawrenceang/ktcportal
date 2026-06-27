@@ -7,6 +7,8 @@
 **Format:** Canonical (see `docs/smoke-test-template-canonical.md`)
 **Supersedes:** **ST03** (it was written at migration `0104`, before the serving-number retirement, the operations/checker X-ray split, and the entire Release / Pull-out module). ST05 is the single end-to-end go-live blind walkthrough on the current build. **ST04** stands alongside as the deep-dive on the Release / Pull-out spine + the no-zero number rules — Lane I here condenses it and points back to ST04 for the per-action detail.
 
+> **Superseded in part by ST06 (2026-06-27).** ST05's *serving-number-retired* premise (daily Batch, no priority number) and its role matrix/landings predate **ADR-0035** (`0170`–`0177`), which **reintroduced an automatic serving-number queue** with **priority** + **re-X-ray** lanes, made completion **automatic**, split **charges** into request→bill, **gated payment** on the ERP invoice, **re-split the roles** (`0171` — cashier money-only, CSR no approval), and **moved staff landings to `/app/*`**. Run **ST06** (`docs/smoke-test-06-portal.md`) for those deltas; ST05 still owns the broad onboarding / X-ray / payments / release walk. Where this doc and ST06 disagree, **ST06 + runtime win.**
+
 ## Purpose
 
 The pre-go-live **blind walkthrough**: a human walks the live portal end-to-end on the **current** build and proves both operational spines work front-to-back, plus the access controls. Flow:
