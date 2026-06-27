@@ -10,6 +10,14 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.70 — 2026-06-27 (Audit fixes batch 2: completion gate, re-X-ray guards, fuel RLS)
+
+- **Completion no longer errors on a coexisting unpaid charge** — `jo_ready_to_complete` + `enforce_two_gate_complete` now both gate on **billed-unpaid** supplements only (0175 had dropped the clause from one but not the other, so confirming the last X-ray / a supplement payment on an order with another unpaid charge rolled back with a check-violation). A *requested* (un-priced) charge never blocks completion. (Migration **0181**, audit #283.)
+- **Re-X-ray can't be X-rayed before admin approval** — `record_van_xray` blocks an unapproved re-X-ray child (was: a checker could complete it, then approval knocked it back to processing). (#360.)
+- **Customer can't cancel an internal re-X-ray** — `cancel_job_order` refuses re-X-ray children (was UI-only hidden — backend-enforced now). (#258.)
+- **Fuel pricing no longer readable by anon** — `fuel_setting_at`/`fuel_rate_at` revoked from public/anon (kept for the authenticated reporting views); `jo_ready_to_complete` revoked as an internal oracle. (#294/#415.)
+- **Dashboard "Active orders" excludes hidden re-X-ray children** — the count now matches the list. (#272.)
+
 ## v1.6.69 — 2026-06-27 (Audit fixes: vessel-tour copy + lifecycle doc)
 
 - **Removed the misleading "tick vessel not listed" tour step** — the New Job Order tour now says to contact KTC customer service (or ask Lara) to add an unlisted vessel, matching the real flow (the manual-entry control was removed long ago). (Audit #7.)

@@ -26,10 +26,12 @@ export default function Home() {
   useEffect(() => {
     void (async () => {
       const [{ count: active }, { count: pending }, { count: orderAttention }] = await Promise.all([
-        supabase.from('job_orders').select('id', { count: 'exact', head: true }).in('status', ['submitted', 'processing', 'on_hold']),
+        // Exclude re-X-ray children — they're internal KTC orders hidden from the customer's
+        // list (MyJobOrders filters is_rexray=false), so counting them desyncs tile vs list.
+        supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false).in('status', ['submitted', 'processing', 'on_hold']),
         // `held` = a draft awaiting account approval (hidden from KTC until verified) — shown as "pending".
-        supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('status', 'held'),
-        supabase.from('job_orders').select('id', { count: 'exact', head: true })
+        supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false).eq('status', 'held'),
+        supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false)
           .or('status.eq.on_hold,and(status.eq.rejected,rejected_recoverable.eq.true),and(payment_status.eq.rejected,status.in.(submitted,processing,completed))'),
       ])
       setStats({ active: active ?? 0, pending: pending ?? 0, orderAttention: orderAttention ?? 0 })
