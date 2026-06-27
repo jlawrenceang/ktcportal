@@ -10,6 +10,15 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.67 — 2026-06-27 (Audit fixes: financial-integrity + notification + maker-checker holes)
+
+Fixes for high-severity findings from the whole-app audit (several introduced by the ADR-0035 overhaul):
+- **Walk-in payment bypassed the invoice gate** — `record_office_payment` now also requires the ERP + BIR invoice before confirming a base payment (migration **0178**); the **cashier station** can now record the invoice on a processing order with a pending proof (it was deadlocked after 0177).
+- **A cancelled release could be revived to "paid"** — `confirm_release_payment` now only confirms a `payable` release (0178).
+- **Staff-only internal notes pinged the customer** — `notify_jo_comment` skips `staff_only` comments (0178).
+- **Re-X-ray children leaked customer notifications + could be force-accepted** past the approve gate — status/serving notifications suppressed for re-X-ray; `staff_transition_order` + the Approve & process button block re-X-ray children (use Approve re-X-ray) (0178).
+- **Security-invariant gaps** — `guard_job_order_consignee_approved` (0169) + `complete_on_service_done` (0172) were definer trigger functions missing their EXECUTE revoke; both revoked (0178/**0179**). `check-security-invariants` is green again.
+
 ## v1.6.66 — 2026-06-27 (Follow-up: hide internal re-X-ray + un-billed charges from customers)
 
 - **Re-X-ray child orders** (internal KTC ops) are hidden from the customer's **My Job Orders** — no more phantom `JO-…A` submitted order.

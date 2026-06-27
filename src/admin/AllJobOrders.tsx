@@ -661,7 +661,7 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
 
     // Primary direct buttons (the 1–2 most important contextual actions).
     const primary: ReactNode[] = []
-    if (can('accept_orders') && (o.status === 'submitted' || o.status === 'on_hold')) {
+    if (can('accept_orders') && !o.is_rexray && (o.status === 'submitted' || o.status === 'on_hold')) {
       primary.push(
         <button key="accept" style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'processing', null)}>{t('Approve & process')}</button>
       )

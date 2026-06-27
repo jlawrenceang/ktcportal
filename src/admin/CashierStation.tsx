@@ -116,7 +116,10 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
 
   const toReview = orders.filter((o) => o.payment_status === 'submitted' || o.rps_payment_status === 'submitted')
   const toCollect = orders.filter((o) => o.status === 'processing' && (o.payment_status === 'unpaid' || o.payment_status === 'rejected'))
-  const toInvoice = orders.filter((o) => o.status === 'completed' && !o.service_invoice_no)
+  // Record the ERP invoice on a completed order, OR on a live order whose base proof is
+  // awaiting review — since 0177 the invoice must be on file BEFORE the base payment can
+  // be confirmed, so the cashier needs to record it here without leaving the station.
+  const toInvoice = orders.filter((o) => !o.service_invoice_no && (o.status === 'completed' || o.payment_status === 'submitted'))
   // Outstanding additional charges across all orders, flattened with JO identity.
   const supps: SuppRow[] = orders.flatMap((o) =>
     (o.supplements ?? [])
