@@ -40,7 +40,7 @@ export default function NeedHelp({
   if (!phone && !email) return null
 
   return (
-    <p className="ktc-label" style={{ margin: 0, fontSize: 12, lineHeight: 1.6, textAlign: align, ...style }}>
+    <p className="ktc-label" style={{ margin: 0, fontSize: 11.5, lineHeight: 1.6, textAlign: align, whiteSpace: 'nowrap', ...style }}>
       <span style={{ fontWeight: 600 }}>{t('Need help?')}</span>{' '}
       {phone && (
         <>

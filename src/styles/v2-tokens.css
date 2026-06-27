@@ -20,7 +20,7 @@
 
   /* glass materials — visionOS-style tiers (thin → thick) */
   --glass-thin: rgba(255, 255, 255, 0.42);
-  --glass: rgba(255, 255, 255, 0.6);
+  --glass: rgba(255, 255, 255, 0.7);
   --glass-thick: rgba(255, 255, 255, 0.78);
   --glass-brd: rgba(255, 255, 255, 0.62);
   --glass-brd-strong: rgba(255, 255, 255, 0.85);
@@ -86,7 +86,7 @@
   --line-soft: 220 10% 22%;
 
   --glass-thin: rgba(30, 34, 44, 0.42);
-  --glass: rgba(30, 34, 44, 0.62);
+  --glass: rgba(30, 34, 44, 0.72);
   --glass-thick: rgba(26, 30, 40, 0.84);
   --glass-brd: rgba(255, 255, 255, 0.10);
   --glass-brd-strong: rgba(255, 255, 255, 0.18);

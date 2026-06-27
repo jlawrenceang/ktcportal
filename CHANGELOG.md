@@ -10,6 +10,12 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.45 — 2026-06-27 (Sign-in declutter + glass + mobile letterhead fixes)
+
+- Removed the "Create an account to begin accreditation." box from the **sign-in** form (it's on the menu, and the "Create one" toggle is at the bottom).
+- Bumped `--glass` opacity (light `0.6 → 0.7`, dark `0.62 → 0.72`) so the cards read a bit more solid over the terminal photo (app-wide).
+- **Mobile letterhead:** logo no longer stretches (the stacked brand column was forcing it full-width — now `align-items: flex-start`); "Need help? … Email us" stays on one line (11.5px + `nowrap`); and the top photo band is tighter (`8vh → 3vh`) so the card sits higher.
+
 ## v1.6.44 — 2026-06-27 (Menu: Google moved up + centered; forms decluttered)
 
 - **"Continue with Google" now lives on the menu (`/`)** alongside Sign in / Create an account (with an "or" divider), and is **removed from the sign-in / create-account forms** — so the three ways in are all on the menu, centered as one group in the right column.

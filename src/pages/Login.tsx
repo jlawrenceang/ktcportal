@@ -281,12 +281,6 @@ export default function Login() {
           {isSignup ? t('Create account') : t('Sign in')}
         </h1>
 
-        {!isSignup && (
-          <div className="ktc-label" style={{ marginBottom: 22, fontSize: 12.5, lineHeight: 1.6, padding: '12px 14px', borderRadius: 11, background: 'var(--c-w50)', border: '1px solid var(--glass-brd)' }}>
-            {t('Create an account to begin accreditation.')}
-          </div>
-        )}
-
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 14 }}>
           {isSignup && (
             <div style={{ display: 'grid', gap: 6 }}>

@@ -1431,7 +1431,7 @@
   width: 100%;
   max-width: 620px;
   padding: 22px 26px 16px;
-  margin-top: 8vh;            /* mobile: clears a slim terminal-photo hero band up top */
+  margin-top: 3vh;            /* mobile: a slim terminal-photo band up top, kept tight */
 }
 .ktc-landing__top {
   display: flex;
@@ -1443,6 +1443,7 @@
 .ktc-brand {
   display: flex;
   flex-direction: column;   /* phone: stacked under the logo (the address is long) */
+  align-items: flex-start;  /* phone: don't stretch the logo to full width (distorts it) */
   gap: 8px;
   min-width: 0;
 }
