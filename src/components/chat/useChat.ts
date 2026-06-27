@@ -31,6 +31,7 @@ export interface ChatState {
   misses: number                             // consecutive free-text matcher misses
   inputError: string | null
   resultOptions: ChatOption[] | null         // options from the last action result
+  typing: boolean                            // Lara "is typing…" beat before a deterministic reply
   seq: number
 }
 
@@ -46,11 +47,12 @@ type Action =
   | { type: 'SET_PENDING'; category: TicketCategory | null }
   | { type: 'INPUT_ERROR'; error: string }
   | { type: 'BUSY'; busy: boolean }
+  | { type: 'TYPING'; typing: boolean }
 
 function initial(): ChatState {
   return {
     open: false, currentNodeId: 'root', messages: [], vars: {}, lastUserText: null,
-    pendingCategory: null, busy: false, misses: 0, inputError: null, resultOptions: null, seq: 0,
+    pendingCategory: null, busy: false, misses: 0, inputError: null, resultOptions: null, typing: false, seq: 0,
   }
 }
 
@@ -122,6 +124,7 @@ function reducer(state: ChatState, action: Action): ChatState {
     case 'SET_PENDING': return { ...state, pendingCategory: action.category }
     case 'INPUT_ERROR': return { ...state, inputError: action.error }
     case 'BUSY': return { ...state, busy: action.busy }
+    case 'TYPING': return { ...state, typing: action.typing }
     default: return state
   }
 }
@@ -161,6 +164,17 @@ export function useChat() {
     dispatch({ type: 'GOTO', id, misses: opts?.misses })
   }, [runAction])
 
+  // Show Lara "typing…" for a beat before a deterministic reply lands, so the chat
+  // feels conversational. Action nodes skip it — they show their own "Please wait…".
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const goToTyping = useCallback((id: NodeId, opts?: { misses?: number; vars?: Record<string, string> }) => {
+    const target = NODES[id]
+    if (!target || target.kind === 'action') { goTo(id, opts); return }
+    if (typingTimer.current) clearTimeout(typingTimer.current)
+    dispatch({ type: 'TYPING', typing: true })
+    typingTimer.current = setTimeout(() => { dispatch({ type: 'TYPING', typing: false }); goTo(id, opts) }, 1400)
+  }, [goTo])
+
   const open = useCallback(() => {
     dispatch({ type: 'OPEN' })
     if (stateRef.current.messages.length === 0) goTo('root')
@@ -180,8 +194,8 @@ export function useChat() {
     // feedback.*, vessel.add_input) set lastUserText right before navigating, so
     // they're unaffected.
     dispatch({ type: 'SET_LASTUSER', text: '' })
-    goTo(opt.to)
-  }, [goTo])
+    goToTyping(opt.to)
+  }, [goToTyping])
 
   // Always-on free-text input → matcher (or JO-number shortcut, or ticket).
   const submitText = useCallback((raw: string) => {
@@ -191,21 +205,21 @@ export function useChat() {
     dispatch({ type: 'SET_LASTUSER', text })
     if (JO_RE.test(text)) {
       dispatch({ type: 'SET_VAR', key: 'jo', value: text })
-      goTo('track.run', { vars: { ...stateRef.current.vars, jo: text } })  // fresh — not yet in state
+      goToTyping('track.run', { vars: { ...stateRef.current.vars, jo: text } })  // fresh — not yet in state
       return
     }
     const hit = matchText(text)
     if (hit) {
       dispatch({ type: 'SET_PENDING', category: hit.category })
-      goTo(hit.to)
+      goToTyping(hit.to)
       return
     }
     // Miss — two-strike rule: 2nd consecutive miss offers a ticket straight away.
     const nextMiss = stateRef.current.misses + 1
     dispatch({ type: 'SET_PENDING', category: null })
-    if (nextMiss >= 2) goTo('ticket.fromHere', { misses: 0 })
-    else goTo('nomatch', { misses: 1 })
-  }, [goTo])
+    if (nextMiss >= 2) goToTyping('ticket.fromHere', { misses: 0 })
+    else goToTyping('nomatch', { misses: 1 })
+  }, [goToTyping])
 
   // The current input node captured a line.
   const submitInput = useCallback((raw: string) => {
@@ -218,8 +232,8 @@ export function useChat() {
     dispatch({ type: 'PUSH_USER', text: raw.trim(), literal: true })
     dispatch({ type: 'SET_VAR', key: node.storeAs, value: res.value })
     dispatch({ type: 'SET_LASTUSER', text: res.value })
-    goTo(node.next, { vars: { ...stateRef.current.vars, [node.storeAs]: res.value } })  // fresh
-  }, [goTo])
+    goToTyping(node.next, { vars: { ...stateRef.current.vars, [node.storeAs]: res.value } })  // fresh
+  }, [goToTyping])
 
   // On a ticket node, free-typed text becomes the ticket BODY (not a matcher run) —
   // so details a customer types before tapping "Create" aren't lost or misrouted.

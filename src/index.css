@@ -1235,9 +1235,24 @@
     padding: 24px;
   }
   .ktc-loader-logo {
+    position: relative;
+    width: 168px;
     height: 56px;
-    width: auto;
-    animation: ktc-loader-pulse 1.8s var(--ease-spring) infinite;
+    -webkit-mask: url(/ktc-logo.png) center / contain no-repeat;
+    mask: url(/ktc-logo.png) center / contain no-repeat;
+    background: hsl(var(--ink) / 0.15);   /* the faint, un-filled logo */
+  }
+  .ktc-loader-logo-fill {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, var(--acc), var(--acc-2));
+    transform-origin: bottom;
+    animation: ktc-logofill 1.6s var(--ease-spring) infinite;   /* fills the logo with colour, bottom→top */
+  }
+  @keyframes ktc-logofill {
+    0% { transform: scaleY(0); }
+    55% { transform: scaleY(1); }
+    100% { transform: scaleY(0); }
   }
   .ktc-loader-bar {
     position: relative;
@@ -1281,9 +1296,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .ktc-loader-logo,
-    .ktc-loader-bar > span { animation: none; }
-    .ktc-loader-bar > span { left: 0; width: 100%; opacity: 0.55; }
+    .ktc-loader-logo-fill { animation: none; transform: scaleY(0.55); }
     .ktc-route { animation: none; }
   }
 }
@@ -1592,6 +1605,23 @@
 .ktc-walkthrough-card-play {
   flex: 0 0 auto; width: 40px; height: 40px; border-radius: 999px; display: grid; place-items: center;
   color: #fff; background: linear-gradient(135deg, var(--acc), var(--acc-2));
+}
+
+/* Lara "typing…" indicator — three bouncing dots. */
+.ktc-chat-typing {
+  display: inline-flex; gap: 4px; align-items: center;
+  padding: 10px 13px; border-radius: 13px;
+  background: var(--c-w60); border: 1px solid var(--glass-brd);
+}
+.ktc-chat-typing > span {
+  width: 6px; height: 6px; border-radius: 999px; background: hsl(var(--ink-3));
+  animation: ktc-typing-dot 1.2s infinite ease-in-out;
+}
+.ktc-chat-typing > span:nth-child(2) { animation-delay: 0.15s; }
+.ktc-chat-typing > span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes ktc-typing-dot {
+  0%, 65%, 100% { opacity: 0.3; transform: translateY(0); }
+  32% { opacity: 1; transform: translateY(-3px); }
 }
 .ktc-landing__cta {
   display: flex;

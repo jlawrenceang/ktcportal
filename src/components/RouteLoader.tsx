@@ -8,8 +8,7 @@ export default function RouteLoader() {
   const { t } = useT()
   return (
     <div className="ktc-loader" role="status" aria-live="polite">
-      <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" className="ktc-loader-logo" />
-      <div className="ktc-loader-bar" aria-hidden="true"><span /></div>
+      <div className="ktc-loader-logo" aria-hidden="true"><span className="ktc-loader-logo-fill" /></div>
       <span className="ktc-loader-text ktc-label">{t('Loading…')}</span>
     </div>
   )

@@ -10,6 +10,12 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.51 — 2026-06-27 (Lara gets a face + typing; branded logo-fill loader)
+
+- **Lara avatar:** the chat launcher + header now show a friendly young-woman face (SVG generated with codex/GPT, theme-coloured) instead of the generic 💬 chat bubble — she reads as a person, not a box.
+- **Lara typing:** a "typing…" indicator (three bouncing dots) shows for ~1.4s before each deterministic reply, so the chat feels conversational. Action replies still show their own "Please wait…".
+- **Loader:** the route loader is now the **KTC logo filling with colour** bottom-to-top (a CSS mask of the logo with a rising accent fill) — replaces the separate progress bar.
+
 ## v1.6.50 — 2026-06-27 (Home cleanup + walkthrough video into the Quick tour, now MP4)
 
 - **Home:** removed the yard photo banner; the welcome tile is now a proper **opaque glass tile** (was 35% transparent — content was washed out).

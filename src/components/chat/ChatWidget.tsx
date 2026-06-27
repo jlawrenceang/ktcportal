@@ -10,6 +10,7 @@ import { useT } from '../../lib/i18n'
 import { useChat, type ChatMsg } from './useChat'
 import { NODES } from './nodes'
 import type { ChatNode, ChatOption } from './types'
+import LaraAvatar from '../LaraAvatar'
 
 // Clear the floating bottom tab-bar (sits at bottom:16px, ~64px tall).
 const FAB_BOTTOM = 'calc(88px + env(safe-area-inset-bottom, 0px))'
@@ -48,7 +49,7 @@ export default function ChatWidget() {
   useEffect(() => {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
-  }, [state.messages, state.open, state.busy, state.resultOptions])
+  }, [state.messages, state.open, state.busy, state.resultOptions, state.typing])
 
   const node: ChatNode | undefined = NODES[state.currentNodeId]
   const isInput = node?.kind === 'input'
@@ -64,7 +65,7 @@ export default function ChatWidget() {
   function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     const text = draft
-    if (!text.trim() || state.busy) return
+    if (!text.trim() || state.busy || state.typing) return
     setDraft('')
     if (isInput) submitInput(text)
     else if (node?.kind === 'ticket') submitTicketText(text)  // typed details → the ticket body
@@ -101,6 +102,7 @@ export default function ChatWidget() {
   // ── The interactive controls for the current node ─────────────────────────
   function Controls() {
     if (!node) return null
+    if (state.typing) return null
     if (state.busy) {
       return <div className="ktc-label" style={{ fontSize: 12.5, padding: '4px 2px' }}>{t('Please wait…')}</div>
     }
@@ -165,9 +167,9 @@ export default function ChatWidget() {
             width: 56, height: 56, borderRadius: 999, border: '1px solid var(--glass-brd)', cursor: 'pointer',
             background: 'linear-gradient(135deg, var(--acc), var(--acc-2))', color: '#fff',
             boxShadow: 'var(--shadow-lg), 0 10px 26px -8px rgb(var(--acc-rgb) / 0.5)',
-            display: 'grid', placeItems: 'center', fontSize: 24,
+            display: 'grid', placeItems: 'center',
           }}>
-          <span aria-hidden>💬</span>
+          <LaraAvatar size={30} />
           {pulse && (
             <span aria-hidden style={{
               position: 'absolute', top: 8, right: 9, width: 11, height: 11, borderRadius: 999,
@@ -191,8 +193,8 @@ export default function ChatWidget() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderBottom: '1px solid var(--glass-brd)' }}>
             <span aria-hidden style={{
               width: 32, height: 32, borderRadius: 999, flex: '0 0 auto', display: 'grid', placeItems: 'center',
-              background: 'linear-gradient(135deg, var(--acc), var(--acc-2))', color: '#fff', fontSize: 16,
-            }}>💬</span>
+              background: 'linear-gradient(135deg, var(--acc), var(--acc-2))', color: '#fff',
+            }}><LaraAvatar size={20} /></span>
             <span style={{ minWidth: 0 }}>
               <b style={{ fontSize: 14, display: 'block' }}>{t('Lara')}</b>
               <span className="ktc-label" style={{ fontSize: 11 }}>{t('KTC Assistant')}</span>
@@ -219,6 +221,11 @@ export default function ChatWidget() {
               </div>
             ))}
 
+            {state.typing && (
+              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                <div className="ktc-chat-typing" aria-hidden><span /><span /><span /></div>
+              </div>
+            )}
             {/* Live controls for the current node */}
             <div style={{ marginTop: 2 }}><Controls /></div>
 
@@ -230,9 +237,9 @@ export default function ChatWidget() {
           {/* Composer — always-on; runs the matcher, or the current input node */}
           <form onSubmit={onSubmit} style={{ display: 'flex', gap: 8, padding: '10px 12px', borderTop: '1px solid var(--glass-brd)' }}>
             <input ref={composerRef} className="ktc-input" value={draft} onChange={(e) => setDraft(e.target.value)}
-              placeholder={placeholder} aria-label={t('Type a message')} disabled={state.busy}
+              placeholder={placeholder} aria-label={t('Type a message')} disabled={state.busy || state.typing}
               style={{ flex: 1, minWidth: 0 }} />
-            <button type="submit" className="ktc-btn ktc-btn--sm" disabled={state.busy || !draft.trim()}
+            <button type="submit" className="ktc-btn ktc-btn--sm" disabled={state.busy || state.typing || !draft.trim()}
               style={{ flex: '0 0 auto' }}>{
                 isInput && node?.kind === 'input' ? t(node.submitLabel)
                 : node?.kind === 'ticket' ? t('Add')
