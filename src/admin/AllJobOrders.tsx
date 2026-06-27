@@ -62,7 +62,7 @@ const DotsGlyph = ({ size = 16 }: { size?: number }) => (
 )
 
 const SELECT =
-  'id, jo_number, entry_number, consignee_id, vessel_name, voyage_number, vessel_visit, status, priority_status, is_rexray, rexray_status, rexray_billable, parent_job_order_id, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, rps_status, rps_payment_status, rps_payment_proof_path, rps_payment_submitted_at, completed_at, archived_at, created_at, last_customer_edit_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at), supplements:jo_supplements(id, suffix, label, amount, payment_status, payment_proof_path, payment_submitted_at, payment_note, created_at)'
+  'id, jo_number, entry_number, consignee_id, vessel_name, voyage_number, vessel_visit, status, priority_status, is_rexray, rexray_status, rexray_billable, parent_job_order_id, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, rps_status, rps_payment_status, rps_payment_proof_path, rps_payment_submitted_at, completed_at, archived_at, created_at, last_customer_edit_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at), supplements:jo_supplements(id, suffix, label, amount, bill_status, payment_status, payment_proof_path, payment_submitted_at, payment_note, created_at)'
 
 // Lines this order needs, with their per-service completion state (G1).
 function serviceProgress(o: JobOrder): { line: ServiceLine; done: boolean }[] {
@@ -450,14 +450,29 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
   }
 
   async function addCharge() {
-    if (!charge || !chargeLabel.trim() || !(Number(chargeAmount) > 0)) return
+    if (!charge || !chargeLabel.trim()) return
+    const canBill = can('bill_supplement')   // cashier/admin bill directly; ops only requests
+    if (canBill && !(Number(chargeAmount) > 0)) return
     setBusyId(charge.id)
-    const { error } = await supabase.rpc('add_supplement', {
-      p_jo: charge.id, p_label: chargeLabel.trim(), p_amount: Number(chargeAmount),
-    })
+    const { error } = canBill
+      ? await supabase.rpc('add_supplement', { p_jo: charge.id, p_label: chargeLabel.trim(), p_amount: Number(chargeAmount) })
+      : await supabase.rpc('request_supplement', { p_jo: charge.id, p_label: chargeLabel.trim() })
     setBusyId(null)
     if (error) { alert(error.message); return }
     setCharge(null); setChargeLabel(''); setChargeAmount(''); setChargeTypeId('')
+    await load()
+  }
+
+  // Bill a requested charge (cashier): set its amount → it becomes a payable.
+  async function billSupplement(s: { id: string; label: string }, joId: string) {
+    const a = window.prompt(t('Amount (₱) to bill — {label}', { label: s.label }), '')
+    if (a === null) return
+    const amount = Number(a)
+    if (!(amount > 0)) { alert(t('Enter an amount greater than zero.')); return }
+    setBusyId(joId)
+    const { error } = await supabase.rpc('bill_supplement', { p_id: s.id, p_amount: amount })
+    setBusyId(null)
+    if (error) { alert(error.message); return }
     await load()
   }
 
@@ -758,7 +773,7 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
     }
 
     // ERP Service-Invoice recording.
-    if (can('record_invoice') && o.status === 'completed' && !o.service_invoice_no) {
+    if (can('record_invoice') && !['cancelled', 'rejected', 'held'].includes(o.status) && !o.service_invoice_no) {
       if (invoiceId === o.id) {
         menu.push(
           <span key="inv-form" style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -792,11 +807,11 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
       }
     }
 
-    if (can('process_job_orders') && !['cancelled', 'rejected', 'held'].includes(o.status)) {
+    if ((can('request_supplement') || can('bill_supplement')) && !['cancelled', 'rejected', 'held'].includes(o.status)) {
       menu.push(
         <button key="add-charge" style={btn('ghost')} disabled={isBusy} onClick={() => openCharge(o)}
           title={t('Tag an additional charge (JO-…-A/B/C) — the customer settles it before the order can complete')}>
-          ＋ {t('Add charge')}
+          ＋ {can('bill_supplement') ? t('Add charge') : t('Request charge')}
         </button>
       )
     }
@@ -854,18 +869,20 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
         {o.supplements && o.supplements.length > 0 && (
           <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
             {o.supplements.map((s) => {
-              const tone = s.payment_status === 'confirmed' ? 'ktc-chip--success'
+              const requested = s.bill_status === 'requested'
+              const tone = requested ? '' : s.payment_status === 'confirmed' ? 'ktc-chip--success'
                 : s.payment_status === 'submitted' ? 'ktc-chip--warning'
                 : s.payment_status === 'rejected' ? 'ktc-chip--danger' : ''
-              const label = s.payment_status === 'confirmed' ? t('paid')
+              const label = requested ? t('requested') : s.payment_status === 'confirmed' ? t('paid')
                 : s.payment_status === 'submitted' ? t('proof to review')
                 : s.payment_status === 'rejected' ? t('rejected') : t('unpaid')
               return (
                 <div key={s.id} style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', fontSize: 12.5, padding: '6px 10px', borderRadius: 9, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
                   <b className="ktc-mono">{o.jo_number ?? '—'}-{s.suffix}</b>
                   <span>{s.label}</span>
-                  <span className="ktc-mono" style={{ fontWeight: 600 }}>{peso(s.amount)}</span>
+                  <span className="ktc-mono" style={{ fontWeight: 600 }}>{requested ? '—' : peso(s.amount)}</span>
                   <span className={`ktc-chip ${tone}`} style={{ marginLeft: 'auto' }}>{label}</span>
+                  {requested && can('bill_supplement') && <button type="button" className="ktc-link" style={{ fontSize: 12 }} onClick={() => void billSupplement(s, o.id)}>{t('Bill')}</button>}
                 </div>
               )
             })}
@@ -1109,11 +1126,13 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
                 <input className="ktc-input" value={chargeLabel} autoFocus placeholder={t('What is the charge for? (e.g. Extra X-ray container)')}
                   onChange={(e) => setChargeLabel(e.target.value)} style={{ fontSize: 13.5 }} />
               )}
-              <input className="ktc-input ktc-mono" value={chargeAmount} inputMode="decimal" placeholder={t('Amount (₱)')}
-                onChange={(e) => setChargeAmount(e.target.value.replace(/[^0-9.]/g, ''))} style={{ fontSize: 13.5 }} />
+              {can('bill_supplement') && (
+                <input className="ktc-input ktc-mono" value={chargeAmount} inputMode="decimal" placeholder={t('Amount (₱)')}
+                  onChange={(e) => setChargeAmount(e.target.value.replace(/[^0-9.]/g, ''))} style={{ fontSize: 13.5 }} />
+              )}
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
-              <button style={btn('solid')} disabled={!!busyId || !chargeLabel.trim() || !(Number(chargeAmount) > 0)} onClick={() => void addCharge()}>{busyId ? t('Adding…') : t('Add charge')}</button>
+              <button style={btn('solid')} disabled={!!busyId || !chargeLabel.trim() || (can('bill_supplement') && !(Number(chargeAmount) > 0))} onClick={() => void addCharge()}>{busyId ? t('Saving…') : can('bill_supplement') ? t('Add charge') : t('Request charge')}</button>
               <button type="button" className="ktc-link" onClick={() => setCharge(null)}>{t('Cancel')}</button>
             </div>
           </div>

@@ -101,6 +101,7 @@ export interface ServiceCompletion {
  *  with its own payment proof + confirm. Every supplement must be paid before
  *  the order can complete (0101). */
 export interface JoSupplement {
+  bill_status?: 'requested' | 'billed'
   id: string
   job_order_id?: string
   suffix: string

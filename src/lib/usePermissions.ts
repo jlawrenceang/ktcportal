@@ -26,6 +26,8 @@ export type Permission =
   | 'approve_priority'
   | 'request_rexray'
   | 'approve_rexray'
+  | 'request_supplement'
+  | 'bill_supplement'
 
 /**
  * UI mirror of the owner-tweakable role gates (role_permissions, migration
