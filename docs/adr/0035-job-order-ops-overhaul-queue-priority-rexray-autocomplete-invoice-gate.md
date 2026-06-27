@@ -26,7 +26,7 @@ Mapping the admin job-order controls surfaced gaps between how ops actually run 
 
 Chosen option: **phased overhaul**, built and shipped in seven phases:
 
-1. **Roles** — CSR gains `accept_orders` + `hold_reject_orders` (Approve & process / Hold / Reject), alongside admin + operations.
+1. **Roles (separation of duties)** — order approval (`accept_orders` / `hold_reject_orders`) stays with **operations + admin**; **CSR** is intake + comms only (file on behalf, support, consignee review, release-doc verify); **cashier** is trimmed to its money lane (`review_payments` + `record_invoice`). *(Revised after the role-permission review: a CSR could file-on-behalf and approve — a maker-checker gap; cashier reached outside money. Migrations 0170 → 0171.)*
 2. **Auto-complete** — an order self-completes the moment both gates pass (all services done + base payment confirmed + RPS settled); the manual "Mark completed" button retires.
 3. **Queue auto-lifecycle** — active line = `submitted` / `processing`; `on_hold` / `rejected` / `cancelled` / `completed` vacate the serving number (→ 0, off the board); returning to the line gets a NEW number at the tail (never the old one). The manual `restore_serving_number` retires.
 4. **Priority lane** — a separate numbering lane (`P-n`) served fully ahead of the regular queue; **requested by CS / operations → approved by admin**; the checker strikes items off as served.
