@@ -188,6 +188,9 @@ export default function Consignees() {
     e.preventDefault()
     const n = name.trim()
     if (n.length < MIN_NAME) { setError(t('Name must be at least {n} characters.', { n: MIN_NAME })); return }
+    if (!address.trim()) { setError(t('Business address is required.')); return }
+    if (!tin.trim()) { setError(t('TIN / VAT Reg # is required.')); return }
+    if (!doc) { setError(t('Attach the BIR 2303 (Certificate of Registration).')); return }
     setBusy(true); setError(null); setNotice(null)
     try {
       const row: { name: string; code?: string; address?: string; tin?: string } = { name: n }
@@ -214,15 +217,16 @@ export default function Consignees() {
   // filled in later (0120 dropped the address/TIN/2303 pre-approval requirement).
   async function approveAllPending() {
     if (pendingCount === 0) return
-    if (!window.confirm(t('Approve all {n} pending consignees? They become visible to customers in job orders. You can still edit details afterwards.', { n: pendingCount }))) return
+    if (!window.confirm(t('Approve all complete pending consignees? Incomplete ones (missing address, TIN, or 2303) are skipped — they can’t be approved until completed.'))) return
     setBusy(true); setError(null); setNotice(null)
-    const { error } = await supabase.from('consignees')
+    const { data, error } = await supabase.from('consignees')
       .update({ status: 'approved', decided_at: new Date().toISOString() })
       .eq('status', 'pending')
+      .not('address', 'is', null).not('tin', 'is', null).not('doc_2303_path', 'is', null)
+      .select('id')
     setBusy(false)
     if (error) return setError(friendly(error, t))
-    setNotice(t('Approved {n} pending consignee(s).', { n: pendingCount }))
-    setPendingCount(0)
+    setNotice(t('Approved {n} pending consignee(s).', { n: (data ?? []).length }))
     await load()
   }
 
@@ -277,7 +281,7 @@ export default function Consignees() {
       <div className="ktc-glass" style={{ padding: 18, marginBottom: 16 }}>
         <h1 className="ktc-title" style={{ fontSize: 18 }}>{t('Consignees')}</h1>
         <p className="ktc-sub" style={{ marginBottom: 14, fontSize: 12 }}>
-          {t('Added consignees are')} <b>{t('pending')}</b> {t('and become visible to customers once approved. Address, TIN, and the 2303 can be filled in later — they’re no longer required to approve.')}
+          {t('Added consignees are')} <b>{t('pending')}</b> {t('and become visible to customers once approved. A business address, TIN, and the BIR 2303 are required before a consignee can be approved.')}
         </p>
 
         {canManage && (
@@ -290,9 +294,9 @@ export default function Consignees() {
             <form onSubmit={addOne} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
               <Field label={t('Consignee name *')} w={200}><input className="ktc-input ktc-input--compact" value={name} onChange={(e) => setName(e.target.value)} required minLength={MIN_NAME} /></Field>
               <Field label={t('Code (optional)')} w={110}><input className="ktc-input ktc-input--compact" value={code} onChange={(e) => setCode(e.target.value)} placeholder={t('auto')} /></Field>
-              <Field label={t('Address')} w={230}><input className="ktc-input ktc-input--compact" value={address} onChange={(e) => setAddress(e.target.value)} /></Field>
-              <Field label={t('TIN')} w={140}><input className="ktc-input ktc-input--compact" value={tin} onChange={(e) => setTin(e.target.value)} /></Field>
-              <Field label={t('2303 document')} w={190}><input ref={docRef} className="ktc-input ktc-input--compact" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc(e.target.files?.[0] ?? null)} style={{ padding: '6px 10px' }} /></Field>
+              <Field label={t('Address *')} w={230}><input className="ktc-input ktc-input--compact" value={address} onChange={(e) => setAddress(e.target.value)} required /></Field>
+              <Field label={t('TIN *')} w={140}><input className="ktc-input ktc-input--compact" value={tin} onChange={(e) => setTin(e.target.value)} required /></Field>
+              <Field label={t('2303 document *')} w={190}><input ref={docRef} className="ktc-input ktc-input--compact" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc(e.target.files?.[0] ?? null)} style={{ padding: '6px 10px' }} /></Field>
               <button className="ktc-btn ktc-btn--sm" type="submit" disabled={busy} style={{ width: 'auto', padding: '8px 16px', fontSize: 13 }}>{t('Add consignee')}</button>
             </form>
           </>
