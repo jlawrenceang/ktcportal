@@ -29,10 +29,7 @@ export default function JobOrder() {
   // Consignee picker — searchable typeahead over the full master list.
   // (No per-broker accreditation gate: any registered broker can pick any consignee.)
   const [consignee, setConsignee] = useState<PickerItem | null>(null)
-  // True when the chosen consignee is one the customer just requested (pending
-  // KTC approval) — drives the "needs approval" tag. Reset when they pick another.
-  const [consigneePending, setConsigneePending] = useState(false)
-  function pickConsignee(item: PickerItem | null) { setConsignee(item); setConsigneePending(false) }
+  function pickConsignee(item: PickerItem | null) { setConsignee(item) }
   const [entryNumber, setEntryNumber] = useState('')
   const [lines, setLines] = useState<LineDraft[]>([emptyLine()])
   const [busy, setBusy] = useState(false)
@@ -153,12 +150,7 @@ export default function JobOrder() {
               search={searchConsignees}
               minChars={1}
             />
-            <ConsigneeRequestForm onCreated={(item) => { setConsignee(item); setConsigneePending(true) }} />
-            {consigneePending && (
-              <div style={{ fontSize: 12.5, lineHeight: 1.5, padding: '9px 11px', borderRadius: 10, background: 'var(--c-h40-90-94)', border: '1px solid var(--c-h35-85-82)', color: 'var(--c-h30-60-32)' }}>
-                {t('New consignee — pending KTC approval. You can still file; KTC will verify it.')}
-              </div>
-            )}
+            <ConsigneeRequestForm />
           </div>
           <div style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
             <label className="ktc-label" htmlFor="entry">{t('Entry Number')} *</label>

@@ -7,7 +7,7 @@ import { useFileViewer } from '../components/FileViewerModal'
 import { cisPrintUrl } from '../lib/cis'
 import { usePermissions } from '../lib/usePermissions'
 import { useT } from '../lib/i18n'
-import { AlertTriangleIcon } from '../components/icons'
+import { AlertTriangleIcon, CheckCircleIcon } from '../components/icons'
 
 function parseCsv(text: string): string[][] {
   const rows: string[][] = []
@@ -57,7 +57,7 @@ function friendly(err: unknown, t: (k: string, vars?: Record<string, string | nu
 
 const MIN_NAME = 2
 const PAGE = 200
-type Filter = 'all' | AccreditationStatus
+type Filter = 'all' | 'needs_docs' | AccreditationStatus
 
 const STATUS_STYLE: Record<AccreditationStatus, { bg: string; fg: string }> = {
   pending: { bg: 'var(--c-h40-90-94)', fg: 'var(--c-h35-80-38)' },
@@ -124,7 +124,8 @@ export default function Consignees() {
       .order('code')
       .range(page * PAGE, page * PAGE + PAGE - 1)
     if (s) req = req.or(`name.ilike.*${s}*,code.ilike.*${s}*,address.ilike.*${s}*`)
-    if (filter !== 'all') req = req.eq('status', filter)
+    if (filter === 'needs_docs') req = req.is('doc_2303_path', null)
+    else if (filter !== 'all') req = req.eq('status', filter)
     const { data, count, error } = await req
     if (error) setError(error.message)
     else { setList((data ?? []) as Consignee[]); setTotal(count ?? 0) }
@@ -306,6 +307,7 @@ export default function Consignees() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
           <select className="ktc-input ktc-input--compact" value={filter} onChange={(e) => changeFilter(e.target.value as Filter)}>
             <option value="all">{t('All')}</option>
+            <option value="needs_docs">{t('Needs documents')}</option>
             <option value="pending">{t('Pending')}</option>
             <option value="needs_info">{t('Needs info')}</option>
             <option value="approved">{t('Approved')}</option>
@@ -350,6 +352,9 @@ export default function Consignees() {
                       <span style={{ fontSize: 13.5, overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</span>
                     </span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
+                      <span className="ktc-label" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4, color: c.doc_2303_path ? 'var(--c-h150-60-30)' : 'var(--c-h30-70-38)' }}>
+                        {c.doc_2303_path ? <><CheckCircleIcon size={11} /> {t('2303 on file')}</> : <><AlertTriangleIcon size={11} /> {t('needs documents')}</>}
+                      </span>
                       {c.requested_by && <span className="ktc-chip ktc-chip--accent" style={{ fontSize: 10 }}>{t('customer-requested')}</span>}
                       {!complete && c.status !== 'approved' && <span className="ktc-label" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--c-h30-70-38)' }}><AlertTriangleIcon size={11} /> {t('needs address/TIN/2303')}</span>}
                       {c.tin && <span className="ktc-label" style={{ fontSize: 11 }}>{t('TIN')} {c.tin}</span>}

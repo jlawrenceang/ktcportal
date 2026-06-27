@@ -14,6 +14,7 @@ export async function searchConsignees(q: string): Promise<PickerItem[]> {
   const { data } = await supabase
     .from('consignees')
     .select('id, code, name, doc_2303_path')
+    .eq('status', 'approved')   // GATE: only KTC-approved consignees can be used to file (no pending/limbo)
     .or(`code.ilike.%${s}%,name.ilike.%${s}%`)
     .order('code')
     .limit(40)
