@@ -102,6 +102,10 @@ export default function MarkdownDoc({ body }: { body: string }) {
           <MarkdownBody body={body} />
         </div>
       </ProtectedDoc>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 22 }}>
+        <button className="ktc-link" onClick={() => navigate(-1)}>← Back</button>
+        <button className="ktc-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>↑ Back to top</button>
+      </div>
     </div>
   )
 }
