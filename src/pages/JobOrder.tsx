@@ -50,9 +50,6 @@ export default function JobOrder() {
       .then(({ data }) => setVessels((data ?? []) as VesselOpt[]))
   }, [])
 
-  const approved = broker?.status === 'approved'
-  const hasId = !!broker?.valid_id_path
-
   // Per-step validation (used to gate Next on mobile; the full re-check still
   // runs in submit()). Step 1 needs a consignee AND the entry (C-) number.
   function step1Error() {
@@ -124,15 +121,6 @@ export default function JobOrder() {
     // Redirect to the orders list (no auto-open — the new order shows at the top).
     navigate('/job-orders')
   }
-
-  const pendingNotice = !approved ? (
-    <div style={{ fontSize: 13, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, marginTop: 14, background: 'var(--c-h40-90-97)', border: '1px solid var(--c-h35-85-82)', color: 'var(--c-h30-60-32)' }}>
-      {t('You can file job orders now, but they')}{' '}<b>{t('can’t be processed until you pass final verification')}</b>.{' '}
-      {hasId
-        ? t('Your valid ID is on file — a KTC admin is verifying your account. Once approved, your held orders are sent to KTC automatically.')
-        : t('Upload your valid ID for final verification (banner above); once a KTC admin approves you, your held orders are sent automatically.')}
-    </div>
-  ) : null
 
   const wizardSteps: WizardStep[] = [
     {
@@ -208,8 +196,7 @@ export default function JobOrder() {
           onSubmit={openReview}
           busy={busy}
           error={error}
-          footer={pendingNotice}
-          submitLabel={busy ? (approved ? t('Submitting…') : t('Filing…')) : approved ? t('Submit Job Order') : t('File Job Order')}
+          submitLabel={busy ? t('Submitting…') : t('Submit Job Order')}
         />
       </div>
 
@@ -239,7 +226,7 @@ export default function JobOrder() {
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '14px 20px', borderTop: '1px solid var(--glass-brd)' }}>
               <button type="button" className="ktc-btn" disabled={busy} onClick={() => { setReviewing(false); void submit() }} style={{ width: 'auto', padding: '10px 18px' }}>
-                {approved ? t('Confirm & submit') : t('Confirm & file')}
+                {t('Confirm & submit')}
               </button>
               <button type="button" className="ktc-link" disabled={busy} onClick={() => setReviewing(false)}>{t('← Go back & edit')}</button>
             </div>
