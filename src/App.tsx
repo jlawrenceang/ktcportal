@@ -10,10 +10,11 @@ import SessionSupersededOverlay from './components/SessionSupersededOverlay'
 import ServerBusyBanner from './components/ServerBusyBanner'
 import RouteLoader from './components/RouteLoader'
 import HeroSlideshow from './components/HeroSlideshow'
+import PublicShell from './components/PublicShell'
+import AuthRail from './components/AuthRail'
 import { useBroker } from './lib/useBroker'
 import { hasAdminAccess } from './lib/types'
 import Login from './pages/Login'
-import Landing from './pages/Landing'
 import Confirmed from './pages/Confirmed'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
@@ -82,12 +83,13 @@ function RoleLanding() {
   return <Home />
 }
 
-// Root route: a signed-out visitor sees the public Landing; a signed-in session
-// goes straight to its role landing (no landing detour, no forced accept gate).
+// Root route: a signed-out visitor sees the public access rail (rendered inside the
+// shared PublicShell's Outlet); a signed-in session goes straight to its role landing
+// (no landing detour, no forced accept gate).
 function RootGate() {
   const { session, loading } = useAuth()
   if (loading) return <RouteLoader />
-  if (!session) return <Landing />
+  if (!session) return <AuthRail />
   return <Protected><RoleLanding /></Protected>
 }
 
@@ -102,6 +104,10 @@ function RouteFade({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
+    // The shared public pages ("/", "/login", "/register") fade their own right column
+    // (PublicShell's .ktc-public-swap) — skip the app-level fade so the persistent card
+    // chrome doesn't re-fade on navigation between them.
+    if (pathname === '/' || pathname === '/login' || pathname === '/register') return
     const el = ref.current
     if (!el) return
     el.classList.remove('ktc-route')
@@ -139,9 +145,16 @@ export default function App() {
         <Suspense fallback={<RouteLoader />}>
         <RouteFade>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          {/* Walk-in QR target — opens Login straight in sign-up mode */}
-          <Route path="/register" element={<Login />} />
+          {/* Shared public shell: the landing ("/"), sign-in ("/login"), and create-account
+              ("/register") render the SAME card — top letterhead, left intro+services, and
+              footer persist (rendered once in PublicShell); only the right column (the routed
+              Outlet) swaps between the access buttons and the auth form. */}
+          <Route element={<PublicShell />}>
+            <Route path="/" element={<RootGate />} />
+            <Route path="/login" element={<Login />} />
+            {/* Walk-in QR target — opens Login straight in sign-up mode */}
+            <Route path="/register" element={<Login />} />
+          </Route>
           <Route path="/confirmed" element={<Confirmed />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
@@ -155,7 +168,6 @@ export default function App() {
           <Route path="/privacy" element={<Navigate to="/agreement" replace />} />
 
           {/* Broker portal */}
-          <Route path="/" element={<RootGate />} />
           <Route path="/account" element={<Protected><Account /></Protected>} />
           <Route path="/verify-id" element={<Protected><VerifyId /></Protected>} />
           <Route path="/job-order" element={<Protected><JobOrder /></Protected>} />

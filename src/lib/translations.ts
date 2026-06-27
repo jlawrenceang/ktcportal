@@ -1844,4 +1844,5 @@ export const tl: Record<string, string> = {
   "Email us": "Mag-email sa amin",
   "Secure": "Ligtas",
   "SSL-encrypted": "Naka-encrypt (SSL)",
+  "← Back to menu": "← Bumalik sa menu",
 }

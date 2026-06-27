@@ -4,12 +4,9 @@ import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
 import { AGREEMENT_VERSION, AGREEMENT_VERSION_LABEL, AGREEMENT_BODY } from '../content/legal'
-import { VERSION_LABEL, VERSION_FULL } from '../version'
 import { MarkdownBody } from '../components/MarkdownDoc'
 import Notice from '../components/Notice'
-import LangToggle from '../components/LangToggle'
 import PasswordInput from '../components/PasswordInput'
-import PublicBrand from '../components/PublicBrand'
 import PasswordStrength from '../components/PasswordStrength'
 import { passwordIssue } from '../lib/validation'
 import { useT } from '../lib/i18n'
@@ -262,23 +259,16 @@ export default function Login() {
 
 
   return (
-    <div style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24 }}>
-      {/* The terminal-photo backdrop is rendered once at the app level (PublicBackdrop)
-          so it persists from the landing into sign-in / create-account. */}
-      <div className="ktc-glass ktc-rise ktc-auth">
-        {/* Spanning top letterhead (mirrors the landing) + a 2-column body. The left intro
-            stays static; only the right form changes between Sign in / Create account. */}
-        <div className="ktc-auth__top">
-          <PublicBrand logoHeight={50} />
-          <LangToggle />
-        </div>
-        <aside className="ktc-auth__brand">
-          <h2 className="ktc-auth__brand-title">{t('KTC Online Portal')}</h2>
-          <p className="ktc-auth__brand-lede">
-            {t('The online service desk of KTC Container Terminal Corp. — file and track your terminal and port-services work.')}
-          </p>
-        </aside>
-        <div className="ktc-auth__panel">
+    <>
+      {/* Just the form column — PublicShell renders the shared letterhead, the left
+          intro + services, the footer, and the .ktc-landing__access wrapper. Only this
+          right column changes between Sign in / Create account; the backdrop persists. */}
+      <div className="ktc-authform">
+        {/* Back to the main menu — swaps this right column back to the Sign in / Create
+            account buttons (the card chrome stays put). */}
+        <Link to="/" className="ktc-link" style={{ justifySelf: 'start', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, textDecoration: 'none' }}>
+          {t('← Back to menu')}
+        </Link>
         {notice && <Notice tone="success" style={{ marginBottom: 14 }}>{notice}</Notice>}
         {isLocked && (
           <Notice tone="warning" style={{ marginBottom: 14 }}>
@@ -441,21 +431,6 @@ export default function Login() {
             {isSignup ? t('Sign in') : t('Create one')}
           </button>
         </p>
-
-        <div className="ktc-label" style={{ marginTop: 14, fontSize: 11.5, opacity: 0.78, textAlign: 'center', lineHeight: 1.7 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              {t('Secure')}
-            </span>
-            <span>· {t('SSL-encrypted')} ·</span>
-            <Link to="/agreement" className="ktc-link">{t('Privacy & Terms')}</Link>
-          </span>
-          <div style={{ opacity: 0.85, marginTop: 2 }}><span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.</div>
-        </div>
-        </div>
       </div>
 
       {showAgreement && (
@@ -491,6 +466,6 @@ export default function Login() {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

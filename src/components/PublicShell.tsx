@@ -1,17 +1,18 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
+import { useAuth } from '../lib/AuthContext'
 import { useT } from '../lib/i18n'
-import LangToggle from '../components/LangToggle'
-import PublicBrand from '../components/PublicBrand'
+import LangToggle from './LangToggle'
+import PublicBrand from './PublicBrand'
 import { VERSION_LABEL, VERSION_FULL } from '../version'
 
-// Public landing — what an unauthenticated visitor sees at "/" (App routes a
-// signed-in session straight to the role landing instead). Orientation +
-// services + two clear paths in (Sign in / Create account). No forced "accept"
-// gate: legal consent lives at sign-up (the Customer Agreement scroll-consent),
-// not here. The owner's real KTC terminal aerials run as an auto-advancing
-// crossfade slideshow behind a dark scrim; the glass card carries all the copy.
-// One card on phone (the loved tile); a wider two-column split on desktop.
+// Shared public shell for the landing ("/"), sign-in ("/login"), and create-account
+// ("/register") routes. The top letterhead, the left intro + services, and the footer
+// are rendered ONCE here and persist across all three (never re-mounted); only the
+// right column (.ktc-landing__access) swaps via the routed <Outlet/> — the landing's
+// access buttons on "/", the full auth form on "/login" + "/register". Each navigation
+// fades only that right column (keyed by pathname → .ktc-public-swap). The terminal-photo
+// backdrop is rendered once at the app level (PublicBackdrop), so it persists too.
 
 const SERVICES: { key: string; title: string; body: string }[] = [
   {
@@ -36,15 +37,26 @@ const SERVICES: { key: string; title: string; body: string }[] = [
   },
 ]
 
-export default function Landing() {
+export default function PublicShell() {
   const { t } = useT()
+  const { session } = useAuth()
+  const { pathname } = useLocation()
   // Phone: service descriptions collapse to keep the landing to one screen (tap a
   // title to reveal). Desktop shows them all (CSS forces them open — it has room).
   const [openSvc, setOpenSvc] = useState<string | null>(null)
+  // On phone the auth pages are form-focused — the intro + services (which the visitor
+  // just saw on the landing) hide so the form sits at the top, not below a scroll. Desktop
+  // keeps the intro as the left column.
+  const isAuth = pathname === '/login' || pathname === '/register'
+  // The public card chrome is for logged-out visitors. A signed-in session at "/"
+  // renders its role landing (Home / admin redirect) full-page through a bare Outlet —
+  // RootGate's logged-in branch, unchanged. (/login + /register redirect to "/" when a
+  // session exists, so they never reach the shell authenticated.)
+  if (session) return <Outlet />
   return (
     <div className="ktc-landing">
       {/* The terminal-photo backdrop is rendered once at the app level (PublicBackdrop)
-          so it persists across landing <-> sign-in; this page is just the glass card. */}
+          so it persists across landing <-> sign-in; this is just the glass card. */}
       <main className="ktc-glass ktc-rise ktc-landing__card">
         {/* Header — logo + language (full width above the split) */}
         <div className="ktc-landing__top">
@@ -54,7 +66,7 @@ export default function Landing() {
 
         <div className="ktc-landing__grid">
           {/* Intro — what it is, who it's for, and the services (the hero content) */}
-          <section className="ktc-landing__intro">
+          <section className={isAuth ? 'ktc-landing__intro ktc-landing__intro--auth' : 'ktc-landing__intro'}>
             <h1 className="ktc-landing__title">{t('KTC Online Portal')}</h1>
             <p className="ktc-landing__lede">
               {t('The online service desk of KTC Container Terminal Corp. — file and track your terminal and port-services work.')}
@@ -83,19 +95,12 @@ export default function Landing() {
             </ul>
           </section>
 
-          {/* Access — two clear paths in */}
+          {/* Access — the ONLY part that changes between landing / sign-in / create-account.
+              Keyed by pathname so only this right column fades on navigation. */}
           <section className="ktc-landing__access">
-            <div className="ktc-landing__cta">
-              <Link to="/login" className="ktc-btn" style={{ textDecoration: 'none' }}>
-                {t('Sign in')}
-              </Link>
-              <Link to="/register" className="ktc-btn-secondary" style={{ textDecoration: 'none' }}>
-                {t('Create an account')}
-              </Link>
+            <div key={pathname} className="ktc-public-swap">
+              <Outlet />
             </div>
-            <p className="ktc-label" style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55 }}>
-              {t('Create an account to begin accreditation.')}
-            </p>
           </section>
         </div>
 

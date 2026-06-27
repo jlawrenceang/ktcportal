@@ -1538,7 +1538,21 @@
 .ktc-landing__access {
   display: grid;
   gap: 12px;
-  align-content: start;
+  align-content: start;   /* top-align: the auth form is taller than the access rail */
+}
+/* Only the right column swaps between landing / sign-in / create-account — fade it in
+   on navigation (keyed by pathname in PublicShell). */
+.ktc-public-swap { animation: ktc-fade-in 0.3s ease; }
+@keyframes ktc-fade-in {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+/* The auth form column (Login renders into the right column's Outlet). */
+.ktc-authform { display: grid; gap: 14px; }
+/* Phone: the auth pages are form-focused — hide the intro + services (just seen on the
+   landing) so the form is at the top, not below a scroll. Desktop keeps it (left column). */
+@media (max-width: 899px) {
+  .ktc-landing__intro--auth { display: none; }
 }
 .ktc-landing__cta {
   display: flex;
@@ -1582,7 +1596,7 @@
   .ktc-landing__access {
     padding-left: 46px;
     border-left: 1px solid var(--glass-brd);
-    align-content: center;            /* center the sign-in panel — kills the bottom void */
+    align-content: start;             /* top-align: the shared column also holds the taller auth form */
   }
   .ktc-landing__cta {
     flex-direction: column;
