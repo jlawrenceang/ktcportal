@@ -38,7 +38,7 @@ export default function Payment() {
     if (!id) return
     const [{ data: jo }, pricing, { data: pi }, { data: rm }] = await Promise.all([
       supabase.from('job_orders')
-        .select('id, jo_number, status, payment_status, payment_note, payment_submitted_at, service_invoice_no, invoice_pad_no, xray_performed_at, rps_status, rps_payment_status, rps_payment_note, rps_payment_submitted_at, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), supplements:jo_supplements(id, suffix, label, amount, payment_status, payment_note, payment_submitted_at)')
+        .select('id, jo_number, status, payment_status, payment_note, payment_submitted_at, service_invoice_no, invoice_pad_no, xray_performed_at, rps_status, rps_payment_status, rps_payment_note, rps_payment_submitted_at, created_at, is_rexray, rexray_billable, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), supplements:jo_supplements(id, suffix, label, amount, payment_status, payment_note, payment_submitted_at)')
         .eq('id', id).maybeSingle(),
       loadPricingConfig(),
       supabase.from('payment_info').select('key, value, label'),
@@ -63,6 +63,9 @@ export default function Payment() {
   // components; balance = total − paid.
   const breakdown = useMemo(() => {
     if (!order || !cfg) return null
+    // A free re-X-ray (KTC-initiated, not billable) completes on services-done with no
+    // payment — never a balance, even though it copies the parent's X-ray container lines.
+    if (order.is_rexray && !order.rexray_billable) return { baseTotal: 0, rpsAmount: 0, total: 0, paid: 0, balance: 0 }
     const counts = new Map<string, number>()
     for (const l of order.lines ?? []) counts.set(l.service_request, (counts.get(l.service_request) ?? 0) + 1)
     const baseTotal = computeCharges(counts, cfg).total

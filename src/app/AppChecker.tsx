@@ -69,8 +69,9 @@ export default function AppChecker() {
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from('job_orders').select(SELECT)
+    const { data, error: e } = await supabase.from('job_orders').select(SELECT)
       .in('status', ['submitted', 'processing', 'on_hold']).order('created_at', { ascending: true })
+    if (e) { setError(e.message); setLoading(false); return }
     const rows = ((data ?? []) as unknown as Order[]).map(shape)
       .filter((o) => (o.lines ?? []).some((l) => isXray(l.service_request) && !l.xray_done_at))
       .sort((a, b) => servingKey(a) - servingKey(b))
@@ -82,7 +83,8 @@ export default function AppChecker() {
 
   const openOrder = useCallback(async (id: string) => {
     setError(null)
-    const { data } = await supabase.from('job_orders').select(SELECT).eq('id', id).maybeSingle()
+    const { data, error: e } = await supabase.from('job_orders').select(SELECT).eq('id', id).maybeSingle()
+    if (e) { setError(e.message); return }
     if (!data) { setError(t('No job order found for that code.')); return }
     setActive(shape(data as unknown as Order))
   }, [t])
@@ -100,7 +102,8 @@ export default function AppChecker() {
     const candidates = [raw]
     const digits = raw.replace(/\D/g, '')
     if (digits) candidates.push('JO-' + digits.padStart(6, '0'))
-    const { data } = await supabase.from('job_orders').select(SELECT).in('jo_number', candidates).limit(2)
+    const { data, error: e } = await supabase.from('job_orders').select(SELECT).in('jo_number', candidates).limit(2)
+    if (e) { setError(e.message); return }
     const rows = (data ?? []) as unknown as Order[]
     if (rows.length === 0) { setError(t('No job order found for “{q}”.', { q: jo.trim() })); return }
     if (rows.length > 1) { setError(t('More than one order matches — type the full JO number.')); return }

@@ -123,7 +123,7 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
   // Outstanding additional charges across all orders, flattened with JO identity.
   const supps: SuppRow[] = orders.flatMap((o) =>
     (o.supplements ?? [])
-      .filter((s) => s.payment_status !== 'confirmed')
+      .filter((s) => s.amount > 0 && s.payment_status !== 'confirmed')
       .map((s) => ({ ...s, jo_number: o.jo_number, who: o.broker?.full_name ?? t('Unknown') })))
 
   const who = (o: CashOrder) => `${o.broker?.full_name ?? t('Unknown')}${o.consignee ? ` · ${o.consignee.code}` : ''}`
@@ -240,7 +240,7 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
                   <b className="ktc-mono" style={{ fontSize: 15 }}>{s.jo_number ?? '—'}-{s.suffix}</b>
                   <span style={{ fontSize: 13.5 }}>{s.label}</span>
-                  <span className="ktc-mono" style={{ fontWeight: 700 }}>{peso(s.amount)}</span>
+                  <span className="ktc-mono" style={{ fontWeight: 700 }}>{s.amount > 0 ? peso(s.amount) : '—'}</span>
                   <span className="ktc-label" style={{ fontSize: 12 }}>· {s.who}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
