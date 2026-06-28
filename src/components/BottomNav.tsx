@@ -8,6 +8,7 @@ import { useT } from '../lib/i18n'
 import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
 import InstallButton from './InstallButton'
+import { WatchWalkthroughButton, PlayIcon } from './Walkthrough'
 
 // Persistent bottom tab bar — the single navigation on ALL widths (a centered
 // floating bar on desktop too). 5 icons: Home · Orders · Vessels · Rates · ⊞ Menu.
@@ -147,6 +148,9 @@ export default function BottomNav() {
                   <span style={{ flex: 1 }}>{t('Quick tour')}</span>
                 </button>
               )}
+              <WatchWalkthroughButton className="ktc-menu-setting" onClick={() => setSheet(null)}>
+                <span style={{ flex: 1, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 8 }}><PlayIcon size={16} /> {t('Watch walkthrough')}</span>
+              </WatchWalkthroughButton>
               <div className="ktc-menu-setting">
                 <span style={{ flex: 1 }}>{t('Language')}</span>
                 <LangToggle />

@@ -13,7 +13,7 @@ The landing page shows live counts — pending approvals, the open job-order que
 - Each card shows the registrant's details with badges: **✓ Email confirmed · ✓ Valid ID on file · ✓ Terms & DPA accepted**.
 - **View / Download** the uploaded ID (signed link). **Approve is disabled until an ID is on file.**
 - **Approve** → the customer is emailed, and any job orders they filed while waiting are released into the queue with real JO numbers.
-- **Reject** offers two paths: *recoverable* (ID unreadable / needs updated info — the customer sees a gentle "resubmit your details" panel and can fix + re-upload) or **Suspend** (terminal; their held orders are cancelled).
+- **Reject** offers two paths: *recoverable* (ID unreadable / needs updated info — the customer sees a gentle "resubmit your details" panel and can fix + re-upload) or **Suspend** (terminal; their open orders are cancelled).
 - Unverified accounts that confirm email but upload no ID within **48 hours** are auto-rejected (hourly job).
 - **Cancellation cascades:** **suspending or rejecting a customer** cancels all their open job orders — **except** orders already paid or with an ERP service invoice recorded, which are left in place for manual handling. (Rejecting a **consignee** likewise cancels its open job orders — see Consignees below.)
 

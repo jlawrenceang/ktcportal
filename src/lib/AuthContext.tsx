@@ -28,7 +28,6 @@ function jwtSessionId(token?: string | null): string | null {
 interface SignUpExtras {
   fullName?: string
   contactNumber?: string
-  idFile?: File | null
   captchaToken?: string
   irrVersion?: string
   termsVersion?: string
@@ -186,31 +185,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: 'This email already has an account. Please sign in instead — or reset your password if you’ve forgotten it.' }
     }
 
-    // With a session (email confirmation off), persist the valid ID + contact
-    // number onto the customer row for admin visibility. Consent is recorded
-    // separately via the server-stamped RPC below (the consent columns are not
-    // client-writable — see migration 0162). Best-effort.
-    if (data.session && data.user) {
-      const updates: Record<string, unknown> = {}
-      if (extras?.contactNumber) updates.contact_number = extras.contactNumber
-      if (extras?.idFile) {
-        const ext = extras.idFile.name.split('.').pop()?.toLowerCase() || 'dat'
-        const path = `${data.user.id}/valid-id.${ext}`
-        const { error: upErr } = await supabase.storage
-          .from('valid-ids')
-          .upload(path, extras.idFile, { upsert: true })
-        if (!upErr) updates.valid_id_path = path
-      }
-      if (Object.keys(updates).length > 0) {
-        await supabase.from('customers').update(updates).eq('user_id', data.user.id)
-      }
-      // Server-stamp the Customer Agreement consent (IRR + Terms + Privacy) in one
-      // call; the consent columns are revoked from client UPDATE in 0162.
-      const consentVersion = extras?.termsVersion ?? extras?.irrVersion ?? extras?.privacyVersion
-      if (consentVersion) {
-        await supabase.rpc('record_agreement_consent', { p_version: consentVersion })
-      }
-    }
     return { error: null }
   }
   const signOut = async () => {

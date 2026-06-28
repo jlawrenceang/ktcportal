@@ -11,7 +11,7 @@
   "navigationColorDark": "#0e1116",
   "backgroundColor": "#ffffff",
   "enableNotifications": true,
-  "startUrl": "/app?app=1",
+  "startUrl": "/app",
   "iconUrl": "https://portal.ktcterminal.com/app-icon-512.png",
   "maskableIconUrl": "https://portal.ktcterminal.com/app-icon-maskable.png",
   "splashScreenFadeOutDuration": 300,
