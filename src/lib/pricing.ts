@@ -93,6 +93,38 @@ export function computeCharges(counts: Map<string, number>, cfg: PricingConfig, 
   }
 }
 
+// The running money breakdown for a single order: X-ray base + assessed RPS, less the
+// confirmed components. ONE source of truth so the payment page, the cashier desk, and
+// anywhere else display the SAME number — never a parallel calculation. Pass the order's
+// job_order_lines + the RPS moves (move_type → qty) for that order.
+export interface Breakdown { baseTotal: number; rpsAmount: number; total: number; paid: number; balance: number; hasMissingRates: boolean }
+
+// Minimal structural shape — both the customer JobOrder and the cashier CashOrder satisfy it.
+export interface BreakdownInput {
+  is_rexray?: boolean | null
+  rexray_billable?: boolean | null
+  lines?: { service_request: string }[] | null
+  payment_status?: string | null
+  rps_payment_status?: string | null
+  service_invoice_no?: string | null
+}
+
+export function computeBreakdown(o: BreakdownInput, cfg: PricingConfig, moves?: Map<string, number>): Breakdown {
+  // A free re-X-ray (KTC-initiated, not billable) completes on services-done with no
+  // payment — never a balance, even though it copies the parent's X-ray container lines.
+  if (o.is_rexray && !o.rexray_billable) return { baseTotal: 0, rpsAmount: 0, total: 0, paid: 0, balance: 0, hasMissingRates: false }
+  const counts = new Map<string, number>()
+  for (const l of o.lines ?? []) counts.set(l.service_request, (counts.get(l.service_request) ?? 0) + 1)
+  const baseTotal = computeCharges(counts, cfg).total
+  const full = computeCharges(counts, cfg, moves)
+  const total = full.total
+  const rpsAmount = Math.max(0, total - baseTotal)
+  const baseConfirmed = o.payment_status === 'confirmed' || !!o.service_invoice_no
+  const rpsConfirmed = o.rps_payment_status === 'confirmed'
+  const paid = (baseConfirmed ? baseTotal : 0) + (rpsConfirmed ? rpsAmount : 0)
+  return { baseTotal, rpsAmount, total, paid, balance: total - paid, hasMissingRates: full.hasMissingRates }
+}
+
 export function peso(n: number): string {
   return '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }

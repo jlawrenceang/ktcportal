@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import { usePageTour } from '../components/TourProvider'
 import { cashierSteps } from './AdminTour'
-import { peso } from '../lib/pricing'
+import { peso, loadPricingConfig, computeBreakdown, type PricingConfig, type Breakdown } from '../lib/pricing'
 import type { JoSupplement } from '../lib/types'
 import { useT } from '../lib/i18n'
 
@@ -27,15 +27,18 @@ interface CashOrder {
   rps_status: string | null
   service_invoice_no: string | null
   completed_at: string | null
+  is_rexray?: boolean
+  rexray_billable?: boolean
   broker?: { full_name: string | null } | null
   consignee?: { code: string; name: string } | null
+  lines?: { service_request: string }[]
   supplements?: JoSupplement[]
 }
 
 // A supplement flattened with its parent JO's identity, for the cashier desk.
 interface SuppRow extends JoSupplement { jo_number: string | null; who: string }
 
-const SELECT = 'id, jo_number, entry_number, status, payment_status, payment_proof_path, rps_payment_status, rps_payment_proof_path, rps_status, service_invoice_no, completed_at, broker:customers(full_name), consignee:consignees(code, name), supplements:jo_supplements(id, suffix, label, amount, payment_status, payment_proof_path)'
+const SELECT = 'id, jo_number, entry_number, status, payment_status, payment_proof_path, rps_payment_status, rps_payment_proof_path, rps_status, service_invoice_no, completed_at, is_rexray, rexray_billable, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(service_request), supplements:jo_supplements(id, suffix, label, amount, bill_status, payment_status, payment_proof_path)'
 
 function one<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : (v ?? null)
@@ -47,9 +50,14 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
   const { t } = useT()
   usePageTour('cashier', cashierSteps)
   const [orders, setOrders] = useState<CashOrder[]>([])
+  const [cfg, setCfg] = useState<PricingConfig | null>(null)
+  // RPS moves keyed by job_order_id (move_type → qty) — feeds the RPS portion of the balance.
+  const [moves, setMoves] = useState<Map<string, Map<string, number>>>(new Map())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
+  // Per-supplement amount entry for the "Charges to bill" bucket (keyed by supplement id).
+  const [billAmt, setBillAmt] = useState<Record<string, string>>({})
   const [reject, setReject] = useState<{ id: string; kind: 'base' | 'rps' } | null>(null)
   const [rejectNote, setRejectNote] = useState('')
   const [invId, setInvId] = useState<string | null>(null)
@@ -61,11 +69,31 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
   const [suppNote, setSuppNote] = useState('')
 
   async function load() {
-    const { data, error } = await supabase.from('job_orders').select(SELECT)
-      .in('status', ['submitted', 'processing', 'on_hold', 'completed'])
-      .order('created_at', { ascending: true })
+    const [{ data, error }, pricing] = await Promise.all([
+      supabase.from('job_orders').select(SELECT)
+        .in('status', ['submitted', 'processing', 'on_hold', 'completed'])
+        .order('created_at', { ascending: true }),
+      loadPricingConfig(),
+    ])
     if (error) { setError(error.message); setLoading(false); return }
-    setOrders(((data ?? []) as unknown as CashOrder[]).map((o) => ({ ...o, broker: one(o.broker), consignee: one(o.consignee) })))
+    const rows = ((data ?? []) as unknown as CashOrder[]).map((o) => ({ ...o, broker: one(o.broker), consignee: one(o.consignee) }))
+    setOrders(rows)
+    setCfg(pricing)
+    // Fetch RPS moves only for orders that were assessed an RPS charge → per-order move map,
+    // so the cashier sees the same RPS amount the customer's Payment page shows.
+    const rpsIds = rows.filter((o) => o.rps_status === 'needed').map((o) => o.id)
+    if (rpsIds.length) {
+      const { data: rm } = await supabase.from('rps_moves').select('job_order_id, move_type, qty').in('job_order_id', rpsIds)
+      const m = new Map<string, Map<string, number>>()
+      for (const r of (rm ?? []) as { job_order_id: string; move_type: string; qty: number }[]) {
+        const inner = m.get(r.job_order_id) ?? new Map<string, number>()
+        inner.set(r.move_type, (inner.get(r.move_type) ?? 0) + r.qty)
+        m.set(r.job_order_id, inner)
+      }
+      setMoves(m)
+    } else {
+      setMoves(new Map())
+    }
     setLoading(false)
   }
   useEffect(() => { void load() }, [])
@@ -113,6 +141,23 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
     if (error) { setError(error.message); return }
     await load()
   }
+  // Bill an ops-requested charge (NULL amount): set the amount → it becomes a payable.
+  async function billSupp(id: string) {
+    const amount = Number(billAmt[id])
+    if (!(amount > 0)) { setError(t('Enter an amount greater than zero.')); return }
+    setBusyId(id); setError(null)
+    const { error } = await supabase.rpc('bill_supplement', { p_id: id, p_amount: amount })
+    setBusyId(null)
+    if (error) { setError(error.message); return }
+    setBillAmt((m) => { const n = { ...m }; delete n[id]; return n })
+    await load()
+  }
+
+  // Per-order money breakdown — the SAME helper the customer Payment page uses, so the
+  // cashier confirms against the exact amount shown elsewhere (no parallel calculation).
+  function bd(o: CashOrder): Breakdown | null {
+    return cfg ? computeBreakdown(o, cfg, moves.get(o.id)) : null
+  }
 
   const toReview = orders.filter((o) => o.payment_status === 'submitted' || o.rps_payment_status === 'submitted')
   const toCollect = orders.filter((o) => o.status === 'processing' && (o.payment_status === 'unpaid' || o.payment_status === 'rejected'))
@@ -120,9 +165,19 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
   // its X-ray payment was already confirmed must still be settleable at the window (T1-05).
   const toCollectRps = orders.filter((o) => o.rps_status === 'needed' && o.rps_payment_status !== 'confirmed' && o.rps_payment_status !== 'submitted')
   // Record the ERP invoice on a completed order, OR on a live order whose base proof is
-  // awaiting review — since 0177 the invoice must be on file BEFORE the base payment can
-  // be confirmed, so the cashier needs to record it here without leaving the station.
-  const toInvoice = orders.filter((o) => !o.service_invoice_no && (o.status === 'completed' || o.payment_status === 'submitted'))
+  // awaiting review, OR on a live unpaid/rejected walk-in — since 0177 the invoice must be
+  // on file BEFORE the base payment can be confirmed/collected, so the cashier needs to
+  // record it here (record_service_invoice accepts any live order, 0177) without leaving.
+  const toInvoice = orders.filter((o) => !o.service_invoice_no && (
+    o.status === 'completed' ||
+    o.payment_status === 'submitted' ||
+    (o.status === 'processing' && (o.payment_status === 'unpaid' || o.payment_status === 'rejected'))
+  ))
+  // Ops-requested charges awaiting the cashier to set an amount (NULL amount, bill_status=requested).
+  const toBill: SuppRow[] = orders.flatMap((o) =>
+    (o.supplements ?? [])
+      .filter((s) => s.bill_status === 'requested')
+      .map((s) => ({ ...s, jo_number: o.jo_number, who: o.broker?.full_name ?? t('Unknown') })))
   // Outstanding additional charges across all orders, flattened with JO identity.
   const supps: SuppRow[] = orders.flatMap((o) =>
     (o.supplements ?? [])
@@ -130,6 +185,20 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
       .map((s) => ({ ...s, jo_number: o.jo_number, who: o.broker?.full_name ?? t('Unknown') })))
 
   const who = (o: CashOrder) => `${o.broker?.full_name ?? t('Unknown')}${o.consignee ? ` · ${o.consignee.code}` : ''}`
+
+  // Amount to collect/verify for one card — the base X-ray or the RPS portion, from the
+  // shared breakdown. Flags incomplete rates so the cashier doesn't trust a misleading ₱0.
+  function Money({ o, kind }: { o: CashOrder; kind: 'base' | 'rps' }) {
+    const b = bd(o)
+    if (!b) return null
+    const amount = kind === 'rps' ? b.rpsAmount : b.baseTotal
+    return (
+      <span className="ktc-mono" style={{ fontWeight: 700, fontSize: 14 }}>
+        {peso(amount)}
+        {b.hasMissingRates && <span className="ktc-label" style={{ fontWeight: 500, fontSize: 11, marginLeft: 5 }}>{t('· rates incomplete')}</span>}
+      </span>
+    )
+  }
 
   function Card({ o, children }: { o: CashOrder; children: ReactNode }) {
     return (
@@ -158,6 +227,7 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
     return (
       <>
         <span className="ktc-chip ktc-chip--warning">{label}</span>
+        <Money o={o} kind={kind} />
         <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => void viewProof(proof)}>{t('View slip')}</button>
         <button className="ktc-btn ktc-btn--sm" disabled={busyId === o.id} onClick={() => void doReview(o.id, true, kind)}>{t('Confirm payment')}</button>
         <button style={dangerBtn} disabled={busyId === o.id} onClick={() => { setReject({ id: o.id, kind }); setRejectNote('') }}>{t('Reject')}</button>
@@ -206,6 +276,7 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
             {toCollect.length === 0 ? <span className="ktc-label" style={{ fontSize: 13.5 }}>{t('No walk-in collections pending.')}</span> : toCollect.map((o) => (
               <Card key={o.id} o={o}>
                 <span className="ktc-chip">{o.payment_status === 'rejected' ? t('Proof rejected') : t('Unpaid')}</span>
+                <Money o={o} kind="base" />
                 <button className="ktc-btn ktc-btn--sm" disabled={busyId === o.id} onClick={() => setOffice({ id: o.id, kind: 'base', label: o.jo_number ?? '—' })}>{t('Record office payment')}</button>
               </Card>
             ))}
@@ -216,13 +287,14 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
             {toCollectRps.length === 0 ? <span className="ktc-label" style={{ fontSize: 13.5 }}>{t('No RPS collections pending.')}</span> : toCollectRps.map((o) => (
               <Card key={o.id} o={o}>
                 <span className="ktc-chip ktc-chip--warning">{o.rps_payment_status === 'rejected' ? t('RPS proof rejected') : t('RPS unpaid')}</span>
+                <Money o={o} kind="rps" />
                 <button className="ktc-btn ktc-btn--sm" disabled={busyId === o.id} onClick={() => setOffice({ id: o.id, kind: 'rps', label: `${o.jo_number ?? '—'} · RPS` })}>{t('Record RPS office payment')}</button>
               </Card>
             ))}
           </Section>
 
           {/* 3 — Record the ERP invoice */}
-          <Section title={t('Record invoice')} count={toInvoice.length} sub={t('Completed orders awaiting the ERP Service Invoice number.')}>
+          <Section title={t('Record invoice')} count={toInvoice.length} sub={t('Orders awaiting the ERP Service Invoice number — record it to release the order, and so a walk-in payment can then be collected.')}>
             {toInvoice.length === 0 ? <span className="ktc-label" style={{ fontSize: 13.5 }}>{t('No invoices to record.')}</span> : toInvoice.map((o) => (
               <Card key={o.id} o={o}>
                 {invId === o.id ? (
@@ -234,12 +306,32 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
                   </span>
                 ) : (
                   <>
-                    <span className="ktc-chip ktc-chip--success">{t('Completed')}</span>
+                    <span className={`ktc-chip ${o.status === 'completed' ? 'ktc-chip--success' : 'ktc-chip--warning'}`}>
+                      {o.status === 'completed' ? t('Completed') : o.payment_status === 'submitted' ? t('Proof submitted') : t('Walk-in · unpaid')}
+                    </span>
+                    <Money o={o} kind="base" />
                     <button className="ktc-btn ktc-btn--sm" onClick={() => { setInvId(o.id); setInvNo(''); setPadNo('') }}>{t('Record invoice')}</button>
                     <span className="ktc-label" style={{ fontSize: 11.5 }}>{t('Cash: OR-INV-… · Credit: BI-INV-…')}</span>
                   </>
                 )}
               </Card>
+            ))}
+          </Section>
+
+          {/* 3b — Ops-requested charges awaiting a price (bill_supplement) */}
+          <Section title={t('Charges to bill')} count={toBill.length} sub={t('Charges operations requested — set the amount to bill the customer, then it becomes payable.')}>
+            {toBill.length === 0 ? <span className="ktc-label" style={{ fontSize: 13.5 }}>{t('No charges waiting to be billed.')}</span> : toBill.map((s) => (
+              <div key={s.id} style={{ padding: '12px 14px', borderRadius: 12, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                  <b className="ktc-mono" style={{ fontSize: 15 }}>{s.jo_number ?? '—'}-{s.suffix}</b>
+                  <span style={{ fontSize: 13.5 }}>{s.label}</span>
+                  <span className="ktc-label" style={{ fontSize: 12 }}>· {s.who}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <input className="ktc-input ktc-mono" inputMode="decimal" value={billAmt[s.id] ?? ''} onChange={(e) => setBillAmt((m) => ({ ...m, [s.id]: e.target.value }))} placeholder={t('Amount (₱)')} style={{ maxWidth: 150, width: '100%', padding: '7px 11px', fontSize: 13 }} />
+                  <button className="ktc-btn ktc-btn--sm" disabled={busyId === s.id || !(Number(billAmt[s.id]) > 0)} onClick={() => void billSupp(s.id)}>{t('Bill')}</button>
+                </div>
+              </div>
             ))}
           </Section>
 

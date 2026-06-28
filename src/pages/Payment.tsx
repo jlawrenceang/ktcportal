@@ -6,7 +6,7 @@ import FileViewerModal from '../components/FileViewerModal'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import { prepareUpload } from '../lib/validation'
-import { loadPricingConfig, computeCharges, peso, type PricingConfig } from '../lib/pricing'
+import { loadPricingConfig, computeCharges, computeBreakdown, peso, type PricingConfig } from '../lib/pricing'
 import { useT } from '../lib/i18n'
 import { ClockIcon, PaperclipIcon } from '../components/icons'
 import type { JobOrder } from '../lib/types'
@@ -63,18 +63,7 @@ export default function Payment() {
   // components; balance = total − paid.
   const breakdown = useMemo(() => {
     if (!order || !cfg) return null
-    // A free re-X-ray (KTC-initiated, not billable) completes on services-done with no
-    // payment — never a balance, even though it copies the parent's X-ray container lines.
-    if (order.is_rexray && !order.rexray_billable) return { baseTotal: 0, rpsAmount: 0, total: 0, paid: 0, balance: 0 }
-    const counts = new Map<string, number>()
-    for (const l of order.lines ?? []) counts.set(l.service_request, (counts.get(l.service_request) ?? 0) + 1)
-    const baseTotal = computeCharges(counts, cfg).total
-    const total = computeCharges(counts, cfg, moves).total
-    const rpsAmount = Math.max(0, total - baseTotal)
-    const baseConfirmed = order.payment_status === 'confirmed' || !!order.service_invoice_no
-    const rpsConfirmed = order.rps_payment_status === 'confirmed'
-    const paid = (baseConfirmed ? baseTotal : 0) + (rpsConfirmed ? rpsAmount : 0)
-    return { baseTotal, rpsAmount, total, paid, balance: total - paid }
+    return computeBreakdown(order, cfg, moves)
   }, [order, cfg, moves])
 
   async function submitProof(kind: 'base' | 'rps', theFile: File | null) {
