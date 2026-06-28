@@ -28,7 +28,7 @@ last_updated: 2026-06-27
 |--------|-------|
 | Consignees imported | **2,488** (from `Customer.csv`) |
 | Job orders / customers / releases | **0 / 0 / 0** — prod test data purged to a clean slate 2026-06-23; `jo_number_seq` reset so the first real order = `JO-000001` |
-| Owner accounts | 1 (`jlawrenceang@gmail.com`, 2FA) + `jla.ktcport@gmail.com` as plain admin fallback |
+| Owner accounts | 1 (`jlawrenceang@gmail.com`, 2FA, root owner). **No secondary admin fallback** — `jla.ktcport@gmail.com` is now a **rejected customer** (re-registered 2026-06-21), not an admin. Failsafe: email-keyed backstop in `is_owner()`/`is_admin()` (`0184`) + `seed-owner.sql` break-glass ([[Owner Failsafe]]) |
 | Staff accounts | created on demand via Settings |
 
 ## Stack

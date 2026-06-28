@@ -57,7 +57,7 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | Role | Identity | Notes |
 |---|---|---|
 | Owner | `jlawrenceang@gmail.com` | server-only `is_owner`; failsafe; bypasses every gate; never lockable |
-| Admin (fallback) | `jla.ktcport@gmail.com` | plain admin; everything **except `confirm_xray`** |
+| Admin (secondary) | _create via Settings → Staff_ | `jla.ktcport@gmail.com` is **no longer admin** (now a rejected customer) — create a fresh staff admin (everything **except `confirm_xray`**) |
 | Test customer | a throwaway email you control (e.g. `you+st05@gmail.com`) | created in Lane A; **must be `approved`** before Lane I (releases reject `pending`) |
 | Operations | created in Lane J via Settings | e.g. `st05ops` — accept/process/complete/hold-reject + assess_rps + vessels; **monitors** X-ray (no confirm); no money |
 | Cashier | created in Lane J via Settings | e.g. `st05cash` — review_payments + record_invoice + complete/hold-reject; **no X-ray queue**, no release-doc verify |

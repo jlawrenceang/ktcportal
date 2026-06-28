@@ -61,7 +61,7 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | Role | Identity | Notes |
 |---|---|---|
 | Owner | `jlawrenceang@gmail.com` | server-only `is_owner`; failsafe; bypasses every gate |
-| Admin (fallback) | `jla.ktcport@gmail.com` | plain admin; everything **except `confirm_xray`**; approves priority + re-X-ray; bills charges |
+| Admin (secondary) | _create via Settings → Staff_ | `jla.ktcport@gmail.com` is **no longer admin** (now a rejected customer) — create a fresh staff admin (everything **except `confirm_xray`**; approves priority + re-X-ray; bills charges) |
 | Operations | `st06ops` (create in Settings) | accept/process/RPS/vessels + **request** priority/re-X-ray/charge; **no money**; **monitors** X-ray |
 | Cashier | `st06cash` | `review_payments` + `record_invoice` + **`bill_supplement`**; **no** accept/hold-reject/complete; **no** X-ray queue |
 | Checker | `st06check` | `confirm_xray` + **`request_rexray`** only |

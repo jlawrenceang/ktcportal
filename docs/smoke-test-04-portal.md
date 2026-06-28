@@ -22,7 +22,7 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | Role | Identity | Notes |
 |---|---|---|
 | Owner | `jlawrenceang@gmail.com` | server-only `is_owner`; failsafe; bypasses every gate (both `verify_release_docs` + `review_payments`) |
-| Admin (fallback) | `jla.ktcport@gmail.com` | plain admin; has `verify_release_docs` by default (0124 seed) |
+| Admin (secondary) | _create via Settings → Staff_ | `jla.ktcport@gmail.com` is **no longer admin** (now a rejected customer) — create a fresh staff admin (grant `verify_release_docs`) for non-owner checks |
 | Test customer | a throwaway email you control (e.g. `you+st04@gmail.com`) | **must be fully approved** before filing — releases reject `pending` (unlike JOs) |
 | CSR (documents desk) | created via Settings → Staff | e.g. `st04csr` — `verify_release_docs` only (no money, no OR) |
 | Cashier | created via Settings → Staff | e.g. `st04cash` — `review_payments` only (confirm pay + record OR; no doc verify) |

@@ -16,7 +16,7 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | Role | Identity | Notes |
 |---|---|---|
 | Owner | `jlawrenceang@gmail.com` | failsafe; 2FA target of Lane 7 |
-| Admin (fallback) | `jla.ktcport@gmail.com` | plain admin since 2026-06-12 |
+| Admin (secondary) | _create via Settings → Staff_ | `jla.ktcport@gmail.com` is **no longer admin** (now a rejected customer) — create a fresh staff admin for non-owner checks |
 | Test customer | a throwaway email you control | created in Lane 1 |
 | Cashier / Checker | created in Lane 6 via Settings | e.g. `st02cash` / `st02check` |
 | Operations | created in Lane 9 via Settings | e.g. `st02ops` (assess RPS, confirm X-ray, vessels) |
