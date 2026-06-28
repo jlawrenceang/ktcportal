@@ -16,13 +16,14 @@ import { checkerSteps } from '../admin/AdminTour'
 interface Line { id: string; container_number: string; service_request: string; xray_done_at: string | null }
 interface Order {
   id: string; jo_number: string | null; status: string
+  is_rexray?: boolean | null; rexray_status?: string | null
   broker?: { full_name: string | null } | null
   consignee?: { code: string; name: string } | null
   lines?: Line[]
   serving?: ServingNumber[]
 }
 const SELECT =
-  'id, jo_number, status, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
+  'id, jo_number, status, is_rexray, rexray_status, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
 const isXray = (s: string) => s.toLowerCase().includes('x-ray')
 function one<T>(v: T | T[] | null | undefined): T | null { return Array.isArray(v) ? (v[0] ?? null) : (v ?? null) }
 function shape(o: Order): Order { return { ...o, broker: one(o.broker), consignee: one(o.consignee) } }
@@ -74,6 +75,8 @@ export default function AppChecker() {
     if (e) { setError(e.message); setLoading(false); return }
     const rows = ((data ?? []) as unknown as Order[]).map(shape)
       .filter((o) => (o.lines ?? []).some((l) => isXray(l.service_request) && !l.xray_done_at))
+      // KTC-26: an unapproved re-X-ray child can't be acted on — keep it out of the queue.
+      .filter((o) => !(o.is_rexray && o.rexray_status !== 'approved'))
       .sort((a, b) => servingKey(a) - servingKey(b))
     setQueue(rows)
     setLoading(false)

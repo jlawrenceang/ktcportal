@@ -9,6 +9,10 @@ last_updated: 2026-06-28
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
 
+## 2026-06-28 — Break-test security/integrity hardening (v1.6.77)
+
+**Migration `0187` applied to prod; `APP_VERSION` = `v1.6.77`.** The security/integrity slice of the break-test mediums/lows (the first chunk of audit Phase 2): RPS guards (no confirm-on-unassessed / no assess-on-dead-order — KTC-14/15), terminal-reject retired (`resubmit_rejected` always-raises + backfill — KTC-13), checker can't X-ray an un-accepted order (KTC-16), `file_job_order`/`update_job_order` length caps + container-format + service whitelist (KTC-21/22/09-residuals), X-ray-only re-X-ray line copy (KTC-27), RLS gates on `payment_info`/`shipping_lines`/`role_permissions` (KTC-31/33), dead-count + unapproved-rexray-queue cleanup (KTC-25/26). Sandbox-verified + Jarvis-reviewed. KTC-20 re-framed (single-IP test artifact, not a real ceiling); KTC-32 left for owner decision.
+
 ## 2026-06-28 — Break-test critical+high fixes (v1.6.76)
 
 **Migration `0186` applied to prod; `APP_VERSION` = `v1.6.76`.** A full-lifecycle break-test (sandbox `zwvzadkgeyhkhyshkwhc`, 17-agent ultracode run + 50×10 load) surfaced 33 findings ([[breaktest-2026-06-28]] / `docs/audits/2026-06-28-breaktest-findings.md`); the **12 critical+high** were fixed in `0186` and shipped, each verified by a 9-agent behavioral re-test (14/14 PASS) + an independent Jarvis code review. Headlines: `request_supplement` un-crashed (KTC-01), free re-X-ray can complete (KTC-02), no auto-complete with a billed-unpaid charge (KTC-03), payment can't confirm on a cancelled/rejected order (KTC-05/34), container-swap invalidates prior payment+X-ray (KTC-06), cancel guards a paid charge (KTC-07), `file_job_order` caps + service whitelist (KTC-08/09), consignee-request staff notification (KTC-11), privilege-escalation audit log fixed (KTC-17). Medium/low + two KTC-09 residuals remain open.

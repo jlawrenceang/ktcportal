@@ -56,7 +56,7 @@ export default function BottomNav() {
   // issue) → a badge on the Orders tab. Refetched on navigation so it stays fresh.
   useEffect(() => {
     void supabase.from('job_orders').select('id', { count: 'exact', head: true })
-      .or('status.eq.on_hold,and(status.eq.rejected,rejected_recoverable.eq.true),and(payment_status.eq.rejected,status.in.(submitted,processing,completed))')
+      .or('status.eq.on_hold,and(payment_status.eq.rejected,status.in.(submitted,processing,completed))')
       .then(({ count }) => setAttention(count ?? 0))
   }, [loc.pathname])
 

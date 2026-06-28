@@ -30,7 +30,7 @@ export default function Home() {
         // list (MyJobOrders filters is_rexray=false), so counting them desyncs tile vs list.
         supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false).in('status', ['submitted', 'processing', 'on_hold']),
         supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false)
-          .or('status.eq.on_hold,and(status.eq.rejected,rejected_recoverable.eq.true),and(payment_status.eq.rejected,status.in.(submitted,processing,completed))'),
+          .or('status.eq.on_hold,and(payment_status.eq.rejected,status.in.(submitted,processing,completed))'),
       ])
       setStats({ active: active ?? 0, orderAttention: orderAttention ?? 0 })
     })()

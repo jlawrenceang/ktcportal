@@ -4,6 +4,19 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.6.77 — 2026-06-28 (Break-test security/integrity hardening — Phase 2 part 1)
+
+Migration **0187** — the security/integrity slice of the break-test mediums/lows (first chunk of audit Phase 2), sandbox-verified + Jarvis-reviewed:
+- **KTC-13** rejected orders are terminal for real — `resubmit_rejected` retired (always-raises) + `rejected_recoverable=false` backfilled.
+- **KTC-14/15** RPS guards — can't confirm an RPS payment on an order with no RPS assessed; can't (re)assess RPS on a cancelled/rejected/completed order (and a re-assessment resets the RPS payment state).
+- **KTC-16** a checker can no longer X-ray a never-accepted (`submitted`) order — the ops accept gate is enforced; checker queue/count scoped to `processing`/`on_hold`.
+- **KTC-21/22 + KTC-09 residuals** — `file_job_order`/`update_job_order` now cap field lengths (entry ≤40, vessel/voyage ≤80), validate container-number format, and reject non-catalogue services with friendly messages (whitelist also on `update_job_order`/`admin_file_job_order`).
+- **KTC-27** re-X-ray copies only X-ray service lines (not DEA/OOG).
+- **KTC-31/33** RLS gates — `payment_info` (KTC payee bank/GCash), `shipping_lines`, and `role_permissions` are no longer world-readable to pending/any authenticated; gated to approved customers / staff.
+- **KTC-25/26** (frontend) — dropped the dead recoverable-rejected count clause; excluded unapproved re-X-ray children from the checker queue.
+
+KTC-20 re-framed as a single-IP load-test artifact (not a real concurrency ceiling — distributed users + the 2026-06-16 ~500-concurrent test). KTC-32 (`verify_job_order` disclosure) left for owner decision. ERP API (T2-35) deferred pending Titus. `APP_VERSION` v1.6.76 → v1.6.77.
+
 ## v1.6.76 — 2026-06-28 (Break-test critical+high fixes)
 
 Migration **0186** — fixes for the 2026-06-28 full-lifecycle break-test (`docs/audits/2026-06-28-breaktest-findings.md`), each verified by a 9-agent behavioral re-test (**14/14 PASS**) + an independent **Jarvis** code review before prod:

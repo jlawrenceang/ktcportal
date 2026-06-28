@@ -19,6 +19,8 @@ interface CheckerOrder {
   id: string
   jo_number: string | null
   status: string
+  is_rexray?: boolean | null
+  rexray_status?: string | null
   xray_performed_at: string | null
   service_invoice_no: string | null
   rps_status: string | null
@@ -34,7 +36,7 @@ function one<T>(v: T | T[] | null | undefined): T | null {
 }
 
 const SELECT =
-  'id, jo_number, status, xray_performed_at, service_invoice_no, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, vacated_at)'
+  'id, jo_number, status, is_rexray, rexray_status, xray_performed_at, service_invoice_no, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, vacated_at)'
 
 const isXray = (s: string) => s.toLowerCase().includes('x-ray')
 // Priority lane is served ahead of the regular queue, then re-X-ray (each numbers from 1).
@@ -104,14 +106,18 @@ export default function Checker() {
   async function load() {
     const { data } = await supabase
       .from('job_orders')
+      // KTC-16: only ACCEPTED orders (processing/on_hold) — a still-submitted
+      // order hasn't cleared the ops accept gate, so it isn't the checker's yet.
       .select(SELECT)
-      .in('status', ['submitted', 'processing', 'on_hold'])
+      .in('status', ['processing', 'on_hold'])
       .order('created_at', { ascending: true })
     const rows = ((data ?? []) as unknown as CheckerOrder[])
       .map((o) => ({ ...o, broker: one(o.broker), consignee: one(o.consignee) }))
       // X-ray still pending (a JO with other services can stay open after its
       // X-ray is done — it leaves this queue but remains findable via lookup)
       .filter((o) => (o.lines ?? []).some((l) => isXray(l.service_request) && !l.xray_done_at))
+      // KTC-26: an unapproved re-X-ray child can't be acted on — keep it out of the queue.
+      .filter((o) => !(o.is_rexray && o.rexray_status !== 'approved'))
       // Serve the priority lane first, then the regular queue by serving number (not raw filing order).
       .sort((a, b) => servingKey(a) - servingKey(b))
     setQueue(rows)
