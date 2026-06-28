@@ -729,7 +729,7 @@ export const NODES: NodeRegistry = {
   'ticket.payment': {
     kind: 'ticket', category: 'payment',
     subject: { from: 'userText', prefix: 'Payment: ' }, body: { from: 'userText' },
-    intro: 'What’s your payment question? Please include your JO number, the charge (X-ray / port-services / additional), and the amount + date + reference of your transfer. I’ll send it to the KTC cashier team.',
+    intro: 'What’s your payment question? Please include your JO number, the charge (X-ray / port-services / additional), and the amount + date + reference of your transfer. I’ll send it to KTC’s support team to help with your payment concern.',
     confirmLabel: 'Create a payment ticket', cancelOption: { label: 'Back to menu', to: 'root' },
   },
   'ticket.account': {

@@ -138,7 +138,7 @@ export const tl: Record<string, string> = {
   "Re-upload a corrected slip": "Mag-re-upload ng tamang slip",
   "I disagree — open a support ticket": "Hindi ako sang-ayon — magbukas ng ticket",
   "Payment:": "Payment:",
-  "What’s your payment question? Please include your JO number, the charge (X-ray / port-services / additional), and the amount + date + reference of your transfer. I’ll send it to the KTC cashier team.": "Ano ang tanong mo sa payment? Pakisama ang JO number mo, ang charge (X-ray / port-services / additional), at ang amount + petsa + reference ng transfer mo. Ipapadala ko ’to sa KTC cashier team.",
+  "What’s your payment question? Please include your JO number, the charge (X-ray / port-services / additional), and the amount + date + reference of your transfer. I’ll send it to KTC’s support team to help with your payment concern.": "Ano ang tanong mo sa payment? Pakisama ang JO number mo, ang charge (X-ray / port-services / additional), at ang amount + petsa + reference ng transfer mo. Ipapadala ko ’to sa support team ng KTC para tulungan ka sa payment concern mo.",
   "Create a payment ticket": "Gumawa ng payment ticket",
   "Rates, charges, and the vessel schedule — what do you need?": "Rates, charges, at vessel schedule — ano ang kailangan mo?",
   "How do I estimate my charges?": "Paano ko ma-e-estimate ang charges ko?",
