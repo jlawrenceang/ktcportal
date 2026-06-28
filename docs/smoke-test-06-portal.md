@@ -292,4 +292,4 @@ If any preflight check fails, pause and fix first.
 
 ## Reuse rule
 
-Keep the canonical Route/Click/Backend-Contract structure (`docs/smoke-test-template-canonical.md`). ST06 is the **ADR-0035 deltas** pass; for the broad onboarding / X-ray / payments / release walkthrough see **ST05** (`docs/smoke-test-05-portal.md`), and for the release/pull-out deep dive **ST04**. See `docs/agent/testing-and-release.md`.
+Keep the canonical Route/Click/Backend-Contract structure (`docs/smoke-test-template-canonical.md`). ST06 is the **ADR-0035 deltas** pass; for the broad onboarding / X-ray / payments / release walkthrough see **ST05** (`docs/smoke-test-05-portal.md`), for the **break-test-derived full-lifecycle + adversarial + load** pass see **ST07** (`docs/smoke-test-07-portal.md`), and for the release/pull-out deep dive **ST04**. See `docs/agent/testing-and-release.md`.
