@@ -5,24 +5,36 @@ import { test, expect } from '@playwright/test'
 // server-side CAPTCHA. They cover the no-auth parts of ST01 Lane 1 plus routing
 // and the SPA rewrite. See docs/smoke-test-01-portal.md.
 
+// These are DEPLOYED-site checks (no local server needed). .env.local sets
+// BASE_URL=http://localhost:3000 for the local-preview workflow, which — with no
+// `npm run preview` running — points every test at a dead port (ERR_CONNECTION_
+// REFUSED) and fails the whole suite. So resolve to the deployed site unless
+// BASE_URL is explicitly a non-localhost target. Run a local preview with e.g.
+// `BASE_URL=http://localhost:4173 npx playwright test` only when a server is up.
+const DEPLOYED = process.env.BASE_URL && !process.env.BASE_URL.includes('localhost')
+  ? process.env.BASE_URL
+  : 'https://portal.ktcterminal.com'
+
 test.describe('KTC portal — unauthenticated smoke', () => {
+  test.use({ baseURL: DEPLOYED })
   // Signed-out "/" now renders the public access menu (AuthRail) inside the shared
   // PublicShell — orientation + the three ways in — NOT a redirect to /login (the
   // public Landing shipped 2026-06-26).
   test('root shows the public access menu (AuthRail) when logged out', async ({ page }) => {
     await page.goto('/')
     await expect(page).toHaveURL(/\/$/) // stays at the root, not bounced to /login
-    await expect(page.getByRole('link', { name: 'Sign in' }).first()).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Create an account' }).first()).toBeVisible()
+    // href-based (language-agnostic — link labels are translated in Tagalog).
+    await expect(page.locator('a[href="/login"]').first()).toBeVisible()
+    await expect(page.locator('a[href="/register"]').first()).toBeVisible()
   })
 
   test('login page renders core elements', async ({ page }) => {
     await page.goto('/login')
+    // Structural selectors (the heading + button text are translated in Tagalog).
     await expect(page.getByAltText('KTC Container Terminal Corp')).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
     await expect(page.locator('#email')).toBeVisible()
     await expect(page.locator('#password')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
+    await expect(page.locator('form button[type="submit"]')).toBeVisible()
   })
 
   test('protected admin route redirects to /login when logged out', async ({ page }) => {
@@ -70,14 +82,13 @@ test.describe('KTC portal — unauthenticated smoke', () => {
   test('unknown route falls through to the root access menu', async ({ page }) => {
     await page.goto('/this-route-does-not-exist')
     await expect(page).toHaveURL(/\/$/)
-    await expect(page.getByRole('link', { name: 'Create an account' }).first()).toBeVisible()
+    await expect(page.locator('a[href="/register"]').first()).toBeVisible()
   })
 
   test('can switch to Create account (valid ID moved to post-confirmation)', async ({ page }) => {
-    await page.goto('/login')
-    await page.getByRole('button', { name: 'Create one' }).click()
-    await expect(page.getByRole('heading', { name: 'Create account' })).toBeVisible()
+    await page.goto('/register') // the walk-in QR target opens straight in sign-up mode
     await expect(page.locator('#fullName')).toBeVisible()
+    await expect(page.locator('#contactNumber')).toBeVisible()
     await expect(page.locator('#validId')).toHaveCount(0) // ID is uploaded after email confirmation now
   })
 
@@ -95,13 +106,12 @@ test.describe('KTC portal — unauthenticated smoke', () => {
     }
   })
 
-  test('registration shows the inline agreement + Terms and DPA consent ticks', async ({ page }) => {
-    await page.goto('/login')
-    await page.getByRole('button', { name: 'Create one' }).click()
+  test('registration shows the inline agreement + Terms and DPA consent tick', async ({ page }) => {
+    await page.goto('/register')
     await expect(page.getByRole('checkbox')).toHaveCount(1) // one tick = Terms + NDA + DPA (consolidated)
-    await expect(page.getByRole('button', { name: /View full/i })).toBeVisible() // opens the agreement modal
-    await expect(page.getByText(/KTC Customer Agreement/i).first()).toBeVisible() // inline doc
-    await expect(page.getByText(/Data Privacy Act/i).first()).toBeVisible()
+    // The agreement proper noun appears in the inline doc body (legal text isn't
+    // translated), so it's a language-agnostic marker that the agreement rendered.
+    await expect(page.getByText(/KTC Customer Agreement/i).first()).toBeVisible()
   })
 
   test('login enforces CAPTCHA: Turnstile mounts and the submit is gated', async ({ page }) => {
@@ -120,6 +130,6 @@ test.describe('KTC portal — unauthenticated smoke', () => {
     // Turnstile mounts its widget (a hidden response input id'd cf-chl-widget-*).
     await expect(page.locator('[id^="cf-chl-widget-"]')).toBeAttached({ timeout: 20000 })
     // Submit stays disabled until a CAPTCHA token exists — proves the gate is wired.
-    await expect(page.getByRole('button', { name: 'Sign in' })).toBeDisabled()
+    await expect(page.locator('form button[type="submit"]')).toBeDisabled()
   })
 })

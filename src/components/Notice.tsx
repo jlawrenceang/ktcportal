@@ -28,9 +28,11 @@ export default function Notice({
 }) {
   const c = TONES[tone]
   const hasHead = !!(badge || title)
+  // error/warning are assertive (interrupt the SR); success/info are polite.
+  const role = tone === 'error' || tone === 'warning' ? 'alert' : 'status'
   return (
     <div
-      role="status"
+      role={role}
       style={{
         padding: '14px 16px',
         borderRadius: 12,

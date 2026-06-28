@@ -14,6 +14,7 @@ import { peso } from '../lib/pricing'
 import { useT } from '../lib/i18n'
 import { ArchiveIcon, PencilIcon, ClockIcon, ChatIcon, GridIcon } from '../components/icons'
 import ReleaseTracks from '../components/ReleaseTracks'
+import Notice from '../components/Notice'
 import { batchLabel, formatAge, ageHours } from '../lib/batch'
 import { joPaymentState, hasPaymentToReview } from '../lib/joPayment'
 
@@ -195,6 +196,7 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
   const { can } = usePermissions()
   const [orders, setOrders] = useState<AdminJobOrder[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   // ERP Service Invoice recording (cashier): JO id being recorded + the number.
   const [invoiceId, setInvoiceId] = useState<string | null>(null)
@@ -257,7 +259,9 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
     return q
       .order('created_at', { ascending: false })
       .range(p * PAGE, p * PAGE + PAGE - 1)
-      .then(({ data, count }) => {
+      .then(({ data, error, count }) => {
+        if (error) { setLoadError(error.message); setLoading(false); return }
+        setLoadError(null)
         const rows = ((data ?? []) as unknown as AdminJobOrder[]).map((o) => ({
           ...o,
           broker: one(o.broker),
@@ -993,6 +997,8 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
           <div style={{ display: 'grid', gap: 12 }}>
             {[72, 72, 72].map((h, i) => <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 14 }} />)}
           </div>
+        ) : loadError ? (
+          <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{loadError}</Notice>
         ) : orders.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>
             {filter === 'unpaid' ? t('Nothing waiting for payment — every completed order has an invoice.') : t('No job orders in this view.')}

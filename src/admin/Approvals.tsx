@@ -139,7 +139,6 @@ export default function Approvals() {
             <h2 style={{ margin: '14px 0 0', fontSize: 19, fontWeight: 600 }}>{t('Account approved')}</h2>
             <p className="ktc-label" style={{ marginTop: 8, lineHeight: 1.6, fontSize: 14 }}>
               <b>{approvedName}</b> {t('has been approved and notified by email.')}
-              {error ? t(' Note: their valid ID could not be deleted — see the warning on the page.') : t(' Their valid ID was removed from storage.')}
             </p>
             <button className="ktc-btn" type="button" onClick={() => setApprovedName(null)} style={{ marginTop: 18, width: '100%' }}>
               {t('Done')}

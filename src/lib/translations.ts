@@ -15,6 +15,16 @@
 
 export const tl: Record<string, string> = {
   "Awaiting ops acceptance": "Naghihintay na tanggapin ng operations",
+  // --- Phase-5 batch: error-blind loaders + specific highs ---
+  "Couldn't load — tap Retry": "Hindi ma-load — i-tap ang Subukan ulit",
+  "Retry": "Subukan ulit",
+  "Job Order filed": "Na-file ang Job Order",
+  "Your reference is": "Ang iyong reference ay",
+  "Your job order has been filed.": "Na-file na ang iyong job order.",
+  "Search by name, email, or customer ID…": "Maghanap ayon sa pangalan, email, o customer ID…",
+  "Search customers": "Maghanap ng mga customer",
+  "No customers match your search.": "Walang customer na tumugma sa iyong paghahanap.",
+  "You appear to be offline — check your internet connection. We'll reconnect automatically.": "Mukhang offline ka — pakisuri ang iyong koneksyon sa internet. Awtomatiko kaming magre-reconnect.",
   // --- bulk coverage pass (Tagalog) ---
   "— re-upload to replace": "— mag-re-upload para palitan",
   "· rates incomplete": "· kulang ang rates",

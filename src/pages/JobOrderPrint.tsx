@@ -1,8 +1,10 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
 import { SERVICE_LINE_LABEL, type ServiceLine } from '../lib/types'
+import Notice from '../components/Notice'
+import { useT } from '../lib/i18n'
 
 interface PrintOrder {
   id: string
@@ -43,18 +45,23 @@ const PRINT_CSS = `
 `
 
 export default function JobOrderPrint() {
+  const { t } = useT()
   const { id } = useParams<{ id: string }>()
   const [order, setOrder] = useState<PrintOrder | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!id) return
+    setLoading(true)
+    setLoadError(null)
     supabase
       .from('job_orders')
       .select('id, jo_number, entry_number, vessel_name, voyage_number, status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, vacated_at)')
       .eq('id', id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { setLoadError(error.message); setLoading(false); return }
         if (data) {
           const o = data as unknown as PrintOrder
           setOrder({ ...o, customer: one(o.customer), consignee: one(o.consignee) })
@@ -62,6 +69,8 @@ export default function JobOrderPrint() {
         setLoading(false)
       })
   }, [id])
+
+  useEffect(() => { load() }, [load])
 
   // Printable from filing onward; only the dead-end states have no slip.
   const BLOCKED = ['held', 'rejected', 'cancelled']
@@ -94,6 +103,10 @@ export default function JobOrderPrint() {
 
       {loading ? (
         <p className="ktc-label" style={{ textAlign: 'center' }}>Loading…</p>
+      ) : loadError ? (
+        <div style={{ maxWidth: 380, margin: '0 auto' }}>
+          <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => load()}>{t('Retry')}</button>}>{loadError}</Notice>
+        </div>
       ) : !order ? (
         <p className="ktc-label" style={{ textAlign: 'center' }}>Job order not found.</p>
       ) : !printable ? (

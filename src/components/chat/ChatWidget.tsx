@@ -29,11 +29,37 @@ export default function ChatWidget() {
   const wasOpenRef = useRef(false)
   const [draft, setDraft] = useState('')
   const [pulse, setPulse] = useState(false)
+  // Hide the launcher while a text field is focused so the FAB never sits over
+  // the input the user is typing in (visual-roast: FAB covered the email field).
+  const [fieldFocused, setFieldFocused] = useState(false)
 
   // First-open hint once per browser session (mirrors the tour pattern).
   useEffect(() => {
     try { if (!sessionStorage.getItem('ktc_chat_seen')) setPulse(true) } catch { /* ignore */ }
   }, [])
+
+  // Track focus on typing fields anywhere on the page (not the Lara composer —
+  // when that's focused the panel is open and the launcher is already hidden).
+  useEffect(() => {
+    function isField(el: EventTarget | null) {
+      const n = el as HTMLElement | null
+      if (!n || !n.tagName) return false
+      // The Lara composer lives INSIDE the panel — focusing it must not flag a
+      // "page field", or an Escape-close can't restore focus to the launcher
+      // (it'd still be gated off). Only genuine page inputs hide the FAB.
+      if (n.closest('[data-lara-panel]')) return false
+      return n.tagName === 'INPUT' || n.tagName === 'TEXTAREA' || n.isContentEditable
+    }
+    function onIn(e: FocusEvent) { if (isField(e.target)) setFieldFocused(true) }
+    function onOut() { setFieldFocused(false) }
+    document.addEventListener('focusin', onIn)
+    document.addEventListener('focusout', onOut)
+    return () => { document.removeEventListener('focusin', onIn); document.removeEventListener('focusout', onOut) }
+  }, [])
+
+  // When the panel closes, clear the flag so the launcher always returns — a
+  // focusout may not fire when the focused composer is unmounted (e.g. Escape).
+  useEffect(() => { if (!state.open) setFieldFocused(false) }, [state.open])
 
   // Focus management (WCAG 2.4.3). Non-modal dialog: on open, move focus into the
   // panel (the composer); on close, restore it to the now-remounted launcher.
@@ -159,8 +185,9 @@ export default function ChatWidget() {
 
   return createPortal(
     <>
-      {/* Launcher — hidden while the panel is open (the panel has its own close). */}
-      {!state.open && (
+      {/* Launcher — hidden while the panel is open (the panel has its own close)
+          or while a text field is focused (so it never covers the input). */}
+      {!state.open && !fieldFocused && (
         <button ref={launcherRef} type="button" data-tour="lara-launcher" aria-label={t('Open KTC assistant (Lara)')} onClick={launcherClick}
           style={{
             position: 'fixed', right: 16, bottom: FAB_BOTTOM, zIndex: 60,
@@ -181,7 +208,7 @@ export default function ChatWidget() {
 
       {/* Panel */}
       {state.open && (
-        <div className="ktc-glass" role="dialog" aria-label={t('KTC assistant — Lara')}
+        <div className="ktc-glass" role="dialog" aria-label={t('KTC assistant — Lara')} data-lara-panel
           onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); close() } }}
           style={{
             position: 'fixed', right: 16, bottom: FAB_BOTTOM, zIndex: 60,

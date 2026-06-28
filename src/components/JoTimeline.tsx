@@ -6,6 +6,7 @@ import { joEventLabel } from '../lib/eventLabels'
 import type { JobOrderEvent } from '../lib/types'
 import { useT } from '../lib/i18n'
 import { PaperclipIcon } from './icons'
+import Notice from './Notice'
 
 // Unified Job Order timeline: lifecycle events + supporting documents + two-way
 // comments (customer ↔ KTC), from the jo_timeline RPC (migration 0070). The
@@ -42,10 +43,13 @@ export default function JoTimeline({ orderId, userId, canComment, canAttach, sta
   const [file, setFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const { openFromStorage, viewerModal } = useFileViewer(setErr)
 
   async function load() {
-    const { data } = await supabase.rpc('jo_timeline', { p_jo: orderId })
+    const { data, error } = await supabase.rpc('jo_timeline', { p_jo: orderId })
+    if (error) { setLoadError(error.message); return }
+    setLoadError(null)
     setRows((data ?? []) as Row[])
   }
   useEffect(() => { void load() }, [orderId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -101,7 +105,9 @@ export default function JoTimeline({ orderId, userId, canComment, canAttach, sta
     <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--glass-brd)' }}>
       <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Timeline')}</span>
 
-      {rows.length === 0 ? (
+      {loadError ? (
+        <Notice tone="error" style={{ marginTop: 8 }} title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{loadError}</Notice>
+      ) : rows.length === 0 ? (
         <p className="ktc-label" style={{ fontSize: 12.5, marginTop: 8, opacity: 0.75 }}>{t('No activity yet.')}</p>
       ) : (
         <div style={{ display: 'grid', gap: 0, marginTop: 10 }}>

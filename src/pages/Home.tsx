@@ -7,6 +7,7 @@ import { useBroker } from '../lib/useBroker'
 import { homeSteps } from '../components/WelcomeTour'
 import { usePageTour } from '../components/TourProvider'
 import BulletinBoard from '../components/BulletinBoard'
+import Notice from '../components/Notice'
 import { useT } from '../lib/i18n'
 
 // Home is an at-a-glance OVERVIEW: KTC's bulletin board + light order counts.
@@ -23,17 +24,24 @@ export default function Home() {
   // the live pipeline. Only APPROVED accounts can file (migration 0163), and their
   // orders are created directly as `submitted` — the old `held`/Draft model is retired.
   const [stats, setStats] = useState({ active: 0, orderAttention: 0 })
+  // A discarded read error here would silently render 0/0 — looking like "nothing
+  // active, nothing needs attention" when the fetch actually failed (RLS/offline).
+  const [loadError, setLoadError] = useState<string | null>(null)
+  async function loadStats() {
+    setLoadError(null)
+    const [activeRes, attentionRes] = await Promise.all([
+      // Exclude re-X-ray children — they're internal KTC orders hidden from the customer's
+      // list (MyJobOrders filters is_rexray=false), so counting them desyncs tile vs list.
+      supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false).in('status', ['submitted', 'processing', 'on_hold']),
+      supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false)
+        .or('status.eq.on_hold,and(payment_status.eq.rejected,status.in.(submitted,processing,completed))'),
+    ])
+    const err = activeRes.error || attentionRes.error
+    if (err) { setLoadError(err.message); return }
+    setStats({ active: activeRes.count ?? 0, orderAttention: attentionRes.count ?? 0 })
+  }
   useEffect(() => {
-    void (async () => {
-      const [{ count: active }, { count: orderAttention }] = await Promise.all([
-        // Exclude re-X-ray children — they're internal KTC orders hidden from the customer's
-        // list (MyJobOrders filters is_rexray=false), so counting them desyncs tile vs list.
-        supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false).in('status', ['submitted', 'processing', 'on_hold']),
-        supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false)
-          .or('status.eq.on_hold,and(payment_status.eq.rejected,status.in.(submitted,processing,completed))'),
-      ])
-      setStats({ active: active ?? 0, orderAttention: orderAttention ?? 0 })
-    })()
+    void loadStats()
   }, [])
 
   // A pending account that hasn't uploaded a valid ID has ONE open action —
@@ -59,16 +67,28 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="ktc-stat-grid" style={{ marginBottom: 16 }}>
-        <Link to="/job-orders" className="ktc-glass ktc-stat">
-          <span className="ktc-stat-num">{stats.active}</span>
-          <span className="ktc-stat-label">{t('Active orders')}</span>
-        </Link>
-        <Link to={attentionTo} className={`ktc-glass ktc-stat${attention > 0 ? ' ktc-stat--alert' : ''}`}>
-          <span className="ktc-stat-num">{attention}</span>
-          <span className="ktc-stat-label">{t('Need your attention')}</span>
-        </Link>
-      </div>
+      {loadError ? (
+        <div style={{ marginBottom: 16 }}>
+          <Notice
+            tone="error"
+            title={t("Couldn't load — tap Retry")}
+            action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => { void loadStats() }}>{t('Retry')}</button>}
+          >
+            {loadError}
+          </Notice>
+        </div>
+      ) : (
+        <div className="ktc-stat-grid" style={{ marginBottom: 16 }}>
+          <Link to="/job-orders" className="ktc-glass ktc-stat">
+            <span className="ktc-stat-num">{stats.active}</span>
+            <span className="ktc-stat-label">{t('Active orders')}</span>
+          </Link>
+          <Link to={attentionTo} className={`ktc-glass ktc-stat${attention > 0 ? ' ktc-stat--alert' : ''}`}>
+            <span className="ktc-stat-num">{attention}</span>
+            <span className="ktc-stat-label">{t('Need your attention')}</span>
+          </Link>
+        </div>
+      )}
 
       <BulletinBoard />
     </Shell>

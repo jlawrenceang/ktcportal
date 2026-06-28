@@ -11,6 +11,7 @@ import { usePageTour } from '../components/TourProvider'
 import { jobOrderSteps } from '../components/WelcomeTour'
 import { useT } from '../lib/i18n'
 import Wizard, { type WizardStep } from '../components/Wizard'
+import Notice from '../components/Notice'
 
 export default function JobOrder() {
   const { t } = useT()
@@ -38,6 +39,9 @@ export default function JobOrder() {
   // `busy` check twice and file the order twice.
   const submittingRef = useRef(false)
   const [reviewing, setReviewing] = useState(false)
+  // On success we keep the customer on this page and confirm the filed order's
+  // reference (the assigned JO number) rather than silently redirecting.
+  const [filed, setFiled] = useState<{ joNumber: string | null } | null>(null)
 
   // Vessel + voyage (required) — picked from the current vessel schedule ONLY.
   // A call not yet listed is operations' work: the customer contacts KTC CS to
@@ -104,7 +108,7 @@ export default function JobOrder() {
     // Atomic: the order + its lines are inserted in one transaction server-side
     // (0098), so a failure can't leave an orphan line-less order. Pending vs
     // approved (held/submitted) is decided in the RPC.
-    const { error: fileErr } = await supabase.rpc('file_job_order', {
+    const { data: newId, error: fileErr } = await supabase.rpc('file_job_order', {
       p_consignee: consignee.id,
       p_entry_number: entryNumber.trim().toUpperCase(),
       p_vessel_visit: vVisit,
@@ -112,14 +116,21 @@ export default function JobOrder() {
       p_voyage_number: vVoyage,
       p_lines: filled.map((l) => ({ container_number: l.container_number.trim().toUpperCase(), service_request: l.service_request })),
     })
-    setBusy(false)
     if (fileErr) {
+      setBusy(false)
       submittingRef.current = false
       setError(fileErr.message)
       return
     }
-    // Redirect to the orders list (no auto-open — the new order shows at the top).
-    navigate('/job-orders')
+    // The RPC returns the new order's id; look up its assigned JO number so we
+    // can confirm the reference to the customer (null while still "Draft").
+    let joNumber: string | null = null
+    if (newId) {
+      const { data: row } = await supabase.from('job_orders').select('jo_number').eq('id', newId as string).maybeSingle()
+      joNumber = row?.jo_number ?? null
+    }
+    setBusy(false)
+    setFiled({ joNumber })
   }
 
   const wizardSteps: WizardStep[] = [
@@ -189,15 +200,31 @@ export default function JobOrder() {
           {t('File for container terminal services.')}
         </p>
 
-        <Wizard
-          steps={wizardSteps}
-          step={wizStep}
-          onStepChange={setWizStep}
-          onSubmit={openReview}
-          busy={busy}
-          error={error}
-          submitLabel={busy ? t('Submitting…') : t('Submit Job Order')}
-        />
+        {filed ? (
+          <Notice
+            tone="success"
+            title={t('Job Order filed')}
+            action={
+              <button type="button" className="ktc-btn" style={{ width: 'auto', padding: '10px 18px' }} onClick={() => navigate('/job-orders')}>
+                {t('View job orders')}
+              </button>
+            }
+          >
+            {filed.joNumber
+              ? <>{t('Your reference is')} <span className="ktc-mono" style={{ fontWeight: 700 }}>{filed.joNumber}</span></>
+              : t('Your job order has been filed.')}
+          </Notice>
+        ) : (
+          <Wizard
+            steps={wizardSteps}
+            step={wizStep}
+            onStepChange={setWizStep}
+            onSubmit={openReview}
+            busy={busy}
+            error={error}
+            submitLabel={busy ? t('Submitting…') : t('Submit Job Order')}
+          />
+        )}
       </div>
 
       {reviewing && (

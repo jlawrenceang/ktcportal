@@ -32,17 +32,20 @@ export default function MyRequests() {
   const { broker } = useBroker()
   const [cons, setCons] = useState<CReq[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
   const [editC, setEditC] = useState<CReq | null>(null)
 
   async function load() {
     if (!broker?.id) return
-    const { data: c } = await supabase
+    const { data: c, error } = await supabase
       .from('consignees')
       .select('id, code, name, status, address, tin, note, customer_name, address2, tel, mobile, email')
       .eq('requested_by', broker.id)
       .order('requested_at', { ascending: false })
+    if (error) { setLoadError(error.message); setLoading(false); return }
+    setLoadError(null)
     setCons((c ?? []) as CReq[])
     setLoading(false)
   }
@@ -69,7 +72,9 @@ export default function MyRequests() {
 
       <div className="ktc-glass" style={{ padding: 20 }}>
         <h2 style={{ fontSize: 15, fontWeight: 650, margin: '0 0 12px' }}>{t('Consignee requests')}</h2>
-        {cons.length === 0 ? (
+        {loadError ? (
+          <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{loadError}</Notice>
+        ) : cons.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 13 }}>{t('None yet.')}</div>
         ) : (
           <div style={{ display: 'grid', gap: 8 }}>

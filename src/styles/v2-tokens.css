@@ -65,6 +65,14 @@
   --tone-accent-bg: rgb(var(--acc-rgb) / 0.14);
   --tone-accent-ink: var(--acc-2);
 
+  /* Short semantic aliases — some components reference these directly for inline
+     status/error text. They point at the themed tone inks above (NOT the brand
+     accent), so they resolve correctly in both light + dark and never fall back
+     to off-system hex. --danger is the correct token for error copy (was --acc-2). */
+  --ok: var(--tone-success-ink);
+  --warn: var(--tone-warning-ink);
+  --danger: var(--tone-danger-ink);
+
   color-scheme: light;
 }
 

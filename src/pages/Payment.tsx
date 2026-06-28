@@ -32,11 +32,12 @@ export default function Payment() {
   const [busy, setBusy] = useState(false)
   const [suppBusy, setSuppBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [qrOpen, setQrOpen] = useState(false)
 
   async function load() {
     if (!id) return
-    const [{ data: jo }, pricing, { data: pi }, { data: rm }] = await Promise.all([
+    const [{ data: jo, error: joErr }, pricing, { data: pi }, { data: rm }] = await Promise.all([
       supabase.from('job_orders')
         .select('id, jo_number, status, payment_status, payment_note, payment_submitted_at, service_invoice_no, invoice_pad_no, xray_performed_at, rps_status, rps_payment_status, rps_payment_note, rps_payment_submitted_at, created_at, is_rexray, rexray_billable, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), supplements:jo_supplements(id, suffix, label, amount, payment_status, payment_note, payment_submitted_at)')
         .eq('id', id).maybeSingle(),
@@ -48,6 +49,7 @@ export default function Payment() {
     setCfg(pricing)
     setMoves(new Map(((rm ?? []) as { move_type: string; qty: number }[]).map((x) => [x.move_type, x.qty])))
     setInfo(new Map(((pi ?? []) as PayInfo[]).map((r) => [r.key, r.value])))
+    setLoadError(joErr ? joErr.message : null)
     setLoading(false)
   }
   useEffect(() => { void load() }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -112,7 +114,11 @@ export default function Payment() {
     return (
       <Shell>
         <div className="ktc-glass" style={{ padding: 18 }}>
-          <p className="ktc-label">{t('Job order not found.')} <Link to="/job-orders" className="ktc-link">{t('Back to My Job Orders')}</Link></p>
+          {loadError ? (
+            <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{loadError}</Notice>
+          ) : (
+            <p className="ktc-label">{t('Job order not found.')} <Link to="/job-orders" className="ktc-link">{t('Back to My Job Orders')}</Link></p>
+          )}
         </div>
       </Shell>
     )

@@ -4,6 +4,31 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.7.2 — 2026-06-29 (Phase-5 UX/UI batch + resilience + e2e recalibration)
+
+The consolidated Phase-5 batch-fix (ship-review + UX/UI audit + visual roast findings), jarvis-verified across two passes (it caught a ship-blocker — see below), + the e2e suite recalibrated to a desktop/mobile × EN/FIL × light/dark matrix.
+
+**Security:** migration **0195** revokes direct EXECUTE on 4 release trigger-functions (from 0188) that `check-security-invariants` flagged as `authenticated`/`anon`-callable — they're trigger-only now (applied to prod during the test battery; the migration file lands here).
+
+**Read-side reliability — "looks fine but isn't working":**
+- **13 error-blind data loaders** (Home, Notifications, MyJobOrders, MyRequests, Payment, Vessels, customer + admin Releases, NotificationBell, JoTimeline, JobOrderPrint, Dashboard, AllJobOrders, CustomerDetail) now capture the Supabase `error` and render an **error + Retry** state instead of the success empty-state ("no orders" / "all caught up") on a failed/RLS-denied/offline fetch. `Dashboard` stat counts + `CustomerDetail` are guarded too (jarvis follow-ups).
+
+**Resilience:**
+- **Offline banner** — a distinct "you appear to be offline" notice (slate, auto-recovers on reconnect) so a dropped connection no longer mislabels itself as "servers are busy". (Busy-server banner + ErrorBoundary already existed.)
+
+**UX/UI (from the audit + visual roast):**
+- **De-glassed** the Home data tiles + bulletin → solid hairline surfaces (data is the hero, no photo bleed-through).
+- Shared **`Modal` a11y** — role=dialog / aria-modal / focus-trap / focus-return; **`Notice`** errors now `role="alert"`. Semantic-token aliases `--ok/--warn/--danger`.
+- **Lara FAB** hides while a page input is focused (no longer covers the field).
+- **Responsive admin width** — the ops column widens 960→1200px only at ≥1280px; mobile/tablet/normal-desktop unchanged.
+- **Approvals**: removed the false "valid ID was removed from storage" claim (the ID is retained). **New Job Order**: a filing **confirmation that names the JO number** (+ captures the submit error). **Brokers list**: client-side **search + pagination**.
+
+**jarvis caught a ship-blocker:** the new `Modal` focus-on-open effect, keyed on `[open, onClose]`, re-ran on every keystroke when a caller passed an unstable `onClose` → the customer **consignee-request form became untypable**. Fixed by splitting the effect (focus keyed on `[open]` only).
+
+**E2E recalibration (test-fork):** the smoke "14/14 fail" was a **`.env.local` `BASE_URL=localhost` footgun**, not stale selectors — fixed baseURL resolution + global action/navigation timeouts. New **8-config matrix** (viewport × locale × theme) seeded via per-project storageState, language-agnostic selectors, and a **NEW `layout.spec` overflow guard** (40/40 green — no Tagalog/mobile/dark overflow). Smoke 112/112.
+
+`APP_VERSION` v1.7.1 → v1.7.2. tsc + check:i18n + build clean.
+
 ## v1.7.1 — 2026-06-29 (Hotfix: 2 live v1.7.0 bugs — release-supplement money gap + checker dead-end)
 
 Migration **0194** + frontend. Both from the v1.7.0 ship-review; jarvis-verified before prod.

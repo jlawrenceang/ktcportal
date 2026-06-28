@@ -14,9 +14,17 @@ const STAFF = process.env.E2E_STAFF_EMAIL // e.g. <username>@ktc-staff.local
 test.describe('KTC portal — authenticated (Phase 2)', () => {
   test.describe.configure({ mode: 'serial' })
   test.beforeEach(() => {
+    // Gated behind an explicit opt-in: these mint REAL role accounts (owner/broker/
+    // staff) and the fixme lanes mutate data, so they must run against a DEDICATED
+    // TEST project — never prod (minting the real owner against prod would evict the
+    // owner's live session; the mutation lanes would corrupt prod). Without the
+    // opt-in they SKIP cleanly (no false failure). The prod authenticated round-trip
+    // is covered by customer-lifecycle.spec.ts (a throwaway customer, self-purged).
+    // To run: E2E_AUTH_LIVE=1 with E2E_SUPABASE_URL/E2E_SERVICE_ROLE_KEY +
+    // BASE_URL pointing at that test project's frontend. See e2e/README.md.
     test.skip(
-      !e2eAuthConfigured,
-      'Set E2E_SUPABASE_URL + E2E_SERVICE_ROLE_KEY (point at a test project) to run Phase 2. See e2e/README.md.',
+      !e2eAuthConfigured || !process.env.E2E_AUTH_LIVE,
+      'authenticated.spec runs against a dedicated TEST project — set E2E_AUTH_LIVE=1 (+ E2E_SUPABASE_URL/E2E_SERVICE_ROLE_KEY/BASE_URL for it). Prod auth lane = customer-lifecycle.spec.ts.',
     )
   })
 

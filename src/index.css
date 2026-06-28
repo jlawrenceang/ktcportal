@@ -529,6 +529,13 @@
     overflow-x: clip;
   }
   .ktc-page--wide { max-width: 960px; }
+  /* Large desktops (≥1280px) only: give the admin/ops working column more room
+     for dense tables (Job-Orders, Cashier, Logs) — on a big monitor 960px wastes
+     half the screen. Mobile, tablet, and normal desktop (≤1279px) keep the loved
+     app-like sizes unchanged; this is purely additive for big screens. */
+  @media (min-width: 1280px) {
+    .ktc-page--wide { max-width: 1200px; }
+  }
   /* Clear the floating bottom tab bar (customer shell). Two-class selector so it
      wins over the base + mobile .ktc-page padding regardless of source order.
      Adds the iOS home-indicator safe-area so content never hides under it. */
@@ -1050,11 +1057,30 @@
     border-radius: 16px;
     text-decoration: none;
     color: inherit;
+    /* De-glassed: a solid, hairline-bordered surface so the numbers are the hero
+       and never sit frosted over the terminal photo (visual-roast HIGH). The
+       no-blur + opaque bg win over a co-applied .ktc-glass (later in source). */
+    background: var(--card);
+    border: 1px solid hsl(var(--line));
+    box-shadow: var(--shadow-sm);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
+  .ktc-stat:hover { border-color: hsl(var(--ink-3)); }
   .ktc-stat-num { font-size: 30px; font-weight: 750; letter-spacing: -0.03em; line-height: 1.1; }
   .ktc-stat-label { font-size: 12.5px; font-weight: 550; color: hsl(var(--ink-2)); }
   .ktc-stat--alert .ktc-stat-num { color: var(--acc-2); }
-  .ktc-bulletin { padding: 18px 18px; border-radius: 16px; }
+  .ktc-bulletin {
+    padding: 18px 18px;
+    border-radius: 16px;
+    /* Solid surface (matches the de-glassed stat tiles) — readable text, no
+       photo bleed-through. */
+    background: var(--card);
+    border: 1px solid hsl(var(--line));
+    box-shadow: var(--shadow-sm);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
   .ktc-bulletin-title { margin: 0 0 10px; font-size: 14.5px; font-weight: 700; }
   .ktc-bulletin-list { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13px; line-height: 1.5; color: hsl(var(--ink-2)); }
   .ktc-bulletin-links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }

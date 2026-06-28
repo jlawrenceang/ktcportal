@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import Shell from '../components/Shell'
+import Notice from '../components/Notice'
 import { supabase } from '../lib/supabase'
 import { MonthCalendar, Badge, fmt, type VesselRow } from '../components/VesselCalendar'
 import { usePageTour } from '../components/TourProvider'
@@ -96,14 +97,20 @@ export default function Vessels() {
   const { t } = useT()
   const [rows, setRows] = useState<VesselRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [showAll, setShowAll] = useState(false)
   const [view, setView] = useState<'cards' | 'table' | 'calendar'>('cards')
 
-  useEffect(() => {
-    void supabase.from('vessel_schedule_v').select('*')
+  async function load() {
+    setLoading(true)
+    setLoadError(null)
+    const { data, error } = await supabase.from('vessel_schedule_v').select('*')
       .order('actual_arrival', { ascending: false, nullsFirst: true })
-      .then(({ data }) => { setRows((data as VesselRow[]) ?? []); setLoading(false) })
-  }, [])
+    if (error) { setLoadError(error.message); setLoading(false); return }
+    setRows((data as VesselRow[]) ?? [])
+    setLoading(false)
+  }
+  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const visible = useMemo(
     () => (showAll ? rows : rows.filter((r) => r.is_current && !r.cancelled)),
@@ -137,6 +144,9 @@ export default function Vessels() {
       </div>
 
       {loading ? <p className="ktc-label">{t('Loading…')}</p>
+        : loadError ? (
+          <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{loadError}</Notice>
+        )
         : view === 'calendar' ? <MonthCalendar rows={rows.filter((r) => !r.cancelled)} />
         : view === 'cards' ? (
           visible.length === 0

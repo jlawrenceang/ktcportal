@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { idDeletable, RELEASE_STATUS_LABEL, type Broker, type JobOrder } from '../lib/types'
 import { BrokerReview } from './BrokerReview'
 import { useFileViewer } from '../components/FileViewerModal'
+import Notice from '../components/Notice'
 import { peso } from '../lib/pricing'
 import { useT } from '../lib/i18n'
 
@@ -40,6 +41,11 @@ export default function CustomerDetail() {
   const [tickets, setTickets] = useState<TicketRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Per-section load errors (orders / releases / tickets) so a failed/RLS-denied
+  // fetch shows a retry instead of a misleading "none yet" success empty-state.
+  const [ordersErr, setOrdersErr] = useState<string | null>(null)
+  const [releasesErr, setReleasesErr] = useState<string | null>(null)
+  const [ticketsErr, setTicketsErr] = useState<string | null>(null)
   // Admin password-reset: mint a one-time set-password link to hand the customer
   // directly (spam-proof). No email is sent from here.
   const [resetLink, setResetLink] = useState<string | null>(null)
@@ -65,29 +71,32 @@ export default function CustomerDetail() {
     try { await navigator.clipboard.writeText(resetLink); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch { /* clipboard blocked — user can select manually */ }
   }
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!id) return
-    void (async () => {
-      const [c, o, rel, tk] = await Promise.all([
-        supabase.from('customers').select('*').eq('id', id).maybeSingle(),
-        supabase.from('job_orders')
-          .select('id, jo_number, entry_number, status, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)')
-          .eq('customer_id', id).order('created_at', { ascending: false }),
-        supabase.from('release_orders')
-          .select('id, release_number, bl_number, status, amount, created_at')
-          .eq('customer_id', id).order('created_at', { ascending: false }),
-        supabase.from('support_tickets')
-          .select('id, subject, category, status, last_message_at, created_at')
-          .eq('customer_id', id).order('last_message_at', { ascending: false }),
-      ])
-      if (c.error) setError(c.error.message)
-      setCust((c.data as Broker) ?? null)
-      setOrders(((o.data ?? []) as unknown as JobOrder[]).map((r) => ({ ...r, consignee: one(r.consignee) })))
-      setReleases((rel.data ?? []) as ReleaseRow[])
-      setTickets((tk.data ?? []) as TicketRow[])
-      setLoading(false)
-    })()
+    const [c, o, rel, tk] = await Promise.all([
+      supabase.from('customers').select('*').eq('id', id).maybeSingle(),
+      supabase.from('job_orders')
+        .select('id, jo_number, entry_number, status, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)')
+        .eq('customer_id', id).order('created_at', { ascending: false }),
+      supabase.from('release_orders')
+        .select('id, release_number, bl_number, status, amount, created_at')
+        .eq('customer_id', id).order('created_at', { ascending: false }),
+      supabase.from('support_tickets')
+        .select('id, subject, category, status, last_message_at, created_at')
+        .eq('customer_id', id).order('last_message_at', { ascending: false }),
+    ])
+    setError(c.error ? c.error.message : null) // clear a stale error when a Retry succeeds
+    setOrdersErr(o.error ? o.error.message : null)
+    setReleasesErr(rel.error ? rel.error.message : null)
+    setTicketsErr(tk.error ? tk.error.message : null)
+    setCust((c.data as Broker) ?? null)
+    setOrders(((o.data ?? []) as unknown as JobOrder[]).map((r) => ({ ...r, consignee: one(r.consignee) })))
+    setReleases((rel.data ?? []) as ReleaseRow[])
+    setTickets((tk.data ?? []) as TicketRow[])
+    setLoading(false)
   }, [id])
+
+  useEffect(() => { void load() }, [load])
 
   const { openFromStorage, viewerModal } = useFileViewer(setError)
 
@@ -95,7 +104,13 @@ export default function CustomerDetail() {
   if (!cust) return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 18 }}>
-        <p className="ktc-label">{t('Customer not found.')} <Link to="/admin/customers" className="ktc-link">{t('Back to Customers')}</Link></p>
+        {error ? (
+          // A failed customer load must show the error + Retry, not a misleading
+          // "not found" (which swallows the error before the banner can render).
+          <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{error}</Notice>
+        ) : (
+          <p className="ktc-label">{t('Customer not found.')} <Link to="/admin/customers" className="ktc-link">{t('Back to Customers')}</Link></p>
+        )}
       </div>
     </AdminShell>
   )
@@ -154,7 +169,9 @@ export default function CustomerDetail() {
       <div className="ktc-glass" style={{ padding: 18 }}>
         <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('Job order history')}</h2>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 16 }}>{t('{n} order(s).', { n: orders.length })}</p>
-        {orders.length === 0 ? (
+        {ordersErr ? (
+          <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{ordersErr}</Notice>
+        ) : orders.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>{t('No job orders yet.')}</div>
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
@@ -181,7 +198,9 @@ export default function CustomerDetail() {
       <div className="ktc-glass" style={{ padding: 18, marginTop: 18 }}>
         <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('Releases')}</h2>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 16 }}>{t('{n} release(s).', { n: releases.length })}</p>
-        {releases.length === 0 ? (
+        {releasesErr ? (
+          <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{releasesErr}</Notice>
+        ) : releases.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>{t('No releases yet.')}</div>
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
@@ -205,7 +224,9 @@ export default function CustomerDetail() {
       <div className="ktc-glass" style={{ padding: 18, marginTop: 18 }}>
         <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('Support')}</h2>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 16 }}>{t('{n} ticket(s).', { n: tickets.length })}</p>
-        {tickets.length === 0 ? (
+        {ticketsErr ? (
+          <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{ticketsErr}</Notice>
+        ) : tickets.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>{t('No support tickets yet.')}</div>
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>

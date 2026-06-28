@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import Shell from '../components/Shell'
+import Notice from '../components/Notice'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import type { JobOrder } from '../lib/types'
@@ -241,6 +242,7 @@ export default function MyJobOrders() {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<JobOrder | null>(null) // order shown in the detail modal
   const [error, setError] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null) // list-load failure (separate from action errors)
   const [respondingId, setRespondingId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null) // order being edited inline
   const [cancelId, setCancelId] = useState<string | null>(null) // order pending cancel confirmation
@@ -281,9 +283,11 @@ export default function MyJobOrders() {
       q = q.or('status.eq.on_hold,and(payment_status.eq.rejected,status.in.(submitted,processing,completed)),and(has_open_supplement.eq.true,status.in.(submitted,processing,on_hold))')
     else if (f === 'completed') q = q.eq('status', 'completed')
     else if (f === 'closed') q = q.in('status', ['rejected', 'cancelled'])
-    const { data, count } = await q
+    const { data, count, error: loadErr } = await q
       .order('created_at', { ascending: false })
       .range(p * PAGE, p * PAGE + PAGE - 1)
+    if (loadErr) { setLoadError(loadErr.message); setLoading(false); return }
+    setLoadError(null)
     const rows = (data ?? []) as unknown as JobOrder[]
     setOrders(rows)
     setTotal(count ?? rows.length)
@@ -379,6 +383,8 @@ export default function MyJobOrders() {
                 <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 12 }} />
               ))}
             </div>
+          ) : loadError ? (
+            <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{loadError}</Notice>
           ) : orders.length === 0 ? (
             <div className="ktc-label" style={{ fontSize: 14 }}>
               {t(EMPTY_HINT[filter])}{' '}

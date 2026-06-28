@@ -91,6 +91,7 @@ export default function Releases() {
   // List of the customer's own release orders (read directly via RLS).
   const [rows, setRows] = useState<ReleaseOrder[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   // "File a release" form.
   const [consignee, setConsignee] = useState<PickerItem | null>(null)
@@ -108,10 +109,12 @@ export default function Releases() {
   const [selected, setSelected] = useState<ReleaseOrder | null>(null)
 
   async function loadList() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('release_orders')
       .select(SELECT_COLS)
       .order('created_at', { ascending: false })
+    if (error) { setLoadError(error.message); setLoading(false); return }
+    setLoadError(null)
     const list = (data ?? []) as unknown as ReleaseOrder[]
     setRows(list)
     setLoading(false)
@@ -258,6 +261,8 @@ export default function Releases() {
           <div style={{ display: 'grid', gap: 10 }} aria-label={t('Loading releases')}>
             {[52, 52, 52].map((h, i) => <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 12 }} />)}
           </div>
+        ) : loadError ? (
+          <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void loadList()}>{t('Retry')}</button>}>{loadError}</Notice>
         ) : rows.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>
             {t('No releases yet. File one above to get started.')}

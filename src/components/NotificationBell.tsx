@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import PushToggle from './PushToggle'
 import NotificationRow from './NotificationRow'
+import Notice from './Notice'
 import { useT } from '../lib/i18n'
 import {
   BellIcon, ChatIcon, AlertTriangleIcon, BanIcon, CheckCircleIcon, CreditCardIcon,
@@ -64,10 +65,11 @@ export default function NotificationBell() {
   const [items, setItems] = useState<Notif[]>([])
   const [unread, setUnread] = useState(0)
   const [open, setOpen] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const wrapRef = useRef<HTMLSpanElement>(null)
 
   async function load() {
-    const [{ data }, { count }] = await Promise.all([
+    const [itemsRes, countRes] = await Promise.all([
       supabase
         .from('notifications')
         .select('id, job_order_id, release_order_id, kind, title, created_at, read_at')
@@ -78,8 +80,13 @@ export default function NotificationBell() {
         .select('id', { count: 'exact', head: true })
         .is('read_at', null),
     ])
-    setItems((data ?? []) as Notif[])
-    setUnread(count ?? 0)
+    if (itemsRes.error || countRes.error) {
+      setLoadError((itemsRes.error ?? countRes.error)!.message)
+      return
+    }
+    setLoadError(null)
+    setItems((itemsRes.data ?? []) as Notif[])
+    setUnread(countRes.count ?? 0)
   }
   useEffect(() => { void load() }, [])
   // Refresh every 60s on a visible tab (same cadence as the order list).
@@ -156,7 +163,11 @@ export default function NotificationBell() {
             </span>
           </div>
 
-          {items.length === 0 ? (
+          {loadError ? (
+            <div style={{ padding: 10 }}>
+              <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{loadError}</Notice>
+            </div>
+          ) : items.length === 0 ? (
             <p className="ktc-label" style={{ fontSize: 12.5, padding: '18px 14px', opacity: 0.75, margin: 0 }}>
               {t('No notifications yet.')}
             </p>

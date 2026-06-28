@@ -31,6 +31,10 @@ export default function Brokers() {
   const [acting, setActing] = useState<string | null>(null)
   const [suspendId, setSuspendId] = useState<string | null>(null)
   const [suspendReason, setSuspendReason] = useState('')
+  const [query, setQuery] = useState('')
+  const PAGE = 25
+  const [visible, setVisible] = useState(PAGE)
+  useEffect(() => { setVisible(PAGE) }, [query])
 
   async function load() {
     // External brokers only — staff/admins live under Settings.
@@ -57,6 +61,14 @@ export default function Brokers() {
 
   const { openFromStorage, viewerModal } = useFileViewer(setError)
 
+  const q = query.trim().toLowerCase()
+  const filtered = q
+    ? rows.filter((b) =>
+        [b.full_name, b.email, b.customer_code, b.customer_id]
+          .some((f) => (f ?? '').toLowerCase().includes(q)))
+    : rows
+  const shown = filtered.slice(0, visible)
+
   return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 18 }}>
@@ -69,8 +81,16 @@ export default function Brokers() {
         {loading ? <span className="ktc-label">{t('Loading…')}</span> : rows.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>{t('No customer accounts yet.')}</div>
         ) : (
+          <>
+            <div style={{ marginBottom: 12, maxWidth: 360 }}>
+              <input className="ktc-input" type="search" value={query} onChange={(e) => setQuery(e.target.value)}
+                placeholder={t('Search by name, email, or customer ID…')} aria-label={t('Search customers')} />
+            </div>
+            {filtered.length === 0 ? (
+              <div className="ktc-label" style={{ fontSize: 14 }}>{t('No customers match your search.')}</div>
+            ) : (
           <div style={{ display: 'grid', gap: 8 }}>
-            {rows.map((b) => {
+            {shown.map((b) => {
               const ss = STATUS_STYLE[b.status] ?? STATUS_STYLE.pending
               return (
                 <div key={b.id} style={{ display: 'grid', gap: suspendId === b.id ? 8 : 0 }}>
@@ -128,6 +148,15 @@ export default function Brokers() {
               )
             })}
           </div>
+            )}
+            {filtered.length > shown.length && (
+              <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center' }}>
+                <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => setVisible((v) => v + PAGE)}>
+                  {t('Show more')}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
       {viewerModal}
