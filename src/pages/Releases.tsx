@@ -12,6 +12,8 @@ import { searchConsignees } from '../lib/pickerSearches'
 import { prepareUpload } from '../lib/validation'
 import { peso } from '../lib/pricing'
 import { useT } from '../lib/i18n'
+import { usePageTour } from '../components/TourProvider'
+import { releasesSteps } from '../components/WelcomeTour'
 import { PaperclipIcon } from '../components/icons'
 import { RELEASE_STATUS_LABEL, type ReleaseOrder, type ReleaseStatus, type ReleaseSupplement } from '../lib/types'
 
@@ -77,6 +79,7 @@ function FileChip({ file, onRemove, disabled }: { file: File; onRemove: () => vo
 
 export default function Releases() {
   const { t } = useT()
+  usePageTour('releases', releasesSteps)
   const { session } = useAuth()
   const { broker } = useBroker()
   const uid = session?.user.id

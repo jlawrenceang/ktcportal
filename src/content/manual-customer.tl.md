@@ -16,7 +16,7 @@ Lahat ng kailangan mo para mag-file at mag-track ng Job Orders para sa X-ray ins
 
 - Pagkatapos ng unang sign-in mo, dadating ka sa **Verify ID** page: i-tick ang data-privacy consent at mag-upload ng isang valid government ID (o i-skip muna at gawin mamaya mula sa banner sa home page mo).
 - May KTC admin na magre-review at maga-approve ng account mo. Makakatanggap ka ng **approval email**.
-- **Pwede ka nang mag-file ng job orders habang naghihintay** — itatabi muna ang mga ito (ipapakita bilang *Draft — no number yet*) at automatic na ipapadala sa KTC sa sandaling ma-approve ka. Hanggang 10 held orders.
+- **Nabubuksan ang pag-file ng Job Orders kapag na-approve na ng KTC admin ang account mo.** Hanggang doon, verify-only muna ang account mo — i-upload lang ang valid ID mo (sa itaas) at hintayin ang approval email.
 - **Mahalaga:** i-upload ang ID mo sa loob ng **48 oras** mula nang i-confirm mo ang email mo, kung hindi ay isasara ang account at kailangan mong mag-register ulit.
 - Ang na-upload mong ID ay buburahin sa aming servers **hindi lalampas sa 3 araw pagkatapos ng upload** (Agreement §4).
 
@@ -28,7 +28,13 @@ Lahat ng kailangan mo para mag-file at mag-track ng Job Orders para sa X-ray ins
 - **Wala sa listahan ang vessel?** Kung wala sa dropdown ang vessel mo, **tumawag sa KTC customer service** para idagdag ito sa schedule — hindi mo pwedeng idagdag mismo ang vessel.
 - Bawat container row ay may **service** na kailangan nito (X-Ray, DEA, OOG Stripping…).
 - **Bulk paste:** i-paste ang buong listahan ng container numbers nang sabay-sabay — isang row kada container ang gagawin at lalaktawan ang mga duplicate.
-- Pag na-submit (verified accounts) makakakuha ang order ng permanenteng **JO number** nito (JO-000123).
+- Pag na-submit, makakakuha ang order ng permanenteng **JO number** nito (JO-000123).
+
+### Mag-request ng bagong consignee
+
+- Tanging **approved** na consignees lang ang lumalabas sa picker. Kung wala sa listahan ang sa iyo, i-tap ang **Request new consignee** sa consignee step at punan ang mga detalye nito (trade name, business address, TIN, BIR 2303, at contact info).
+- Ire-review ito ng KTC. Kapag **approved** na, lalabas na ito sa picker mo at pwede mo nang i-file laban dito — **hindi ka pwedeng mag-file ng order laban sa isang consignee hangga't hindi ito approved**.
+- I-track ang bawat request sa **My Requests**: **Pending** (hinihintay ng KTC), **Needs info** (may hinihingi pang detalye ang KTC — i-edit at i-resubmit), **Approved**, o **Rejected** (ayusin ang detalye at mag-request ulit). Pwede kang dalhin doon agad ni Lara.
 
 ### Mga order mo ayon sa batch
 
@@ -71,12 +77,32 @@ Pwede mong **i-cancel** ang sarili mong order mula sa card nito (may confirm pro
 
 ---
 
-## 6 · Account mo
+## 6 · Release / Pull-out (pagkuha ng container)
+
+**Hiwalay ito sa Job Order** — gamitin ang **Release / Pull-out** para mag-request ng pagkuha ng container mula sa terminal. Kailangang **approved** ang account mo para makapag-file (hindi pwede ang pending account).
+
+- Buksan ang **Release / Pull-out → File a release**. Piliin ang **consignee** (optional — approved na consignees lang ang lalabas; kung wala pa ang sa iyo, i-request muna o iwan na blangko), ilagay ang **BL Number** (kailangan), at i-attach ang photo/PDF ng **DO o BL** mo (optional sa pag-file, pero kailangan ito ng KTC para i-assess ang charges, kaya i-attach na ngayon).
+- Bini-**verify ng KTC ang documents mo**, tapos **ia-assess ang charges** at maaaring i-attach ang aktwal na **bill / SOA** — mababalitaan ka at pwede mong **tingnan o i-download ang bill** bago magbayad.
+- **Magbayad** tulad ng sa Job Order (transfer / GCash + i-upload ang slip, o magbayad sa KTC cashier). Iko-**confirm ng KTC** ang bayad mo.
+- Itatala ng KTC ang **OR** at **ire-release** na ang container. Maaaring magdagdag ang KTC ng **extra charges** sa proseso — bayaran ang mga ito bago maging final ang release.
+- Mga status: **Submitted → Documents verified → Ready for payment → Paid → Released**, plus **On hold** (may kailangan ang KTC) at **Cancelled**. I-track nang live sa **My Releases** — may **abiso** ka sa bawat hakbang.
+
+---
+
+## 7 · Tulong at Suporta
+
+- Si **Lara**, ang in-app assistant (ang chat button), ay sumasagot agad sa mga karaniwang tanong — pag-file, mga status, bayad, vessels, releases — at pwedeng magbukas ng support ticket para sa iyo.
+- **Help & Support** (ang Support page): magbukas ng **ticket** at sasagot ang KTC in-app. Ang ticket ay **Open** (hinihintay ang KTC), **Answered** (sumagot na ang KTC), o **Closed** (resolved na). Lumalabas ang mga sagot sa notifications mo.
+- Kahit **pending (hindi pa approved)** na account ay nakakaabot sa Support at nakikita ang contact details ng KTC mula sa verify-only screen.
+
+---
+
+## 8 · Account mo
 
 - **My Account:** i-edit ang pangalan at contact number mo, palitan ang email mo (kailangan ng re-confirmation) o password. Ang pagpapalit ng pangalan sa isang approved account ay magbabalik sa iyo para sa **re-verification** (bagong ID upload) — kailangang tugma ang data mo sa ID mo.
 - Nakalimutan ang password? **Reset by email** mula sa login page.
 
-## 7 · Security — ano ang aasahan
+## 9 · Security — ano ang aasahan
 
 - Nag-si-sign out ang sessions **pagkatapos ng 15 idle minutes** — may "Are you still there?" na prompt na lalabas isang minuto bago iyon; kahit anong click ay panatilihin kang naka-sign in.
 - **Isang active session kada account:** ang pag-sign in sa pangalawang device ay magsa-sign out sa una. Kung na-sign out ka "because this account signed in on another device" at hindi ikaw iyon — **palitan agad ang password mo**.

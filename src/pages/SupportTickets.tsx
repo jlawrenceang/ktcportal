@@ -3,6 +3,8 @@ import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import { useT } from '../lib/i18n'
+import { usePageTour } from '../components/TourProvider'
+import { supportSteps } from '../components/WelcomeTour'
 import { LockIcon } from '../components/icons'
 
 // Customer support tickets — the logged system-of-record. Customers open
@@ -71,6 +73,7 @@ function StatusChip({ status }: { status: string }) {
 
 export default function SupportTickets() {
   const { t } = useT()
+  usePageTour('support', supportSteps)
   const { broker } = useBroker()
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
