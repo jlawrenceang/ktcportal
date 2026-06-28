@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, type NavigateFunction } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import PushToggle from './PushToggle'
+import NotificationRow from './NotificationRow'
 import { useT } from '../lib/i18n'
 import {
   BellIcon, ChatIcon, AlertTriangleIcon, BanIcon, CheckCircleIcon, CreditCardIcon,
@@ -13,10 +14,11 @@ import {
 // badge; the dropdown lists recent notifications (read + unread) with the
 // unread ones highlighted. Backed by the 0071 triggers + mark_notifications_read.
 // The Home dashboard keeps its inline bar for a louder "you have updates" cue.
-type Notif = { id: string; job_order_id: string | null; kind: string; title: string; created_at: string; read_at: string | null }
+// The /notifications history page reuses the type, icon map, fmtWhen + routing.
+export type Notif = { id: string; job_order_id: string | null; release_order_id: string | null; kind: string; title: string; created_at: string; read_at: string | null }
 
 // Per-kind line icon (shared set) — replaces the old emoji map.
-const ICON: Record<string, (p: IconProps) => ReactNode> = {
+export const ICON: Record<string, (p: IconProps) => ReactNode> = {
   comment: ChatIcon,
   on_hold: AlertTriangleIcon,
   rejected: BanIcon,
@@ -32,10 +34,28 @@ const ICON: Record<string, (p: IconProps) => ReactNode> = {
   consignee_approved: CheckCircleIcon,
   consignee_rejected: BanIcon,
   consignee_needs_info: AlertTriangleIcon,
+  release_payable: ReceiptIcon,
+  release_confirmed: CreditCardIcon,
+  release_rejected: CreditCardIcon,
+  release_released: CheckCircleIcon,
+  release_on_hold: AlertTriangleIcon,
+  release_cancelled: BanIcon,
 }
 
-function fmtWhen(iso: string): string {
+export function fmtWhen(iso: string): string {
   return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+}
+
+// Single source of routing for a customer notification — shared by the bell and
+// the /notifications history page (each handles its own mark-read state first).
+export function routeCustomerNotif(n: Pick<Notif, 'kind' | 'job_order_id' | 'release_order_id'>, navigate: NavigateFunction) {
+  // Route by kind: support replies → the ticket page; order events → the
+  // orders list (auto-opening that order); account/announcement → Home.
+  if (n.kind === 'support_reply') { navigate('/support'); return }
+  if (n.kind.startsWith('consignee_')) { navigate('/requests'); return }
+  if (n.release_order_id) { navigate('/releases'); return }
+  if (n.job_order_id) { sessionStorage.setItem('ktc_jo_filed_id', n.job_order_id); navigate('/job-orders'); return }
+  navigate('/')
 }
 
 export default function NotificationBell() {
@@ -50,7 +70,7 @@ export default function NotificationBell() {
     const [{ data }, { count }] = await Promise.all([
       supabase
         .from('notifications')
-        .select('id, job_order_id, kind, title, created_at, read_at')
+        .select('id, job_order_id, release_order_id, kind, title, created_at, read_at')
         .order('created_at', { ascending: false })
         .limit(20),
       supabase
@@ -82,12 +102,7 @@ export default function NotificationBell() {
       setUnread((u) => Math.max(0, u - 1))
       void supabase.rpc('mark_notifications_read', { p_ids: [n.id] }).then(() => undefined, () => undefined)
     }
-    // Route by kind: support replies → the ticket page; order events → the
-    // orders list (auto-opening that order); account/announcement → Home.
-    if (n.kind === 'support_reply') { navigate('/support'); return }
-    if (n.kind.startsWith('consignee_')) { navigate('/requests'); return }
-    if (n.job_order_id) { sessionStorage.setItem('ktc_jo_filed_id', n.job_order_id); navigate('/job-orders'); return }
-    navigate('/')
+    routeCustomerNotif(n, navigate)
   }
 
   async function markAll() {
@@ -148,30 +163,25 @@ export default function NotificationBell() {
           ) : (
             <div style={{ maxHeight: 360, overflowY: 'auto', padding: 6 }}>
               {items.map((n) => (
-                <button
+                <NotificationRow
                   key={n.id}
-                  type="button"
+                  icon={(ICON[n.kind] ?? BellIcon)({ size: 17 })}
+                  title={n.title}
+                  when={fmtWhen(n.created_at)}
+                  isRead={!!n.read_at}
                   onClick={() => void openItem(n)}
-                  style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 10, width: '100%', textAlign: 'left',
-                    padding: '9px 10px', borderRadius: 9, cursor: 'pointer', marginBottom: 2,
-                    background: n.read_at ? 'transparent' : 'var(--c-w55)',
-                    border: '1px solid ' + (n.read_at ? 'transparent' : 'var(--glass-brd)'),
-                    font: 'inherit', color: 'hsl(var(--ink))',
-                  }}
-                >
-                  <span aria-hidden style={{ flex: '0 0 auto', display: 'inline-flex', marginTop: 1, color: 'hsl(var(--ink-2))' }}>
-                    {(ICON[n.kind] ?? BellIcon)({ size: 17 })}
-                  </span>
-                  <span style={{ minWidth: 0, flex: '1 1 auto' }}>
-                    <span style={{ display: 'block', fontSize: 12.5, lineHeight: 1.4, fontWeight: n.read_at ? 400 : 600 }}>{n.title}</span>
-                    <span className="ktc-label" style={{ fontSize: 11, opacity: 0.7 }}>{fmtWhen(n.created_at)}</span>
-                  </span>
-                  {!n.read_at && <span aria-hidden style={{ width: 7, height: 7, borderRadius: 999, background: 'var(--acc)', flex: '0 0 auto', marginTop: 5 }} />}
-                </button>
+                />
               ))}
             </div>
           )}
+          <button
+            type="button"
+            className="ktc-link"
+            style={{ display: 'block', width: '100%', textAlign: 'center', fontSize: 12, padding: '10px 14px', borderTop: '1px solid var(--glass-brd)' }}
+            onClick={() => { setOpen(false); navigate('/notifications') }}
+          >
+            {t('View all')}
+          </button>
           <PushToggle variant="bell" />
         </div>
       )}

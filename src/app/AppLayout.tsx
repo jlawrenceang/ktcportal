@@ -6,8 +6,10 @@ import { useIdleLogout } from '../lib/useIdleLogout'
 import { useSessionGuard } from '../lib/useSessionGuard'
 import IdleWarning from '../components/IdleWarning'
 import StaffNotificationBell from '../components/StaffNotificationBell'
+import InstallButton from '../components/InstallButton'
 import { useTour } from '../components/TourProvider'
 import { useT } from '../lib/i18n'
+import { staffHome } from '../lib/types'
 import { LockIcon } from '../components/icons'
 
 // Focused "app mode" chrome for the installed staff app — a slim top bar (logo
@@ -73,7 +75,11 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
       <div className="ktc-stagger">{children}</div>
 
       <footer style={{ marginTop: 28, textAlign: 'center', fontSize: 11.5, color: 'hsl(var(--ink-2))', opacity: 0.7 }}>
-        <Link to="/admin" className="ktc-foot-link">{t('Open full portal')}</Link>
+        {/* Self-hides unless the browser offers install + not already standalone —
+            so a gate tablet that opened the app in a browser can still install it. */}
+        <div style={{ maxWidth: 260, margin: '0 auto 6px' }}><InstallButton /></div>
+        {/* Open each role on its own work home, not a Dashboard they can't act on. */}
+        <Link to={staffHome(broker)} className="ktc-foot-link">{t('Open full portal')}</Link>
       </footer>
 
       {idleWarning && <IdleWarning />}

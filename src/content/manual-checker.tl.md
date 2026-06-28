@@ -7,7 +7,7 @@ Ang station mo ay ang **X-ray Checker** queue — dito ka dadating pagka-sign in
 ## 1 · Pag-sign in
 
 - Gamitin ang iyong **username** at password sa portal login page (hindi na kailangan ng email).
-- Ipinapakita ng queue ang lahat ng order na naghihintay para sa X-ray, **naka-sort ayon sa line number**, na may **Now serving** strip sa taas.
+- Ipinapakita ng queue ang lahat ng order na naghihintay para sa X-ray, **naka-sort ayon sa line — ang priority lane (P-…) muna**, tapos ang regular queue (#…) at anumang re-X-ray (R-…), na may **Now serving** strip sa taas. May **Line** column ang desktop view; i-tap ang header para mag-re-sort ayon sa line, JO no., o age.
 
 ## 2 · Paghahanap ng container
 
@@ -24,6 +24,11 @@ Kapag pumasa ang isang container sa X-ray, pindutin ang **Confirm**:
 
 - Ang petsa at oras ay permanenteng ma-stamp (makikita ito sa lookup).
 - Aalis ang order sa queue mo. Kung X-ray ang huling pending service nito, magko-complete na ito; kung kailangan pa nito ng DEA o OOG, mananatili itong open para doon — pero anuman ang mangyari, wala na ito sa line mo.
+
+### Re-X-ray
+
+- Kung kailangan ng panibagong X-ray ang isang **completed** na order, hanapin ito at i-tap ang **Request re-X-ray** — gagawa ito ng suffixed child order (hal. `JO-000001A`) na ia-approve ng admin.
+- Ang re-X-ray child na **naghihintay ng admin approval** ay nagpapakita ng label na iyon sa halip na Confirm button — hindi mo ito puwedeng i-confirm hangga't hindi ito ina-approve ng admin.
 
 ## 4 · Ang weekly line
 

@@ -5,8 +5,15 @@ export interface Consignee {
   status: AccreditationStatus
   address: string | null
   tin: string | null
+  /** Full Customer Information Sheet contact fields (migration 0166). */
+  customer_name?: string | null
+  address2?: string | null
+  tel?: string | null
+  mobile?: string | null
+  email?: string | null
   doc_2303_path: string | null
   doc_2307_path?: string | null
+  payment_terms?: 'cash' | 'credit'
   requested_by?: string | null
   note?: string | null
   created_at?: string | null
@@ -62,6 +69,19 @@ export function hasAdminAccess(b: Pick<Broker, 'is_admin' | 'is_owner'> | null |
 /** Any back-office account: owner, admin, or a restricted role (cashier/checker). */
 export function isStaff(b: Pick<Broker, 'is_admin' | 'is_owner' | 'staff_role'> | null | undefined): boolean {
   return !!b && (b.is_admin || b.is_owner || !!b.staff_role)
+}
+
+/** Per-role landing page — each restricted role opens on its own work home
+ *  (admin/owner default to the admin dashboard). Single source for both the
+ *  admin shell start-link and the focused app's "open full portal". */
+export function staffHome(b: Pick<Broker, 'staff_role'> | null | undefined): string {
+  switch (b?.staff_role) {
+    case 'checker': return '/admin/checker'
+    case 'operations': return '/admin/job-orders'
+    case 'cashier': return '/admin/cashier'
+    case 'csr': return '/admin/support'
+    default: return '/admin'
+  }
 }
 
 // Also the consignee approval status (the accreditation *feature* UI was
@@ -199,6 +219,8 @@ export interface ReleaseOrder {
   consignee_id: string | null
   bl_number: string
   doc_path: string | null
+  /** Staff-uploaded bill / SOA (release-docs bucket, bills/<id>.<ext>); 0188. */
+  bill_doc_path?: string | null
   status: ReleaseStatus
   verified_at?: string | null
   amount?: number | null

@@ -55,7 +55,7 @@ export const homeSteps: TourStep[] = [
 export const jobOrderSteps: TourStep[] = [
   {
     icon: <TagIcon size={SZ} />, title: 'Consignee & entry number', target: '[data-tour="jo-consignee"]',
-    body: 'Start here: type to search the consignee master list and pick yours, then enter the Entry Number (C-…) from your customs entry.',
+    body: 'Start here: type to search the consignee master list and pick yours, then enter the Entry Number (C-…) from your customs entry. Not listed? Tap Request new consignee — KTC approves it, then it appears here. Track requests under My Requests.',
   },
   {
     icon: <ShipIcon size={SZ} />, title: 'Vessel & voyage', target: '[data-tour="jo-vessel"]',
@@ -100,5 +100,26 @@ export const accountSteps: TourStep[] = [
   {
     icon: <UserIcon size={SZ} />, title: 'Your account',
     body: 'Manage your profile here — update your name and contact number, change your email, or reset your password. Changing your legal name needs re-verification by a KTC admin, since it’s matched to your valid ID.',
+  },
+]
+
+export const releasesSteps: TourStep[] = [
+  {
+    icon: <BoxIcon size={SZ} />, title: 'Release / Pull-out',
+    body: 'Request a container release here — this is separate from a Job Order. File with the BL Number and a photo/PDF of your DO or BL; KTC verifies the documents, assesses the charges (with the bill attached for you to view), and you pay. Track each one through Submitted → Documents verified → Ready for payment → Paid → Released, with a notification at every step. Your account must be approved to file.',
+  },
+]
+
+export const requestsSteps: TourStep[] = [
+  {
+    icon: <TagIcon size={SZ} />, title: 'My Requests',
+    body: 'Consignees you’ve asked KTC to add show here with their status — Pending, Needs info (edit and resubmit), Approved, or Rejected (adjust the details and request again). Once a consignee is approved it appears in your filing picker so you can file against it.',
+  },
+]
+
+export const supportSteps: TourStep[] = [
+  {
+    icon: <ChatIcon size={SZ} />, title: 'Help & Support',
+    body: 'Open a support ticket and KTC replies in-app — a ticket moves from Open to Answered to Closed, and replies land in your notifications. For quick questions, tap Lara (the chat button) first; she answers instantly and can open a ticket for you if needed.',
   },
 ]

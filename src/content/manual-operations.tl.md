@@ -7,8 +7,8 @@ May dalawang station kang hinahawakan: ang **X-ray Checker** (ito ang home mo pa
 ## 1 · Signing in
 
 - Gamitin ang iyong **username** at password sa login page (hindi kailangan ng email).
-- Mapupunta ka sa **X-ray Checker** queue — mga order na naghihintay ng X-ray, naka-sort ayon sa line number, na may **Now serving** strip sa itaas.
-- Ang mga nav tab mo: **X-ray Checker**, **Vessels**, **Job Orders** (read-only), **Manual**.
+- Mapupunta ka sa iyong **Job Orders** work surface — ang live na order queue sa focused na app shell.
+- Ang X-ray work mo (assess + confirm) ay nasa **X-ray Checker**: buksan ito mula sa **Open full portal → X-ray Checker**. Ipinapakita ng Checker ang queue sa **line order — priority lane muna** — na may **Now serving** strip sa itaas. (Ang focused na checker app ay para sa confirm lang.)
 
 ## 2 · Assess a job order (RPS)
 
@@ -44,6 +44,8 @@ Kung bibigyan ka ng owner ng hold/reject gates, pareho ang rules sa admin:
 
 - **Field-targeted ang Hold for info** — i-tsek kung aling mga field ang kailangang i-re-enter ng customer (**Consignee · Entry number · Vessel & Voyage · Containers**) at maglagay ng note; ang mga field lang na 'yon ang mabubuksan para sa kanila.
 - **Final ang Reject** — hindi na puwedeng i-resubmit ang isang na-reject na order (mag-fa-file ng bago ang customer). Gamitin ang **Hold for info** para sa puwedeng ayusin.
+- **Priority lane:** **Request priority** sa isang order para mauna ito sa X-ray line (may admin na maga-approve). Ang approved na orders ay may **P-…** number at uunahin.
+- **Re-X-ray:** sa isang **completed** na order, **Request re-X-ray** (may admin na maga-approve) — gagawa ito ng suffixed child order (hal. `JO-000001A`) para sa bagong X-ray.
 
 ## 6 · What's not yours
 

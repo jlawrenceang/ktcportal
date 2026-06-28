@@ -46,12 +46,13 @@ export function WalkthroughProvider({ children }: { children: ReactNode }) {
   )
 }
 
-// Shared trigger. Pass className/style to fit each placement; children override the label.
-export function WatchWalkthroughButton({ className, style, children }: { className?: string; style?: CSSProperties; children?: ReactNode }) {
+// Shared trigger. Pass className/style to fit each placement; children override the
+// label; onClick runs before opening (e.g. to close the Menu sheet it lives in).
+export function WatchWalkthroughButton({ className, style, children, onClick }: { className?: string; style?: CSSProperties; children?: ReactNode; onClick?: () => void }) {
   const { open } = useWalkthrough()
   const { t } = useT()
   return (
-    <button type="button" className={className} style={style} onClick={open}>
+    <button type="button" className={className} style={style} onClick={() => { onClick?.(); open() }}>
       {children ?? (<><PlayIcon /> {t('Watch walkthrough')}</>)}
     </button>
   )

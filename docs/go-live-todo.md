@@ -31,6 +31,11 @@ that only the owner can complete. Keep this current — tick items as they're do
       the Supabase secret pairs with the Vercel site key (same Cloudflare widget).*
 - [ ] **Re-enable MFA** and enroll the owner + staff (`/admin/security`).
 - [ ] **Rotate the owner password** (`jlawrenceang@gmail.com`).
+- [ ] **MFA recovery / break-glass (audit T2-01, deferred here 2026-06-29).** Build
+      with the MFA re-enablement so it's testable end-to-end: recovery codes at
+      enrolment, an owner-only "clear a staff 2FA factor" action, and a documented
+      owner break-glass (lost authenticator) path. Touches the owner failsafe →
+      write a short spec + Jarvis review before building. (Phase-4 batch 4d.)
 
 ## 3. Google OAuth
 - [ ] **Finish the Supabase URL config** (Site URL + redirect allow-list) and

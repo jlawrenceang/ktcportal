@@ -4,8 +4,10 @@ import { supabase } from '../lib/supabase'
 import { usePermissions } from '../lib/usePermissions'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import type { ServingNumber } from '../lib/types'
+import { servingKey, servingTag } from '../lib/serving'
 import { useT } from '../lib/i18n'
 import { CameraIcon } from '../components/icons'
+import NowServing from '../components/NowServing'
 import { usePageTour } from '../components/TourProvider'
 import { checkerSteps } from '../admin/AdminTour'
 
@@ -27,15 +29,8 @@ const SELECT =
 const isXray = (s: string) => s.toLowerCase().includes('x-ray')
 function one<T>(v: T | T[] | null | undefined): T | null { return Array.isArray(v) ? (v[0] ?? null) : (v ?? null) }
 function shape(o: Order): Order { return { ...o, broker: one(o.broker), consignee: one(o.consignee) } }
-const activeServing = (o: Order) => o.serving?.find((s) => !s.vacated_at) ?? null
-// Priority lane is served AHEAD of the regular queue, then re-X-ray. Each lane numbers
-// from 1 independently, so fold the lane rank in front of the number for the sort.
-const LANE_RANK: Record<string, number> = { priority: 0, rexray: 2 }
-const servingKey = (o: Order) => { const s = activeServing(o); return s ? (LANE_RANK[s.service_line] ?? 1) * 1_000_000 + s.serving_no : Infinity }
-// Lane-tagged display: P-1 (priority), R-1 (re-X-ray), #1 (regular queue) — so the checker
-// can tell the lanes apart instead of seeing three identical "#1"s.
-const LANE_TAG: Record<string, string> = { priority: 'P', rexray: 'R' }
-const servingTag = (o: Order) => { const s = activeServing(o); return s ? (LANE_TAG[s.service_line] ? `${LANE_TAG[s.service_line]}-${s.serving_no}` : `#${s.serving_no}`) : null }
+// Lane order + lane-tagged display (P-1 priority / R-1 re-X-ray / #1 regular) come from
+// lib/serving so the desktop Checker + queue table show the exact same thing.
 
 // Map the raw DB status token to a friendly, translatable label (mirrors the
 // other pages so the chip never shows a bare lowercase token).
@@ -51,6 +46,7 @@ export default function AppChecker() {
   const { t } = useT()
   const { can } = usePermissions()
   const allowed = can('confirm_xray')
+  const canRexray = can('request_rexray')
   // Same tour key as the desktop Checker so the once-per-role flag is shared.
   usePageTour('checker', checkerSteps)
 
@@ -77,7 +73,7 @@ export default function AppChecker() {
       .filter((o) => (o.lines ?? []).some((l) => isXray(l.service_request) && !l.xray_done_at))
       // KTC-26: an unapproved re-X-ray child can't be acted on — keep it out of the queue.
       .filter((o) => !(o.is_rexray && o.rexray_status !== 'approved'))
-      .sort((a, b) => servingKey(a) - servingKey(b))
+      .sort((a, b) => servingKey(a.serving) - servingKey(b.serving))
     setQueue(rows)
     setLoading(false)
   }, [])
@@ -166,8 +162,24 @@ export default function AppChecker() {
     void load()
   }
 
+  // Re-X-ray: request on a COMPLETED order (opened via scan/lookup) → admin approves → child JO.
+  // Mirrors the desktop Checker + AllJobOrders; the checker holds request_rexray.
+  const [rexrayBusy, setRexrayBusy] = useState(false)
+  async function requestRexray(id: string) {
+    if (!window.confirm(t('Request a re-X-ray for this completed order? It creates a suffixed child order (e.g. JO-000001A) for admin approval.'))) return
+    setRexrayBusy(true); setError(null)
+    const { error: rpcErr } = await supabase.rpc('request_rexray', { p_parent: id })
+    setRexrayBusy(false)
+    if (rpcErr) { setError(rpcErr.message); return }
+    if (active) await openOrder(active.id)
+    void load()
+  }
+
   const xrayLines = (active?.lines ?? []).filter((l) => isXray(l.service_request))
   const statusChip = (s: string) => t(STATUS_LABEL[s] ?? s)
+  // An unapproved re-X-ray child can't be confirmed (record_van_xray rejects it) — guard the
+  // opened-order detail (the queue already excludes them). T2-20.
+  const activeRexrayPending = !!active?.is_rexray && active?.rexray_status !== 'approved'
 
   return (
     <AppLayout title="X-ray Checker">
@@ -177,6 +189,7 @@ export default function AppChecker() {
         </div>
       ) : (
         <>
+          <div style={{ marginTop: 14 }}><NowServing /></div>
           {error && (
             <div role="alert" style={{ margin: '12px 0', fontSize: 14, fontWeight: 600, color: 'var(--c-h0-65-40)', padding: '11px 14px', borderRadius: 10, background: 'var(--c-h0-75-97)', border: '1px solid var(--c-h0-70-88)' }}>{error}</div>
           )}
@@ -208,7 +221,7 @@ export default function AppChecker() {
           {active && (
             <div className="ktc-glass" style={{ padding: 18, marginTop: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                {servingTag(active) != null && <span className="ktc-mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--acc-2)' }}>{servingTag(active)}</span>}
+                {servingTag(active.serving) != null && <span className="ktc-mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--acc-2)' }}>{servingTag(active.serving)}</span>}
                 <b className="ktc-mono" style={{ fontSize: 18 }}>{active.jo_number ?? '—'}</b>
                 <span className="ktc-chip">{statusChip(active.status)}</span>
                 <button type="button" className="ktc-btn-secondary ktc-btn--sm" style={{ marginLeft: 'auto', padding: '8px 14px' }} onClick={() => setActive(null)}>{t('Close')}</button>
@@ -225,6 +238,8 @@ export default function AppChecker() {
                       <span className="ktc-mono" style={{ fontSize: 16, fontWeight: 600 }}>{l.container_number}</span>
                       {l.xray_done_at ? (
                         <span className="ktc-chip ktc-chip--success" style={{ marginLeft: 'auto' }}>✓ {t('X-ray confirmed')}</span>
+                      ) : activeRexrayPending ? (
+                        <span className="ktc-chip" style={{ marginLeft: 'auto' }}>{t('Re-X-ray — awaiting admin approval')}</span>
                       ) : ['submitted', 'processing', 'on_hold'].includes(active.status) ? (
                         <button className="ktc-btn ktc-btn--sm" style={{ marginLeft: 'auto', fontSize: 15, padding: '10px 18px' }}
                           onClick={() => setConfirmTarget({ id: l.id, container: l.container_number, jo: active.jo_number ?? '—' })}>
@@ -235,6 +250,13 @@ export default function AppChecker() {
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+              {canRexray && active.status === 'completed' && !active.is_rexray && (
+                <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--glass-brd)' }}>
+                  <button className="ktc-btn-secondary" style={{ width: '100%', padding: '12px' }} disabled={rexrayBusy} onClick={() => void requestRexray(active.id)}>
+                    {rexrayBusy ? t('Requesting…') : t('Request re-X-ray')}
+                  </button>
                 </div>
               )}
             </div>
@@ -249,7 +271,7 @@ export default function AppChecker() {
                 : queue.map((o) => (
                   <button key={o.id} type="button" onClick={() => setActive(o)}
                     style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', padding: '12px 14px', borderRadius: 12, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)', cursor: 'pointer', font: 'inherit', color: 'hsl(var(--ink))' }}>
-                    {servingTag(o) != null && <span className="ktc-mono" style={{ fontSize: 17, fontWeight: 700, color: 'var(--acc-2)' }}>{servingTag(o)}</span>}
+                    {servingTag(o.serving) != null && <span className="ktc-mono" style={{ fontSize: 17, fontWeight: 700, color: 'var(--acc-2)' }}>{servingTag(o.serving)}</span>}
                     <b className="ktc-mono" style={{ fontSize: 14.5 }}>{o.jo_number ?? '—'}</b>
                     <span className="ktc-label" style={{ fontSize: 12, marginLeft: 'auto' }}>
                       {(o.lines ?? []).filter((l) => isXray(l.service_request) && !l.xray_done_at).length} {t('van(s)')}

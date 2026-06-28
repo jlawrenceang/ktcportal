@@ -30,6 +30,12 @@ Everything you need to file and track Job Orders for X-ray inspection, DEA exam,
 - **Bulk paste:** paste a whole list of container numbers at once — one row per container is created and duplicates are skipped.
 - On submit the order gets its permanent **JO number** (JO-000123).
 
+### Request a new consignee
+
+- Only **approved** consignees appear in the picker. If yours isn't listed, tap **Request new consignee** on the consignee step and fill in its details (trade name, business address, TIN, BIR 2303, and contact info).
+- KTC reviews it. Once **approved**, it appears in your picker and you can file against it — **you can't file an order against a consignee until it's approved**.
+- Track every request under **My Requests**: **Pending** (waiting on KTC), **Needs info** (KTC asked for more — edit and resubmit), **Approved**, or **Rejected** (adjust the details and request again). Lara can take you straight there.
+
 ### Your orders by batch
 
 - Orders are grouped by the **day you filed them** — today's batch, yesterday's, and so on. There is no serving number to wait on.
@@ -71,12 +77,32 @@ You can **cancel** your own order from its card (with a confirm prompt).
 
 ---
 
-## 6 · Your account
+## 6 · Release / Pull-out (container withdrawal)
+
+This is **separate from a Job Order** — use **Release / Pull-out** to request the withdrawal of a container from the terminal. Your account must be **approved** to file one (a pending account can't).
+
+- Open **Release / Pull-out → File a release**. Pick the **consignee** (optional — only approved consignees show; if yours isn't there yet, request it first or leave it blank), enter the **BL Number** (required), and attach a photo/PDF of your **DO or BL** (optional at filing, but KTC needs it to assess charges, so attach it now).
+- KTC **verifies your documents**, then **assesses the charges** and may attach the actual **bill / SOA** — you'll be notified and can **view or download the bill** before paying.
+- **Pay** the same way as a Job Order (transfer / GCash + upload the slip, or pay at the KTC cashier). KTC **confirms** your payment.
+- KTC records the **OR** and the container is **cleared / released**. KTC may add **extra charges** along the way — settle those before the release is final.
+- Statuses: **Submitted → Documents verified → Ready for payment → Paid → Released**, plus **On hold** (KTC needs something) and **Cancelled**. Track them live under **My Releases** — you're **notified** at each step.
+
+---
+
+## 7 · Help & Support
+
+- **Lara**, the in-app assistant (the chat button), answers common questions instantly — filing, statuses, payments, vessels, releases — and can open a support ticket for you.
+- **Help & Support** (the Support page): open a **ticket** and KTC replies in-app. A ticket is **Open** (waiting on KTC), **Answered** (KTC replied), or **Closed** (resolved). Replies show up in your notifications.
+- Even a **pending (not-yet-approved)** account can reach Support and see KTC's contact details from the verify-only screen.
+
+---
+
+## 8 · Your account
 
 - **My Account:** edit your name and contact number, change your email (re-confirmation required) or password. A name change on an approved account sends you back for **re-verification** (a fresh ID upload) — your data must match your ID.
 - Forgot the password? **Reset by email** from the login page.
 
-## 7 · Security — what to expect
+## 9 · Security — what to expect
 
 - Sessions **sign out after 15 idle minutes** — an "Are you still there?" prompt appears one minute before; any click keeps you signed in.
 - **One active session per account:** signing in on a second device signs the first one out. If you're ever signed out "because this account signed in on another device" and it wasn't you — **change your password immediately**.

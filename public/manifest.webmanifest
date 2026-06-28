@@ -2,7 +2,7 @@
   "name": "KTC Online Portal",
   "short_name": "KTC Portal",
   "description": "KTC Container Terminal Corp. — staff & customer portal",
-  "start_url": "/app?app=1",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

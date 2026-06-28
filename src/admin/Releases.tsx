@@ -4,9 +4,12 @@ import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import { usePermissions } from '../lib/usePermissions'
 import { useFileViewer } from '../components/FileViewerModal'
+import { prepareUpload } from '../lib/validation'
 import { peso } from '../lib/pricing'
 import { RELEASE_STATUS_LABEL, type ReleaseOrder, type ReleaseSupplement } from '../lib/types'
 import { useT } from '../lib/i18n'
+import { usePageTour } from '../components/TourProvider'
+import { releaseAdminSteps } from './AdminTour'
 
 // Release / Pull-out desks (ADR-0024). Two permission-gated sections sharing one
 // queue of release_orders — an admin/owner sees both:
@@ -21,7 +24,7 @@ function one<T>(v: T | T[] | null | undefined): T | null {
 }
 
 const SELECT =
-  'id, release_number, bl_number, doc_path, status, amount, charges_note, payment_status, payment_proof_path, payment_submitted_at, payment_note, or_number, service_invoice_no, invoice_recorded_at, created_at, verified_at, staff_note, consignee:consignees(code, name), broker:customers(full_name, email), supplements:release_supplements(id, label, amount, payment_status, payment_proof_path, payment_submitted_at, payment_note, created_at)'
+  'id, release_number, bl_number, doc_path, bill_doc_path, status, amount, charges_note, payment_status, payment_proof_path, payment_submitted_at, payment_note, or_number, service_invoice_no, invoice_recorded_at, created_at, verified_at, staff_note, consignee:consignees(code, name), broker:customers(full_name, email), supplements:release_supplements(id, label, amount, payment_status, payment_proof_path, payment_submitted_at, payment_note, created_at)'
 
 const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
   submitted: { bg: 'var(--c-h210-60-90)', ink: 'var(--c-h210-55-36)' },
@@ -57,6 +60,7 @@ const btn = (variant: 'solid' | 'ghost' | 'danger'): CSSProperties => ({
 
 export default function Releases() {
   const { t } = useT()
+  usePageTour('admin-releases', releaseAdminSteps)
   const { can, loading: permLoading } = usePermissions()
   const [rows, setRows] = useState<ReleaseOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -67,10 +71,11 @@ export default function Releases() {
   // Documents desk — hold-for-correction note prompt (release id being held).
   const [holdId, setHoldId] = useState<string | null>(null)
   const [holdNote, setHoldNote] = useState('')
-  // Documents desk — set-charges inputs (release id being charged).
+  // Documents desk / cashier — set-charges inputs (release id being charged).
   const [chargeId, setChargeId] = useState<string | null>(null)
   const [chargeAmount, setChargeAmount] = useState('')
   const [chargeNote, setChargeNote] = useState('')
+  const [chargeBill, setChargeBill] = useState<File | null>(null)
   // Documents desk — add-supplement inputs (release id getting an extra charge).
   const [supId, setSupId] = useState<string | null>(null)
   const [supLabel, setSupLabel] = useState('')
@@ -118,14 +123,42 @@ export default function Releases() {
     await load()
   }
 
+  // Upload the staff-prepared bill / SOA into release-docs/bills/<id>.<ext>.
+  async function uploadBill(releaseId: string, file: File): Promise<{ path: string } | { error: string }> {
+    const prepared = await prepareUpload(file)
+    if ('error' in prepared) return { error: t(prepared.error) }
+    const ext = prepared.file.name.split('.').pop()?.toLowerCase() || 'pdf'
+    const path = `bills/${releaseId}.${ext}`
+    const { error: upErr } = await supabase.storage.from('release-docs').upload(path, prepared.file, { upsert: true, contentType: prepared.file.type })
+    if (upErr) return { error: upErr.message }
+    return { path }
+  }
+
   async function setCharges(id: string) {
     const amount = Number(chargeAmount)
     if (!chargeAmount.trim() || Number.isNaN(amount) || amount <= 0) { setError(t('Enter a valid charge amount.')); return }
     setBusyId(id); setError(null)
-    const { error: err } = await supabase.rpc('set_release_charges', { p_id: id, p_amount: amount, p_note: chargeNote.trim() || null })
+    // Upload a new bill if one was chosen; otherwise keep the existing one (the RPC
+    // coalesces a null path to the stored value).
+    let billPath: string | null = null
+    if (chargeBill) {
+      const up = await uploadBill(id, chargeBill)
+      if ('error' in up) { setBusyId(null); setError(up.error); return }
+      billPath = up.path
+    }
+    const { error: err } = await supabase.rpc('set_release_charges', { p_id: id, p_amount: amount, p_note: chargeNote.trim() || null, p_bill_doc_path: billPath })
     setBusyId(null)
     if (err) { setError(err.message); return }
-    setChargeId(null); setChargeAmount(''); setChargeNote('')
+    setChargeId(null); setChargeAmount(''); setChargeNote(''); setChargeBill(null)
+    await load()
+  }
+
+  async function voidCharge(supplementId: string, releaseId: string) {
+    if (!window.confirm(t('Remove this additional charge? This can’t be undone.'))) return
+    setBusyId(releaseId); setError(null)
+    const { error: err } = await supabase.rpc('void_release_charge', { p_id: supplementId })
+    setBusyId(null)
+    if (err) { setError(err.message); return }
     await load()
   }
 
@@ -218,6 +251,10 @@ export default function Releases() {
 
   const showDocs = can('verify_release_docs')
   const showCashier = can('review_payments')
+  // Charge controls (set / edit / add / void / bill upload) are open to the
+  // documents desk AND the cashier — "cashier does both" (0188 widened the RPC
+  // gates the same way). Only the document VERIFY action stays docs-desk-only.
+  const showCharges = showDocs || showCashier
 
   // Staff cancel — only for releases still in motion. The RPC enforces the same set.
   const CANCELLABLE = new Set(['submitted', 'docs_verified', 'payable', 'on_hold'])
@@ -236,6 +273,46 @@ export default function Releases() {
     }
     return (
       <button style={btn('danger')} disabled={isBusy} onClick={() => { setCancelId(r.id); setCancelReason('') }}>{t('Cancel release')}</button>
+    )
+  }
+
+  // Set / edit the base charge + attach the bill. Reused at docs_verified ("Set
+  // charges") and while payable + unpaid/rejected ("Edit charge"). The RPC
+  // enforces the editable window; the UI just exposes the control.
+  function ChargeControl({ r, label }: { r: ReleaseOrder; label: string }) {
+    const isBusy = busyId === r.id
+    if (chargeId === r.id) {
+      return (
+        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input className="ktc-input ktc-mono" value={chargeAmount} inputMode="decimal" autoFocus placeholder={t('Amount (₱)')}
+            onChange={(e) => setChargeAmount(e.target.value.replace(/[^0-9.]/g, ''))} style={{ maxWidth: 150, width: '100%', padding: '7px 11px', fontSize: 13 }} />
+          <input className="ktc-input" value={chargeNote} placeholder={t('Note (optional)')}
+            onChange={(e) => setChargeNote(e.target.value)} style={{ maxWidth: 220, width: '100%', padding: '7px 11px', fontSize: 13 }} />
+          <input className="ktc-input" type="file" accept="image/*,application/pdf" disabled={isBusy}
+            onChange={(e) => setChargeBill(e.target.files?.[0] ?? null)}
+            title={r.bill_doc_path ? t('Replace the bill (optional)') : t('Attach the bill (optional)')}
+            style={{ maxWidth: 220, width: '100%', padding: '6px 10px', fontSize: 12.5 }} />
+          <button style={btn('solid')} disabled={isBusy || !chargeAmount.trim()} onClick={() => void setCharges(r.id)}>{t('Save')}</button>
+          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setChargeId(null); setChargeAmount(''); setChargeNote(''); setChargeBill(null) }}>{t('Cancel')}</button>
+        </span>
+      )
+    }
+    return (
+      <button style={btn('solid')} disabled={isBusy}
+        onClick={() => { setChargeId(r.id); setChargeAmount(r.amount != null ? String(r.amount) : ''); setChargeNote(r.charges_note ?? ''); setChargeBill(null) }}>
+        {label}
+      </button>
+    )
+  }
+
+  // Standalone "View bill" — wherever a release already carries a staff bill.
+  function ViewBill({ r }: { r: ReleaseOrder }) {
+    if (!r.bill_doc_path) return null
+    return (
+      <button style={btn('ghost')}
+        onClick={() => void openFromStorage('release-docs', r.bill_doc_path, `${t('Bill')} — ${r.release_number ?? r.bl_number} (${who(r)})`)}>
+        {t('View bill')}
+      </button>
     )
   }
 
@@ -280,12 +357,15 @@ export default function Releases() {
         </div>
       )}
 
-      {/* ── Documents desk (CSR / documents) ─────────────────────────────── */}
-      {showDocs && (
+      {/* ── Documents desk (CSR / documents) + charges (also the cashier) ──── */}
+      {showCharges && (
         <div className="ktc-glass" style={{ padding: 22, marginBottom: 18 }}>
           <h2 style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 650 }}>{t('Documents desk')}</h2>
           <p className="ktc-sub" style={{ marginBottom: 14 }}>{t('Check the delivery order / bill of lading, then set the charges.')}</p>
 
+          {/* Document verification stays documents-desk-only; charges are open to
+              the cashier too. */}
+          {showDocs && (<>
           <h3 style={{ margin: '8px 0 10px', fontSize: 13.5, fontWeight: 650 }}>
             {t('To verify')}{!loading ? ` · ${toCheck.length}` : ''}
           </h3>
@@ -328,6 +408,7 @@ export default function Releases() {
               })}
             </div>
           )}
+          </>)}
 
           <h3 style={{ margin: '20px 0 10px', fontSize: 13.5, fontWeight: 650 }}>
             {t('Set charges')}{!loading ? ` · ${toCharge.length}` : ''}
@@ -338,9 +419,7 @@ export default function Releases() {
             <Empty label={t('No verified releases waiting for charges.')} />
           ) : (
             <div style={{ display: 'grid', gap: 12 }}>
-              {toCharge.map((r) => {
-                const isBusy = busyId === r.id
-                return (
+              {toCharge.map((r) => (
                   <div key={r.id} style={cardStyle}>
                     <Header r={r} />
                     <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -348,23 +427,11 @@ export default function Releases() {
                         onClick={() => void openFromStorage('release-docs', r.doc_path, `${t('DO / BL')} — ${r.release_number ?? r.bl_number} (${who(r)})`)}>
                         {t('View DO/BL')}
                       </button>
-                      {chargeId === r.id ? (
-                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <input className="ktc-input ktc-mono" value={chargeAmount} inputMode="decimal" autoFocus placeholder={t('Amount (₱)')}
-                            onChange={(e) => setChargeAmount(e.target.value.replace(/[^0-9.]/g, ''))} style={{ maxWidth: 150, width: '100%', padding: '7px 11px', fontSize: 13 }} />
-                          <input className="ktc-input" value={chargeNote} placeholder={t('Note (optional)')}
-                            onChange={(e) => setChargeNote(e.target.value)} style={{ maxWidth: 220, width: '100%', padding: '7px 11px', fontSize: 13 }} />
-                          <button style={btn('solid')} disabled={isBusy || !chargeAmount.trim()} onClick={() => void setCharges(r.id)}>{t('Set charges')}</button>
-                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setChargeId(null); setChargeAmount(''); setChargeNote('') }}>{t('Cancel')}</button>
-                        </span>
-                      ) : (
-                        <button style={btn('solid')} disabled={isBusy} onClick={() => { setChargeId(r.id); setChargeAmount(''); setChargeNote('') }}>{t('Set charges')}</button>
-                      )}
+                      <ChargeControl r={r} label={t('Set charges')} />
                       {chargeId !== r.id && <CancelRelease r={r} />}
                     </div>
                   </div>
-                )
-              })}
+              ))}
             </div>
           )}
 
@@ -393,12 +460,20 @@ export default function Releases() {
                             <span>{s.label}</span>
                             <span className="ktc-mono" style={{ fontWeight: 600 }}>{peso(Number(s.amount))}</span>
                             <span className="ktc-chip">{t(SUP_STATUS_LABEL[s.payment_status] ?? s.payment_status)}</span>
+                            {(s.payment_status === 'unpaid' || s.payment_status === 'rejected') && (
+                              <button type="button" className="ktc-link" style={{ fontSize: 12, color: 'var(--acc-2)' }} disabled={isBusy} onClick={() => void voidCharge(s.id, r.id)}>{t('Remove')}</button>
+                            )}
                           </div>
                         ))}
                       </div>
                     )}
                     <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-                      {supId === r.id ? (
+                      {supId !== r.id && <ViewBill r={r} />}
+                      {/* Edit the base charge / replace the bill while it's still unpaid. */}
+                      {supId !== r.id && r.status === 'payable' && (r.payment_status === 'unpaid' || r.payment_status === 'rejected') && (
+                        <ChargeControl r={r} label={t('Edit charge')} />
+                      )}
+                      {chargeId !== r.id && (supId === r.id ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                           <input className="ktc-input" value={supLabel} autoFocus placeholder={t('Charge label')}
                             onChange={(e) => setSupLabel(e.target.value)} style={{ maxWidth: 220, width: '100%', padding: '7px 11px', fontSize: 13 }} />
@@ -409,8 +484,8 @@ export default function Releases() {
                         </span>
                       ) : (
                         <button style={btn('ghost')} disabled={isBusy} onClick={() => { setSupId(r.id); setSupLabel(''); setSupAmount('') }}>{t('Add charge')}</button>
-                      )}
-                      {supId !== r.id && <CancelRelease r={r} />}
+                      ))}
+                      {supId !== r.id && chargeId !== r.id && <CancelRelease r={r} />}
                     </div>
                   </div>
                 )

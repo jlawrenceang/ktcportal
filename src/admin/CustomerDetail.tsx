@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
-import { idDeletable, type Broker, type JobOrder } from '../lib/types'
+import { idDeletable, RELEASE_STATUS_LABEL, type Broker, type JobOrder } from '../lib/types'
 import { BrokerReview } from './BrokerReview'
 import { useFileViewer } from '../components/FileViewerModal'
+import { peso } from '../lib/pricing'
 import { useT } from '../lib/i18n'
 
 const STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
@@ -14,8 +15,17 @@ const STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
   suspended: { bg: 'var(--c-h28-85-93)', fg: 'var(--c-h24-80-40)' },
 }
 const JO_STATUS: Record<string, string> = {
-  held: 'Pending approval (held)', submitted: 'Submitted', processing: 'Processing', completed: 'Completed', cancelled: 'Cancelled',
+  held: 'Pending approval (held)', submitted: 'Submitted', processing: 'Processing',
+  on_hold: 'On hold', completed: 'Completed', rejected: 'Rejected', cancelled: 'Cancelled',
 }
+const TICKET_STATUS_LABEL: Record<string, string> = { open: 'Open', closed: 'Closed' }
+const TICKET_CATEGORY_LABEL: Record<string, string> = {
+  account: 'Account', accreditation: 'Accreditation', job_order: 'Job order', payment: 'Payment',
+  app_system: 'App / System', customer_service: 'Customer service', operations: 'Operations', other: 'Other',
+}
+
+type ReleaseRow = { id: string; release_number: string | null; bl_number: string; status: string; amount: number | null; created_at: string }
+type TicketRow = { id: string; subject: string; category: string; status: string; last_message_at: string; created_at: string }
 
 function one<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : (v ?? null)
@@ -26,6 +36,8 @@ export default function CustomerDetail() {
   const { id } = useParams()
   const [cust, setCust] = useState<Broker | null>(null)
   const [orders, setOrders] = useState<JobOrder[]>([])
+  const [releases, setReleases] = useState<ReleaseRow[]>([])
+  const [tickets, setTickets] = useState<TicketRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   // Admin password-reset: mint a one-time set-password link to hand the customer
@@ -56,15 +68,23 @@ export default function CustomerDetail() {
   useEffect(() => {
     if (!id) return
     void (async () => {
-      const [c, o] = await Promise.all([
+      const [c, o, rel, tk] = await Promise.all([
         supabase.from('customers').select('*').eq('id', id).maybeSingle(),
         supabase.from('job_orders')
           .select('id, jo_number, entry_number, status, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)')
           .eq('customer_id', id).order('created_at', { ascending: false }),
+        supabase.from('release_orders')
+          .select('id, release_number, bl_number, status, amount, created_at')
+          .eq('customer_id', id).order('created_at', { ascending: false }),
+        supabase.from('support_tickets')
+          .select('id, subject, category, status, last_message_at, created_at')
+          .eq('customer_id', id).order('last_message_at', { ascending: false }),
       ])
       if (c.error) setError(c.error.message)
       setCust((c.data as Broker) ?? null)
       setOrders(((o.data ?? []) as unknown as JobOrder[]).map((r) => ({ ...r, consignee: one(r.consignee) })))
+      setReleases((rel.data ?? []) as ReleaseRow[])
+      setTickets((tk.data ?? []) as TicketRow[])
       setLoading(false)
     })()
   }, [id])
@@ -152,6 +172,53 @@ export default function CustomerDetail() {
                     {o.lines.map((l, i) => <li key={i}>{l.container_number} — {l.service_request}</li>)}
                   </ul>
                 )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="ktc-glass" style={{ padding: 18, marginTop: 18 }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('Releases')}</h2>
+        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 16 }}>{t('{n} release(s).', { n: releases.length })}</p>
+        {releases.length === 0 ? (
+          <div className="ktc-label" style={{ fontSize: 14 }}>{t('No releases yet.')}</div>
+        ) : (
+          <div style={{ display: 'grid', gap: 12 }}>
+            {releases.map((r) => (
+              <div key={r.id} style={{ padding: '14px 16px', borderRadius: 14, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <b className="ktc-mono" style={{ fontSize: 15 }}>{r.release_number ?? t('Draft (no number yet)')}</b>
+                    <span className="ktc-chip">{t(RELEASE_STATUS_LABEL[r.status as keyof typeof RELEASE_STATUS_LABEL] ?? r.status)}</span>
+                    {r.amount != null && <span className="ktc-chip ktc-chip--info ktc-mono">{peso(Number(r.amount))}</span>}
+                  </span>
+                  <span className="ktc-label" style={{ fontSize: 12 }}>{new Date(r.created_at).toLocaleString()}</span>
+                </div>
+                <div className="ktc-label" style={{ fontSize: 13, marginTop: 4 }}>{t('BL')}: <span className="ktc-mono">{r.bl_number}</span></div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="ktc-glass" style={{ padding: 18, marginTop: 18 }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('Support')}</h2>
+        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 16 }}>{t('{n} ticket(s).', { n: tickets.length })}</p>
+        {tickets.length === 0 ? (
+          <div className="ktc-label" style={{ fontSize: 14 }}>{t('No support tickets yet.')}</div>
+        ) : (
+          <div style={{ display: 'grid', gap: 12 }}>
+            {tickets.map((tk) => (
+              <div key={tk.id} style={{ padding: '14px 16px', borderRadius: 14, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', minWidth: 0 }}>
+                    <b style={{ fontSize: 14.5 }}>{tk.subject}</b>
+                    <span className={tk.status === 'open' ? 'ktc-chip ktc-chip--warning' : 'ktc-chip'}>{t(TICKET_STATUS_LABEL[tk.status] ?? tk.status)}</span>
+                    <span className="ktc-chip">{t(TICKET_CATEGORY_LABEL[tk.category] ?? tk.category)}</span>
+                  </span>
+                  <span className="ktc-label" style={{ fontSize: 12 }}>{new Date(tk.last_message_at).toLocaleString()}</span>
+                </div>
               </div>
             ))}
           </div>

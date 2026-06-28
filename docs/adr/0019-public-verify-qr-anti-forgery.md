@@ -77,3 +77,13 @@ Chosen option: **C** (migrations `0089`, `0090`, `0097`).
 * `supabase/migrations/0097_rps_in_completion_gate.sql` (verify RPC returns RPS state)
 * `src/pages/JobOrderPrint.tsx` (watermark + QR), `src/pages/Verify.tsx` (public `/verify/:id` page)
 * `docs/obsidian-vault/09-Future/` (deferred guard / gate module)
+
+## Addendum — 2026-06-28 (KTC-32 reaffirmed; owner decision)
+
+The 2026-06-28 break-test flagged the anon `verify_job_order` payload as over-disclosing — it returns full container **numbers**, the **consignee** name, and the **payment / RPS** status (finding **KTC-32**, `docs/audits/2026-06-28-breaktest-findings.md`). On owner review the disclosure is **affirmed intentional, no change**, because every returned field is load-bearing for this ADR's stated purpose:
+
+- **Container numbers + consignee** are the anti-forgery cross-check (Decision Outcome §QR-copy defence). Removing them would defeat the only realistic attack — copying a genuine paid QR onto a forged slip — which is caught precisely because the scan resolves to *someone else's* containers/consignee.
+- **Payment / RPS status** is the reason to scan at all ("is this slip really PAID?"), and reflects the full two-gate picture (§Reflects the full gate).
+- The endpoint is **not enumerable**: the UUIDv4 is printed only on the slip, so only a holder of the physical paper can call it — and the returned facts (operational IDs already on that paper) carry **no amounts, email, TIN, or broker identity**.
+
+This addendum exists so future audits resolve KTC-32 to "intentional, documented" rather than re-raising it. Should KTC ever want to minimize further, the cheap step that preserves the feature is collapsing the three raw payment sub-statuses into a single derived "fully paid" flag (container numbers + consignee must stay for the cross-check) — deferred unless a concrete privacy need arises.

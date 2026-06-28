@@ -5,7 +5,7 @@ import { usePageTour } from '../components/TourProvider'
 import { vesselSteps } from './AdminTour'
 import { MonthCalendar, Badge, fmt, fmtDT, type VesselRow } from '../components/VesselCalendar'
 import { useT } from '../lib/i18n'
-import { AlertTriangleIcon, CameraIcon, RefreshIcon } from '../components/icons'
+import { CameraIcon, RefreshIcon } from '../components/icons'
 
 // ── Vessel schedule (operations) ──────────────────────────────────────────
 // Reads vessel_schedule_v: last_free_day + is_current are computed server-side
@@ -59,17 +59,6 @@ export default function VesselSchedule() {
   const [err, setErr] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
 
-  // Pending vessel requests (unlisted vessels customers/admins filed against).
-  type VesselReq = { id: string; vessel_name: string; voyage_number: string; waiting_count: number; created_at: string }
-  const [reqs, setReqs] = useState<VesselReq[]>([])
-  const [reqLink, setReqLink] = useState<Record<string, string>>({}) // request id → chosen vessel_visit
-  const [reqBusy, setReqBusy] = useState<string | null>(null)
-
-  async function loadReqs() {
-    const { data } = await supabase.rpc('pending_vessel_requests')
-    setReqs((data as VesselReq[]) ?? [])
-  }
-
   async function load() {
     setLoading(true)
     const [{ data: v }, { data: sl }] = await Promise.all([
@@ -79,7 +68,6 @@ export default function VesselSchedule() {
     setRows((v as VesselRow[]) ?? [])
     setLines((sl ?? []).map((r: { name: string }) => r.name))
     setLoading(false)
-    void loadReqs()
   }
   useEffect(() => { void load() }, [])
 
@@ -94,40 +82,6 @@ export default function VesselSchedule() {
     if (data === 'not_configured') { setSyncing(false); setErr(t('Vessel sync isn’t configured yet — contact the owner.')); return }
     setMsg(t('Syncing from the Google Sheet… the list refreshes in a few seconds.'))
     window.setTimeout(() => { setSyncing(false); void load() }, 6000)
-  }
-
-  async function approveReq(r: VesselReq) {
-    const visit = (reqLink[r.id] ?? '').trim()
-    if (!visit) { setErr(t('Pick the scheduled call to link “{name}” to (add it above first if needed).', { name: r.vessel_name })); return }
-    setReqBusy(r.id); setErr(null); setMsg(null)
-    const { error } = await supabase.rpc('review_vessel_request', { p_id: r.id, p_action: 'approve', p_vessel_visit: visit })
-    setReqBusy(null)
-    if (error) { setErr(friendly(error)); return }
-    setMsg(t('Vessel approved — {n} job order(s) linked.', { n: r.waiting_count }))
-    void load()
-  }
-
-  async function rejectReq(r: VesselReq) {
-    const note = window.prompt(t('Reject “{name}” — reason (optional, shown to ops only):', { name: r.vessel_name }), '')
-    if (note === null) return // cancelled
-    setReqBusy(r.id); setErr(null); setMsg(null)
-    const { error } = await supabase.rpc('review_vessel_request', { p_id: r.id, p_action: 'reject', p_note: note.trim() || null })
-    setReqBusy(null)
-    if (error) { setErr(friendly(error)); return }
-    setMsg(t('Vessel request rejected.'))
-    void loadReqs()
-  }
-
-  async function needsInfoReq(r: VesselReq) {
-    const note = window.prompt(t('Ask the customer for more info on “{name}” — what’s needed:', { name: r.vessel_name }), '')
-    if (note === null) return // cancelled
-    if (!note.trim()) { setErr(t('Add a note for the customer explaining what’s needed.')); return }
-    setReqBusy(r.id); setErr(null); setMsg(null)
-    const { error } = await supabase.rpc('review_vessel_request', { p_id: r.id, p_action: 'needs_info', p_note: note.trim() })
-    setReqBusy(null)
-    if (error) { setErr(friendly(error)); return }
-    setMsg(t('Asked the customer for more info.'))
-    void loadReqs()
   }
 
   const visible = useMemo(() => (showAll ? rows : rows.filter((r) => r.is_current)), [rows, showAll])
@@ -301,48 +255,6 @@ export default function VesselSchedule() {
         {err && <p className="ktc-error" style={{ whiteSpace: 'pre-wrap', marginTop: 10 }}>{err}</p>}
         {msg && <p style={{ color: 'var(--c-h150-60-30)', marginTop: 10, fontSize: 13 }}>{msg}</p>}
       </form>
-
-      {/* Pending vessel requests — unlisted vessels customers filed against. */}
-      {reqs.length > 0 && (
-        <div className="ktc-glass" style={{ padding: 16, marginBottom: 16, border: '1px solid var(--c-h40-85-78)', background: 'var(--c-h40-95-97)' }}>
-          <strong style={{ fontSize: 14, display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-            <AlertTriangleIcon size={15} /> {t('Vessel requests — {n} awaiting review', { n: reqs.length })}
-          </strong>
-          <p className="ktc-label" style={{ fontSize: 12.5, marginBottom: 12, lineHeight: 1.5 }}>
-            {t('Customers filed Job Orders against these vessels, which aren’t on the schedule. Add the call above (if needed), then link it here to approve — every waiting order adopts the scheduled vessel. Or reject if it doesn’t belong.')}
-          </p>
-          <div style={{ display: 'grid', gap: 10 }}>
-            {reqs.map((r) => (
-              <div key={r.id} style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, background: '#fff', border: '1px solid var(--glass-brd)' }}>
-                <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13.5 }}>{r.vessel_name} <span style={{ color: 'hsl(var(--ink-2))', fontWeight: 400 }}>· {r.voyage_number || '—'}</span></div>
-                  <div className="ktc-label" style={{ fontSize: 12 }}>{t('{n} job order(s) waiting', { n: r.waiting_count })}</div>
-                </div>
-                <select
-                  className="ktc-input"
-                  style={{ flex: '1 1 200px', minWidth: 160 }}
-                  value={reqLink[r.id] ?? ''}
-                  onChange={(e) => setReqLink((m) => ({ ...m, [r.id]: e.target.value }))}
-                >
-                  <option value="">{t('Link to scheduled call…')}</option>
-                  {rows.filter((v) => !v.cancelled).map((v) => (
-                    <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_visit} — {v.vessel_name} · {v.voyage_number}</option>
-                  ))}
-                </select>
-                <button className="ktc-btn ktc-btn--sm" type="button" disabled={reqBusy === r.id} onClick={() => void approveReq(r)}>
-                  {reqBusy === r.id ? t('Working…') : t('Approve & link')}
-                </button>
-                <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" disabled={reqBusy === r.id} onClick={() => void needsInfoReq(r)}>
-                  {t('Needs info')}
-                </button>
-                <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" disabled={reqBusy === r.id} onClick={() => void rejectReq(r)}>
-                  {t('Reject')}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
         <strong style={{ fontSize: 14 }}>{showAll ? t('{count} total call(s)', { count: visible.length }) : t('{count} current call(s)', { count: visible.length })}</strong>

@@ -34,6 +34,20 @@ Ipinapakita ng **Job Orders** queue ang live na orders (hindi kasama ang held dr
 - **History** sa bawat card: filed / status changes / service-done events kasama ang pangalan ng actor at timestamps.
 - Ang **Serving numbers** ay per service line, nire-reset kada linggo (Monday 00:15 carry-over na nag-re-requeue ng open orders sa harap, ayon sa pagkakasunod). Ang cancel/reject ay nagbabakante ng number (sinunog, hindi muling ginagamit).
 
+### Priority lane
+
+Ang **admin-approved priority lane** lang ang paraan para mauna ang isang order sa regular na X-ray line (retired na ang lumang manual na "restore number"):
+
+- **Request priority** (admin / operations / CSR) sa isang order → magpapakita ng **Priority requested**.
+- **Approve** o **Deny priority** (admin lang). Kapag approved, makakakuha ito ng **P-… serving number** at uunahin bago ang regular queue (inuuna ng X-ray Checker ang priority lane).
+
+### Re-X-ray
+
+Kapag kailangang i-X-ray ulit ang isang container pagkatapos mag-complete ng order nito:
+
+- **Request re-X-ray** (admin / operations / checker) sa isang **completed** na order → gagawa ng **suffixed child order** (hal. `JO-000001A`) na naghihintay ng approval.
+- **Approve** o **Deny re-X-ray** (admin lang). Kapag approved, papasok ang child sa X-ray queue na may **R-… serving number**; ito ay **libre o may bayad** ayon sa desisyon ng KTC — ang libreng re-X-ray ay walang balance. Hangga't hindi approved, nasa labas ito ng checker queue (hindi pa ito puwedeng i-confirm).
+
 ## 4 · Mga payment at invoice
 
 - **Payment proofs:** ang orders na may na-upload na deposit slip ay nagpapakita ng "Payment proof to review". Buksan ang slip (may Print / Save ang viewer), tapos **Confirm** o **Reject with a note** — ma-e-email ang customer alinman ang mangyari at puwede silang mag-re-upload.
@@ -41,16 +55,30 @@ Ipinapakita ng **Job Orders** queue ang live na orders (hindi kasama ang held dr
 - **Unpaid · completed** view: ang completed orders na walang invoice, may aging chips (*unpaid 3d*).
 - Ang **Archive paid & completed** (o ang Monday cron) ay naglilipat ng tapos na, may-invoice na orders palabas ng default views; hindi naaapektuhan ang customer history.
 
-## 5 · Pag-file para sa iba (New JO)
+## 5 · Release / Pull-out (pagkuha ng container)
+
+Hinahawakan ng **Releases** desk ang mga container pull-out request — **hiwalay sa job orders**, cash-only sa launch — na may malinaw na separation of duties:
+
+1. **Mag-fa-file ang customer** ng release (BL number + DO/BL document). Dadating itong **Submitted**.
+2. **Verify documents** (documents desk — `verify_release_docs`): tingnan ang DO/BL, tapos i-mark na **Documents verified**.
+3. **Set the charge** at **i-attach ang bill / SOA** para makita ito ng customer bago magbayad. Ang maling charge ay puwedeng **iayos o tanggalin habang unpaid** (naka-lock ang paid na charge); ganoon din ang pagdagdag ng extra charges.
+4. **Magbabayad ang customer** (mag-a-upload ng proof) → **Confirm the payment** (cashier — `review_payments`).
+5. **Record the OR** (ERP control no., OR-INV-…) → ire-**Released** na ang container.
+
+- **May abiso sa bawat hakbang** sa customer at sa tamang desk (documents / cashier).
+- **Puwedeng i-cancel** habang open ang release; ang pag-suspend o pag-reject ng customer ay nagka-**cancel din ng kanilang open releases** (maliban sa paid/released, o sa may confirmed na extra charge).
+- Mga status: **Submitted → Documents verified → Ready for payment → Paid → Released**, plus **On hold** at **Cancelled**.
+
+## 6 · Pag-file para sa iba (New JO)
 
 Para sa walk-ins: ang **New JO** ay nagfa-file ng job order para sa kahit sinong customer — diretso itong napupunta sa submitted na may serving number, ang success panel ay nag-aalok ng printable slip, at nire-record ng History ikaw bilang ang nag-file.
 
-## 6 · Customers & consignees
+## 7 · Customers & consignees
 
 - **Customers:** ang master list (search, status, badges). I-click ang pangalan para sa profile — detalye, verification badges, at buong job-order history.
 - **Consignees:** ang master list na ginagamit ng typeahead ng JO form (puwedeng pumili ang kahit sinong customer ng kahit anong consignee — current policy). Ang **pag-reject ng consignee** ay nagkakansela ng open job orders nito, na may dahilan na ipinapakita sa mga apektadong customer.
 
-## 7 · Settings
+## 8 · Settings
 
 - **Service rates & fees:** naka-lock by default — i-tap ang "Locked — unlock to edit". Per-service rates (₱, per container, VATable flag) kasama ang iisang flat na **Admin & print fee** (pinagsama na ang dating hiwalay na admin fee at print fee). **Naka-fixed ang VAT sa statutory na 12%** (server-guarded). I-drag ang rows (⠿) para itakda ang display order kahit saan. Ang pag-save ay muling nagla-lock.
 - **Terminal tariff (per-service):** para sa bawat service, i-tsek kung aling mga kondisyon nag-iiba ang rate nito — **origin / size / fill / kind**, o wala para sa **uniform** na rate. Ipapakita lang ng editor ang mga input na tina-tsek mo, kaya ang uniform na service ay iisang cell lang habang ang fully-varied na service ay lumalawak sa matrix nito.
@@ -61,13 +89,13 @@ Para sa walk-ins: ang **New JO** ay nagfa-file ng job order para sa kahit sinong
 - **Payment details:** bank name / account / GCash at ang QR image na ipinapakita sa customer payment page. Ang mga blangkong field ay nakatago.
 - **Staff accounts:** gumawa ng cashier / checker logins (username + password, walang email), mag-reset ng passwords, at i-edit ang **role-gate matrix** — kung ano ang puwedeng makita at gawin ng bawat role. Ang gates ay ipinatutupad server-side.
 
-## 8 · Logs & system health
+## 9 · Logs & system health
 
 - **Logs:** apat na view — Job orders (buong audit trail), **Security** (owner-only: mga blocked na escalation attempts, role-gate changes, session evictions), Client errors, Emails & sync (bawat outbound call kasama ang HTTP result nito).
 - **Settings → System health:** one-click snapshot ng huling run ng bawat scheduled job, mga outbound failure, at mga recent na client error.
 - May **watchdog** na tumatakbo kada 15 minutes at nag-e-email sa owner kapag may totoong problema (failed jobs, failed sends, error spikes, escalation attempts).
 
-## 9 · Security model (kung ano ang nagpoprotekta sa portal)
+## 10 · Security model (kung ano ang nagpoprotekta sa portal)
 
 - **Sign-in:** CAPTCHA enforced server-side; kailangan ng email confirmation; 5 maling password = 60s lockout.
 - **2FA (admin + owner):** mag-enroll ng authenticator app sa **2FA** tab. Kapag naka-enroll na, hindi gumagana ang admin rights hangga't hindi naipapasok ang 6-digit code — kahit para sa direktang API calls.

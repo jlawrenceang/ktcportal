@@ -6,7 +6,7 @@ import { useT } from '../lib/i18n'
 import { useTour } from './TourProvider'
 import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
-import { GearIcon, GlobeIcon, MoonIcon, SignOutIcon } from './icons'
+import { GearIcon, GlobeIcon, MoonIcon, SignOutIcon, UserIcon } from './icons'
 
 const iconWrap = { width: 20, display: 'inline-flex', justifyContent: 'center', flex: '0 0 auto', color: 'hsl(var(--ink-2))' } as const
 
@@ -36,7 +36,7 @@ function initials(name?: string | null, email?: string | null): string {
   return src.slice(0, 2).toUpperCase()
 }
 
-export default function AccountMenu({ settingsTo, settingsLabel, role }: { settingsTo?: string; settingsLabel?: string; role?: string }) {
+export default function AccountMenu({ settingsTo, settingsLabel, accountTo, accountLabel, role }: { settingsTo?: string; settingsLabel?: string; accountTo?: string; accountLabel?: string; role?: string }) {
   const { t } = useT()
   const { broker } = useBroker()
   const { signOut } = useAuth()
@@ -108,6 +108,12 @@ export default function AccountMenu({ settingsTo, settingsLabel, role }: { setti
             </span>
           </div>
           <div style={{ height: 1, background: 'var(--glass-brd)', margin: '2px 4px 4px' }} />
+          {accountTo && (
+            <button type="button" role="menuitem" className="ktc-menu-setting" onClick={() => go(accountTo)}>
+              <span aria-hidden style={iconWrap}><UserIcon size={17} /></span>
+              <span style={{ flex: 1 }}>{t(accountLabel ?? 'My Account')}</span>
+            </button>
+          )}
           {settingsTo && (
             <button type="button" role="menuitem" className="ktc-menu-setting" onClick={() => go(settingsTo)}>
               <span aria-hidden style={iconWrap}><GearIcon size={17} /></span>

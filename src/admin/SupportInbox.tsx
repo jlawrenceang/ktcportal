@@ -6,6 +6,8 @@ import { usePageTour } from '../components/TourProvider'
 import { supportSteps } from './AdminTour'
 import { useT } from '../lib/i18n'
 import { LockIcon } from '../components/icons'
+import SearchPicker, { type PickerItem } from '../components/SearchPicker'
+import { searchCustomers } from '../lib/pickerSearches'
 
 // Staff support inbox — gated on the manage_support permission. Lists every
 // ticket with a status filter; opening one shows the thread, a reply box, and
@@ -63,6 +65,27 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'closed', label: 'Closed' },
 ]
 
+// Category filter for the list (T2-24) — the customer/Lara-facing set.
+type CatFilter = 'all' | 'account' | 'accreditation' | 'job_order' | 'payment' | 'other'
+const CAT_FILTERS: { key: CatFilter; label: string }[] = [
+  { key: 'all', label: 'All categories' },
+  { key: 'account', label: 'Account' },
+  { key: 'accreditation', label: 'Accreditation' },
+  { key: 'job_order', label: 'Job order' },
+  { key: 'payment', label: 'Payment' },
+  { key: 'other', label: 'Other' },
+]
+
+// Categories a staffer may pick when opening a ticket on a customer's behalf
+// (T2-25) — must match the staff_open_ticket / support_tickets CHECK set.
+const NEW_TICKET_CATEGORIES: { key: string; label: string }[] = [
+  { key: 'account', label: 'Account' },
+  { key: 'accreditation', label: 'Accreditation' },
+  { key: 'job_order', label: 'Job order' },
+  { key: 'payment', label: 'Payment' },
+  { key: 'other', label: 'Other' },
+]
+
 const SELECT =
   'id, customer_id, subject, category, status, created_at, last_message_at, customer:customers(full_name, email)'
 
@@ -87,7 +110,17 @@ export default function SupportInbox({ app = false }: { app?: boolean }) {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>('all')
+  const [catFilter, setCatFilter] = useState<CatFilter>('all')
   const [error, setError] = useState<string | null>(null)
+
+  // New-ticket composer (T2-25) — staff opens a ticket on a customer's behalf.
+  const [composing, setComposing] = useState(false)
+  const [ntCustomer, setNtCustomer] = useState<PickerItem | null>(null)
+  const [ntSubject, setNtSubject] = useState('')
+  const [ntCategory, setNtCategory] = useState('account')
+  const [ntBody, setNtBody] = useState('')
+  const [ntBusy, setNtBusy] = useState(false)
+  const [ntError, setNtError] = useState<string | null>(null)
 
   // The open ticket is stored as its own object (not derived from the filtered
   // list) so the thread modal stays put after a reply / status change — it used
@@ -101,11 +134,12 @@ export default function SupportInbox({ app = false }: { app?: boolean }) {
 
   const allowed = can('manage_support')
 
-  const loadTickets = useCallback(async (f: Filter) => {
+  const loadTickets = useCallback(async (f: Filter, c: CatFilter) => {
     let q = supabase
       .from('support_tickets')
       .select(SELECT)
     if (f !== 'all') q = q.eq('status', f)
+    if (c !== 'all') q = q.eq('category', c)
     const { data, error: err } = await q.order('last_message_at', { ascending: false })
     if (err) { setError(err.message); setLoading(false); return }
     const rows = ((data ?? []) as unknown as Ticket[]).map((tk) => ({ ...tk, customer: one(tk.customer) }))
@@ -115,11 +149,43 @@ export default function SupportInbox({ app = false }: { app?: boolean }) {
 
   useEffect(() => {
     if (permLoading || !allowed) return
-    void loadTickets(filter)
-  }, [permLoading, allowed, filter, loadTickets])
+    void loadTickets(filter, catFilter)
+  }, [permLoading, allowed, filter, catFilter, loadTickets])
 
   function changeFilter(f: Filter) {
     setFilter(f); setLoading(true)
+  }
+  function changeCat(c: CatFilter) {
+    setCatFilter(c); setLoading(true)
+  }
+
+  function openCompose() {
+    setNtCustomer(null); setNtSubject(''); setNtCategory('account'); setNtBody(''); setNtError(null)
+    setComposing(true)
+  }
+
+  async function submitNewTicket() {
+    if (!ntCustomer) { setNtError(t('Select a customer.')); return }
+    if (!ntSubject.trim()) { setNtError(t('Enter a subject.')); return }
+    if (!ntBody.trim()) { setNtError(t('Enter a message.')); return }
+    setNtBusy(true); setNtError(null)
+    const { data, error: err } = await supabase.rpc('staff_open_ticket', {
+      p_customer: ntCustomer.id,
+      p_subject: ntSubject.trim(),
+      p_category: ntCategory,
+      p_body: ntBody.trim(),
+    })
+    setNtBusy(false)
+    if (err) { setNtError(err.message); return }
+    setComposing(false)
+    await loadTickets(filter, catFilter)
+    // Pull the freshly-opened ticket and open its thread.
+    const newId = data as unknown as string
+    const { data: tk } = await supabase.from('support_tickets').select(SELECT).eq('id', newId).single()
+    if (tk) {
+      const row = tk as unknown as Ticket
+      openTicket({ ...row, customer: one(row.customer) })
+    }
   }
 
   const loadThread = useCallback(async (ticketId: string) => {
@@ -149,7 +215,7 @@ export default function SupportInbox({ app = false }: { app?: boolean }) {
     if (err) { setError(err.message); return }
     setReply('')
     await loadThread(active.id)
-    void loadTickets(filter)
+    void loadTickets(filter, catFilter)
   }
 
   async function setStatus(status: string) {
@@ -162,7 +228,7 @@ export default function SupportInbox({ app = false }: { app?: boolean }) {
     // stays open (no flicker, no disappearing row).
     setActive((a) => (a ? { ...a, status } : a))
     void loadThread(active.id)
-    void loadTickets(filter)
+    void loadTickets(filter, catFilter)
   }
 
   if (permLoading) {
@@ -191,7 +257,14 @@ export default function SupportInbox({ app = false }: { app?: boolean }) {
   return (
     <RoleShell app={app} title="Support">
       <div className="ktc-glass" style={{ padding: 18 }}>
-        <h1 className="ktc-title">{t('Support')}</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <h1 className="ktc-title">{t('Support')}</h1>
+          {/* manage_support already gates this whole page (early return below), so
+              reaching here means the staffer may open a ticket on a customer's behalf. */}
+          <button type="button" className="ktc-btn ktc-btn--sm" style={{ width: 'auto' }} onClick={openCompose}>
+            + {t('New ticket')}
+          </button>
+        </div>
         <p className="ktc-sub" style={{ marginBottom: 14 }}>{t('Customer support tickets. Newest activity first.')}</p>
 
         {error && (
@@ -200,13 +273,21 @@ export default function SupportInbox({ app = false }: { app?: boolean }) {
           </div>
         )}
 
-        {/* Status filter */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 18 }}>
-          {FILTERS.map((f) => (
-            <button key={f.key} type="button" className={`ktc-nav-link${filter === f.key ? ' is-active' : ''}`} onClick={() => changeFilter(f.key)}>
-              {t(f.label)}
-            </button>
-          ))}
+        {/* Status + category filters */}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 18 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {FILTERS.map((f) => (
+              <button key={f.key} type="button" className={`ktc-nav-link${filter === f.key ? ' is-active' : ''}`} onClick={() => changeFilter(f.key)}>
+                {t(f.label)}
+              </button>
+            ))}
+          </div>
+          <label className="ktc-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 'auto', fontSize: 12.5 }}>
+            {t('Category')}
+            <select className="ktc-input" value={catFilter} onChange={(e) => changeCat(e.target.value as CatFilter)} style={{ width: 'auto', padding: '6px 10px' }}>
+              {CAT_FILTERS.map((c) => <option key={c.key} value={c.key}>{t(c.label)}</option>)}
+            </select>
+          </label>
         </div>
 
         {loading ? (
@@ -324,6 +405,61 @@ export default function SupportInbox({ app = false }: { app?: boolean }) {
           </div>
         )
       })()}
+
+      {/* New-ticket composer — staff opens a ticket on a customer's behalf (T2-25). */}
+      {composing && (
+        <div className="ktc-modal-backdrop" onClick={() => { if (!ntBusy) setComposing(false) }}>
+          <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 520, maxHeight: '90vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '15px 20px', borderBottom: '1px solid var(--glass-brd)' }}>
+              <b style={{ fontSize: 15 }}>{t('New support ticket')}</b>
+              <button type="button" aria-label={t('Close')} onClick={() => setComposing(false)}
+                style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))', flex: '0 0 auto' }}>✕</button>
+            </div>
+
+            <div style={{ overflowY: 'auto', padding: '16px 20px', display: 'grid', gap: 14 }}>
+              <p className="ktc-label" style={{ fontSize: 12.5, margin: 0 }}>
+                {t('Open a ticket on a customer’s behalf (phone, walk-in, or proactive). The customer sees the thread and can reply.')}
+              </p>
+
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label className="ktc-label" htmlFor="nt-customer">{t('Customer')}</label>
+                <SearchPicker
+                  inputId="nt-customer"
+                  placeholder={t('Search by name, customer code, or email…')}
+                  selected={ntCustomer}
+                  onSelect={setNtCustomer}
+                  search={searchCustomers}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label className="ktc-label" htmlFor="nt-subject">{t('Subject')}</label>
+                <input id="nt-subject" className="ktc-input" value={ntSubject} onChange={(e) => setNtSubject(e.target.value)} placeholder={t('Short summary')} />
+              </div>
+
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label className="ktc-label" htmlFor="nt-category">{t('Category')}</label>
+                <select id="nt-category" className="ktc-input" value={ntCategory} onChange={(e) => setNtCategory(e.target.value)}>
+                  {NEW_TICKET_CATEGORIES.map((c) => <option key={c.key} value={c.key}>{t(c.label)}</option>)}
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label className="ktc-label" htmlFor="nt-body">{t('Message')}</label>
+                <textarea id="nt-body" className="ktc-input" rows={4} value={ntBody} onChange={(e) => setNtBody(e.target.value)}
+                  placeholder={t('What does the customer need?')} style={{ width: '100%', resize: 'vertical' }} />
+              </div>
+
+              {ntError && <div style={{ color: 'var(--acc-2)', fontSize: 13 }}>{ntError}</div>}
+
+              <button type="button" className="ktc-btn ktc-btn--sm" disabled={ntBusy} onClick={() => void submitNewTicket()} style={{ justifySelf: 'start' }}>
+                {ntBusy ? t('Opening…') : t('Open ticket')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </RoleShell>
   )
 }

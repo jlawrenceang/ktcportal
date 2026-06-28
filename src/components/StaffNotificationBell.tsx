@@ -1,34 +1,58 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, type NavigateFunction } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import PushToggle from './PushToggle'
+import NotificationRow from './NotificationRow'
 import { useT } from '../lib/i18n'
-import { BellIcon, CreditCardIcon, ChatIcon, IdCardIcon, type IconProps } from './icons'
+import { BellIcon, CreditCardIcon, ChatIcon, IdCardIcon, BuildingIcon, ReceiptIcon, RefreshIcon, type IconProps } from './icons'
 
 // Staff-side notification center — the mirror of the customer NotificationBell,
 // but routed BY PERMISSION (0085). RLS on staff_notifications already filters
-// the shared rows to what this staff member's gate allows, so we just read the
-// 20 most recent + the caller's own read markers and compute unread locally.
-type Notif = {
+// the shared rows to what this staff member's gate allows; we read the 20 most
+// recent (+ the caller's own read markers) for the dropdown, but the badge COUNT
+// comes from staff_unread_count() (0189) — the latest-20 window under-counted.
+// The /admin/notifications history page reuses the type, icon map + routing.
+export type Notif = {
   id: string
   required_permission: string
   kind: string
   title: string
   job_order_id: string | null
+  release_order_id: string | null
   ticket_id: string | null
   created_at: string
 }
 
-const ICON: Record<string, (p: IconProps) => ReactNode> = {
+export const ICON: Record<string, (p: IconProps) => ReactNode> = {
   payment: CreditCardIcon,
   rps_payment: CreditCardIcon,
   support: ChatIcon,
   account: IdCardIcon,
+  release_new: IdCardIcon,
+  release_payment: CreditCardIcon,
+  consignee: BuildingIcon,
+  supplement: ReceiptIcon, // an extra charge tacked onto a JO (0183)
+  rexray: RefreshIcon,     // a re-X-ray request (0183) — repeat of the scan
 }
 
-function fmtWhen(iso: string): string {
+export function fmtWhen(iso: string): string {
   return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+}
+
+// Single source of routing for a staff notification — shared by the bell and
+// the /admin/notifications history page (each handles its own mark-read first).
+export function routeStaffNotif(n: Pick<Notif, 'kind' | 'job_order_id' | 'release_order_id' | 'ticket_id'>, navigate: NavigateFunction) {
+  // Route by target: payment/RPS events → the orders list (handing the order id
+  // over the same way the customer bell does); support → the inbox; account
+  // verifications → the approvals desk; anything else → the admin home.
+  if (n.job_order_id) { sessionStorage.setItem('ktc_jo_filed_id', n.job_order_id); navigate('/admin/job-orders'); return }
+  if (n.release_order_id) { navigate('/admin/releases'); return }
+  if (n.ticket_id) { navigate('/admin/support'); return }
+  if (n.kind === 'account') { navigate('/admin/approvals'); return }
+  // A consignee request has no row id — route to the consignee review desk.
+  if (n.kind === 'consignee') { navigate('/admin/consignees'); return }
+  navigate('/admin')
 }
 
 export default function StaffNotificationBell() {
@@ -36,14 +60,22 @@ export default function StaffNotificationBell() {
   const navigate = useNavigate()
   const [items, setItems] = useState<Notif[]>([])
   const [readIds, setReadIds] = useState<Set<string>>(new Set())
+  const [unread, setUnread] = useState(0)
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLSpanElement>(null)
+
+  // Exact unread badge (0189) — not derived from the latest-20 window, which
+  // under-counted once a staffer had more than 20 unread items.
+  async function refreshCount() {
+    const { data } = await supabase.rpc('staff_unread_count')
+    setUnread((data as number | null) ?? 0)
+  }
 
   async function load() {
     const [{ data: notifs }, { data: reads }] = await Promise.all([
       supabase
         .from('staff_notifications')
-        .select('id, required_permission, kind, title, job_order_id, ticket_id, created_at')
+        .select('id, required_permission, kind, title, job_order_id, release_order_id, ticket_id, created_at')
         .order('created_at', { ascending: false })
         .limit(20),
       supabase
@@ -52,6 +84,7 @@ export default function StaffNotificationBell() {
     ])
     setItems((notifs ?? []) as Notif[])
     setReadIds(new Set((reads ?? []).map((r) => r.notification_id as string)))
+    await refreshCount()
   }
   useEffect(() => { void load() }, [])
   // Refresh every 60s on a visible tab (same cadence as the customer bell).
@@ -67,21 +100,14 @@ export default function StaffNotificationBell() {
     return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey) }
   }, [open])
 
-  const unread = items.filter((n) => !readIds.has(n.id)).length
-
   async function openItem(n: Notif) {
     setOpen(false)
     if (!readIds.has(n.id)) {
       setReadIds((prev) => new Set(prev).add(n.id))
+      setUnread((u) => Math.max(0, u - 1))
       void supabase.rpc('mark_staff_notifications_read', { p_ids: [n.id] }).then(() => undefined, () => undefined)
     }
-    // Route by target: payment/RPS events → the orders list (handing the order
-    // id over the same way the customer bell does); support → the inbox;
-    // account verifications → the approvals desk; anything else → the admin home.
-    if (n.job_order_id) { sessionStorage.setItem('ktc_jo_filed_id', n.job_order_id); navigate('/admin/job-orders'); return }
-    if (n.ticket_id) { navigate('/admin/support'); return }
-    if (n.kind === 'account') { navigate('/admin/approvals'); return }
-    navigate('/admin')
+    routeStaffNotif(n, navigate)
   }
 
   async function markAll() {
@@ -90,6 +116,7 @@ export default function StaffNotificationBell() {
       items.forEach((n) => next.add(n.id))
       return next
     })
+    setUnread(0) // mark_staff_notifications_read(null) clears every unread row server-side
     void supabase.rpc('mark_staff_notifications_read', { p_ids: null }).then(() => undefined, () => undefined)
   }
 
@@ -102,7 +129,7 @@ export default function StaffNotificationBell() {
         aria-label={unread > 0 ? t('Notifications ({n} unread)', { n: unread }) : t('Notifications')}
         aria-expanded={open}
         title={t('Notifications')}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen((v) => { const next = !v; if (next) void refreshCount(); return next })}
       >
         <BellIcon size={20} />
         {unread > 0 && <span aria-hidden className="ktc-nav-bell-badge">{unread > 99 ? '99+' : unread}</span>}
@@ -131,34 +158,26 @@ export default function StaffNotificationBell() {
             </p>
           ) : (
             <div style={{ maxHeight: 360, overflowY: 'auto', padding: 6 }}>
-              {items.map((n) => {
-                const isRead = readIds.has(n.id)
-                return (
-                  <button
-                    key={n.id}
-                    type="button"
-                    onClick={() => void openItem(n)}
-                    style={{
-                      display: 'flex', alignItems: 'flex-start', gap: 10, width: '100%', textAlign: 'left',
-                      padding: '9px 10px', borderRadius: 9, cursor: 'pointer', marginBottom: 2,
-                      background: isRead ? 'transparent' : 'var(--c-w55)',
-                      border: '1px solid ' + (isRead ? 'transparent' : 'var(--glass-brd)'),
-                      font: 'inherit', color: 'hsl(var(--ink))',
-                    }}
-                  >
-                    <span aria-hidden style={{ flex: '0 0 auto', display: 'inline-flex', marginTop: 1, color: 'hsl(var(--ink-2))' }}>
-                      {(ICON[n.kind] ?? BellIcon)({ size: 17 })}
-                    </span>
-                    <span style={{ minWidth: 0, flex: '1 1 auto' }}>
-                      <span style={{ display: 'block', fontSize: 12.5, lineHeight: 1.4, fontWeight: isRead ? 400 : 600 }}>{n.title}</span>
-                      <span className="ktc-label" style={{ fontSize: 11, opacity: 0.7 }}>{fmtWhen(n.created_at)}</span>
-                    </span>
-                    {!isRead && <span aria-hidden style={{ width: 7, height: 7, borderRadius: 999, background: 'var(--acc)', flex: '0 0 auto', marginTop: 5 }} />}
-                  </button>
-                )
-              })}
+              {items.map((n) => (
+                <NotificationRow
+                  key={n.id}
+                  icon={(ICON[n.kind] ?? BellIcon)({ size: 17 })}
+                  title={n.title}
+                  when={fmtWhen(n.created_at)}
+                  isRead={readIds.has(n.id)}
+                  onClick={() => void openItem(n)}
+                />
+              ))}
             </div>
           )}
+          <button
+            type="button"
+            className="ktc-link"
+            style={{ display: 'block', width: '100%', textAlign: 'center', fontSize: 12, padding: '10px 14px', borderTop: '1px solid var(--glass-brd)' }}
+            onClick={() => { setOpen(false); navigate('/admin/notifications') }}
+          >
+            {t('View all')}
+          </button>
           <PushToggle variant="bell" />
         </div>
       )}

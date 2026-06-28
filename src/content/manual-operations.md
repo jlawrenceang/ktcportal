@@ -7,8 +7,8 @@ You run two stations: the **X-ray Checker** (your sign-in home) and **Vessels** 
 ## 1 · Signing in
 
 - Use your **username** and password on the login page (no email needed).
-- You land on the **X-ray Checker** queue — orders waiting for X-ray, sorted by line number, with the **Now serving** strip on top.
-- Your nav tabs: **X-ray Checker**, **Vessels**, **Job Orders** (read-only), **Manual**.
+- You land on your **Job Orders** work surface — the live order queue in a focused app shell.
+- Your X-ray work (assess + confirm) is on the **X-ray Checker**: open it from **Open full portal → X-ray Checker**. The Checker shows the queue in **line order — the priority lane first** — with the **Now serving** strip on top. (The focused checker app handles confirm-only.)
 
 ## 2 · Assess a job order (RPS)
 
@@ -44,6 +44,8 @@ If the owner grants you the hold/reject gates, the same rules as admin apply:
 
 - **Hold for info** is field-targeted — tick which fields the customer must re-enter (**Consignee · Entry number · Vessel & Voyage · Containers**) and add a note; only those fields unlock for them.
 - **Reject is final** — a rejected order cannot be resubmitted (the customer files a new one). Use **Hold for info** for fixable issues.
+- **Priority lane:** **Request priority** on an order to move it ahead of the X-ray line (an admin approves it). Approved orders get a **P-…** number and are served first.
+- **Re-X-ray:** on a **completed** order, **Request re-X-ray** (an admin approves) — it creates a suffixed child order (e.g. `JO-000001A`) for a fresh X-ray.
 
 ## 6 · What's not yours
 

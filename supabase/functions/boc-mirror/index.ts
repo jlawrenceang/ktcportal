@@ -2,6 +2,11 @@
 // Bureau of Customs, who don't get portal access). Never reads the Sheet back:
 // Supabase stays the source of truth.
 //
+// Scope (owner, 2026-06-29): an X-RAY INSPECTION view — one row per X-ray
+// container (BOC's X-ray division cares about inspection, not KTC billing), so
+// only X-ray service lines are exported and the billing columns (customer/broker,
+// service invoice) are dropped. Vessel/voyage + per-container X-ray-done added.
+//
 // Trigger: pg_cron (hourly) POSTs here with the x-cron-secret header
 // (migration 0037); can also be invoked manually with the same header.
 //
@@ -59,7 +64,7 @@ Deno.serve(async (req) => {
     const since = new Date(Date.now() - 60 * 86400_000).toISOString() // rolling 60 days
     const { data, error } = await db
       .from('job_orders')
-      .select('jo_number, status, entry_number, created_at, xray_performed_at, service_invoice_no, customer:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)')
+      .select('jo_number, status, entry_number, created_at, vessel_name, voyage_number, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request, xray_done_at)')
       .neq('status', 'held') // account-gated drafts never leave the app
       .gte('created_at', since)
       .order('created_at', { ascending: false })
@@ -67,26 +72,26 @@ Deno.serve(async (req) => {
 
     type Row = {
       jo_number: string | null; status: string; entry_number: string | null; created_at: string
-      xray_performed_at: string | null; service_invoice_no: string | null
-      customer: { full_name: string | null } | { full_name: string | null }[] | null
+      vessel_name: string | null; voyage_number: string | null
       consignee: { code: string; name: string } | { code: string; name: string }[] | null
-      lines: { container_number: string; service_request: string }[] | null
+      lines: { container_number: string; service_request: string; xray_done_at: string | null }[] | null
     }
     const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] ?? null : v)
+    const isXray = (s: string) => s.toLowerCase().includes('x-ray')
 
     const values: string[][] = [
-      [`KTC Online Portal — job-order mirror (read-only). Updated ${ph(new Date().toISOString())} PH time. Last 60 days.`],
-      ['JO Number', 'Filed', 'Status', 'Container No.', 'Service', 'Customer (Broker)', 'Consignee', 'Entry No.', 'X-ray Done', 'Service Invoice'],
+      [`KTC Online Portal — X-ray inspection mirror (read-only). Updated ${ph(new Date().toISOString())} PH time. Last 60 days.`],
+      ['Container No.', 'JO Number', 'Entry No.', 'Consignee', 'Vessel / Voyage', 'Filed', 'Status', 'X-ray Done'],
     ]
     for (const o of (data ?? []) as Row[]) {
-      const customer = one(o.customer)?.full_name ?? ''
       const cons = one(o.consignee)
       const consignee = cons ? `${cons.code} – ${cons.name}` : ''
-      const lines = o.lines?.length ? o.lines : [{ container_number: '', service_request: '' }]
-      for (const l of lines) {
+      const vessel = [o.vessel_name, o.voyage_number].filter(Boolean).join(' / ')
+      // One row per X-RAY container only — the BOC X-ray division view (no billing).
+      for (const l of (o.lines ?? []).filter((l) => isXray(l.service_request))) {
         values.push([
-          o.jo_number ?? '', ph(o.created_at), o.status, l.container_number, l.service_request,
-          customer, consignee, o.entry_number ?? '', ph(o.xray_performed_at), o.service_invoice_no ?? '',
+          l.container_number, o.jo_number ?? '', o.entry_number ?? '', consignee, vessel,
+          ph(o.created_at), o.status, ph(l.xray_done_at),
         ])
       }
     }

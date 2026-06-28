@@ -10,6 +10,7 @@ import StaffNotificationBell from '../components/StaffNotificationBell'
 import AccountMenu from '../components/AccountMenu'
 import AdminBottomNav from './AdminBottomNav'
 import { useT } from '../lib/i18n'
+import { staffHome } from '../lib/types'
 import { VERSION_LABEL, VERSION_FULL } from '../version'
 
 // Admin shell — mirrors the customer Shell: a slim top rail (logo + role badge)
@@ -55,11 +56,7 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
     : broker?.staff_role === 'operations' ? 'Operations'
     : broker?.staff_role === 'csr' ? 'CSR'
     : broker?.is_admin ? 'Admin' : ''
-  const home = broker?.staff_role === 'checker' ? '/admin/checker'
-    : broker?.staff_role === 'operations' ? '/admin/job-orders'
-    : broker?.staff_role === 'cashier' ? '/admin/cashier'
-    : broker?.staff_role === 'csr' ? '/admin/support'
-    : '/admin'
+  const home = staffHome(broker)
 
   return (
     <div className="ktc-page ktc-page--wide ktc-page--tabbar">
@@ -73,6 +70,8 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
             below) instead of as a separate rail pill — only set once the role is
             known so the owner's badge never flashes a generic "Admin". */}
         <AccountMenu
+          accountTo="/admin/account"
+          accountLabel="My Account"
           settingsTo={broker?.is_admin || broker?.is_owner ? '/admin/settings' : undefined}
           settingsLabel="Settings"
           role={role || undefined}

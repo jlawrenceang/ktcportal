@@ -4,6 +4,32 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.7.0 — 2026-06-29 (Audit remediation Phases 2–4 + SMS scaffold + customs mirror)
+
+The consolidated ship of the 2026-06-28 process/coherence-audit remediation (Phases 2–4, after Phase 1's go-live blockers in v1.6.75) plus two owner-requested integrations. Migrations **0186–0193** are applied to prod (backward-compatible with the prior frontend; new SMS path ships dormant). Build + `tsc` + `check:i18n` (now strict, 0 untranslated) green.
+
+**Phase 2 — ops gaps (T2):**
+- **Release-billing loop** (`0188`, ADR-0036): bill-document upload + view; correct/void an unpaid charge; customer **and** desk notifications across the release lifecycle; consignee `cash`/`credit` terms flag; suspend/reject now cancels a customer's open releases.
+- **Cashier station**: walk-in invoice capture, a "charges to bill" bucket, amounts/balances on review cards.
+- **Consignee / CIS**: full CIS contact fields + BIR 2307 in admin, a request→review staff signal + CSR-visible badge, "approve all" fixed for name-only rows.
+- **Notifications & support**: notification inbox + exact unread counts, staff-opened tickets (`0189`).
+- **Settings cluster** (`0190`): the Roles & Gates matrix now renders all live gates, the RPS move-rate editor gained add/retire/reorder, System health opened to admins, a disposable-domain admin panel, vessel-request retirement.
+- **Staff "My Account"**, customer-detail releases/tickets, vessel needs-info recovery.
+
+**Phase 3 — polish (T3):** dead-code cleanup (`0191`); a **Now-serving** board; dashboard/logs label + cron-monitor fixes; **bulletin** edit/reorder/schedule/draft (`0192`); storage-tier band editor + ERP-series guard UI + calculator print; print-slip serving, free re-X-ray ₱0 handling, PWA install affordances, Lara document-verification guide, CIS zero-rating.
+
+**Phase 4 — ops tail + docs:**
+- Desktop **X-ray Checker** lane column + priority-order default + re-X-ray station + lookup guard; **calculator** no longer locks out a vessel-less estimate; Lara consignee copy corrected; a 2303-backfill nudge for staff.
+- **Manuals + tours** (EN + Tagalog): customer Release/consignee-request/Help sections + page tours; admin Release section + desk tour; a new **CSR guide**; priority-lane + re-X-ray documented across admin/operations/checker; operations-landing reconciled.
+- **Tagalog localization**: **288** entries added (the tour was ~55% English) + a coverage **guard** (`npm run check:i18n`, `--strict`) so new copy can't silently revert to English.
+- MFA recovery (T2-01) **deferred** to the go-live security pass.
+
+**SMS notifications (dormant scaffold, `0193`):** a 4th channel via android-sms-gateway — `send-sms` function + a notifications trigger (whitelisted high-value kinds, opt-out, PH-number normalize), silent no-op until a gateway is connected (`scripts/setup-sms.mjs`, `docs/sms-setup.md`). Jarvis-reviewed.
+
+**Customs (BOC) Sheet mirror** re-scoped to an **X-ray inspection** view (one row per X-ray container; billing columns dropped). Still dormant pending Google creds.
+
+`APP_VERSION` v1.6.77 → **v1.7.0**.
+
 ## v1.6.77 — 2026-06-28 (Break-test security/integrity hardening — Phase 2 part 1)
 
 Migration **0187** — the security/integrity slice of the break-test mediums/lows (first chunk of audit Phase 2), sandbox-verified + Jarvis-reviewed:

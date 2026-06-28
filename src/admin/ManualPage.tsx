@@ -10,11 +10,13 @@ import adminBody from '../content/manual-admin.md?raw'
 import operationsBody from '../content/manual-operations.md?raw'
 import cashierBody from '../content/manual-cashier.md?raw'
 import checkerBody from '../content/manual-checker.md?raw'
+import csrBody from '../content/manual-csr.md?raw'
 import customerBody from '../content/manual-customer.md?raw'
 import adminBodyTl from '../content/manual-admin.tl.md?raw'
 import operationsBodyTl from '../content/manual-operations.tl.md?raw'
 import cashierBodyTl from '../content/manual-cashier.tl.md?raw'
 import checkerBodyTl from '../content/manual-checker.tl.md?raw'
+import csrBodyTl from '../content/manual-csr.tl.md?raw'
 import customerBodyTl from '../content/manual-customer.tl.md?raw'
 
 // Staff user manual, role-aware: cashier and checker see their own guide;
@@ -26,6 +28,7 @@ const GUIDES = [
   { key: 'operations', label: 'Operations', en: operationsBody, tl: operationsBodyTl },
   { key: 'cashier', label: 'Cashier', en: cashierBody, tl: cashierBodyTl },
   { key: 'checker', label: 'Checker', en: checkerBody, tl: checkerBodyTl },
+  { key: 'csr', label: 'CSR', en: csrBody, tl: csrBodyTl },
   { key: 'customer', label: 'Customer', en: customerBody, tl: customerBodyTl },
 ] as const
 
@@ -74,6 +77,15 @@ const ROLE_FLOWS: Record<string, { steps: FlowStep[]; phases: FlowPhase[] }> = {
     ],
     phases: [{ label: 'Check & clear', from: 0, to: 5 }],
   },
+  csr: {
+    steps: [
+      { title: 'Answer support tickets' },
+      { title: 'Review consignee requests' },
+      { title: 'File orders on behalf (intake)' },
+      { title: 'Verify pull-out documents' },
+    ],
+    phases: [{ label: 'Intake & comms', from: 0, to: 4 }],
+  },
   customer: {
     steps: [
       { title: 'Create your account' },
@@ -97,7 +109,8 @@ export default function ManualPage() {
   const { t, lang } = useT()
   const floorGuide = broker?.staff_role === 'cashier' ? 'cashier'
     : broker?.staff_role === 'checker' ? 'checker'
-    : broker?.staff_role === 'operations' ? 'operations' : null
+    : broker?.staff_role === 'operations' ? 'operations'
+    : broker?.staff_role === 'csr' ? 'csr' : null
   const [tab, setTab] = useState<(typeof GUIDES)[number]['key']>(floorGuide ?? 'admin')
   const active = floorGuide ?? tab
   const guide = GUIDES.find((g) => g.key === active) ?? GUIDES[0]

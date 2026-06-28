@@ -7,6 +7,8 @@ import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { prepareUpload } from '../lib/validation'
 import { useT } from '../lib/i18n'
+import { usePageTour } from '../components/TourProvider'
+import { requestsSteps } from '../components/WelcomeTour'
 
 // Customer "My Requests" — their new-consignee submissions and where they stand.
 // A request KTC tagged "needs info" can be edited & resubmitted here (back to
@@ -25,6 +27,7 @@ const STYLE: Record<string, { bg: string; fg: string }> = {
 
 export default function MyRequests() {
   const { t } = useT()
+  usePageTour('requests', requestsSteps)
   const { session } = useAuth()
   const { broker } = useBroker()
   const [cons, setCons] = useState<CReq[]>([])

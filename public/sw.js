@@ -14,7 +14,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const c = await caches.open(SHELL)
     // Best-effort precache of the app shell + icon (offline launch).
-    await c.addAll(['/', '/index.html', '/app-icon.svg']).catch(() => {})
+    await c.addAll(['/', '/index.html', '/app-icon-192.png']).catch(() => {})
   })())
 })
 
@@ -70,8 +70,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'KTC Online Portal'
   const options = {
     body: data.body || '',
-    icon: '/app-icon.svg',
-    badge: '/app-icon.svg',
+    icon: '/app-icon-192.png',
+    badge: '/app-icon-192.png',
     data: { url: data.url || '/' },
     tag: data.tag || undefined,
   }

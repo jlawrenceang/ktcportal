@@ -7,7 +7,7 @@ Your station is the **X-ray Checker** queue — you land there at sign-in. One j
 ## 1 · Signing in
 
 - Use your **username** and password on the portal login page (no email needed).
-- The queue shows every order waiting for X-ray, **sorted by line number**, with the **Now serving** strip on top.
+- The queue shows every order waiting for X-ray, **sorted by line — the priority lane (P-…) first**, then the regular queue (#…) and any re-X-ray (R-…), with the **Now serving** strip on top. The desktop view has a **Line** column; tap a header to re-sort by line, JO no., or age.
 
 ## 2 · Looking up a container
 
@@ -24,6 +24,11 @@ When a container passes the X-ray, hit **Confirm**:
 
 - The date and time are stamped permanently (the lookup will show them).
 - The order leaves your queue. If X-ray was its last pending service it completes; if it still needs DEA or OOG it stays open for those — either way it's out of your line.
+
+### Re-X-ray
+
+- If a **completed** order needs another X-ray, look it up and tap **Request re-X-ray** — it creates a suffixed child order (e.g. `JO-000001A`) for an admin to approve.
+- A re-X-ray child **awaiting admin approval** shows that label instead of a Confirm button — you can't confirm it until an admin approves it.
 
 ## 4 · The weekly line
 

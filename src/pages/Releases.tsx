@@ -12,6 +12,8 @@ import { searchConsignees } from '../lib/pickerSearches'
 import { prepareUpload } from '../lib/validation'
 import { peso } from '../lib/pricing'
 import { useT } from '../lib/i18n'
+import { usePageTour } from '../components/TourProvider'
+import { releasesSteps } from '../components/WelcomeTour'
 import { PaperclipIcon } from '../components/icons'
 import { RELEASE_STATUS_LABEL, type ReleaseOrder, type ReleaseStatus, type ReleaseSupplement } from '../lib/types'
 
@@ -22,7 +24,7 @@ import { RELEASE_STATUS_LABEL, type ReleaseOrder, type ReleaseStatus, type Relea
 // DEFINER RPC (file_release_order / resubmit_release_doc / submit_release_payment).
 
 const SELECT_COLS =
-  'id, release_number, bl_number, status, amount, charges_note, payment_status, payment_proof_path, payment_note, or_number, service_invoice_no, staff_note, created_at, consignee:consignees(code, name), supplements:release_supplements(id, label, amount, payment_status, payment_proof_path, payment_note, created_at)'
+  'id, release_number, bl_number, status, amount, charges_note, bill_doc_path, payment_status, payment_proof_path, payment_note, or_number, service_invoice_no, staff_note, created_at, consignee:consignees(code, name), supplements:release_supplements(id, label, amount, payment_status, payment_proof_path, payment_note, created_at)'
 
 // Per-status semantic tone for the .ktc-chip status pill (mirrors MyJobOrders).
 const STATUS_TONE: Record<ReleaseStatus, string> = {
@@ -77,6 +79,7 @@ function FileChip({ file, onRemove, disabled }: { file: File; onRemove: () => vo
 
 export default function Releases() {
   const { t } = useT()
+  usePageTour('releases', releasesSteps)
   const { session } = useAuth()
   const { broker } = useBroker()
   const uid = session?.user.id
@@ -367,6 +370,16 @@ function ReleaseDetail({ release, uid, info, qrUrl, onQrOpen, uploadDoc, onClose
     await onChanged()
   }
 
+  // Open the staff-uploaded bill / SOA (release-docs is private — sign a short URL).
+  async function viewBill() {
+    if (!r.bill_doc_path) return
+    setBusy(true); setError(null)
+    const { data, error: e } = await supabase.storage.from('release-docs').createSignedUrl(r.bill_doc_path, 60)
+    setBusy(false)
+    if (e || !data?.signedUrl) { setError(e?.message ?? t('Could not open the bill.')); return }
+    window.open(data.signedUrl, '_blank', 'noopener')
+  }
+
   const showPay = r.status === 'payable'
   const proofSubmitted = r.payment_status === 'submitted'
   const proofRejected = r.payment_status === 'rejected'
@@ -442,6 +455,11 @@ function ReleaseDetail({ release, uid, info, qrUrl, onQrOpen, uploadDoc, onClose
                     <span className="ktc-mono" style={{ fontWeight: 700, fontSize: 17 }}>{peso(r.amount ?? 0)}</span>
                   </div>
                   {r.charges_note && <p className="ktc-label" style={{ fontSize: 12.5, lineHeight: 1.55, margin: 0 }}>{r.charges_note}</p>}
+                  {r.bill_doc_path && (
+                    <button type="button" className="ktc-link" style={{ fontSize: 12.5, justifySelf: 'start' }} disabled={busy} onClick={() => void viewBill()}>
+                      {t('View bill')}
+                    </button>
+                  )}
                 </div>
 
                 {/* How to pay (bank details + QRPH) */}

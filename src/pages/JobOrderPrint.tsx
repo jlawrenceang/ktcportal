@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
+import { SERVICE_LINE_LABEL, type ServiceLine } from '../lib/types'
 
 interface PrintOrder {
   id: string
@@ -75,6 +76,8 @@ export default function JobOrderPrint() {
   const count = order?.lines?.length ?? 0
   // X-rayed vans carry the confirming checker's e-signature (name + time).
   const xrayDone = (order?.lines ?? []).filter((l) => /x-?ray/i.test(l.service_request) && l.xray_done_at)
+  // Live "now serving" lane number(s) — burned (vacated) entries don't count.
+  const servings = (order?.serving ?? []).filter((s) => !s.vacated_at && s.serving_no != null)
 
   return (
     <div style={{ minHeight: '100%', background: 'hsl(220 16% 96%)', padding: 24 }}>
@@ -145,6 +148,18 @@ export default function JobOrderPrint() {
                 Date: <b style={{ color: '#15233a' }}>{new Date(order.created_at).toLocaleDateString()}</b>
               </div>
             </div>
+
+            {/* Now-serving lane number(s) — the per-service queue position. */}
+            {servings.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 7 }}>
+                {servings.map((s, i) => (
+                  <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 8.5, fontWeight: 800, letterSpacing: '0.04em', color: '#fff', background: LINE, borderRadius: 4, padding: '3px 8px' }}>
+                    <span style={{ opacity: 0.8, textTransform: 'uppercase' }}>{(SERVICE_LINE_LABEL[s.service_line as ServiceLine] ?? s.service_line)}</span>
+                    Serving #{s.serving_no}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {submitted && (
               <div style={{ marginTop: 7, fontSize: 9, fontWeight: 800, letterSpacing: '0.06em', textAlign: 'center', color: '#92560a', background: '#fef3e2', border: '1px solid #f3d3a0', borderRadius: 4, padding: '5px 6px' }}>

@@ -39,6 +39,7 @@ const Vessels = lazyWithReload(() => import('./pages/Vessels'))
 const SupportTickets = lazyWithReload(() => import('./pages/SupportTickets'))
 const Releases = lazyWithReload(() => import('./pages/Releases'))
 const MyRequests = lazyWithReload(() => import('./pages/MyRequests'))
+const Notifications = lazyWithReload(() => import('./pages/Notifications'))
 const Manual = lazyWithReload(() => import('./pages/Manual'))
 const AdminManual = lazyWithReload(() => import('./admin/ManualPage'))
 const Dashboard = lazyWithReload(() => import('./admin/Dashboard'))
@@ -55,7 +56,9 @@ const CashierStation = lazyWithReload(() => import('./admin/CashierStation'))
 const VesselSchedule = lazyWithReload(() => import('./admin/VesselSchedule'))
 const Logs = lazyWithReload(() => import('./admin/Logs'))
 const Security = lazyWithReload(() => import('./admin/Security'))
+const AccountStaff = lazyWithReload(() => import('./admin/AccountStaff'))
 const SupportInbox = lazyWithReload(() => import('./admin/SupportInbox'))
+const AdminNotifications = lazyWithReload(() => import('./admin/NotificationsPage'))
 const AdminReleases = lazyWithReload(() => import('./admin/Releases'))
 
 function Protected({ children }: { children: ReactNode }) {
@@ -183,6 +186,7 @@ export default function App() {
           <Route path="/support" element={<Protected><SupportTickets /></Protected>} />
           <Route path="/releases" element={<Protected><Releases /></Protected>} />
           <Route path="/requests" element={<Protected><MyRequests /></Protected>} />
+          <Route path="/notifications" element={<Protected><Notifications /></Protected>} />
           <Route path="/manual" element={<Protected><Manual /></Protected>} />
 
           {/* Installable staff app (focused, role-aware) */}
@@ -194,6 +198,7 @@ export default function App() {
 
           {/* Admin portal */}
           <Route path="/admin" element={<Admin><Dashboard /></Admin>} />
+          <Route path="/admin/account" element={<Admin><AccountStaff /></Admin>} />
           <Route path="/admin/approvals" element={<Admin><Approvals /></Admin>} />
           <Route path="/admin/customers" element={<Admin><Brokers /></Admin>} />
           <Route path="/admin/customers/:id" element={<Admin><CustomerDetail /></Admin>} />
@@ -209,6 +214,7 @@ export default function App() {
           <Route path="/admin/settings" element={<Admin><Settings /></Admin>} />
           <Route path="/admin/bulletin" element={<Admin><BulletinBoardAdmin /></Admin>} />
           <Route path="/admin/support" element={<Admin><SupportInbox /></Admin>} />
+          <Route path="/admin/notifications" element={<Admin><AdminNotifications /></Admin>} />
           <Route path="/admin/manual" element={<Admin><AdminManual /></Admin>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />

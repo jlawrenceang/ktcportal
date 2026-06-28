@@ -143,9 +143,9 @@ export const NODES: NodeRegistry = {
 
   'consignee.add': {
     kind: 'message', ticketCategory: 'accreditation',
-    body: 'No problem. On the consignee step, tap Request new consignee and enter its details. It’s tagged “pending KTC approval”, but you can still file the order now — KTC verifies the consignee on their side. You don’t have to wait.',
+    body: 'No problem. On the consignee step, tap “Request new consignee” and fill in its details. KTC reviews it on their side — once they approve it, it appears in your consignee list and you can file an order against it. You can’t file against a consignee until it’s approved, so just keep an eye on your request. You can track it any time in My Requests.',
     then: [
-      { label: 'Start a Job Order', to: 'nav.newJO' },
+      { label: 'Track my request', to: 'nav.requests' },
       { label: 'Ask KTC about a consignee', to: 'ticket.accreditation' },
       { label: 'Back to menu', to: 'root' },
     ],
@@ -409,7 +409,7 @@ export const NODES: NodeRegistry = {
 
   'rel.how': {
     kind: 'message', ticketCategory: 'operations',
-    body: 'Filing a release is online — no queue. Go to Release / Pull-out → File a release: 1) pick the Consignee (or Request a new consignee and file anyway), 2) enter the BL Number (required), 3) attach a photo/PDF of your DO or BL (optional at filing, but KTC verifies it before assessing charges, so attach it now). Tap File release; KTC aims to verify and assess within 24 hours. Note: your account must be fully approved first — a pending account can’t file a release yet.',
+    body: 'Filing a release is online — no queue. Go to Release / Pull-out → File a release: 1) pick the Consignee (optional — only approved consignees show in the picker; if yours isn’t there yet, request it and leave this blank for now, or add it once it’s approved), 2) enter the BL Number (required), 3) attach a photo/PDF of your DO or BL (optional at filing, but KTC verifies it before assessing charges, so attach it now). Tap File release; KTC aims to verify and assess within 24 hours. Note: your account must be fully approved first — a pending account can’t file a release yet.',
     then: [
       { label: 'Open Release / Pull-out', to: 'rel.nav' },
       { label: 'What happens next?', to: 'rel.after' },
@@ -573,14 +573,12 @@ export const NODES: NodeRegistry = {
     ],
   },
 
-  // TODO: wire the document-verification guide when provided. Holding answer only —
-  // do not fabricate the steps.
   'acct.doc_verification': {
     kind: 'message', ticketCategory: 'account',
-    body: 'KTC verifies the documents you submit (like your valid ID, and DO/BL for releases) before approving or assessing charges. A full step-by-step guide is coming shortly. In the meantime I can connect you to our team for the specifics of your case.',
+    body: 'Here’s how ID verification works, step by step. 1) After you confirm your email, open the Verify ID screen — or tap “Upload valid ID” on your home banner. 2) Tick the consent box, then attach a clear photo or PDF of a valid government-issued ID (you can review it before sending). 3) Tap Submit for verification. 4) A KTC admin reviews it; you’ll get an approval email once it’s verified, and filing Job Orders unlocks then. Important: upload your ID within 48 hours of confirming your email, or the pending account is closed and you’d have to register again.',
     then: [
+      { label: 'Upload my valid ID', to: 'nav.verifyId' },
       { label: 'Ask KTC about my documents', to: 'ticket.account' },
-      { label: 'See KTC contact options', to: 'nav.support' },
       { label: 'Back to menu', to: 'root' },
     ],
   },
@@ -679,6 +677,7 @@ export const NODES: NodeRegistry = {
       { label: 'A concern about Logistics / trucking', to: 'feedback.logistics' },
       { label: 'A complaint', to: 'feedback.complaint' },
       { label: 'A suggestion', to: 'feedback.suggestion' },
+      { label: 'Report an app problem', to: 'bug.report' },
       { label: 'Back to menu', to: 'root' },
     ],
   },
@@ -729,7 +728,7 @@ export const NODES: NodeRegistry = {
   'ticket.payment': {
     kind: 'ticket', category: 'payment',
     subject: { from: 'userText', prefix: 'Payment: ' }, body: { from: 'userText' },
-    intro: 'What’s your payment question? Please include your JO number, the charge (X-ray / port-services / additional), and the amount + date + reference of your transfer. I’ll send it to the KTC cashier team.',
+    intro: 'What’s your payment question? Please include your JO number, the charge (X-ray / port-services / additional), and the amount + date + reference of your transfer. I’ll send it to KTC’s support team to help with your payment concern.',
     confirmLabel: 'Create a payment ticket', cancelOption: { label: 'Back to menu', to: 'root' },
   },
   'ticket.account': {
@@ -803,6 +802,7 @@ export const NODES: NodeRegistry = {
 
   // ── Navigation leaves (routes verified in App.tsx) ────────────────────────
   'nav.myOrders': { kind: 'nav', route: '/job-orders', cta: 'Open My Job Orders', body: 'Here are all your Job Orders with their live status and balances.' },
+  'nav.requests': { kind: 'nav', route: '/requests', cta: 'Open My Requests', body: 'Here are your consignee requests and their approval status.' },
   'nav.newJO': { kind: 'nav', route: '/job-order', cta: 'Open New Job Order', body: 'Let’s file it.' },
   'nav.support': { kind: 'nav', route: '/support', cta: 'Open Support', body: 'Your tickets and live-agent contact options are here.' },
   'nav.account': { kind: 'nav', route: '/account', cta: 'Open My Account', body: 'Manage your name, contact, email and password here.' },

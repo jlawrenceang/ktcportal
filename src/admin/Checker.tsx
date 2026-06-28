@@ -5,6 +5,8 @@ import { useAutoRefresh } from '../lib/useAutoRefresh'
 import { usePermissions } from '../lib/usePermissions'
 import { batchLabel, formatAge } from '../lib/batch'
 import XrayQueueTable, { type QueueRow } from '../components/XrayQueueTable'
+import { servingKey, servingTag } from '../lib/serving'
+import NowServing from '../components/NowServing'
 import { usePageTour } from '../components/TourProvider'
 import { checkerSteps } from './AdminTour'
 import { useT } from '../lib/i18n'
@@ -39,12 +41,8 @@ const SELECT =
   'id, jo_number, status, is_rexray, rexray_status, xray_performed_at, service_invoice_no, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, vacated_at)'
 
 const isXray = (s: string) => s.toLowerCase().includes('x-ray')
-// Priority lane is served ahead of the regular queue, then re-X-ray (each numbers from 1).
-const LANE_RANK: Record<string, number> = { priority: 0, rexray: 2 }
-const servingKey = (o: CheckerOrder) => {
-  const s = o.serving?.find((x) => !x.vacated_at)
-  return s ? (LANE_RANK[s.service_line] ?? 1) * 1_000_000 + s.serving_no : Infinity
-}
+// Priority lane is served ahead of the regular queue, then re-X-ray — shared with
+// the app checker + queue table via lib/serving so all three agree.
 
 function Clearance({ o }: { o: CheckerOrder }) {
   const { t } = useT()
@@ -119,7 +117,7 @@ export default function Checker() {
       // KTC-26: an unapproved re-X-ray child can't be acted on — keep it out of the queue.
       .filter((o) => !(o.is_rexray && o.rexray_status !== 'approved'))
       // Serve the priority lane first, then the regular queue by serving number (not raw filing order).
-      .sort((a, b) => servingKey(a) - servingKey(b))
+      .sort((a, b) => servingKey(a.serving) - servingKey(b.serving))
     setQueue(rows)
     setLoading(false)
   }
@@ -159,15 +157,33 @@ export default function Checker() {
     await load()
   }
 
+  // Re-X-ray: request on a COMPLETED order (found via lookup) → admin approves → child JO.
+  // Mirrors AllJobOrders; the checker holds request_rexray but otherwise has no station for it.
+  const [rexrayBusy, setRexrayBusy] = useState<string | null>(null)
+  async function requestRexray(id: string) {
+    if (!window.confirm(t('Request a re-X-ray for this completed order? It creates a suffixed child order (e.g. JO-000001A) for admin approval.'))) return
+    setRexrayBusy(id); setError(null)
+    const { error: rpcErr } = await supabase.rpc('request_rexray', { p_parent: id })
+    setRexrayBusy(null)
+    if (rpcErr) { setError(rpcErr.message); return }
+    setQuery(''); setResults(null)
+    await load()
+  }
+
   function OrderCard({ o, highlight }: { o: CheckerOrder; highlight?: boolean }) {
     const xrayLines = (o.lines ?? []).filter((l) => isXray(l.service_request))
     const open = ['submitted', 'processing', 'on_hold'].includes(o.status)
+    const lane = servingTag(o.serving)
+    // A re-X-ray child not yet approved can't be confirmed (record_van_xray rejects it).
+    // The queue already excludes these; this guards the lookup path (T2-20).
+    const rexrayPending = !!o.is_rexray && o.rexray_status !== 'approved'
     return (
       <div style={{
         padding: '16px 18px', borderRadius: 16, background: 'var(--c-w60)',
         border: highlight ? '1px solid rgb(var(--acc-rgb) / 0.45)' : '1px solid var(--glass-brd)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          {lane && <span className="ktc-mono" style={{ fontSize: 18, fontWeight: 700, color: 'var(--acc-2)' }}>{lane}</span>}
           <b className="ktc-mono" style={{ fontSize: 17 }}>{o.jo_number ?? '—'}</b>
           <Clearance o={o} />
           <span className="ktc-chip" style={{ fontSize: 11 }}>{t('Batch')}: {batchLabel(o.created_at, t)}</span>
@@ -190,6 +206,8 @@ export default function Checker() {
                 </span>
               ) : !open ? (
                 <span className="ktc-chip" style={{ marginLeft: 'auto' }}>{t(o.status)}</span>
+              ) : rexrayPending ? (
+                <span className="ktc-chip" style={{ marginLeft: 'auto' }}>{t('Re-X-ray — awaiting admin approval')}</span>
               ) : can('confirm_xray') ? (
                 <button className="ktc-btn ktc-btn--sm" style={{ marginLeft: 'auto' }}
                   onClick={() => setConfirmTarget({ id: l.id, container: l.container_number, jo: o.jo_number ?? '—' })}>
@@ -201,6 +219,13 @@ export default function Checker() {
             </div>
           ))}
         </div>
+        {can('request_rexray') && o.status === 'completed' && !o.is_rexray && (
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--glass-brd)' }}>
+            <button className="ktc-btn-secondary ktc-btn--sm" disabled={rexrayBusy === o.id} onClick={() => void requestRexray(o.id)}>
+              {rexrayBusy === o.id ? t('Requesting…') : t('Request re-X-ray')}
+            </button>
+          </div>
+        )}
         {can('assess_rps') && (
           <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--glass-brd)' }}>
             {assessId === o.id ? (
@@ -240,10 +265,11 @@ export default function Checker() {
     )
   }
 
-  // Flat list of containers (vans) still needing X-ray — the working log.
+  // Flat list of containers (vans) still needing X-ray — the working log. Carry
+  // the order's serving lane onto each row so the table can show + sort by lane.
   const vanRows: QueueRow[] = queue.flatMap((o) =>
     (o.lines ?? []).filter((l) => isXray(l.service_request) && !l.xray_done_at)
-      .map((l) => ({ lineId: l.id, container: l.container_number, jo_number: o.jo_number, consignee: o.consignee ?? null, created_at: o.created_at })))
+      .map((l) => ({ lineId: l.id, container: l.container_number, jo_number: o.jo_number, consignee: o.consignee ?? null, created_at: o.created_at, lane: servingTag(o.serving), laneRank: servingKey(o.serving) })))
 
   if (!permLoading && !can('view_xray_queue')) {
     return (
@@ -257,6 +283,7 @@ export default function Checker() {
 
   return (
     <AdminShell>
+      <NowServing />
       <div style={{ margin: '14px 4px 20px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
         <div>
           <h1 className="ktc-title">{t('X-ray Queue')}</h1>

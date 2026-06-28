@@ -2,16 +2,19 @@ import { useState, type CSSProperties } from 'react'
 import { useT } from '../lib/i18n'
 import { batchLabel, formatAge, ageHours } from '../lib/batch'
 
-// Reusable container worklist table — one row per item, ordered by JO number
-// (the true sequential intake/log order) or by working-hours age. Built for the
-// X-ray queue; the same shape can drive future cashier / document-verification
-// queues. Presentational: the parent owns the data + the action.
+// Reusable container worklist table — one row per item, ordered by serving lane
+// (priority → regular → re-X-ray, the order the line is actually worked), or by
+// JO number (intake order), or by working-hours age. Built for the X-ray queue;
+// the same shape can drive future cashier / document-verification queues.
+// Presentational: the parent owns the data + the action.
 export interface QueueRow {
   lineId: string
   container: string
   jo_number: string | null
   consignee: { code: string; name: string } | null
   created_at: string
+  lane?: string | null  // display tag: P-1 (priority) / R-1 (re-X-ray) / #1 (regular)
+  laneRank?: number     // numeric sort key for lane order (servingKey)
 }
 
 const thStyle: CSSProperties = { padding: '8px 10px', fontSize: 11.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', textAlign: 'left' }
@@ -34,11 +37,17 @@ export default function XrayQueueTable({ rows, canConfirm, onConfirm, actionLabe
   actionLabel?: string
 }) {
   const { t } = useT()
-  const [sortBy, setSortBy] = useState<'jo' | 'age'>('jo')
+  // Default to lane order — the order the X-ray line is actually served (priority
+  // first). JO + age stay available. (Was JO-only, which discarded the priority lane.)
+  const [sortBy, setSortBy] = useState<'line' | 'jo' | 'age'>('line')
+  const byJo = (a: QueueRow, b: QueueRow) => (a.jo_number ?? '').localeCompare(b.jo_number ?? '')
   const sorted = [...rows].sort((a, b) =>
     sortBy === 'age'
       ? new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      : (a.jo_number ?? '').localeCompare(b.jo_number ?? ''))
+      : sortBy === 'jo'
+        ? byJo(a, b)
+        // lane: by servingKey, ties (and unnumbered rows) fall back to JO order
+        : ((a.laneRank ?? Infinity) - (b.laneRank ?? Infinity)) || byJo(a, b))
 
   return (
     <>
@@ -49,6 +58,7 @@ export default function XrayQueueTable({ rows, canConfirm, onConfirm, actionLabe
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--glass-brd)' }}>
+              <SortTh label={t('Line')} active={sortBy === 'line'} onClick={() => setSortBy('line')} />
               <SortTh label={t('JO no.')} active={sortBy === 'jo'} onClick={() => setSortBy('jo')} />
               <th style={thStyle}>{t('Container')}</th>
               <th style={thStyle}>{t('Consignee')}</th>
@@ -62,6 +72,7 @@ export default function XrayQueueTable({ rows, canConfirm, onConfirm, actionLabe
               const h = ageHours(r.created_at)
               return (
                 <tr key={r.lineId} style={{ borderTop: '1px solid var(--glass-brd)' }}>
+                  <td style={tdStyle}>{r.lane ? <b className="ktc-mono" style={{ color: 'var(--acc-2)' }}>{r.lane}</b> : <span className="ktc-label">—</span>}</td>
                   <td style={tdStyle}><b className="ktc-mono">{r.jo_number ?? '—'}</b></td>
                   <td style={tdStyle}><span className="ktc-mono">{r.container}</span></td>
                   <td style={{ ...tdStyle, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.consignee ? `${r.consignee.code} – ${r.consignee.name}` : t('no consignee')}</td>

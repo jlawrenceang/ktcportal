@@ -25,11 +25,20 @@ export default function BulletinBoard() {
   const { openFromStorage, viewerModal } = useFileViewer(setFileErr)
 
   useEffect(() => {
+    // Visibility is enforced server-side by the "read bulletins" RLS policy
+    // (published AND publish_at <= now() AND not expired — migration 0192). We
+    // mirror the time window here too (defense in depth; client now() is only a
+    // hint — the RLS now() is authoritative). T3-23: order by pinned → sort_order
+    // → date, with a sensible row cap as a backstop.
+    const now = new Date().toISOString()
     void supabase.from('bulletin_posts').select('id, title, body, pinned, created_at, attachment_path, attachment_name')
       .eq('is_published', true)
+      .lte('publish_at', now)
+      .or(`expires_at.is.null,expires_at.gt.${now}`)
       .order('pinned', { ascending: false })
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false })
+      .limit(50)
       .then(({ data }) => setPosts((data ?? []) as Post[]))
     void supabase.from('bulletin_reads').select('post_id')
       .then(({ data }) => setReadIds(new Set(((data ?? []) as { post_id: string }[]).map((r) => r.post_id))))

@@ -127,6 +127,21 @@ export const operationsSteps: TourStep[] = [
     icon: <FlagIcon size={SZ} />, title: 'Complete the services',
     body: 'When an order has several services, mark each one done as it finishes. The order completes on its own once every service is done — and the two-gate rule means it only closes fully once payment is confirmed too.',
   },
+  {
+    icon: <FlagIcon size={SZ} />, title: 'Move ahead or re-X-ray',
+    body: 'Two extra moves live in the ⋯ Actions menu. Request priority bumps an order ahead of the X-ray line once an admin approves it — it gets a P-… number and is served first. And on a completed order, Request re-X-ray creates a suffixed child JO (e.g. JO-000001A) for a fresh X-ray after an admin approves.',
+  },
+]
+
+export const releaseAdminSteps: TourStep[] = [
+  {
+    icon: <FolderIcon size={SZ} />, title: 'Releases / Pull-out desk',
+    body: 'Container pull-out requests land here (separate from job orders). The flow: a customer files → Verify documents (check the DO/BL) → Set the charge and attach the bill → the customer pays → Confirm the payment → Record the OR → Released. Each step notifies the customer and the right desk.',
+  },
+  {
+    icon: <MoneyIcon size={SZ} />, title: 'Fixing a charge',
+    body: 'A wrong charge can be corrected or removed while it\'s still unpaid — a paid charge is locked. Extra charges are added the same way. An unconfirmed extra charge holds up the OR until it\'s settled or removed.',
+  },
 ]
 
 export const vesselSteps: TourStep[] = [
