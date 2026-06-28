@@ -12,8 +12,10 @@ Close the **remaining T2 ops gaps** that Phases 2–3 left, **then** do the **do
 |---|---|---|
 | **4a** | T2-18, T2-19, T2-20 | **Checker lanes (frontend-only).** Desktop X-ray Checker: lane/serving column on `XrayQueueTable` + default to lane order + lane chip on the card (mobile `AppChecker` already correct → extract shared `lib/serving.ts`); add "Request re-X-ray" on a completed order at both stations (T2-19); guard the **lookup** path against an unapproved re-X-ray child showing a live Confirm (T2-20; the queue already excludes them — KTC-26). |
 | **4b** | T2-31, T2-07 | **Calculator un-gate + Lara copy (frontend-only).** Gate the calculator Generate on quantity alone, not a scheduled vessel (T2-31). Fix the Lara "you can still file now" pending-consignee node to approved-only + "track my request" (T2-07). |
-| **4c** | T2-12 | **2303 backfill worklist (consignee compliance).** Make the picker's cosmetic "docs pending" an actionable admin worklist + attach path (or a grandfather flag). Migration if a flag/RPC is needed. |
-| **4d** | T2-01 | **MFA recovery (security; gated on go-live MFA).** Recovery codes at enrolment + an owner-only clear-staff-factor action + a documented owner break-glass. Touches the owner failsafe — Jarvis-review mandatory. **Confirm with owner before building** (interacts with the go-live security re-enablement). |
+| **4c** | T2-12 | ✅ **DONE.** The worklist (`needs_docs` filter, v1.6.53) + attach path (edit-modal 2303 uploader) already shipped; added the missing "remediation owner" nudge — a bar counting approved consignees missing their 2303, linking to the worklist. No migration (0120's no-block decision preserved). |
+| ~~**4d**~~ | T2-01 | ⏸️ **DEFERRED to the go-live security hardening pass** (owner decision 2026-06-29). MFA recovery codes + owner-only clear-staff-factor + break-glass runbook belong with the MFA/Turnstile/owner-password re-enablement, where they can be tested end-to-end (MFA is currently off for testing). Recorded in the go-live checklist. |
+
+**Part 1 status:** 4a/4b/4c shipped on the branch; 4d deferred. Ops tail complete.
 
 ### Explicitly NOT built (deferred — do not implement)
 
