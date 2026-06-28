@@ -4,6 +4,14 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.7.1 — 2026-06-29 (Hotfix: 2 live v1.7.0 bugs — release-supplement money gap + checker dead-end)
+
+Migration **0194** + frontend. Both from the v1.7.0 ship-review; jarvis-verified before prod.
+- **Money fix (ship-review medium):** a release **additional charge could be paid and confirmed on a CANCELLED release** — real money confirmed with no OR and no in-app refund. `cancel_release_order` (0131) only blocks a *submitted/confirmed* supplement, so a `payable` release with an **unpaid** supplement could be cancelled, the charge survive, then be paid + confirmed. `submit_release_supplement_payment` + `confirm_release_supplement_payment` now **reject when the parent release is cancelled/released** (0194; recreated verbatim from 0125/0159 + only the guard); the customer pay control (`Releases.tsx`) and the cashier review queue (`admin/Releases.tsx`) also gate on the release status. (The release-side twin of the JO fix in 0186 / base-release fix in 0178.)
+- **Checker dead-end fix (compat regression):** `0187` (KTC-16) made `record_van_xray` reject a never-accepted `submitted` order, but **both checker stations** still queued/offered a "Confirm X-ray" button on it that hard-errored. The **mobile** `AppChecker` and the **desktop** `Checker` lookup now show an **"Awaiting ops acceptance"** chip for a `submitted` order instead of a dead Confirm button (queues scoped to `processing`/`on_hold`). (Desktop twin caught by the jarvis verify pass.)
+
+`APP_VERSION` v1.7.0 → v1.7.1. tsc + `check:i18n` clean.
+
 ## v1.7.0 — 2026-06-29 (Audit remediation Phases 2–4 + SMS scaffold + customs mirror)
 
 The consolidated ship of the 2026-06-28 process/coherence-audit remediation (Phases 2–4, after Phase 1's go-live blockers in v1.6.75) plus two owner-requested integrations. Migrations **0186–0193** are applied to prod (backward-compatible with the prior frontend; new SMS path ships dormant). Build + `tsc` + `check:i18n` (now strict, 0 untranslated) green.

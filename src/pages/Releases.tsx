@@ -530,7 +530,7 @@ function ReleaseDetail({ release, uid, info, qrUrl, onQrOpen, uploadDoc, onClose
                   </p>
                 </div>
                 {r.supplements.map((s) => (
-                  <SupplementRow key={s.id} supp={s} uid={uid} busy={busy} setBusy={setBusy} setError={setError} onChanged={onChanged} />
+                  <SupplementRow key={s.id} supp={s} releaseStatus={r.status} uid={uid} busy={busy} setBusy={setBusy} setError={setError} onChanged={onChanged} />
                 ))}
               </div>
             )}
@@ -594,8 +594,9 @@ function ReleaseDetail({ release, uid, info, qrUrl, onQrOpen, uploadDoc, onClose
 // One release_supplements row: shows label + amount + status chip, and lets the
 // customer pay it (separate proof per line) when unpaid / rejected. Mirrors the
 // base payment-proof upload (payment-slips bucket, submit_release_supplement_payment).
-function SupplementRow({ supp, uid, busy, setBusy, setError, onChanged }: {
+function SupplementRow({ supp, releaseStatus, uid, busy, setBusy, setError, onChanged }: {
   supp: ReleaseSupplement
+  releaseStatus: ReleaseStatus
   uid: string | undefined
   busy: boolean
   setBusy: (b: boolean) => void
@@ -605,7 +606,10 @@ function SupplementRow({ supp, uid, busy, setBusy, setError, onChanged }: {
   const { t } = useT()
   const s = supp
   const [proof, setProof] = useState<File | null>(null)
-  const canPay = s.payment_status === 'unpaid' || s.payment_status === 'rejected'
+  // A charge can't be paid once its release is terminal (cancelled/released) —
+  // mirrors the 0194 server guard so the pay control never shows a dead action.
+  const canPay = (s.payment_status === 'unpaid' || s.payment_status === 'rejected')
+    && !['cancelled', 'released'].includes(releaseStatus)
 
   async function paySupplement() {
     if (!proof || !uid) { setError(t('Choose your payment slip first.')); return }

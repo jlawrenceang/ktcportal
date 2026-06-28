@@ -14,6 +14,7 @@
 // edit freely — this is the source of truth for Filipino copy.
 
 export const tl: Record<string, string> = {
+  "Awaiting ops acceptance": "Naghihintay na tanggapin ng operations",
   // --- bulk coverage pass (Tagalog) ---
   "— re-upload to replace": "— mag-re-upload para palitan",
   "· rates incomplete": "· kulang ang rates",

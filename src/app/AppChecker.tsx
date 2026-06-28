@@ -67,7 +67,7 @@ export default function AppChecker() {
 
   const load = useCallback(async () => {
     const { data, error: e } = await supabase.from('job_orders').select(SELECT)
-      .in('status', ['submitted', 'processing', 'on_hold']).order('created_at', { ascending: true })
+      .in('status', ['processing', 'on_hold']).order('created_at', { ascending: true })
     if (e) { setError(e.message); setLoading(false); return }
     const rows = ((data ?? []) as unknown as Order[]).map(shape)
       .filter((o) => (o.lines ?? []).some((l) => isXray(l.service_request) && !l.xray_done_at))
@@ -240,7 +240,9 @@ export default function AppChecker() {
                         <span className="ktc-chip ktc-chip--success" style={{ marginLeft: 'auto' }}>✓ {t('X-ray confirmed')}</span>
                       ) : activeRexrayPending ? (
                         <span className="ktc-chip" style={{ marginLeft: 'auto' }}>{t('Re-X-ray — awaiting admin approval')}</span>
-                      ) : ['submitted', 'processing', 'on_hold'].includes(active.status) ? (
+                      ) : active.status === 'submitted' ? (
+                        <span className="ktc-chip" style={{ marginLeft: 'auto' }}>{t('Awaiting ops acceptance')}</span>
+                      ) : ['processing', 'on_hold'].includes(active.status) ? (
                         <button className="ktc-btn ktc-btn--sm" style={{ marginLeft: 'auto', fontSize: 15, padding: '10px 18px' }}
                           onClick={() => setConfirmTarget({ id: l.id, container: l.container_number, jo: active.jo_number ?? '—' })}>
                           ✓ {t('Confirm X-ray')}

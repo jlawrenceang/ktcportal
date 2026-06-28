@@ -325,10 +325,14 @@ export default function Releases() {
   const toReviewPay = rows.filter((r) => r.payment_status === 'submitted')
   const toRecordOr = rows.filter((r) => r.status === 'paid' && !r.or_number)
   // Additional-charge payments awaiting cashier review (flattened across releases).
+  // Skip terminal releases (cancelled/released) — their charges can't be confirmed
+  // (0194 guard), so they must not surface in the review queue.
   const toReviewSup = rows.flatMap((r) =>
-    (r.supplements ?? [])
-      .filter((s) => s.payment_status === 'submitted')
-      .map((s) => ({ s, r })),
+    ['cancelled', 'released'].includes(r.status)
+      ? []
+      : (r.supplements ?? [])
+          .filter((s) => s.payment_status === 'submitted')
+          .map((s) => ({ s, r })),
   )
 
   if (!permLoading && !showDocs && !showCashier) {

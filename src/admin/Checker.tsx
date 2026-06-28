@@ -208,6 +208,8 @@ export default function Checker() {
                 <span className="ktc-chip" style={{ marginLeft: 'auto' }}>{t(o.status)}</span>
               ) : rexrayPending ? (
                 <span className="ktc-chip" style={{ marginLeft: 'auto' }}>{t('Re-X-ray — awaiting admin approval')}</span>
+              ) : o.status === 'submitted' ? (
+                <span className="ktc-chip" style={{ marginLeft: 'auto' }}>{t('Awaiting ops acceptance')}</span>
               ) : can('confirm_xray') ? (
                 <button className="ktc-btn ktc-btn--sm" style={{ marginLeft: 'auto' }}
                   onClick={() => setConfirmTarget({ id: l.id, container: l.container_number, jo: o.jo_number ?? '—' })}>
