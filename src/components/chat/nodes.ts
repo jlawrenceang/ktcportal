@@ -143,9 +143,9 @@ export const NODES: NodeRegistry = {
 
   'consignee.add': {
     kind: 'message', ticketCategory: 'accreditation',
-    body: 'No problem. On the consignee step, tap Request new consignee and enter its details. It’s tagged “pending KTC approval”, but you can still file the order now — KTC verifies the consignee on their side. You don’t have to wait.',
+    body: 'No problem. On the consignee step, tap “Request new consignee” and fill in its details. KTC reviews it on their side — once they approve it, it appears in your consignee list and you can file an order against it. You can’t file against a consignee until it’s approved, so just keep an eye on your request. You can track it any time in My Requests.',
     then: [
-      { label: 'Start a Job Order', to: 'nav.newJO' },
+      { label: 'Track my request', to: 'nav.requests' },
       { label: 'Ask KTC about a consignee', to: 'ticket.accreditation' },
       { label: 'Back to menu', to: 'root' },
     ],
@@ -409,7 +409,7 @@ export const NODES: NodeRegistry = {
 
   'rel.how': {
     kind: 'message', ticketCategory: 'operations',
-    body: 'Filing a release is online — no queue. Go to Release / Pull-out → File a release: 1) pick the Consignee (or Request a new consignee and file anyway), 2) enter the BL Number (required), 3) attach a photo/PDF of your DO or BL (optional at filing, but KTC verifies it before assessing charges, so attach it now). Tap File release; KTC aims to verify and assess within 24 hours. Note: your account must be fully approved first — a pending account can’t file a release yet.',
+    body: 'Filing a release is online — no queue. Go to Release / Pull-out → File a release: 1) pick the Consignee (optional — only approved consignees show in the picker; if yours isn’t there yet, request it and leave this blank for now, or add it once it’s approved), 2) enter the BL Number (required), 3) attach a photo/PDF of your DO or BL (optional at filing, but KTC verifies it before assessing charges, so attach it now). Tap File release; KTC aims to verify and assess within 24 hours. Note: your account must be fully approved first — a pending account can’t file a release yet.',
     then: [
       { label: 'Open Release / Pull-out', to: 'rel.nav' },
       { label: 'What happens next?', to: 'rel.after' },
@@ -802,6 +802,7 @@ export const NODES: NodeRegistry = {
 
   // ── Navigation leaves (routes verified in App.tsx) ────────────────────────
   'nav.myOrders': { kind: 'nav', route: '/job-orders', cta: 'Open My Job Orders', body: 'Here are all your Job Orders with their live status and balances.' },
+  'nav.requests': { kind: 'nav', route: '/requests', cta: 'Open My Requests', body: 'Here are your consignee requests and their approval status.' },
   'nav.newJO': { kind: 'nav', route: '/job-order', cta: 'Open New Job Order', body: 'Let’s file it.' },
   'nav.support': { kind: 'nav', route: '/support', cta: 'Open Support', body: 'Your tickets and live-agent contact options are here.' },
   'nav.account': { kind: 'nav', route: '/account', cta: 'Open My Account', body: 'Manage your name, contact, email and password here.' },

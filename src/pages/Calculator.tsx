@@ -266,7 +266,10 @@ export default function Calculator() {
   }, [rateOf, basicServices, cells, totalQty, lfd, pickupDate, services, addedSvcs, svcCounts, settings, reeferVans, plugIn, plugOut, rules, line, trade, origin, storageTiers, t])
 
   const hasVessel = !!vesselVisit
-  const canGenerate = hasVessel && totalQty > 0
+  // Only STORAGE needs a vessel (it counts from the vessel's Last Free Day); terminal
+  // + service charges don't. So gate Generate on quantity alone — a missing vessel just
+  // means "no storage estimate", not a full lockout (T2-31).
+  const canGenerate = totalQty > 0
 
   // Display values for the printable estimate slip.
   const selVessel = lineVessels.find((v) => v.vessel_visit === vesselVisit) ?? null
@@ -489,12 +492,12 @@ export default function Calculator() {
             {t('Generate estimate')}
           </button>
 
-          {!hasVessel ? (
-            <p className="ktc-label" style={{ fontSize: 12.5 }}>{t('Select a shipping line and vessel & voyage first — charges are estimated against the vessel’s call.')}</p>
-          ) : totalQty === 0 ? (
+          {totalQty === 0 ? (
             <p className="ktc-label" style={{ fontSize: 12.5 }}>{t('Add at least one container (set a quantity), then tap Generate estimate.')}</p>
           ) : !generated ? (
-            <p className="ktc-label" style={{ fontSize: 12.5 }}>{t('Tap Generate estimate to see the charges.')}</p>
+            <p className="ktc-label" style={{ fontSize: 12.5 }}>{hasVessel
+              ? t('Tap Generate estimate to see the charges.')
+              : t('No vessel selected — the estimate covers terminal & service charges only. Pick a vessel & voyage to include storage (it counts from the vessel’s Last Free Day).')}</p>
           ) : (
             <>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
