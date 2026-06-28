@@ -102,6 +102,10 @@ export default function Settings() {
   const [pricingMsg, setPricingMsg] = useState<string | null>(null)
   // Locked by default; saving re-locks — prices can't be nudged accidentally.
   const [pricingLocked, setPricingLocked] = useState(true)
+  // Accredited ERP control-no. series guard (0127/0129 → pricing_settings keys
+  // erp_series_min / erp_series_max). Kept as strings so "" = blank = guard off.
+  const [erpMin, setErpMin] = useState('')
+  const [erpMax, setErpMax] = useState('')
 
   async function load() {
     const { data, error } = await supabase
@@ -317,8 +321,14 @@ export default function Settings() {
       supabase.from('pricing_settings').select('key, value, label').order('key'),
     ])
     setRates((r ?? []) as Rate[])
+    const ss = (s ?? []) as Setting[]
+    // The ERP-series window has its own dedicated fields below — pull it out so it
+    // doesn't render as a ₱ amount in the generic flat-fee list.
+    const seriesVal = (k: string) => { const row = ss.find((x) => x.key === k); return row?.value == null ? '' : String(row.value) }
+    setErpMin(seriesVal('erp_series_min'))
+    setErpMax(seriesVal('erp_series_max'))
     // print_fee was merged into admin_fee ("Admin & print fee", 0156) — hide it.
-    setSettings(((s ?? []) as Setting[]).filter((x) => x.key !== 'print_fee'))
+    setSettings(ss.filter((x) => x.key !== 'print_fee' && x.key !== 'erp_series_min' && x.key !== 'erp_series_max'))
   }
   useEffect(() => { void loadPricing() }, [])
 
@@ -370,13 +380,24 @@ export default function Settings() {
     setSettings((ss) => ss.map((x) => (x.key === key ? { ...x, value } : x)))
   }
   async function savePricing() {
+    // ERP-series window: blank = off; if both set, min can't exceed max.
+    const minV = erpMin.trim() === '' ? null : Number(erpMin)
+    const maxV = erpMax.trim() === '' ? null : Number(erpMax)
+    if (minV != null && maxV != null && minV > maxV) {
+      setPricingMsg(t('The series minimum can’t be greater than the maximum.')); return
+    }
     setPricingBusy(true); setPricingMsg(null)
     const updatedAt = new Date().toISOString()
     // sort_order = current list position (drag & drop arranges the array)
     const { error: e1 } = await supabase.from('service_rates').upsert(rates.map((r, i) => ({ ...r, sort_order: i + 1, updated_at: updatedAt })), { onConflict: 'service' })
     // vat_rate is statutory (12%) — read-only here, server-guarded (0050)
     const editable = settings.filter((s) => s.key !== 'vat_rate')
-    const { error: e2 } = await supabase.from('pricing_settings').upsert(editable.map((s) => ({ ...s, updated_at: updatedAt })), { onConflict: 'key' })
+    // ERP-series guard persists in the same pricing_settings table; null = unset = off.
+    const erpRows: Setting[] = [
+      { key: 'erp_series_min', value: minV, label: 'ERP accredited series — minimum control no.' },
+      { key: 'erp_series_max', value: maxV, label: 'ERP accredited series — maximum control no.' },
+    ]
+    const { error: e2 } = await supabase.from('pricing_settings').upsert([...editable, ...erpRows].map((s) => ({ ...s, updated_at: updatedAt })), { onConflict: 'key' })
     setPricingBusy(false)
     if (e1 || e2) { setPricingMsg((e1 || e2)!.message); return }
     setPricingMsg(t('✓ Pricing saved.'))
@@ -391,6 +412,8 @@ export default function Settings() {
   const [termRates, setTermRates] = useState<TermRate[]>([])
   const [termConfig, setTermConfig] = useState<Record<string, string[]>>({})
   const [storageTiers, setStorageTiers] = useState<StorageTier[]>([])
+  // Bands removed in the editor — deleted from storage_tiers on the next Save.
+  const [deletedTierIds, setDeletedTierIds] = useState<string[]>([])
   const [termBusy, setTermBusy] = useState(false)
   const [termMsg, setTermMsg] = useState<string | null>(null)
   useEffect(() => {
@@ -424,7 +447,53 @@ export default function Settings() {
   function setTierRate(id: string, rate: number | null) {
     setStorageTiers((ts) => ts.map((x) => (x.id === id ? { ...x, rate } : x)))
   }
+  // A storage band = a paired 20ft + 40ft row sharing the same day boundaries.
+  // Editing a boundary updates both rows together (kept in lockstep so the
+  // calculator's per-size band walk stays consistent).
+  function setTierDays(ids: string[], field: 'day_from' | 'day_to', v: number | null) {
+    setStorageTiers((ts) => ts.map((x) => (ids.includes(x.id) ? { ...x, [field]: v } : x)))
+  }
+  // Add a band to a trade (one 20ft + one 40ft row). Client-minted uuids so the
+  // batch upsert inserts them; default to an open-ended band past the last day.
+  function addBand(tr: string) {
+    const existing = storageTiers.filter((b) => b.trade === tr)
+    const nextFrom = existing.length ? Math.max(...existing.map((b) => b.day_to ?? b.day_from)) + 1 : 1
+    setStorageTiers((ts) => [
+      ...ts,
+      { id: crypto.randomUUID(), trade: tr, size: '20', day_from: nextFrom, day_to: null, rate: null },
+      { id: crypto.randomUUID(), trade: tr, size: '40', day_from: nextFrom, day_to: null, rate: null },
+    ])
+  }
+  function deleteBand(ids: string[]) {
+    setStorageTiers((ts) => ts.filter((x) => !ids.includes(x.id)))
+    setDeletedTierIds((d) => [...d, ...ids]) // harmless if an id was never persisted
+  }
+  // Per trade × size, bands must be ordered, well-formed, contiguous (no gaps /
+  // overlaps), and only the last may be open-ended. Returns a blocking message.
+  function storageTierIssue(): string | null {
+    for (const tr of ['import', 'export', 'transhipment'] as const) {
+      for (const sz of ['20', '40'] as const) {
+        const bands = storageTiers.filter((b) => b.trade === tr && b.size === sz).sort((a, b) => a.day_from - b.day_from)
+        const label = tradeLabel(tr, 'foreign')
+        for (let i = 0; i < bands.length; i++) {
+          const b = bands[i]
+          if (b.day_to != null && b.day_from > b.day_to)
+            return t('{trade} {sz}ft: a band starts after it ends (day {from}–{to}).', { trade: label, sz, from: b.day_from, to: b.day_to })
+          if (i < bands.length - 1) {
+            if (b.day_to == null)
+              return t('{trade} {sz}ft: only the last band can be open-ended (blank “to day”).', { trade: label, sz })
+            if (bands[i + 1].day_from !== b.day_to + 1)
+              return t('{trade} {sz}ft: bands must be contiguous — a gap or overlap near day {n}.', { trade: label, sz, n: b.day_to })
+          }
+        }
+      }
+    }
+    return null
+  }
   async function saveTerm() {
+    // Block the save if any foreign-storage band geometry is invalid.
+    const issue = storageTierIssue()
+    if (issue) { setTermMsg(issue); return }
     setTermBusy(true); setTermMsg(null)
     // Normalize granular services: every physical cell takes its combo's canonical
     // rate so the calculator's full-key lookup stays consistent.
@@ -441,10 +510,17 @@ export default function Settings() {
       supabase.from('terminal_rate_config').upsert(Object.entries(termConfig).map(([service, dims]) => ({ service, dims })), { onConflict: 'service' }),
       supabase.from('storage_tiers').upsert(storageTiers.map((x) => ({ id: x.id, trade: x.trade, size: x.size, day_from: x.day_from, day_to: x.day_to, rate: x.rate })), { onConflict: 'id' }),
     ])
+    // Drop bands removed in the editor (after the upsert; new ids never persisted are a no-op).
+    let e4: { message: string } | null = null
+    if (deletedTierIds.length) {
+      const { error } = await supabase.from('storage_tiers').delete().in('id', deletedTierIds)
+      e4 = error
+    }
     setTermRates(norm)
     setTermBusy(false)
-    const err = e1.error || e2.error || e3.error
+    const err = e1.error || e2.error || e3.error || e4
     setTermMsg(err ? err.message : t('✓ Terminal rates saved.'))
+    if (!err) setDeletedTierIds([])
   }
 
   // Per-shipping-line charge rules (0080): waive/discount/surcharge layered on
@@ -851,6 +927,32 @@ export default function Settings() {
           )}
         </div>
 
+        <div style={{ height: 1, background: 'hsl(var(--line-soft))', margin: '16px 0' }} />
+
+        <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
+          <div>
+            <h3 style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 650 }}>{t('Accredited ERP control-number series')}</h3>
+            <p className="ktc-label" style={{ margin: 0, fontSize: 12.5, lineHeight: 1.5 }}>
+              {t('Optional guard. When recording a release OR, the ERP control no. (OR-INV-…) must fall inside this window. Leave both blank to turn the guard off — any control number is then accepted.')}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', opacity: pricingLocked ? 0.65 : 1 }}>
+            <label style={{ display: 'grid', gap: 4 }}>
+              <span className="ktc-label" style={{ fontSize: 12 }}>{t('Minimum control no.')}</span>
+              <input className="ktc-input ktc-mono" type="number" min="0" step="1" inputMode="numeric"
+                value={erpMin} disabled={pricingLocked} placeholder={t('blank = no minimum')}
+                onChange={(e) => setErpMin(e.target.value)} style={{ width: 180, padding: '7px 10px' }} />
+            </label>
+            <label style={{ display: 'grid', gap: 4 }}>
+              <span className="ktc-label" style={{ fontSize: 12 }}>{t('Maximum control no.')}</span>
+              <input className="ktc-input ktc-mono" type="number" min="0" step="1" inputMode="numeric"
+                value={erpMax} disabled={pricingLocked} placeholder={t('blank = no maximum')}
+                onChange={(e) => setErpMax(e.target.value)} style={{ width: 180, padding: '7px 10px' }} />
+            </label>
+          </div>
+          <span className="ktc-label" style={{ fontSize: 11.5, opacity: 0.8 }}>{t('Saved with “Save pricing”. Blank = guard off.')}</span>
+        </div>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
           <button className="ktc-btn" type="button" disabled={pricingBusy || pricingLocked} onClick={() => void savePricing()} style={{ width: 'auto', padding: '10px 20px' }}
             title={pricingLocked ? t('Unlock editing first') : undefined}>
@@ -946,38 +1048,61 @@ export default function Settings() {
             </div>
             <div style={{ display: 'grid', gap: 12 }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 600 }}><OriginPill origin="foreign" size="sm" /> {t('Progressive per-day bands (charged cumulatively after the free days)')}</span>
+              <span className="ktc-label" style={{ fontSize: 11.5, lineHeight: 1.45, marginTop: -4 }}>
+                {t('Each band covers a day range. Add, remove, or re-bound bands per trade. Bands must be contiguous (no gaps or overlaps); leave the last band’s “to day” blank for open-ended. 20ft and 40ft share the same day boundaries.')}
+              </span>
               {(['import', 'export', 'transhipment'] as const).map((tr) => {
-                const bands = storageTiers.filter((b) => b.trade === tr && b.size === '20').sort((a, b) => a.day_from - b.day_from)
+                const r20 = storageTiers.filter((b) => b.trade === tr && b.size === '20').sort((a, b) => a.day_from - b.day_from)
+                const r40 = storageTiers.filter((b) => b.trade === tr && b.size === '40').sort((a, b) => a.day_from - b.day_from)
+                const n = Math.max(r20.length, r40.length)
                 return (
                   <div key={tr} style={{ display: 'grid', gap: 6 }}>
                     <span className="ktc-label" style={{ fontSize: 12.5, fontWeight: 700 }}>{t(tradeLabel(tr, 'foreign'))}</span>
-                    <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                      <table style={{ borderCollapse: 'collapse', fontSize: 12.5 }}>
-                        <thead>
-                          <tr>
-                            <th className="ktc-label" style={{ textAlign: 'left', padding: '4px 12px 6px 0', fontWeight: 600 }}>{t('Days')}</th>
-                            {bands.map((b) => (
-                              <th key={b.id} className="ktc-label" style={{ padding: '4px 6px 6px', fontWeight: 600, whiteSpace: 'nowrap', textAlign: 'center' }}>
-                                {b.day_from}{b.day_to ? `–${b.day_to}` : '+'}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(['20', '40'] as const).map((sz) => (
-                            <tr key={sz}>
-                              <td className="ktc-label" style={{ padding: '3px 12px 3px 0', fontWeight: 600, whiteSpace: 'nowrap' }}>{t(sz === '20' ? '20ft' : '40ft')}</td>
-                              {storageTiers.filter((b) => b.trade === tr && b.size === sz).sort((a, b) => a.day_from - b.day_from).map((b) => (
-                                <td key={b.id} style={{ padding: '3px 4px' }}>
-                                  <input className="ktc-input ktc-mono" type="number" step="0.01" min="0" value={b.rate ?? ''} placeholder="—"
-                                    onChange={(e) => setTierRate(b.id, e.target.value === '' ? null : Number(e.target.value))} style={{ width: 96, padding: '7px 8px', textAlign: 'right' }} />
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    {n === 0 ? (
+                      <span className="ktc-label" style={{ fontSize: 12 }}>{t('No bands yet — add one below.')}</span>
+                    ) : (
+                      <div style={{ display: 'grid', gap: 6 }}>
+                        <div className="ktc-label" style={{ display: 'flex', gap: 8, fontSize: 11, alignItems: 'center', flexWrap: 'wrap', paddingLeft: 2 }}>
+                          <span style={{ width: 62, textAlign: 'center' }}>{t('From day')}</span>
+                          <span style={{ width: 62, textAlign: 'center' }}>{t('To day')}</span>
+                          <span style={{ width: 104, textAlign: 'center' }}>{t('20ft ₱/day')}</span>
+                          <span style={{ width: 104, textAlign: 'center' }}>{t('40ft ₱/day')}</span>
+                          <span style={{ width: 22 }} />
+                        </div>
+                        {Array.from({ length: n }).map((_, i) => {
+                          const a = r20[i] ?? null
+                          const c = r40[i] ?? null
+                          const ids = [a?.id, c?.id].filter((x): x is string => !!x)
+                          const dayFrom = a?.day_from ?? c?.day_from ?? 0
+                          const dayTo = a?.day_to ?? c?.day_to ?? null
+                          const isLast = i === n - 1
+                          return (
+                            <div key={ids.join('|') || i} style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                              <input className="ktc-input ktc-mono" type="number" min="0" step="1" value={dayFrom} aria-label={t('From day')}
+                                onChange={(e) => setTierDays(ids, 'day_from', e.target.value === '' ? 0 : Math.max(0, Math.floor(Number(e.target.value))))}
+                                style={{ width: 62, padding: '6px 8px', textAlign: 'center' }} />
+                              <input className="ktc-input ktc-mono" type="number" min="0" step="1" value={dayTo ?? ''} placeholder={isLast ? '∞' : ''}
+                                title={t('Leave blank for an open-ended last band')} aria-label={t('To day')}
+                                onChange={(e) => setTierDays(ids, 'day_to', e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value))))}
+                                style={{ width: 62, padding: '6px 8px', textAlign: 'center' }} />
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, width: 104, justifyContent: 'center' }}>
+                                <span className="ktc-label" style={{ fontSize: 11 }}>₱</span>
+                                <input className="ktc-input ktc-mono" type="number" step="0.01" min="0" value={a?.rate ?? ''} placeholder="—" disabled={!a} aria-label={t('20ft rate')}
+                                  onChange={(e) => a && setTierRate(a.id, e.target.value === '' ? null : Number(e.target.value))} style={{ width: 78, padding: '6px 8px', textAlign: 'right' }} />
+                              </span>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, width: 104, justifyContent: 'center' }}>
+                                <span className="ktc-label" style={{ fontSize: 11 }}>₱</span>
+                                <input className="ktc-input ktc-mono" type="number" step="0.01" min="0" value={c?.rate ?? ''} placeholder="—" disabled={!c} aria-label={t('40ft rate')}
+                                  onChange={(e) => c && setTierRate(c.id, e.target.value === '' ? null : Number(e.target.value))} style={{ width: 78, padding: '6px 8px', textAlign: 'right' }} />
+                              </span>
+                              <button type="button" className="ktc-link" aria-label={t('Delete band')} title={t('Delete this band')}
+                                style={{ width: 22, fontSize: 14, color: 'var(--acc-2)' }} onClick={() => deleteBand(ids)}>✕</button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                    <button type="button" className="ktc-link" style={{ justifySelf: 'start', fontSize: 12.5 }} onClick={() => addBand(tr)}>+ {t('Add band')}</button>
                   </div>
                 )
               })}

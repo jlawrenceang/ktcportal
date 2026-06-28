@@ -34,6 +34,40 @@ type StorageTier = { trade: string; size: string; day_from: number; day_to: numb
 const REEFER_KEY = '__reefer__'
 const emptyCell = (): Cell => ({ size: '20', fill: 'full', kind: 'dry', qty: 1 })
 
+// Print / Save: reuse the A6 job-slip print approach (JobOrderPrint.tsx) — a
+// print-only slip that's hidden on screen and the only thing visible when the
+// browser prints, so "Print / Save as PDF" captures a clean estimate.
+const PRINT_LINE = '#2b4a6b'
+const PRINT_HEADFILL = '#eef2f7'
+const CALC_PRINT_CSS = `
+.ktc-estimate-print { display: none; }
+@media print {
+  html, body { height: auto !important; background: #fff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body * { visibility: hidden !important; }
+  /* Collapse the on-screen layout so only the slip occupies the printed page. */
+  .ktc-calc-layout { display: none !important; }
+  .ktc-estimate-print, .ktc-estimate-print * { visibility: visible !important; }
+  .ktc-estimate-print { display: block !important; position: absolute; left: 0; top: 0; width: 100%; }
+  @page { size: A5 portrait; margin: 10mm; }
+}
+`
+function SlipInfo({ label, value }: { label: string; value: string }) {
+  return (
+    <tr>
+      <td style={{ padding: '2px 0', color: '#5a6678', width: '34%', verticalAlign: 'top' }}>{label}</td>
+      <td style={{ padding: '2px 0', fontWeight: 600 }}>{value}</td>
+    </tr>
+  )
+}
+function SlipCharge({ label, value }: { label: string; value: string }) {
+  return (
+    <tr>
+      <td style={{ padding: '4px 8px', borderTop: '1px solid #e2e8f0' }}>{label}</td>
+      <td className="ktc-mono" style={{ padding: '4px 8px', textAlign: 'right', borderTop: '1px solid #e2e8f0', whiteSpace: 'nowrap' }}>{value}</td>
+    </tr>
+  )
+}
+
 export default function Calculator() {
   const { t } = useT()
   usePageTour('calculator', calculatorSteps)
@@ -233,6 +267,13 @@ export default function Calculator() {
 
   const hasVessel = !!vesselVisit
   const canGenerate = hasVessel && totalQty > 0
+
+  // Display values for the printable estimate slip.
+  const selVessel = lineVessels.find((v) => v.vessel_visit === vesselVisit) ?? null
+  const lineLabel = SHIPPING_LINES.find((l) => l.code === line)?.label ?? line
+  const vesselText = selVessel ? `${selVessel.vessel_name.toUpperCase()} — ${selVessel.voyage_number.toUpperCase()}` : '—'
+  const containerSummary = cells.filter((c) => c.qty > 0)
+    .map((c) => `${c.qty}× ${c.size}ft ${t(c.fill === 'full' ? 'Full' : 'Empty')} ${t(c.kind === 'reefer' ? 'Reefer' : 'Dry')}`)
 
   function generate() {
     if (!canGenerate) return
@@ -493,10 +534,82 @@ export default function Calculator() {
               <p className="ktc-label" style={{ fontSize: 11.5, marginTop: 12 }}>
                 {t('Other services (RPS, equipment rental, stripping) are quoted per request — ask KTC.')}
               </p>
+              <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => window.print()}
+                style={{ width: '100%', marginTop: 12 }}>
+                {t('Print / Save as PDF')}
+              </button>
             </>
           )}
         </div>
       </div>
+
+      {/* Print-only estimate slip (hidden on screen) — captured by Print / Save as PDF. */}
+      <style>{CALC_PRINT_CSS}</style>
+      {generated && (
+        <div className="ktc-estimate-print" style={{ fontFamily: '-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', color: '#15233a', maxWidth: 520, margin: '0 auto', background: '#fff', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, borderBottom: `1.5px solid ${PRINT_LINE}`, paddingBottom: 8 }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <img src="/ktc-logo.png" alt="KTC" style={{ height: 30 }} />
+              <div style={{ lineHeight: 1.3 }}>
+                <div style={{ fontSize: 12, fontWeight: 800 }}>KTC CONTAINER TERMINAL CORP.</div>
+                <div style={{ fontSize: 8.5, color: '#5a6678', maxWidth: 250 }}>Purok 16, Buhisan, Tibungco, Bunawan District, 8000 Davao City</div>
+              </div>
+            </div>
+            <div style={{ textAlign: 'right', lineHeight: 1.15 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.04em' }}>{t('RATE ESTIMATE')}</div>
+              <div style={{ fontSize: 8.5, color: '#5a6678' }}>{new Date().toLocaleString()}</div>
+            </div>
+          </div>
+
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, marginTop: 10 }}>
+            <tbody>
+              <SlipInfo label={t('Shipping line')} value={lineLabel || '—'} />
+              <SlipInfo label={t('Vessel & voyage')} value={vesselText} />
+              <SlipInfo label={t('Trade route')} value={`${t(tradeLabel(trade, origin))} · ${origin === 'foreign' ? t('Foreign') : t('Domestic')}`} />
+              {lfd && <SlipInfo label={t('Last Free Day')} value={new Date(lfd).toLocaleDateString()} />}
+              {pickupDate && <SlipInfo label={t('Planned pickup date')} value={new Date(pickupDate).toLocaleDateString()} />}
+              <SlipInfo label={t('Containers')} value={containerSummary.join(', ') || '—'} />
+            </tbody>
+          </table>
+
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10.5, marginTop: 10, border: `1px solid ${PRINT_LINE}` }}>
+            <thead>
+              <tr style={{ background: PRINT_HEADFILL }}>
+                <th style={{ textAlign: 'left', padding: '4px 8px', fontSize: 9, fontWeight: 800, borderBottom: `1px solid ${PRINT_LINE}` }}>{t('Charge')}</th>
+                <th style={{ textAlign: 'right', padding: '4px 8px', fontSize: 9, fontWeight: 800, borderBottom: `1px solid ${PRINT_LINE}` }}>{t('Amount')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {calc.basic.map((b) => <SlipCharge key={b.key} label={t(b.label)} value={b.amount == null ? '—' : peso(b.amount)} />)}
+              {calc.storageDays > 0 && <SlipCharge label={`${t('Storage')} (× ${calc.storageDays} ${t('day(s)')})`} value={calc.storage == null ? '—' : peso(calc.storage)} />}
+              {calc.ancillary.map((a) => <SlipCharge key={a.service} label={a.service} value={a.amount == null ? '—' : peso(a.amount)} />)}
+              {calc.reeferOn && reeferVans > 0 && calc.reeferHours > 0 && <SlipCharge label={t('Electrical / reefer')} value={calc.reefer == null ? '—' : peso(calc.reefer)} />}
+              <SlipCharge label={t('VAT ({pct}%)', { pct: (settings.vat * 100).toFixed(0) })} value={peso(calc.vat)} />
+              <SlipCharge label={t('Admin & print fee')} value={settings.admin == null ? '—' : peso(settings.admin)} />
+              <tr style={{ background: PRINT_HEADFILL }}>
+                <td style={{ padding: '6px 8px', fontWeight: 800, borderTop: `1px solid ${PRINT_LINE}` }}>{t('Estimated charges')}</td>
+                <td className="ktc-mono" style={{ padding: '6px 8px', fontWeight: 800, textAlign: 'right', borderTop: `1px solid ${PRINT_LINE}`, whiteSpace: 'nowrap' }}>{peso(calc.charges)}</td>
+              </tr>
+              {calc.deposit > 0 && (
+                <>
+                  <SlipCharge label={`${t('Refundable cash bond')} (${reeferVans} × ${peso(settings.deposit)})`} value={peso(calc.deposit)} />
+                  <tr>
+                    <td style={{ padding: '6px 8px', fontWeight: 800 }}>{t('Total to prepare')}</td>
+                    <td className="ktc-mono" style={{ padding: '6px 8px', fontWeight: 800, textAlign: 'right', whiteSpace: 'nowrap' }}>{peso(calc.toPrepare)}</td>
+                  </tr>
+                </>
+              )}
+            </tbody>
+          </table>
+
+          <p style={{ fontSize: 8.5, color: '#5a6678', marginTop: 10, lineHeight: 1.5 }}>
+            {t('This is an estimate only — the official amount is confirmed on the Service Invoice at the KTC office. Lines marked “—” are not yet priced and are excluded.')}
+          </p>
+          <div style={{ marginTop: 6, fontSize: 8, color: '#8893a4', textAlign: 'center', borderTop: `1px solid ${PRINT_LINE}`, paddingTop: 5 }}>
+            {t('KTC Online Portal · portal.ktcterminal.com — system-generated rate estimate')}
+          </div>
+        </div>
+      )}
     </Wrap>
   )
 }
