@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useT } from '../lib/i18n'
+import { SECURITY_EVENT_LABEL, securityEventSummary } from '../lib/eventLabels'
 
 // Settings → System health (G12): cron job runs, outbound calls (emails /
 // BOC mirror), and client errors — the system_health() RPC reconciles
@@ -16,17 +17,23 @@ interface Health {
   security_events: { kind: string; actor: string | null; detail: Record<string, unknown>; at: string }[]
 }
 
-const SECURITY_LABEL: Record<string, string> = {
-  protected_field_attempt: 'Blocked privilege-escalation attempt',
-  role_gate_changed: 'Role gate changed',
-}
-
+// Cron-name → plain-English hint. Single source of truth keyed on the ACTUAL
+// scheduled job names (verified against scripts/setup-*.mjs + the migrations
+// that cron.schedule them), so it can't drift from the watchdog again:
+//   expire-unverified-brokers (0018) · boc-mirror-hourly (0037/0045) ·
+//   archive-done-orders-weekly (0039) · requeue-carryovers-weekly (0040) ·
+//   ops-watchdog (renamed from ops-watchdog-hourly in 0046) ·
+//   purge-expired-ids (0053) · remind-unpaid-orders (0084) ·
+//   vessel-sync-hourly (0107).
 const JOB_HINT: Record<string, string> = {
   'expire-unverified-brokers': 'rejects pending accounts with no ID after 48h',
   'boc-mirror-hourly': 'snapshots job orders to the BOC Google Sheet',
   'archive-done-orders-weekly': 'archives completed + paid orders (Mon 00:30 PH)',
   'requeue-carryovers-weekly': 'carry-overs to the front of the new week (Mon 00:15 PH)',
-  'ops-watchdog-hourly': 'this monitor — emails the owner on failures',
+  'purge-expired-ids': 'deletes uploaded valid IDs 3 days after upload',
+  'remind-unpaid-orders': 'reminds customers with orders unpaid 2+ days (daily 01:00 PH)',
+  'vessel-sync-hourly': 'syncs the vessel schedule from the Google Sheet (hourly)',
+  'ops-watchdog': 'this monitor — emails the owner on failures',
 }
 
 const ago = (iso: string | null) => {
@@ -122,8 +129,8 @@ export default function SystemHealth() {
                     background: s.kind === 'protected_field_attempt' ? 'var(--c-h0-75-97)' : 'var(--c-w55)',
                     border: s.kind === 'protected_field_attempt' ? '1px solid var(--c-h0-70-88)' : '1px solid var(--glass-brd)',
                   }}>
-                    <b>{SECURITY_LABEL[s.kind] ? t(SECURITY_LABEL[s.kind]) : s.kind}</b>
-                    <span className="ktc-mono" style={{ fontSize: 11.5, marginLeft: 8 }}>{JSON.stringify(s.detail)}</span>
+                    <b>{t(SECURITY_EVENT_LABEL[s.kind] ?? s.kind)}</b>
+                    <span className="ktc-label" style={{ fontSize: 11.5, marginLeft: 8, overflowWrap: 'anywhere' }}>{securityEventSummary(s.kind, s.detail) ?? JSON.stringify(s.detail)}</span>
                     <span className="ktc-label" style={{ fontSize: 11.5, marginLeft: 8 }}>
                       {s.actor ? t('actor {id}…', { id: s.actor.slice(0, 8) }) : t('system')} · {new Date(s.at).toLocaleString()}
                     </span>

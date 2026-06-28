@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import { useT } from '../lib/i18n'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
-import { joEventLabel, SECURITY_EVENT_LABEL } from '../lib/eventLabels'
+import { joEventLabel, SECURITY_EVENT_LABEL, securityEventSummary } from '../lib/eventLabels'
 import type { JobOrderEvent } from '../lib/types'
 
 // Activity Log (/admin/logs): one place for every recorded event —
@@ -28,6 +28,10 @@ interface Row {
   title: string
   sub?: string
   tone?: 'danger' | 'info'
+  // Client-error rows carry the captured stack + user-agent (write-only until
+  // T3-19) so the entry can expand into a read-only detail block.
+  stack?: string | null
+  ua?: string | null
 }
 
 export default function Logs() {
@@ -40,6 +44,12 @@ export default function Logs() {
   const [page, setPage] = useState(0)
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const toggle = (id: string) => setExpanded((prev) => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
 
   async function load(c: Cat = cat, p: number = page) {
     const range: [number, number] = [p * PAGE, p * PAGE + PAGE - 1]
@@ -70,20 +80,21 @@ export default function Logs() {
       count = n ?? 0
       out = ((data ?? []) as { id: string; kind: string; actor: string | null; detail: Record<string, unknown>; created_at: string }[]).map((e) => ({
         id: e.id, at: e.created_at, actor: e.actor,
-        title: SECURITY_EVENT_LABEL[e.kind] ?? e.kind,
-        sub: JSON.stringify(e.detail),
+        title: t(SECURITY_EVENT_LABEL[e.kind] ?? e.kind),
+        sub: securityEventSummary(e.kind, e.detail) ?? JSON.stringify(e.detail),
         tone: e.kind === 'protected_field_attempt' ? 'danger' : undefined,
       }))
     } else if (c === 'errors') {
       const { data, count: n } = await supabase
         .from('app_errors')
-        .select('id, message, path, user_id, created_at', { count: 'exact' })
+        .select('id, message, path, user_id, stack, user_agent, created_at', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(...range)
       count = n ?? 0
-      out = ((data ?? []) as { id: string; message: string; path: string | null; user_id: string | null; created_at: string }[]).map((e) => ({
+      out = ((data ?? []) as { id: string; message: string; path: string | null; user_id: string | null; stack: string | null; user_agent: string | null; created_at: string }[]).map((e) => ({
         id: e.id, at: e.created_at, actor: e.user_id,
         title: e.message, sub: e.path ?? undefined, tone: 'danger',
+        stack: e.stack, ua: e.user_agent,
       }))
     } else {
       const { data, count: n } = await supabase
@@ -118,11 +129,11 @@ export default function Logs() {
   const { refresh, cooling } = useAutoRefresh(load)
 
   function changeCat(c: Cat) {
-    setCat(c); setPage(0); setLoading(true)
+    setCat(c); setPage(0); setLoading(true); setExpanded(new Set())
     void load(c, 0)
   }
   function changePage(p: number) {
-    setPage(p); setLoading(true)
+    setPage(p); setLoading(true); setExpanded(new Set())
     void load(cat, p)
   }
 
@@ -158,21 +169,41 @@ export default function Logs() {
           </span>
         ) : (
           <div style={{ display: 'grid', gap: 6 }}>
-            {rows.map((r) => (
-              <div key={r.id} style={{
-                display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap',
-                fontSize: 13, padding: '9px 13px', borderRadius: 10,
-                background: r.tone === 'danger' ? 'var(--c-h0-75-97)' : 'var(--c-w55)',
-                border: r.tone === 'danger' ? '1px solid var(--c-h0-70-88)' : '1px solid var(--glass-brd)',
-              }}>
-                <span style={{ fontWeight: 550, minWidth: 0, overflowWrap: 'anywhere' }}>{r.title}</span>
-                {r.sub && <span className="ktc-mono ktc-label" style={{ fontSize: 11.5, minWidth: 0, overflowWrap: 'anywhere' }}>{r.sub}</span>}
-                <span className="ktc-label" style={{ fontSize: 11.5, marginLeft: 'auto', whiteSpace: 'nowrap' }}>
-                  {r.actor ? `${names.get(r.actor) ?? r.actor.slice(0, 8) + '…'} · ` : ''}
-                  {new Date(r.at).toLocaleString()}
-                </span>
-              </div>
-            ))}
+            {rows.map((r) => {
+              const canExpand = !!(r.stack || r.ua)
+              const isOpen = expanded.has(r.id)
+              return (
+                <div key={r.id} style={{
+                  fontSize: 13, padding: '9px 13px', borderRadius: 10,
+                  background: r.tone === 'danger' ? 'var(--c-h0-75-97)' : 'var(--c-w55)',
+                  border: r.tone === 'danger' ? '1px solid var(--c-h0-70-88)' : '1px solid var(--glass-brd)',
+                }}>
+                  <div
+                    onClick={canExpand ? () => toggle(r.id) : undefined}
+                    style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap', cursor: canExpand ? 'pointer' : undefined }}
+                    title={canExpand ? t('Click to show details') : undefined}
+                  >
+                    {canExpand && <span aria-hidden style={{ fontSize: 10, color: 'hsl(var(--ink-2))', alignSelf: 'center' }}>{isOpen ? '▾' : '▸'}</span>}
+                    <span style={{ fontWeight: 550, minWidth: 0, overflowWrap: 'anywhere' }}>{r.title}</span>
+                    {r.sub && <span className="ktc-mono ktc-label" style={{ fontSize: 11.5, minWidth: 0, overflowWrap: 'anywhere' }}>{r.sub}</span>}
+                    <span className="ktc-label" style={{ fontSize: 11.5, marginLeft: 'auto', whiteSpace: 'nowrap' }}>
+                      {r.actor ? `${names.get(r.actor) ?? r.actor.slice(0, 8) + '…'} · ` : ''}
+                      {new Date(r.at).toLocaleString()}
+                    </span>
+                  </div>
+                  {canExpand && isOpen && (
+                    <div style={{ marginTop: 8, display: 'grid', gap: 6 }}>
+                      {r.stack && (
+                        <pre className="ktc-mono" style={{ margin: 0, fontSize: 11, lineHeight: 1.5, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 320, overflow: 'auto', padding: '8px 10px', borderRadius: 8, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>{r.stack}</pre>
+                      )}
+                      {r.ua && (
+                        <div className="ktc-label" style={{ fontSize: 11.5, overflowWrap: 'anywhere' }}>{t('User agent')}: {r.ua}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
 
