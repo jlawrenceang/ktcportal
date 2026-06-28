@@ -14,6 +14,11 @@ Seed: 50 approved+consented customers, 10 staff (1 admin / 3 operations / 2 cash
 - **Data isolation: CLEAN** — all three temp scripts hard-guard the sandbox; `_copy_consignees.mjs` touches prod with exactly one read-only SELECT. No prod-mutation path existed.
 - **Verdict: backlog trustworthy to action on prod** (with KTC-04 re-ranked to LOW).
 
+## ✅ Remediation status — all CRITICAL + HIGH FIXED, verified & shipped (migration 0186, v1.6.76, 2026-06-28)
+**KTC-01, 02, 03, 05, 06, 07, 08, 09, 10, 11, 34, + 17** were fixed in migration `0186_breaktest_fixes_critical_high.sql` (+ `useAdminCounts.ts` perm) and **applied to prod**. Verification chain: (1) applied to the sandbox, (2) a 9-agent behavioral re-test **14/14 PASS** (every repro now correct; happy path completes; 50×10 load clean — 0 dup JO/serving, 0 cap breaches; positive control confirms the guards stay status-specific), (3) **Jarvis code review PASS** (each fix correct, all grants/guards preserved, no over-blocking, idempotent-safe). The sandbox apply also caught a real bug in the fixes pre-prod (a wrong `GET STACKED DIAGNOSTICS` item name).
+
+**Remaining (not shipped):** **KTC-04** → LOW (verified not a prod issue; defensive hardening only). **Two KTC-09 residuals** flagged by Jarvis, low risk, not yet done: (a) the service-catalogue whitelist is on `file_job_order` only, not `update_job_order`/`admin_file_job_order`; (b) the `types.ts` `SERVICE_REQUESTS` fallback casing differs from the `service_rates` catalogue (only bites in a rare DB-unreachable-but-RPC-reachable state). **All MEDIUM/LOW** items remain open as a later remediation pass.
+
 ## Lifecycle reach
 - **Completed clean (→ released):** happy-path-to-release, cancel, priority (grant), walk-in+RPS, reject-recover (terminal *by design*), on-hold resolution (in-app path works), load (only with client-side login throttling — auth is the ceiling, KTC-20).
 - **Dead-ended without a service-role bypass:** **re-X-ray** (KTC-02), **supplement request→bill** (KTC-01), **consignee request** (KTC-04).

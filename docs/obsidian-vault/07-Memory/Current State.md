@@ -9,6 +9,10 @@ last_updated: 2026-06-28
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
 
+## 2026-06-28 — Break-test critical+high fixes (v1.6.76)
+
+**Migration `0186` applied to prod; `APP_VERSION` = `v1.6.76`.** A full-lifecycle break-test (sandbox `zwvzadkgeyhkhyshkwhc`, 17-agent ultracode run + 50×10 load) surfaced 33 findings ([[breaktest-2026-06-28]] / `docs/audits/2026-06-28-breaktest-findings.md`); the **12 critical+high** were fixed in `0186` and shipped, each verified by a 9-agent behavioral re-test (14/14 PASS) + an independent Jarvis code review. Headlines: `request_supplement` un-crashed (KTC-01), free re-X-ray can complete (KTC-02), no auto-complete with a billed-unpaid charge (KTC-03), payment can't confirm on a cancelled/rejected order (KTC-05/34), container-swap invalidates prior payment+X-ray (KTC-06), cancel guards a paid charge (KTC-07), `file_job_order` caps + service whitelist (KTC-08/09), consignee-request staff notification (KTC-11), privilege-escalation audit log fixed (KTC-17). Medium/low + two KTC-09 residuals remain open.
+
 ## 2026-06-28 — Phase 1 go-live blockers, owner-failsafe backstop, ops-overhaul doc-sync (v1.6.75)
 
 **Migrations through `0185` applied to prod; `APP_VERSION` = `v1.6.75`.** In one line each:

@@ -4,6 +4,22 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.6.76 — 2026-06-28 (Break-test critical+high fixes)
+
+Migration **0186** — fixes for the 2026-06-28 full-lifecycle break-test (`docs/audits/2026-06-28-breaktest-findings.md`), each verified by a 9-agent behavioral re-test (**14/14 PASS**) + an independent **Jarvis** code review before prod:
+- **KTC-01** `request_supplement` no longer crashes (NULL into NOT-NULL `jo_supplements.amount`) — the ops "request a charge" maker-checker flow works.
+- **KTC-02** a free re-X-ray child can now complete (gave `enforce_two_gate_complete` the same free-rexray exemption `jo_ready_to_complete` had).
+- **KTC-03** an order no longer auto-completes with a billed-unpaid supplement when the base/RPS payment confirms last.
+- **KTC-05 + KTC-34** payment / supplement-payment can no longer be confirmed on a cancelled/rejected order (terminal-status guards; a positive control confirms live orders still confirm).
+- **KTC-06** swapping containers on resubmit now invalidates the prior base payment + ERP invoice + X-ray completion (closes a revenue-leak + customs/X-ray bypass).
+- **KTC-07** cancelling an order with a paid/pending additional charge is now blocked.
+- **KTC-08 / KTC-09** `file_job_order` caps containers at 100 and rejects non-catalogue services.
+- **KTC-10** consignee unique-violation now distinguishes a code collision from a name collision.
+- **KTC-11** a new consignee request now pings the CSR/review desk + the count badge is gated on `review_consignee_requests`.
+- **KTC-17** the privilege-escalation guard's audit log + owner alert now actually fire (fixed a `22P02` array-literal abort).
+
+KTC-04 verified NOT a prod issue (downgraded to defensive hardening). Medium/low findings + two KTC-09 residuals remain open for a later pass. Backend migration + the `useAdminCounts` perm; `APP_VERSION` v1.6.75 → v1.6.76.
+
 ## v1.6.75 — 2026-06-28 (Phase 1 go-live blockers + ops-overhaul doc-sync)
 
 - **Phase 1 remediation — 7 go-live blockers (T1) fixed** (2026-06-28), from the 2026-06-28 process/coherence audit:

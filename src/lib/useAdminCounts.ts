@@ -18,7 +18,7 @@ const DEFS: CountDef[] = [
     run: () => num(supabase.from('customers').select('id', { count: 'exact', head: true })
       .eq('is_admin', false).eq('is_owner', false).is('staff_role', null).eq('status', 'pending')) },
   // Consignees waiting for approval.
-  { route: '/admin/consignees', perm: 'manage_consignees',
+  { route: '/admin/consignees', perm: 'review_consignee_requests',
     run: () => num(supabase.from('consignees').select('id', { count: 'exact', head: true }).eq('status', 'pending')) },
   // Open job orders in the working queue.
   { route: '/admin/job-orders', perm: 'view_job_orders',
