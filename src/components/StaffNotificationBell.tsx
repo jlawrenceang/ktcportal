@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import PushToggle from './PushToggle'
 import { useT } from '../lib/i18n'
-import { BellIcon, CreditCardIcon, ChatIcon, IdCardIcon, type IconProps } from './icons'
+import { BellIcon, CreditCardIcon, ChatIcon, IdCardIcon, BuildingIcon, type IconProps } from './icons'
 
 // Staff-side notification center — the mirror of the customer NotificationBell,
 // but routed BY PERMISSION (0085). RLS on staff_notifications already filters
@@ -28,6 +28,7 @@ const ICON: Record<string, (p: IconProps) => ReactNode> = {
   account: IdCardIcon,
   release_new: IdCardIcon,
   release_payment: CreditCardIcon,
+  consignee: BuildingIcon,
 }
 
 function fmtWhen(iso: string): string {
@@ -85,6 +86,8 @@ export default function StaffNotificationBell() {
     if (n.release_order_id) { navigate('/admin/releases'); return }
     if (n.ticket_id) { navigate('/admin/support'); return }
     if (n.kind === 'account') { navigate('/admin/approvals'); return }
+    // A consignee request has no row id — route to the consignee review desk.
+    if (n.kind === 'consignee') { navigate('/admin/consignees'); return }
     navigate('/admin')
   }
 

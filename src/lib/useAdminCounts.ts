@@ -10,15 +10,19 @@ import { usePermissions, type Permission } from './usePermissions'
 // customer Orders badge.
 const num = async (q: PromiseLike<{ count: number | null }>) => (await q).count ?? 0
 
-type CountDef = { route: string; perm: Permission; run: () => Promise<number> }
+// `perm` may be a single gate or a list — the badge shows when the role holds
+// ANY of them (mirrors the nav section's `anyPerm`).
+type CountDef = { route: string; perm: Permission | Permission[]; run: () => Promise<number> }
 
 const DEFS: CountDef[] = [
   // Accounts waiting for approval.
   { route: '/admin/approvals', perm: 'manage_approvals',
     run: () => num(supabase.from('customers').select('id', { count: 'exact', head: true })
       .eq('is_admin', false).eq('is_owner', false).is('staff_role', null).eq('status', 'pending')) },
-  // Consignees waiting for approval.
-  { route: '/admin/consignees', perm: 'review_consignee_requests',
+  // Consignees waiting for approval. Visible to whoever can see the section —
+  // the CSR (review_consignee_requests) AND admin/operations (manage_consignees),
+  // matching AdminBottomNav's anyPerm gate so the badge never goes missing.
+  { route: '/admin/consignees', perm: ['review_consignee_requests', 'manage_consignees'],
     run: () => num(supabase.from('consignees').select('id', { count: 'exact', head: true }).eq('status', 'pending')) },
   // Open job orders in the working queue.
   { route: '/admin/job-orders', perm: 'view_job_orders',
@@ -58,7 +62,7 @@ export function useAdminCounts(): Record<string, number> {
   useEffect(() => {
     if (loading) return
     let active = true
-    const defs = DEFS.filter((d) => can(d.perm))
+    const defs = DEFS.filter((d) => (Array.isArray(d.perm) ? d.perm.some((p) => can(p)) : can(d.perm)))
     void Promise.all(defs.map(async (d) => {
       try { return [d.route, await d.run()] as const }
       catch { return [d.route, 0] as const }

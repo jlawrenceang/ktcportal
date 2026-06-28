@@ -67,15 +67,19 @@ const STATUS_STYLE: Record<AccreditationStatus, { bg: string; fg: string }> = {
 }
 
 interface EditState {
-  id: string; code: string; name: string; address: string; tin: string; doc_2303_path: string | null
+  id: string; code: string; name: string; address: string; tin: string
+  customer_name: string; address2: string; tel: string; mobile: string; email: string
+  doc_2303_path: string | null; doc_2307_path: string | null
   payment_terms: 'cash' | 'credit'
 }
 
-async function upload2303(consigneeId: string, file: File): Promise<string> {
+// Upload a consignee's BIR document. `tag` selects the slot/filename so the same
+// helper handles both the 2303 (Certificate of Registration) and the 2307.
+async function uploadDoc(consigneeId: string, file: File, tag: '2303' | '2307'): Promise<string> {
   const prepared = await prepareUpload(file) // oversized images auto-compress
   if ('error' in prepared) throw new Error(prepared.error)
   const ext = prepared.file.name.split('.').pop()?.toLowerCase() || 'pdf'
-  const path = `${consigneeId}/2303.${ext}`
+  const path = `${consigneeId}/${tag}.${ext}`
   const { error } = await supabase.storage.from('consignee-docs').upload(path, prepared.file, { upsert: true })
   if (error) throw new Error(error.message)
   return path
@@ -107,12 +111,15 @@ export default function Consignees() {
   const [tin, setTin] = useState('')
   const [paymentTerms, setPaymentTerms] = useState<'cash' | 'credit'>('cash')
   const [doc, setDoc] = useState<File | null>(null)
+  const [doc2307, setDoc2307] = useState<File | null>(null)
   const csvRef = useRef<HTMLInputElement>(null)
   const docRef = useRef<HTMLInputElement>(null)
+  const doc2307Ref = useRef<HTMLInputElement>(null)
 
   // edit
   const [editing, setEditing] = useState<EditState | null>(null)
   const [editDoc, setEditDoc] = useState<File | null>(null)
+  const [editDoc2307, setEditDoc2307] = useState<File | null>(null)
   // detail modal (clickable row)
   const [selected, setSelected] = useState<Consignee | null>(null)
   const [requester, setRequester] = useState<{ full_name: string | null; email: string | null } | null>(null)
@@ -122,7 +129,7 @@ export default function Consignees() {
     const s = query.replace(/[,()%*]/g, ' ').trim()
     let req = supabase
       .from('consignees')
-      .select('id, code, name, status, address, tin, doc_2303_path, doc_2307_path, payment_terms, requested_by, note, created_at, requested_at, decided_at', { count: 'exact' })
+      .select('id, code, name, status, address, tin, customer_name, address2, tel, mobile, email, doc_2303_path, doc_2307_path, payment_terms, requested_by, note, created_at, requested_at, decided_at', { count: 'exact' })
       .order('code')
       .range(page * PAGE, page * PAGE + PAGE - 1)
     if (s) req = req.or(`name.ilike.*${s}*,code.ilike.*${s}*,address.ilike.*${s}*`)
@@ -203,28 +210,31 @@ export default function Consignees() {
       if (error) throw error
       const created = data as { id: string; code: string }
       if (doc) {
-        const path = await upload2303(created.id, doc)
-        await supabase.from('consignees').update({ doc_2303_path: path }).eq('id', created.id)
+        const upd: { doc_2303_path: string; doc_2307_path?: string } = { doc_2303_path: await uploadDoc(created.id, doc, '2303') }
+        if (doc2307) upd.doc_2307_path = await uploadDoc(created.id, doc2307, '2307')
+        await supabase.from('consignees').update(upd).eq('id', created.id)
       }
       setNotice(t('Added {code} – {name} (pending approval).', { code: created.code, name: n }))
-      setName(''); setCode(''); setAddress(''); setTin(''); setPaymentTerms('cash'); setDoc(null)
+      setName(''); setCode(''); setAddress(''); setTin(''); setPaymentTerms('cash'); setDoc(null); setDoc2307(null)
       if (docRef.current) docRef.current.value = ''
+      if (doc2307Ref.current) doc2307Ref.current.value = ''
       await load()
     } catch (err) { setError(friendly(err, t)) }
     finally { setBusy(false) }
   }
 
   // Bulk approve every pending consignee in one update (across all pages). Used
-  // for the seeded master list, which is name + code only — completeness is
-  // filled in later (0120 dropped the address/TIN/2303 pre-approval requirement).
+  // for the seeded master list, which is name + code only. Completeness is NOT a
+  // pre-approval requirement (0120 dropped it; single-approve doesn't enforce it
+  // either) — so bulk-approve must approve EVERY pending row, not just complete
+  // ones, or it's a silent no-op for the name-only rows it's meant to clear.
   async function approveAllPending() {
     if (pendingCount === 0) return
-    if (!window.confirm(t('Approve all complete pending consignees? Incomplete ones (missing address, TIN, or 2303) are skipped — they can’t be approved until completed.'))) return
+    if (!window.confirm(t('Approve all {n} pending consignee(s)? They become visible to customers immediately; complete their address, TIN, and BIR documents anytime after.', { n: pendingCount }))) return
     setBusy(true); setError(null); setNotice(null)
     const { data, error } = await supabase.from('consignees')
       .update({ status: 'approved', decided_at: new Date().toISOString() })
       .eq('status', 'pending')
-      .not('address', 'is', null).not('tin', 'is', null).not('doc_2303_path', 'is', null)
       .select('id')
     setBusy(false)
     if (error) return setError(friendly(error, t))
@@ -251,14 +261,20 @@ export default function Consignees() {
     setBusy(true); setError(null)
     try {
       let docPath = editing.doc_2303_path
-      if (editDoc) docPath = await upload2303(editing.id, editDoc)
-      const { error } = await supabase.from('consignees')
-        .update({ code: cc, name: n, address: editing.address.trim() || null, tin: editing.tin.trim() || null, doc_2303_path: docPath, payment_terms: editing.payment_terms })
-        .eq('id', editing.id)
+      if (editDoc) docPath = await uploadDoc(editing.id, editDoc, '2303')
+      let doc2307Path = editing.doc_2307_path
+      if (editDoc2307) doc2307Path = await uploadDoc(editing.id, editDoc2307, '2307')
+      const patch = {
+        code: cc, name: n, address: editing.address.trim() || null, tin: editing.tin.trim() || null,
+        customer_name: editing.customer_name.trim() || null, address2: editing.address2.trim() || null,
+        tel: editing.tel.trim() || null, mobile: editing.mobile.trim() || null, email: editing.email.trim() || null,
+        doc_2303_path: docPath, doc_2307_path: doc2307Path, payment_terms: editing.payment_terms,
+      }
+      const { error } = await supabase.from('consignees').update(patch).eq('id', editing.id)
       if (error) throw error
       await load()
-      setSelected((s) => (s && s.id === editing.id ? { ...s, code: cc, name: n, address: editing.address.trim() || null, tin: editing.tin.trim() || null, doc_2303_path: docPath, payment_terms: editing.payment_terms } : s))
-      setEditing(null); setEditDoc(null); setNotice(t('Saved.'))
+      setSelected((s) => (s && s.id === editing.id ? { ...s, ...patch } : s))
+      setEditing(null); setEditDoc(null); setEditDoc2307(null); setNotice(t('Saved.'))
     } catch (err) { setError(friendly(err, t)) }
     finally { setBusy(false) }
   }
@@ -305,6 +321,7 @@ export default function Consignees() {
                 </select>
               </Field>
               <Field label={t('2303 document *')} w={190}><input ref={docRef} className="ktc-input ktc-input--compact" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc(e.target.files?.[0] ?? null)} style={{ padding: '6px 10px' }} /></Field>
+              <Field label={t('2307 document (optional)')} w={190}><input ref={doc2307Ref} className="ktc-input ktc-input--compact" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc2307(e.target.files?.[0] ?? null)} style={{ padding: '6px 10px' }} /></Field>
               <button className="ktc-btn ktc-btn--sm" type="submit" disabled={busy} style={{ width: 'auto', padding: '8px 16px', fontSize: 13 }}>{t('Add consignee')}</button>
             </form>
           </>
@@ -382,7 +399,7 @@ export default function Consignees() {
       {selected && (() => {
         const c = selected
         const ss = STATUS_STYLE[c.status] ?? STATUS_STYLE.pending
-        const close = () => { setSelected(null); setEditing(null); setEditDoc(null) }
+        const close = () => { setSelected(null); setEditing(null); setEditDoc(null); setEditDoc2307(null) }
         return (
           <div className="ktc-modal-backdrop" onClick={close}>
             <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()}
@@ -402,9 +419,14 @@ export default function Consignees() {
                 {editing && editing.id === c.id ? (
                   <div style={{ display: 'grid', gap: 12 }}>
                     <ModalField label={t('Code')}><input className="ktc-input" value={editing.code} onChange={(e) => setEditing({ ...editing, code: e.target.value })} /></ModalField>
-                    <ModalField label={t('Consignee name')}><input className="ktc-input" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></ModalField>
-                    <ModalField label={t('Business address')}><input className="ktc-input" value={editing.address} onChange={(e) => setEditing({ ...editing, address: e.target.value })} /></ModalField>
+                    <ModalField label={t('Trade name (as in invoice)')}><input className="ktc-input" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></ModalField>
+                    <ModalField label={t('Customer name (leave blank if same as trade name)')}><input className="ktc-input" value={editing.customer_name} onChange={(e) => setEditing({ ...editing, customer_name: e.target.value })} /></ModalField>
+                    <ModalField label={t('Business address line 1')}><input className="ktc-input" value={editing.address} onChange={(e) => setEditing({ ...editing, address: e.target.value })} /></ModalField>
+                    <ModalField label={t('Business address line 2')}><input className="ktc-input" value={editing.address2} onChange={(e) => setEditing({ ...editing, address2: e.target.value })} /></ModalField>
                     <ModalField label={t('TIN / VAT Reg #')}><input className="ktc-input" value={editing.tin} onChange={(e) => setEditing({ ...editing, tin: e.target.value })} /></ModalField>
+                    <ModalField label={t('Tel No.')}><input className="ktc-input" value={editing.tel} onChange={(e) => setEditing({ ...editing, tel: e.target.value })} /></ModalField>
+                    <ModalField label={t('Mobile No.')}><input className="ktc-input" value={editing.mobile} onChange={(e) => setEditing({ ...editing, mobile: e.target.value })} /></ModalField>
+                    <ModalField label={t('Email address')}><input className="ktc-input" value={editing.email} onChange={(e) => setEditing({ ...editing, email: e.target.value })} /></ModalField>
                     <ModalField label={t('Payment terms')}>
                       <select className="ktc-input" value={editing.payment_terms} onChange={(e) => setEditing({ ...editing, payment_terms: e.target.value as 'cash' | 'credit' })}>
                         <option value="cash">{t('Cash')}</option>
@@ -412,9 +434,10 @@ export default function Consignees() {
                       </select>
                     </ModalField>
                     <ModalField label={editing.doc_2303_path ? t('Replace BIR 2303') : t('BIR 2303')}><input className="ktc-input" type="file" accept="image/*,application/pdf" onChange={(e) => setEditDoc(e.target.files?.[0] ?? null)} style={{ padding: '8px 11px' }} /></ModalField>
+                    <ModalField label={editing.doc_2307_path ? t('Replace BIR 2307') : t('BIR 2307 (optional)')}><input className="ktc-input" type="file" accept="image/*,application/pdf" onChange={(e) => setEditDoc2307(e.target.files?.[0] ?? null)} style={{ padding: '8px 11px' }} /></ModalField>
                     <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 2 }}>
                       <button className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void saveEdit()} style={{ width: 'auto', padding: '8px 18px' }}>{busy ? t('Saving…') : t('Save changes')}</button>
-                      <button className="ktc-link" onClick={() => { setEditing(null); setEditDoc(null) }}>{t('Cancel')}</button>
+                      <button className="ktc-link" onClick={() => { setEditing(null); setEditDoc(null); setEditDoc2307(null) }}>{t('Cancel')}</button>
                     </div>
                   </div>
                 ) : (
@@ -422,10 +445,15 @@ export default function Consignees() {
                     <div style={{ fontSize: 15.5, fontWeight: 600, lineHeight: 1.35 }}>{c.name}</div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '12px 16px', fontSize: 13, marginTop: 14 }}>
+                      {c.customer_name && <Meta label={t('Customer name')} value={c.customer_name} span2 />}
                       <Meta label={t('Business address')} value={c.address || '—'} span2 />
+                      {c.address2 && <Meta label={t('Business address line 2')} value={c.address2} span2 />}
                       {c.requested_by && <Meta label={t('Requested by')} value={requester ? [requester.full_name, requester.email].filter(Boolean).join(' · ') || '—' : t('Loading…')} span2 />}
                       <Meta label={t('TIN / VAT Reg #')} value={c.tin || '—'} />
                       <Meta label={t('Payment terms')} value={c.payment_terms === 'credit' ? t('Credit') : t('Cash')} />
+                      {c.tel && <Meta label={t('Tel No.')} value={c.tel} />}
+                      {c.mobile && <Meta label={t('Mobile No.')} value={c.mobile} />}
+                      {c.email && <Meta label={t('Email address')} value={c.email} span2 />}
                       <Meta label={t('Date added')} value={c.created_at ? fmtDate(c.created_at) : '—'} />
                       {c.requested_at && <Meta label={t('Requested')} value={fmtDate(c.requested_at)} />}
                       {c.decided_at && <Meta label={t('Reviewed')} value={fmtDate(c.decided_at)} />}
@@ -442,7 +470,7 @@ export default function Consignees() {
                         ? <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => void openFromStorage('consignee-docs', c.doc_2303_path, t('2303 — {name}', { name: c.name }))} style={{ width: 'auto', padding: '7px 13px' }}>{t('View BIR 2303')}</button>
                         : <span className="ktc-label" style={{ fontSize: 12, alignSelf: 'center' }}>{t('No BIR 2303 on file')}</span>}
                       {c.doc_2307_path && <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => void openFromStorage('consignee-docs', c.doc_2307_path, t('2307 — {name}', { name: c.name }))} style={{ width: 'auto', padding: '7px 13px' }}>{t('View BIR 2307')}</button>}
-                      <a className="ktc-btn-secondary ktc-btn--sm" href={cisPrintUrl({ mode: 'update', trade_name: c.name, address1: c.address ?? '', tin: c.tin ?? '' })} target="_blank" rel="noopener" style={{ width: 'auto', padding: '7px 13px', textDecoration: 'none' }}>{t('Print CIS')}</a>
+                      <a className="ktc-btn-secondary ktc-btn--sm" href={cisPrintUrl({ mode: 'update', trade_name: c.name, customer_name: c.customer_name ?? '', address1: c.address ?? '', address2: c.address2 ?? '', tin: c.tin ?? '', tel: c.tel ?? '', mobile: c.mobile ?? '', email: c.email ?? '' })} target="_blank" rel="noopener" style={{ width: 'auto', padding: '7px 13px', textDecoration: 'none' }}>{t('Print CIS')}</a>
                     </div>
 
                     {(canReview || canManage) && (
@@ -450,7 +478,7 @@ export default function Consignees() {
                         {canReview && c.status !== 'approved' && <button className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void review(c, 'approve')} style={{ width: 'auto', padding: '8px 16px' }}>{t('Approve')}</button>}
                         {canReview && c.status !== 'needs_info' && <button className="ktc-link" disabled={busy} onClick={() => { const r = window.prompt(t('Ask the customer for more info — what’s needed:'), ''); if (r === null) return; if (!r.trim()) { setError(t('Add a note for the customer.')); return } void review(c, 'needs_info', r.trim()) }}>{t('Needs info')}</button>}
                         {canReview && c.status !== 'rejected' && <button className="ktc-link" disabled={busy} onClick={() => { const r = window.prompt(t('Reason for rejecting (shown to the customer):'), ''); if (r === null) return; if (!r.trim()) { setError(t('Add a reason.')); return } void review(c, 'reject', r.trim()) }} style={{ color: 'var(--acc-2)' }}>{t('Reject')}</button>}
-                        {canManage && <button className="ktc-link" onClick={() => setEditing({ id: c.id, code: c.code, name: c.name, address: c.address ?? '', tin: c.tin ?? '', doc_2303_path: c.doc_2303_path, payment_terms: c.payment_terms ?? 'cash' })} style={{ marginLeft: 'auto' }}>{t('Edit')}</button>}
+                        {canManage && <button className="ktc-link" onClick={() => setEditing({ id: c.id, code: c.code, name: c.name, address: c.address ?? '', tin: c.tin ?? '', customer_name: c.customer_name ?? '', address2: c.address2 ?? '', tel: c.tel ?? '', mobile: c.mobile ?? '', email: c.email ?? '', doc_2303_path: c.doc_2303_path, doc_2307_path: c.doc_2307_path ?? null, payment_terms: c.payment_terms ?? 'cash' })} style={{ marginLeft: 'auto' }}>{t('Edit')}</button>}
                         {canManage && <button className="ktc-link" disabled={busy} onClick={() => void remove(c)} style={{ color: 'var(--acc-2)' }}>{t('Delete')}</button>}
                       </div>
                     )}

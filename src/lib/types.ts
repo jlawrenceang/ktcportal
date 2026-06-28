@@ -5,6 +5,12 @@ export interface Consignee {
   status: AccreditationStatus
   address: string | null
   tin: string | null
+  /** Full Customer Information Sheet contact fields (migration 0166). */
+  customer_name?: string | null
+  address2?: string | null
+  tel?: string | null
+  mobile?: string | null
+  email?: string | null
   doc_2303_path: string | null
   doc_2307_path?: string | null
   payment_terms?: 'cash' | 'credit'
