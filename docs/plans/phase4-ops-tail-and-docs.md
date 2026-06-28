@@ -28,8 +28,10 @@ Close the **remaining T2 ops gaps** that Phases 2–3 left, **then** do the **do
 
 | Batch | Items | Scope |
 |---|---|---|
-| **4e** | T2-32, T2-33, T2-34, T3-32–36, T2-21 | **Manuals + tours.** Release module customer + admin manual sections + tours (T2-32/33); `manual-csr.md` (+tl) + GUIDES/ROLE_FLOWS (T2-34); priority-lane / re-X-ray / consignee-request / Help+Lara / vessel-review doc + tour steps (T3-32–36); reconcile the operations manual landing/tabs (T2-21). |
-| **4f** | I18N-01–11 | **Tagalog localization.** Add the missing `tl` keys (tour ~55% English, ADR-0035 priority/re-X-ray/charge cluster, release desk, customer banners, cashier/consignee/settings labels). **I18N-05 root-cause guard** — a CI/precommit check that diffs `t()` first-args + TourStep literals against `Object.keys(tl)` and fails on new untranslated strings (the highest-leverage item — stops recurrence). |
+| **4e** | T2-32, T2-33, T2-34, T3-32–35, T2-21 | ✅ **DONE.** Customer release/consignee-request/Help manual + tours (4e-1); admin release section + desk tour; `manual-csr.md` (+tl) wired into GUIDES/ROLE_FLOWS/floorGuide; priority-lane + re-X-ray across admin/ops/checker + tour steps; operations landing reconciled (T2-21). **T3-36 moot** — vessel-request feature retired in phase-2e (0190). |
+| **4f** | I18N-01–11 | ✅ **DONE.** `check-i18n-coverage.mjs` guard (the I18N-05 root-cause fix) + `npm run check:i18n` strict; **288** Tagalog entries added → 100% coverage, guard green. Owner reviews wording pre-go-live. |
+
+**Phase 4 COMPLETE** (2026-06-29): 4a/4b/4c (ops tail), 4e/4f (docs + i18n) shipped on the branch; **4d (MFA) deferred** to the go-live security pass. Branch == audit catalog except T4 (fuel desk / purchaser / gate module) + the explicitly-deferred ADR-0036 calculator bridge / ERP API / credit flow.
 
 ## Per-batch loop
 
