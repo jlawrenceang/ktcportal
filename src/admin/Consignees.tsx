@@ -103,6 +103,10 @@ export default function Consignees() {
   const [filter, setFilter] = useState<Filter>('all')
   const [page, setPage] = useState(0)
   const [pendingCount, setPendingCount] = useState(0)
+  // Approved (live, fileable) consignees still missing their BIR 2303 — the
+  // backfill backlog. The "Needs documents" filter is the worklist + the edit
+  // modal is the attach path; this count gives that latent backlog an owner (T2-12).
+  const [docsGapCount, setDocsGapCount] = useState(0)
 
   // add form
   const [name, setName] = useState('')
@@ -152,6 +156,8 @@ export default function Consignees() {
   useEffect(() => {
     void supabase.from('consignees').select('id', { count: 'exact', head: true }).eq('status', 'pending')
       .then(({ count }) => setPendingCount(count ?? 0))
+    void supabase.from('consignees').select('id', { count: 'exact', head: true }).eq('status', 'approved').is('doc_2303_path', null)
+      .then(({ count }) => setDocsGapCount(count ?? 0))
   }, [list])
 
   // When the detail modal opens a customer-requested consignee, look up who filed it.
@@ -352,6 +358,18 @@ export default function Consignees() {
             </span>
             <button className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void approveAllPending()} style={{ width: 'auto', padding: '6px 14px', fontSize: 12.5 }}>
               {t('Approve all pending')}
+            </button>
+          </div>
+        )}
+
+        {canManage && docsGapCount > 0 && filter !== 'needs_docs' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, padding: '9px 13px', borderRadius: 10, background: 'var(--c-h40-95-92)', border: '1px solid var(--glass-brd)', flexWrap: 'wrap' }}>
+            <AlertTriangleIcon size={14} />
+            <span className="ktc-label" style={{ fontSize: 12.5, flex: 1, minWidth: 160 }}>
+              {t('{n} approved consignee(s) are missing their BIR 2303 — back-fill the documents.', { n: docsGapCount })}
+            </span>
+            <button className="ktc-btn-secondary ktc-btn--sm" disabled={busy} onClick={() => changeFilter('needs_docs')} style={{ width: 'auto', padding: '6px 14px', fontSize: 12.5 }}>
+              {t('Review missing documents')}
             </button>
           </div>
         )}
