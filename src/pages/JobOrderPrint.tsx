@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
 import { SERVICE_LINE_LABEL, type ServiceLine } from '../lib/types'
 import Notice from '../components/Notice'
+import { servingTag } from '../lib/serving'
 import { useT } from '../lib/i18n'
 
 interface PrintOrder {
@@ -17,7 +18,7 @@ interface PrintOrder {
   customer?: { full_name: string | null; customer_code: string | null } | null
   consignee?: { code: string; name: string } | null
   lines?: { container_number: string; service_request: string; xray_done_at: string | null; xray_done_by_name: string | null }[]
-  serving?: { service_line: string; serving_no: number; vacated_at: string | null }[]
+  serving?: { service_line: string; serving_no: number; week_start: string | null; vacated_at: string | null }[]
 }
 
 
@@ -57,7 +58,7 @@ export default function JobOrderPrint() {
     setLoadError(null)
     supabase
       .from('job_orders')
-      .select('id, jo_number, entry_number, vessel_name, voyage_number, status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, vacated_at)')
+      .select('id, jo_number, entry_number, vessel_name, voyage_number, status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)')
       .eq('id', id)
       .maybeSingle()
       .then(({ data, error }) => {
@@ -168,7 +169,7 @@ export default function JobOrderPrint() {
                 {servings.map((s, i) => (
                   <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 8.5, fontWeight: 800, letterSpacing: '0.04em', color: '#fff', background: LINE, borderRadius: 4, padding: '3px 8px' }}>
                     <span style={{ opacity: 0.8, textTransform: 'uppercase' }}>{(SERVICE_LINE_LABEL[s.service_line as ServiceLine] ?? s.service_line)}</span>
-                    Serving #{s.serving_no}
+                    {servingTag([s]) ?? `#${s.serving_no}`}
                   </span>
                 ))}
               </div>

@@ -18,7 +18,7 @@ export default function AppHome() {
     )
   }
   if (broker?.staff_role === 'checker') return <Navigate to="/app/checker" replace />
-  if (broker?.staff_role === 'cashier') return <Navigate to="/app/cashier" replace />
+  if (broker?.staff_role === 'cashier') return <Navigate to="/app/payment-orders" replace />
   if (broker?.staff_role === 'operations') return <Navigate to="/app/operations" replace />
   if (broker?.staff_role === 'csr') return <Navigate to="/app/support" replace />
   if (hasAdminAccess(broker)) return <Navigate to="/admin" replace />

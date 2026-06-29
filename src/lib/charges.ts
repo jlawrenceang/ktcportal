@@ -75,3 +75,25 @@ export async function resolveNames(ids: (string | null | undefined)[]): Promise<
 export function shortId(id: string | null | undefined): string {
   return id ? id.slice(0, 8) : '—'
 }
+
+// Post-cutover unified payment state for an order, derived from its `charges`
+// (replaces joPayment.ts, which read the retired base/RPS/supplement columns):
+//   'none'    — no billed charge yet (order not at a billable stage)
+//   'balance' — a billed charge is still unpaid (anything owed)
+//   'paid'    — every billed charge is confirmed (or reversed/credited)
+export type ChargeBalance = 'paid' | 'balance' | 'none'
+export function chargeState(
+  charges: { bill_status: string; payment_status: string }[] | null | undefined,
+): ChargeBalance {
+  const billed = (charges ?? []).filter((c) => c.bill_status === 'billed')
+  if (!billed.length) return 'none'
+  return billed.some((c) => c.payment_status !== 'confirmed' && c.payment_status !== 'reversed') ? 'balance' : 'paid'
+}
+
+// True when any billed charge on the order has a customer proof "submitted" and
+// is waiting on the cashier — the admin "to review" cue (replaces hasPaymentToReview).
+export function chargeHasProofToReview(
+  charges: { bill_status: string; payment_status: string }[] | null | undefined,
+): boolean {
+  return (charges ?? []).some((c) => c.bill_status === 'billed' && c.payment_status === 'submitted')
+}

@@ -78,7 +78,7 @@ export function staffHome(b: Pick<Broker, 'staff_role'> | null | undefined): str
   switch (b?.staff_role) {
     case 'checker': return '/admin/checker'
     case 'operations': return '/admin/job-orders'
-    case 'cashier': return '/admin/cashier'
+    case 'cashier': return '/admin/payment-orders'
     case 'csr': return '/admin/support'
     default: return '/admin'
   }

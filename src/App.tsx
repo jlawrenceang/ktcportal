@@ -33,7 +33,6 @@ import AdminRoute from './admin/AdminRoute'
 // the rarely-visited print view) — keeps the first paint lean.
 const JobOrderPrint = lazyWithReload(() => import('./pages/JobOrderPrint'))
 const Verify = lazyWithReload(() => import('./pages/Verify'))
-const Payment = lazyWithReload(() => import('./pages/Payment'))
 const Calculator = lazyWithReload(() => import('./pages/Calculator'))
 const AppHome = lazyWithReload(() => import('./app/AppHome'))
 const AppChecker = lazyWithReload(() => import('./app/AppChecker'))
@@ -54,7 +53,6 @@ const AdminNewJobOrder = lazyWithReload(() => import('./admin/NewJobOrder'))
 const Settings = lazyWithReload(() => import('./admin/Settings'))
 const BulletinBoardAdmin = lazyWithReload(() => import('./admin/BulletinBoardAdmin'))
 const Checker = lazyWithReload(() => import('./admin/Checker'))
-const CashierStation = lazyWithReload(() => import('./admin/CashierStation'))
 const VesselSchedule = lazyWithReload(() => import('./admin/VesselSchedule'))
 const Logs = lazyWithReload(() => import('./admin/Logs'))
 const Security = lazyWithReload(() => import('./admin/Security'))
@@ -87,7 +85,7 @@ function RoleLanding() {
   // the full portal is one tap away via "Open full portal".
   if (broker?.staff_role === 'checker') return <Navigate to="/app/checker" replace />
   if (broker?.staff_role === 'operations') return <Navigate to="/app/operations" replace />
-  if (broker?.staff_role === 'cashier') return <Navigate to="/app/cashier" replace />
+  if (broker?.staff_role === 'cashier') return <Navigate to="/app/payment-orders" replace />
   if (broker?.staff_role === 'csr') return <Navigate to="/app/support" replace />
   if (hasAdminAccess(broker)) return <Navigate to="/admin" replace />
   return <Home />
@@ -253,7 +251,6 @@ export default function App() {
           <Route path="/verify-id" element={<Protected><VerifyId /></Protected>} />
           <Route path="/job-order" element={<Protected><JobOrder /></Protected>} />
           <Route path="/job-order/:id/print" element={<Protected><JobOrderPrint /></Protected>} />
-          <Route path="/job-order/:id/pay" element={<Protected><Payment /></Protected>} />
           <Route path="/calculator" element={<Protected><Calculator /></Protected>} />
           <Route path="/vessels" element={<Protected><Vessels /></Protected>} />
           {/* /accreditation removed 2026-06-11 (page deleted; consignee accreditation
@@ -268,7 +265,6 @@ export default function App() {
           {/* Installable staff app (focused, role-aware) */}
           <Route path="/app" element={<Protected><AppHome /></Protected>} />
           <Route path="/app/checker" element={<Admin><AppChecker /></Admin>} />
-          <Route path="/app/cashier" element={<Admin><CashierStation app /></Admin>} />
           <Route path="/app/payment-orders" element={<Admin><PaymentOrderDesk app /></Admin>} />
           <Route path="/app/support" element={<Admin><SupportInbox app /></Admin>} />
           <Route path="/app/operations" element={<Admin><AllJobOrders app /></Admin>} />
@@ -283,7 +279,6 @@ export default function App() {
           <Route path="/admin/job-orders" element={<Admin><AllJobOrders /></Admin>} />
           <Route path="/admin/new-job-order" element={<Admin><AdminNewJobOrder /></Admin>} />
           <Route path="/admin/checker" element={<Admin><Checker /></Admin>} />
-          <Route path="/admin/cashier" element={<Admin><CashierStation /></Admin>} />
           <Route path="/admin/payment-orders" element={<Admin><PaymentOrderDesk /></Admin>} />
           <Route path="/admin/charges" element={<Admin><ChargeApproval /></Admin>} />
           <Route path="/admin/reconciliation" element={<Admin><Reconciliation /></Admin>} />

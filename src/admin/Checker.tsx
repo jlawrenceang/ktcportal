@@ -24,13 +24,12 @@ interface CheckerOrder {
   is_rexray?: boolean | null
   rexray_status?: string | null
   xray_performed_at: string | null
-  service_invoice_no: string | null
   rps_status: string | null
   created_at: string
   broker?: { full_name: string | null } | null
   consignee?: { code: string; name: string } | null
   lines?: { id: string; container_number: string; service_request: string; xray_done_at: string | null; xray_done_by_name: string | null }[]
-  serving?: { service_line: string; serving_no: number; vacated_at: string | null }[]
+  serving?: { service_line: string; serving_no: number; week_start: string | null; vacated_at: string | null }[]
 }
 
 function one<T>(v: T | T[] | null | undefined): T | null {
@@ -38,7 +37,7 @@ function one<T>(v: T | T[] | null | undefined): T | null {
 }
 
 const SELECT =
-  'id, jo_number, status, is_rexray, rexray_status, xray_performed_at, service_invoice_no, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, vacated_at)'
+  'id, jo_number, status, is_rexray, rexray_status, xray_performed_at, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
 
 const isXray = (s: string) => s.toLowerCase().includes('x-ray')
 // Priority lane is served ahead of the regular queue, then re-X-ray — shared with

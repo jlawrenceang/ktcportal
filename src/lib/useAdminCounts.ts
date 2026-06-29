@@ -31,10 +31,12 @@ const DEFS: CountDef[] = [
   // Open support tickets.
   { route: '/admin/support', perm: 'manage_support',
     run: () => num(supabase.from('support_tickets').select('id', { count: 'exact', head: true }).eq('status', 'open')) },
-  // Payment proofs (base or RPS) awaiting the cashier's review.
-  { route: '/admin/cashier', perm: 'review_payments',
-    run: () => num(supabase.from('job_orders').select('id', { count: 'exact', head: true })
-      .or('payment_status.eq.submitted,rps_payment_status.eq.submitted')) },
+  // Customer payment proofs awaiting the cashier's review — a billed charge whose
+  // payment was submitted (post-cutover: money lives on `charges`, settled at the
+  // Payment Orders desk).
+  { route: '/admin/payment-orders', perm: 'review_payments',
+    run: () => num(supabase.from('charges').select('id', { count: 'exact', head: true })
+      .eq('bill_status', 'billed').eq('payment_status', 'submitted')) },
   // Vans still awaiting an X-ray confirmation (per line, in the live queue).
   // KTC-16: only ACCEPTED orders (processing/on_hold) belong to the checker — a
   // still-submitted order hasn't cleared the ops accept gate yet.

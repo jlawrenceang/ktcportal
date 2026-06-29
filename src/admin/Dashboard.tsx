@@ -64,9 +64,6 @@ export default function Dashboard() {
     const xrayCount = supabase.from('job_order_lines').select('id, job_orders!inner(status)', { count: 'exact', head: true })
       .is('xray_done_at', null).ilike('service_request', '%x-ray%')
       .in('job_orders.status', ['processing', 'on_hold'])
-    // Payment proofs (base or RPS) awaiting the cashier's review — mirrors the
-    // cashier badge's filter (applied after .select()).
-    const PAY_FILTER = 'payment_status.eq.submitted,rps_payment_status.eq.submitted'
 
     // Stat counts — n() throws on a query error so a failed read surfaces in the
     // error branch below instead of rendering silent zeros on the tiles.
@@ -80,7 +77,10 @@ export default function Dashboard() {
       // matches the queue's default "Open" view this tile links to
       n(supabase.from('job_orders').select('id', { count: 'exact', head: true })
         .in('status', ['submitted', 'processing', 'on_hold']).is('archived_at', null)),
-      n(supabase.from('job_orders').select('id', { count: 'exact', head: true }).or(PAY_FILTER)),
+      // Billed charges with a submitted payment proof — the cashier's review queue
+      // (post-cutover: money lives on `charges`).
+      n(supabase.from('charges').select('id', { count: 'exact', head: true })
+        .eq('bill_status', 'billed').eq('payment_status', 'submitted')),
       n(supabase.from('support_tickets').select('id', { count: 'exact', head: true }).eq('status', 'open')),
       n(xrayCount),
     ])
@@ -95,7 +95,9 @@ export default function Dashboard() {
         .eq('status', 'pending').order('created_at', { ascending: true }).limit(5),
       supabase.from('consignees').select('id, name, created_at')
         .eq('status', 'pending').order('created_at', { ascending: true }).limit(5),
-      supabase.from('job_orders').select('id, jo_number, created_at').or(PAY_FILTER).order('created_at', { ascending: true }).limit(5),
+      supabase.from('charges').select('id, created_at, job_order:job_orders(jo_number)')
+        .eq('bill_status', 'billed').eq('payment_status', 'submitted')
+        .order('created_at', { ascending: true }).limit(5),
       supabase.from('support_tickets').select('id, subject, created_at')
         .eq('status', 'open').order('created_at', { ascending: true }).limit(5),
       supabase.from('job_order_lines').select('id, container_number, job_orders!inner(jo_number, status, created_at)')
@@ -115,7 +117,10 @@ export default function Dashboard() {
       setQueue({
         accounts: (a.data as AcctRow[] | null) ?? [],
         consignees: (c.data as ConsRow[] | null) ?? [],
-        payments: (p.data as PayRow[] | null) ?? [],
+        payments: ((p.data as unknown as { id: string; created_at: string; job_order: { jo_number: string | null } | { jo_number: string | null }[] | null }[] | null) ?? []).map((c2) => {
+          const jo = Array.isArray(c2.job_order) ? c2.job_order[0] : c2.job_order
+          return { id: c2.id, jo_number: jo?.jo_number ?? null, created_at: c2.created_at }
+        }),
         tickets: (tk.data as TicketRow[] | null) ?? [],
         xray: ((x.data as unknown as { id: string; container_number: string | null; job_orders: { jo_number: string | null; created_at: string | null } | { jo_number: string | null; created_at: string | null }[] | null }[] | null) ?? []).map((l) => {
           const jo = Array.isArray(l.job_orders) ? l.job_orders[0] : l.job_orders
@@ -207,9 +212,9 @@ export default function Dashboard() {
                 </QueueSection>
               )}
               {showPayments && (
-                <QueueSection t={t} title={t('Payment proofs to review')} count={stats?.paymentProofs ?? queue.payments.length} to="/admin/cashier">
+                <QueueSection t={t} title={t('Payment proofs to review')} count={stats?.paymentProofs ?? queue.payments.length} to="/admin/payment-orders">
                   {queue.payments.map((p) => (
-                    <QueueRow key={p.id} to="/admin/cashier" main={p.jo_number || t('(no number)')} date={shortDate(p.created_at)} />
+                    <QueueRow key={p.id} to="/admin/payment-orders" main={p.jo_number || t('(no number)')} date={shortDate(p.created_at)} />
                   ))}
                 </QueueSection>
               )}

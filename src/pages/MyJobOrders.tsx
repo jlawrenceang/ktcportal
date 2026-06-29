@@ -5,7 +5,7 @@ import Notice from '../components/Notice'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import type { JobOrder } from '../lib/types'
-import { joPaymentState } from '../lib/joPayment'
+import { chargeState } from '../lib/charges'
 import { releaseState } from '../lib/release'
 import { usePageTour } from '../components/TourProvider'
 import { myJobOrdersSteps } from '../components/WelcomeTour'
@@ -18,6 +18,12 @@ import SearchPicker, { type PickerItem } from '../components/SearchPicker'
 import ContainerLinesEditor, { emptyLine, type LineDraft } from '../components/ContainerLinesEditor'
 import { searchConsignees } from '../lib/pickerSearches'
 import { useT } from '../lib/i18n'
+
+// Post-cutover billing (ADR-0037): an order's pay state derives entirely from its
+// `charges` rows — the retired payment_status / supplement columns are gone. We
+// embed the minimal charge fields chargeState needs onto each row.
+type ChargeLite = { bill_status: string; payment_status: string }
+type JoRow = JobOrder & { charges?: ChargeLite[] | null }
 
 const STATUS_LABEL: Record<string, string> = {
   submitted: 'Submitted',
@@ -84,11 +90,11 @@ function StatusBadge({ status }: { status: string }) {
   )
 }
 
-// Unified payment pill — ONE indicator for the whole order's balance (base + RPS
-// + every additional charge). Nothing renders before the order is billable.
-function PayPill({ o }: { o: JobOrder }) {
+// Unified payment pill — ONE indicator for the whole order's balance, derived
+// from every billed charge. Nothing renders before the order has a billed charge.
+function PayPill({ o }: { o: JoRow }) {
   const { t } = useT()
-  const s = joPaymentState(o)
+  const s = chargeState(o.charges)
   if (s === 'balance') return <span className="ktc-chip ktc-chip--warning">{t('Balance to pay')}</span>
   if (s === 'paid') return <span className="ktc-chip ktc-chip--success">{t('Paid')}</span>
   return null
@@ -107,9 +113,9 @@ function ClearedBadge({ o }: { o: JobOrder }) {
 }
 
 // Compact payment pill for the dense one-line list rows.
-function PayPillMini({ o }: { o: JobOrder }) {
+function PayPillMini({ o }: { o: JoRow }) {
   const { t } = useT()
-  const s = joPaymentState(o)
+  const s = chargeState(o.charges)
   if (s === 'balance') return <span className="ktc-chip ktc-chip--warning" style={{ fontSize: 10.5, padding: '1px 8px', flex: '0 0 auto' }}>{t('Balance')}</span>
   if (s === 'paid') return <span className="ktc-chip ktc-chip--success" style={{ fontSize: 10.5, padding: '1px 8px', flex: '0 0 auto' }}>{t('Paid')}</span>
   return null
@@ -239,9 +245,9 @@ export default function MyJobOrders() {
   const { t } = useT()
   usePageTour('job-orders', myJobOrdersSteps)
   const { broker } = useBroker()
-  const [orders, setOrders] = useState<JobOrder[]>([])
+  const [orders, setOrders] = useState<JoRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [selected, setSelected] = useState<JobOrder | null>(null) // order shown in the detail modal
+  const [selected, setSelected] = useState<JoRow | null>(null) // order shown in the detail modal
   const [error, setError] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null) // list-load failure (separate from action errors)
   const [respondingId, setRespondingId] = useState<string | null>(null)
@@ -273,15 +279,15 @@ export default function MyJobOrders() {
     let q = supabase
       .from('job_orders')
       .select(
-        'id, jo_number, entry_number, consignee_id, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, needs_fields, payment_status, has_open_supplement, service_invoice_no, rps_status, rps_payment_status, completed_at, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), completions:service_completions(service_line, completed_at), supplements:jo_supplements(id, suffix, label, amount, payment_status)',
+        'id, jo_number, entry_number, consignee_id, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, needs_fields, rps_status, completed_at, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), completions:service_completions(service_line, completed_at), charges(bill_status, payment_status)',
         { count: 'exact' },
       )
       .eq('is_rexray', false)   // re-X-ray child orders are internal KTC ops — hide from the customer
     if (f === 'active') q = q.in('status', ['submitted', 'processing', 'on_hold'])
     else if (f === 'action')
-      // On hold, a rejected payment proof on a live order, or an unpaid additional
-      // charge ("balance to pay") on a live order. (Rejected is terminal — no action.)
-      q = q.or('status.eq.on_hold,and(payment_status.eq.rejected,status.in.(submitted,processing,completed)),and(has_open_supplement.eq.true,status.in.(submitted,processing,on_hold))')
+      // KTC asked for info. (Per-charge billing actions — a rejected proof or an
+      // unpaid charge — now surface inline in JobOrderCharges, not as a list filter.)
+      q = q.eq('status', 'on_hold')
     else if (f === 'completed') q = q.eq('status', 'completed')
     else if (f === 'closed') q = q.in('status', ['rejected', 'cancelled'])
     const { data, count, error: loadErr } = await q
@@ -289,7 +295,7 @@ export default function MyJobOrders() {
       .range(p * PAGE, p * PAGE + PAGE - 1)
     if (loadErr) { setLoadError(loadErr.message); setLoading(false); return }
     setLoadError(null)
-    const rows = (data ?? []) as unknown as JobOrder[]
+    const rows = (data ?? []) as unknown as JoRow[]
     setOrders(rows)
     setTotal(count ?? rows.length)
     setLoading(false)
@@ -317,15 +323,7 @@ export default function MyJobOrders() {
   // button is rate-limited to one pull per 10s.
   const { refresh, cooling } = useAutoRefresh(load)
 
-  // Action button on the pay link mirrors the unified balance state.
-  function payBtnLabel(o: JobOrder): string {
-    const s = joPaymentState(o)
-    if (s === 'balance') return t('Balances')
-    if (s === 'paid') return t('✓ Paid · view charges')
-    return t('View charges')
-  }
-
-  function openOrder(o: JobOrder) { setSelected(o); setRespondingId(null); setCancelId(null); setError(null) }
+  function openOrder(o: JoRow) { setSelected(o); setRespondingId(null); setCancelId(null); setError(null) }
 
   return (
     <Shell wide>
@@ -549,11 +547,6 @@ export default function MyJobOrders() {
                     {!['rejected', 'cancelled'].includes(o.status) && (
                       <Link to={`/job-order/${o.id}/print`} target="_blank" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-flex', textDecoration: 'none' }}>
                         {t('Print slip')} ↗
-                      </Link>
-                    )}
-                    {!['cancelled', 'rejected'].includes(o.status) && (
-                      <Link to={`/job-order/${o.id}/pay`} className="ktc-btn-secondary ktc-btn--sm" style={{ display: 'inline-flex', textDecoration: 'none' }}>
-                        {payBtnLabel(o)}
                       </Link>
                     )}
                   </div>

@@ -1,4 +1,5 @@
-import { serviceLineOf, hasOutstandingSupplements, type JobOrder, type ServiceLine } from './types'
+import { serviceLineOf, type JobOrder, type ServiceLine } from './types'
+import { chargeState } from './charges'
 
 // Two-gate release model (the "cleared for release" / gate-pass signal).
 //
@@ -28,7 +29,9 @@ export interface ReleaseState {
   cleared: boolean
 }
 
-export function releaseState(o: JobOrder): ReleaseState {
+type WithCharges = JobOrder & { charges?: { bill_status: string; payment_status: string }[] }
+
+export function releaseState(o: WithCharges): ReleaseState {
   const applicable = !['held', 'cancelled', 'rejected'].includes(o.status)
 
   // X-ray gate — every distinct service line the order needs has a completion.
@@ -39,18 +42,15 @@ export function releaseState(o: JobOrder): ReleaseState {
   const serviceDone = services.filter((s) => s.done).length
   const serviceComplete = serviceTotal > 0 && serviceDone === serviceTotal
 
-  // Payment gate — paid (or invoiced), with no RPS / supplement still owed.
-  const paid = o.payment_status === 'confirmed' || !!o.service_invoice_no
-  const rpsDue = o.rps_status === 'needed' && o.rps_payment_status !== 'confirmed'
-  const supplementDue = hasOutstandingSupplements(o)
-  const paymentDone = paid && !rpsDue && !supplementDue
+  // Payment gate — every BILLED charge on the order is confirmed (the unified
+  // charges spine: base X-ray + RPS + add-ons are all just charges now).
+  const billed = (o.charges ?? []).filter((c) => c.bill_status === 'billed')
+  const paymentDone = chargeState(o.charges) === 'paid'
 
   let paymentState: PaymentState
-  if (supplementDue) paymentState = 'supplement_due'
-  else if (paid && rpsDue) paymentState = 'rps_due'
-  else if (paid) paymentState = 'confirmed'
-  else if (o.payment_status === 'submitted') paymentState = 'submitted'
-  else if (o.payment_status === 'rejected') paymentState = 'rejected'
+  if (paymentDone && billed.length) paymentState = 'confirmed'
+  else if (billed.some((c) => c.payment_status === 'submitted')) paymentState = 'submitted'
+  else if (billed.some((c) => c.payment_status === 'rejected')) paymentState = 'rejected'
   else paymentState = 'unpaid'
 
   const cleared = o.status === 'completed' || (applicable && serviceComplete && paymentDone)

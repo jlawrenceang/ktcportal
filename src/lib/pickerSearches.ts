@@ -8,20 +8,13 @@ import type { PickerItem } from '../components/SearchPicker'
 const orSafe = (q: string) => q.replace(/[,()%*\\]/g, ' ').trim()
 
 /** Consignee master-list search (code or name) — used by the customer JO form
- *  and the admin file-on-behalf form. */
+ *  and the admin file-on-behalf form. Goes through the column-scoped, anti-scrape
+ *  `search_consignees` RPC (id/code/name only, server-side gate + limit) so the
+ *  master list's PII (TIN / contact) is never exposed to brokers (ADR-0037). */
 export async function searchConsignees(q: string): Promise<PickerItem[]> {
-  const s = orSafe(q)
-  const { data } = await supabase
-    .from('consignees')
-    .select('id, code, name, doc_2303_path')
-    .eq('status', 'approved')   // GATE: only KTC-approved consignees can be used to file (no pending/limbo)
-    .or(`code.ilike.%${s}%,name.ilike.%${s}%`)
-    .order('code')
-    .limit(40)
-  // Flag consignees with no BIR 2303 on file ("documents pending") — still
-  // selectable; the consignee's Customer Information Sheet just isn't complete.
-  return ((data ?? []) as { id: string; code: string; name: string; doc_2303_path: string | null }[])
-    .map((c) => ({ id: c.id, title: c.code, sub: c.name, flag: c.doc_2303_path ? undefined : 'docs pending' }))
+  const { data } = await supabase.rpc('search_consignees', { p_q: q })
+  return ((data ?? []) as { id: string; code: string; name: string }[])
+    .map((c) => ({ id: c.id, title: c.code, sub: c.name }))
 }
 
 /** Customer search for the admin file-on-behalf form. Staff rows are excluded;

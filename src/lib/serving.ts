@@ -9,10 +9,17 @@
 // Structural subset of ServingNumber — the columns the lane helpers need, so a
 // caller that selects only service_line/serving_no/vacated_at (no week_start)
 // still satisfies it.
-export type ServingLike = { service_line: string; serving_no: number; vacated_at: string | null }
+export type ServingLike = { service_line: string; serving_no: number; vacated_at: string | null; week_start?: string | null }
 
 const LANE_RANK: Record<string, number> = { priority: 0, rexray: 2 }
 const LANE_TAG: Record<string, string> = { priority: 'P', rexray: 'R' }
+
+// YYMM from the serving period (week_start now holds the month-start — 0217).
+function yymm(weekStart: string | null | undefined): string {
+  if (!weekStart) return ''
+  const d = new Date(weekStart)
+  return `${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, '0')}`
+}
 
 /** The one currently-active (non-vacated) serving row, or null. */
 export function activeServing(serving: ServingLike[] | null | undefined): ServingLike | null {
@@ -26,9 +33,13 @@ export function servingKey(serving: ServingLike[] | null | undefined): number {
   return s ? (LANE_RANK[s.service_line] ?? 1) * 1_000_000 + s.serving_no : Infinity
 }
 
-/** Lane-tagged display: P-1 (priority), R-1 (re-X-ray), #1 (regular queue), or null. */
+/** Monthly serving tag, format YYMM-XXXX (ADR-0037): e.g. 2606-0001 (regular queue),
+ *  P-2606-0001 (priority), R-2606-0001 (re-X-ray). Falls back to #N if the period
+ *  isn't loaded (a caller that didn't select week_start). */
 export function servingTag(serving: ServingLike[] | null | undefined): string | null {
   const s = activeServing(serving)
   if (!s) return null
-  return LANE_TAG[s.service_line] ? `${LANE_TAG[s.service_line]}-${s.serving_no}` : `#${s.serving_no}`
+  const lane = LANE_TAG[s.service_line] ? `${LANE_TAG[s.service_line]}-` : ''
+  const ym = yymm(s.week_start)
+  return ym ? `${lane}${ym}-${String(s.serving_no).padStart(4, '0')}` : `${lane}#${s.serving_no}`
 }

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import { useT } from '../lib/i18n'
 import { SERVICE_LINE_LABEL, type ServiceLine } from '../lib/types'
+import { servingTag } from '../lib/serving'
 
 // Floor-staff "now serving" board (checker + operations) — NOT customer-facing
 // (customers have no serving number to wait on). Reads now_serving() — one row
@@ -37,6 +38,13 @@ export default function NowServing() {
   // only on a visible tab, plus a manual ↻.
   const { refresh, cooling } = useAutoRefresh(load, { intervalMs: 25_000 })
 
+  // now_serving() is always scoped to the current month (serving_week), so format
+  // each lane's number as the YYMM-XXXX tag the customer sees on the slip (ADR-0037).
+  const period = new Date()
+  const periodStart = `${period.getFullYear()}-${String(period.getMonth() + 1).padStart(2, '0')}-01`
+  const laneTag = (line: string, n: number) =>
+    servingTag([{ service_line: line, serving_no: n, week_start: periodStart, vacated_at: null }]) ?? `#${n}`
+
   return (
     <div className="ktc-glass" style={{ padding: '11px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flex: '0 0 auto' }}>
@@ -54,7 +62,7 @@ export default function NowServing() {
                 {t(SERVICE_LINE_LABEL[r.service_line as ServiceLine] ?? r.service_line)}
               </div>
               <div className="ktc-mono" style={{ fontSize: 21, fontWeight: 700, color: 'var(--acc-2)', lineHeight: 1.15, marginTop: 1 }}>
-                {r.now_serving == null ? '—' : `#${r.now_serving}`}
+                {r.now_serving == null ? '—' : laneTag(r.service_line, r.now_serving)}
               </div>
               <div className="ktc-label" style={{ fontSize: 10, opacity: 0.65, marginTop: 1 }}>
                 {t('last issued #{n}', { n: r.last_issued })}

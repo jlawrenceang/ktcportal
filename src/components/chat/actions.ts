@@ -9,9 +9,13 @@
 // builder — an un-awaited supabase builder never executes (real gotcha, 2026-06-15).
 
 import { supabase } from '../../lib/supabase'
-import { joPaymentState } from '../../lib/joPayment'
+import { chargeState } from '../../lib/charges'
 import type { JobOrder } from '../../lib/types'
 import type { ActionFn, ChatOption } from './types'
+
+// Post-cutover billing lives on `charges` (ADR-0037); the chat derives the unified
+// pay state via chargeState. The old joPayment.ts + jo_supplements columns are gone.
+type ChargeRow = { bill_status: string; payment_status: string }
 
 // "JO12" / "jo-000123" / "123" / "000123" → "JO-000123"; '' if no digits.
 function normalizeJo(raw: string): string {
@@ -54,13 +58,13 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 const TRACK_COLS =
-  'jo_number, status, payment_status, rps_status, rps_payment_status, ' +
+  'jo_number, status, rps_status, ' +
   'completed_at, vessel_name, voyage_number, ' +
-  'consignee:consignees(name), supplements:jo_supplements(payment_status)'
+  'consignee:consignees(name), charges:charges(bill_status, payment_status)'
 
 const LIST_COLS =
-  'jo_number, entry_number, status, payment_status, rps_status, rps_payment_status, ' +
-  'created_at, consignee:consignees(name), supplements:jo_supplements(payment_status)'
+  'jo_number, entry_number, status, rps_status, ' +
+  'created_at, consignee:consignees(name), charges:charges(bill_status, payment_status)'
 
 export const trackOrder: ActionFn = async (vars, { t }) => {
   const jo = normalizeJo(vars.jo ?? '')
@@ -101,8 +105,8 @@ export const trackOrder: ActionFn = async (vars, { t }) => {
     }
   }
 
-  const o = data as unknown as JobOrder
-  const pay = joPaymentState(o)
+  const o = data as unknown as JobOrder & { charges?: ChargeRow[] }
+  const pay = chargeState(o.charges)
   const who = consigneeName((data as { consignee?: unknown }).consignee)
   const vessel = o.vessel_name
     ? o.vessel_name + (o.voyage_number ? ' · ' + o.voyage_number : '')
@@ -142,7 +146,7 @@ export const listMyOrders: ActionFn = async (_vars, { t }) => {
       options: back,
     }
   }
-  const rows = (data ?? []) as unknown as JobOrder[]
+  const rows = (data ?? []) as unknown as (JobOrder & { charges?: ChargeRow[] })[]
   if (rows.length === 0) {
     return {
       bubbles: [t('You don’t have any Job Orders yet. Tap below to file your first one.')],
@@ -159,7 +163,7 @@ export const listMyOrders: ActionFn = async (_vars, { t }) => {
   const lines = rows.map((o) => {
     const id = o.jo_number ?? o.entry_number ?? '—'
     const status = t(STATUS_LABEL[o.status] ?? o.status)
-    return `• ${id} — ${status}${payChip(joPaymentState(o))}`
+    return `• ${id} — ${status}${payChip(chargeState(o.charges))}`
   })
 
   return {
