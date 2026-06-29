@@ -84,3 +84,7 @@ _jarvis_audit*.mjs
 _*.mjs
 scratch_*.mjs
 scratch*.mjs
+
+# B-agent E2E test artifacts (regenerable)
+dist-e2e/
+_tmp_e2e/

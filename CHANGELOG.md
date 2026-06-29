@@ -4,6 +4,12 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v2.0.3 — 2026-06-29 (re-confirm battery — Payment-Order desk fix)
+
+The re-run battery confirmed the v2.0.1/v2.0.2 remediation held on prod (orphans gone, charge path now e2e-verified, photos load, a11y labels landed, `0224` holds, **all 5 money gates intact**) and caught one more latent blocker:
+
+- **HIGH (`0225`):** `create_payment_order` picked the lone customer with `min(s.cust)` — but Postgres has **no `min()` for uuid**, so every call raised `function min(uuid) does not exist`. The cashier's Payment-Order bundling desk (`/admin/payment-orders` + `/app/payment-orders`) was **dead**. It failed CLOSED (no PO row, no charge confirmed, no money moved) — which is why every money-safety probe passed — but a shipped, routed feature never worked (latent since the charge spine landed in `0206`). Fixed: `(array_agg(distinct s.cust))[1]`. Verified on prod (rolled back): bundling now returns a PO; the old form errors as expected.
+
 ## v2.0.2 — 2026-06-29 (battery remediation — photos, a11y, e2e coverage, low edges)
 
 The remaining triaged items from the pre-go-live battery (after the v2.0.1 critical hotfix):
