@@ -4,6 +4,17 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v2.0.1 — 2026-06-29 (cutover hotfix — pre-go-live test battery)
+
+The ultracode pre-go-live test battery (e2e · jarvis · billing-integrity · security · ux/a11y · roast · load · regression) confirmed the **5 anti-fraud money gates all hold**, and caught dropped-column orphans the `0220` discovery missed (it skipped plain `payment_status` as "noisy" — exactly the gap that bit):
+
+- **CRITICAL (0223):** `notify_jo_change` (trigger on `job_orders`) still read the dropped `payment_status` / `payment_note` → **every non-rexray `job_order` UPDATE errored** (no order could be accepted/processed/cancelled/completed; the cashier couldn't confirm the final charge — the auto-complete rolled the whole txn back). Latent only because prod has 0 orders. Fixed: dropped the dead payment block (payment is per-charge now).
+- **HIGH (0223):** the `remind_unpaid_orders` cron read `job_orders.payment_status` → re-expressed over `charges` (a billed, unconfirmed charge).
+- **HIGH:** `Home.tsx` dashboard + `BottomNav.tsx` Orders badge ran `.or('…payment_status…')` on `job_orders` (400 / silent-0) → re-pointed to a new `my_attention_count()` RPC (on_hold OR a rejected charge).
+- `ktc-chip--error` CSS alias added (rejected/cancelled chips on the admin charge screens rendered grey instead of red).
+
+Deferred (non-blocking): the e2e charge-path coverage fix, a11y labels on compliance inputs, hero-photo optimization, and the roast polish.
+
 ## v2.0.0 — 2026-06-29 (X-ray Phase A CUTOVER — charges are the ONLY billing path)
 
 The **ADR-0037 cutover**: the new `charges` spine is now the only X-ray billing path; the old base/RPS/supplement/service-invoice billing is **deleted**. Ruthless + atomic, pre-launch (disposable data). Verified — independent **Jarvis** review (found 2 money edges, both fixed), ~10 transactional DB probes (apply→assert→rollback), security invariants, i18n, typecheck + build — all green. Spec: `docs/specs/xray-phase-a-cutover.md`.

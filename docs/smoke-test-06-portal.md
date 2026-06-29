@@ -1,81 +1,68 @@
-# Smoke Test ST06 — Job-Order Ops Overhaul (ADR-0035): auto-complete · serving lanes · priority · re-X-ray · request→bill charges · invoice-gated payment · role re-split
+# Smoke Test ST06 — X-ray Billing Cutover (ADR-0037 Phase A): uniform charges · per-charge pay · final-invoice confirm gate · payment orders · one-rule completion · monthly serving
 
 **Smoke Test ID:** ST06
-**Date:** 2026-06-27
+**Date:** 2026-06-27 · **Rewritten 2026-06-29 for the v2.0.0 cutover**
 **Status:** DRAFT (ready to execute)
-**Target:** https://portal.ktcterminal.com (live, pre-public) — **v1.6.73 / commit `b730eb3` / DB migrations through `0183`**
+**Target:** https://portal.ktcterminal.com (live, pre-public) — **v2.0.0 / DB migrations through `0222`**
 **Format:** Canonical (see `docs/smoke-test-template-canonical.md`)
-**Supersedes (in part):** the **retired-serving-number** content of **ST05/ST03**. ST05 (drafted at `0131`) recorded the serving number as *retired* (daily Batch + working-hours aging chip). **ADR-0035 (`0170`–`0177`) reintroduced an automatic serving-number queue** with **priority** + **re-X-ray** lanes, made completion **automatic**, split **charges** into request→bill, gated **payment** on the ERP invoice, and **re-split the roles** (`0171`). ST06 is the focused pass on those new surfaces. ST05 still owns the broad onboarding / X-ray / payments / release walkthrough; ST06 layers the ADR-0035 deltas on top.
+**Supersedes:** its own ADR-0035 **request→bill supplement** / **invoice-gated base payment** lanes, and the billing/cashier/serving content of **ST05** + **ST07**. ADR-0037 (`0203`–`0222`) replaced the old base/RPS/supplement/service-invoice billing with **one uniform `charges` table** — the ONLY X-ray billing path. **Where this doc and ST04/ST05/ST07 disagree on billing/cashier/serving, ST06 + runtime win.**
+
+## What changed in the cutover (the new parameters this doc proves)
+
+- **Billing is one uniform `charges` table** (migration `0203`). Each billable — base X-ray (`service`), an RPS move (`rps`), an add-on (`addon`) — is its own `charges` row hanging off the Job Order, carrying its **own** ERP+BIR invoice (draft→final), payment state, maker-checker approval (add-ons), attribution, and `payment_order_id`. The old `base/RPS/supplement/service-invoice` billing was **dropped** (`0220`).
+- **Deleted screens/routes:** the customer **Payment page** (`/job-order/:id/pay`) and the admin **CashierStation** (`/admin/cashier`, `/app/cashier`) — gone, along with `src/lib/joPayment.ts`. The cashier now works the **Payment Order desk** (`/admin/payment-orders`, PWA `/app/payment-orders`).
+- **Payment is PER-CHARGE, inline.** The customer sees **`JobOrderCharges`** inside the My Job Orders detail — each charge with its own invoice + **Pay this charge** action. The cashier collects via **`PaymentOrderDesk`** and adds/approves charges via **`ChargeApproval`** (`/admin/charges`).
+- **Filing auto-creates the base `service` charge + links containers** (`0212`). RPS assessment seeds `rps` charges (`0213`); staff "add charge" creates `service`/`rps`/`addon` charges (`0206`).
+- **Completion = one rule** (`0216`): **all services done AND every billed charge confirmed** (paid, or reversed). No charge confirms without `invoice_state='final'` + `erp_invoice_no` + `bir_invoice_no`.
+- **Serving number resets MONTHLY** and displays **`YYMM-XXXX`** (e.g. `2606-0001`; priority `P-…`, re-X-ray `R-…`) — `0217`. Was weekly `#N`.
+- **Consignee picker uses the `search_consignees` RPC** (id/code/name only) — a broker can no longer SELECT the full consignee master list (`0218`).
+- **Cancel:** customer self-cancel is **blocked** once a charge is past *pristine* (payment/invoice/bundled); a new **admin-only** `admin_cancel_job_order(p_id, p_reason)` exists (`0219`).
+- **Kept/unchanged:** the **release desk** (its own screens; release billing is charge-shadowed via `0214`/`0215`), the rate **Calculator** (`terminal_rates`), per-van **X-ray confirmation** (`record_van_xray`), the **priority** + **re-X-ray** lanes, RPS **assessment**, and the auth/registration flow.
 
 ## Purpose
 
-A focused **blind walkthrough of the ADR-0035 ops overhaul** on the current build, proving each new gate works front-to-back **and** is backend-enforced:
-
-- **Roles (separation of duties, `0171`):** every staff role lands on its **focused staff-PWA screen** (`/app/*`, full portal one tap away); the verified matrix gained six request/approve gates; CSR can't approve orders and the cashier is money-only.
-- **Automatic completion (`0172`/`0179`):** no role clicks "complete" — the order self-completes the moment the last gate (services *or* payment) lands.
-- **Automatic serving-number lifecycle + lanes (`0173`/`0174`/`0175`):** numbers assign on `submitted`/`processing`, vacate on `on_hold`/`rejected`/`cancelled`/`completed`; re-entry gets a **new tail number**; three lanes (regular · priority · re-X-ray) sort **priority → regular → re-X-ray**; the manual `restore_serving_number` queue-jump is gone (`0182`).
-- **Priority lane (`0174`):** CS/ops **request** → admin **approve**; granted orders sort ahead.
-- **Re-X-ray lane (`0175`):** checker/ops **request** on a completed JO → a suffixed **child** (`JO-000001A`) → admin **approve**; the child is internal (no customer notifications, customer can't cancel/edit it, can't be X-rayed before approval).
-- **Charges = request→bill (`0176`):** ops **requests** a charge (label only) → cashier **bills** it (sets the amount) → customer pays → confirm; an un-priced request never blocks completion; billing on a completed order doesn't reopen it.
-- **Payment requires invoice (`0177`/`0178`):** confirming the **base** payment (online **and** walk-in) requires the **ERP service invoice + BIR pad serial** on file — recording them *is* the confirm.
-
-Verify frontend **and** backend (the SECURITY DEFINER RPC + its gate) **and** side effects at each click.
+A focused **blind walkthrough of the ADR-0037 billing cutover** on the current build, proving each new gate works front-to-back **and** is backend-enforced (the SECURITY DEFINER RPC + its gate). Verify frontend **and** backend **and** side effects at each click.
 
 ## Result codes
 
 PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`).
 
-## Verified role → permission matrix (ground truth — `docs/diagrams/role-and-operation-flows.md`, live `role_permissions`, migrations through `0183`)
+## Roles → who touches billing (ground truth — the charge RPCs, `0206`/`0209`/`0210`, live `role_permissions`)
 
-| Permission | admin | operations | cashier | checker | csr |
-|---|:--:|:--:|:--:|:--:|:--:|
-| view_job_orders | ✓ | ✓ | ✓ | ✓ | ✓ |
-| view_xray_queue | ✓ | ✓ |  | ✓ | ✓ |
-| file_job_orders | ✓ |  |  |  | ✓ |
-| accept_orders | ✓ | ✓ |  |  |  |
-| process_job_orders | ✓ | ✓ |  |  |  |
-| complete_orders | ✓ | ✓ |  |  |  |
-| hold_reject_orders | ✓ | ✓ |  |  |  |
-| confirm_xray |  |  |  | ✓ |  |
-| **request_priority** (`0174`) | ✓ | ✓ |  |  | ✓ |
-| **approve_priority** (`0174`) | ✓ |  |  |  |  |
-| **request_rexray** (`0175`) | ✓ | ✓ |  | ✓ |  |
-| **approve_rexray** (`0175`) | ✓ |  |  |  |  |
-| **request_supplement** (`0176`) | ✓ | ✓ |  |  |  |
-| **bill_supplement** (`0176`) | ✓ |  | ✓ |  |  |
-| assess_rps | ✓ | ✓ |  |  |  |
-| review_payments | ✓ |  | ✓ |  |  |
-| record_invoice | ✓ |  | ✓ |  |  |
-| verify_release_docs | ✓ |  |  |  | ✓ |
-| review_consignee_requests | ✓ |  |  |  | ✓ |
-| manage_vessel_schedule | ✓ | ✓ |  |  |  |
-| manage_support | ✓ |  |  |  | ✓ |
-| manage_approvals / manage_customers / manage_consignees / manage_pricing | ✓ |  |  |  |  |
+The supplement gates (`request_supplement`/`bill_supplement`) are **retired** with the supplements table. Charges reuse the existing permission gates:
 
-**Deltas vs ST05's matrix (`0171`):** cashier **lost** `hold_reject_orders` + `complete_orders` (money lane only); the six **request/approve** gates are new. `confirm_xray` stays **checker-only** (admin/ops can view, not confirm).
+| Charge action | RPC | Permission gate |
+|---|---|---|
+| Add a charge (service/rps bill now; addon is *proposed*) | `add_charge` | admin **or** `accept_orders` **or** `complete_orders` |
+| Approve a proposed add-on (maker-checker — approver ≠ creator) | `approve_charge` | admin **or** `complete_orders` **or** `hold_reject_orders` |
+| Record the FINAL ERP + BIR invoice on a charge | `record_charge_invoice` | `record_invoice` |
+| Confirm / reject a charge's payment | `confirm_charge_payment` | `review_payments` |
+| Bundle charges → a payment order | `create_payment_order` | `review_payments` |
+| Collect a payment order (records ONE OR) | `confirm_payment_order` | `review_payments` |
+| Reverse a confirmed charge (credit note) | `reverse_charge` | owner / admin only |
+| Customer submits a per-charge proof | `submit_charge_payment` | the charge's own customer |
+| Admin-cancel a JO (with reason) | `admin_cancel_job_order` | owner / admin only |
 
-**Landings (current):** owner/admin → `/admin` · **operations → `/app/operations`** · **cashier → `/app/cashier`** · **checker → `/app/checker`** · **csr → `/app/support`** · customer → `/`. Operational roles land on the **staff PWA**, full back office one tap away (`RoleLanding`, `src/App.tsx`). **Owner bypasses every gate** (failsafe). The server enforces the **live** matrix.
+**Landings (current):** owner/admin → `/admin` · operations → `/app/operations` · **cashier → `/app/payment-orders`** · checker → `/app/checker` · csr → `/app/support` · customer → `/`. **Owner bypasses every gate** (failsafe). The server enforces the **live** matrix.
 
 ## Test accounts / data
 
 | Role | Identity | Notes |
 |---|---|---|
-| Owner | `jlawrenceang@gmail.com` | server-only `is_owner`; failsafe; bypasses every gate |
-| Admin (secondary) | _create via Settings → Staff_ | `jla.ktcport@gmail.com` is **no longer admin** (now a rejected customer) — create a fresh staff admin (everything **except `confirm_xray`**; approves priority + re-X-ray; bills charges) |
-| Operations | `st06ops` (create in Settings) | accept/process/RPS/vessels + **request** priority/re-X-ray/charge; **no money**; **monitors** X-ray |
-| Cashier | `st06cash` | `review_payments` + `record_invoice` + **`bill_supplement`**; **no** accept/hold-reject/complete; **no** X-ray queue |
-| Checker | `st06check` | `confirm_xray` + **`request_rexray`** only |
-| CSR | `st06csr` | support + file-on-behalf + release-doc verify + consignee-request review + **`request_priority`**; **never** changes order status |
-| Test customer | a throwaway email you control, **`approved`** | needs ≥1 `processing` JO (priority/charges) and ≥1 `completed` JO (re-X-ray) |
+| Owner | `jlawrenceang@gmail.com` | server-only `is_owner`; failsafe; bypasses every gate; only role that can `reverse_charge` besides admin |
+| Admin (secondary) | _create via Settings → Staff_ | full back office; approves add-ons; can `admin_cancel_job_order` |
+| Operations | `st06ops` | `accept_orders` + `complete_orders` + `assess_rps` → can **add charges** (and approve, via complete) but **no money** |
+| Cashier | `st06cash` | `review_payments` + `record_invoice` → records invoices, confirms charge payments, bundles/collects payment orders; **no** order-status power |
+| Checker | `st06check` | `confirm_xray` (per-van X-ray) only |
+| CSR | `st06csr` | support + file-on-behalf + release-doc verify; **never** changes order status or money |
+| Test customer | a throwaway email you control, **`approved`** | needs ≥1 `processing` JO with X-ray container lines, and a rate set so a charge amount computes |
 
 > **Preconditions before the lanes:**
-> - Settings → **Service rates & fees** non-zero (X-ray rate + admin/print fees) + **RPS per-move rates** set, so the pay-page total computes.
+> - Settings → **Service rates & fees** non-zero (so a base charge `amount` computes; an unset rate renders **"—"**, never ₱0).
 > - Settings → **Payment details** (bank / GCash / QR) filled.
-> - At least one **current vessel** on the schedule + one **approved consignee** (consignee must be approved before it can be used to file, `0167`/`0169`).
-> - The test customer is **`approved`** and owns: a **`processing`** JO with multiple X-ray container lines (Lanes B/C/E/F/G) and a **`completed`** JO (Lane D re-X-ray). Stand these up via ST05 Lanes A–E if not already present.
-> - Emails/bells: per [[emails-suspended-by-default]] customer emails may be **off**; when off, confirm the **in-app bell** is the surfaced side effect.
->
-> **Go-live numbering note:** this run consumes `JO-0000xx` (+ `A` suffixes) and serving-lane numbers; reset sequences after teardown only at a true zero-real-rows state — see ST05 Cleanup.
+> - ≥1 **current vessel** + ≥1 **approved consignee** (a consignee must be approved before it can be filed against).
+> - The test customer is **`approved`** and owns a **`processing`** JO with multiple X-ray container lines.
+> - Emails/bells: per [[emails-suspended-by-default]] customer emails may be **off**; when off, confirm the **in-app bell** is the side effect.
 
 ---
 
@@ -87,189 +74,177 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 | P2 Build | `npm run build` | PASS | |
 | P3 Deploy health | `curl -s -o /dev/null -w "%{http_code}\n" https://portal.ktcterminal.com` | `200` | |
 | P4 Bundle target | fetch `/assets/index-*.js`, grep | contains `mdlnfhyylvapzdubhyic.supabase.co`; jta-sys ref absent | |
-| P5 SPA rewrite | `curl … /app/operations` · `… /app/cashier` · `… /app/checker` · `… /admin/job-orders` | `200` (not 404) for all | |
+| P5 New billing routes resolve | `curl … /admin/payment-orders` · `… /admin/charges` · `… /app/payment-orders` | `200` (SPA rewrite, not 404) | |
+| P5b Deleted billing routes gone | `curl … /admin/cashier` · `… /app/cashier` · `… /job-order/00000000/pay` | `200` from the rewrite, but the app **catch-all → `/`** (no Pay/Cashier screen) | |
 | P6 CAPTCHA enforced | tokenless `POST /auth/v1/token?grant_type=password` (anon apikey) | `captcha_failed` | |
-| P7 ADR-0035 RPCs resolve (latest defs) | over the Management API, confirm the new functions + gates exist | `request_priority(uuid)` / `review_priority(uuid,boolean)`; `request_rexray(uuid)→uuid` / `review_rexray(uuid,boolean,boolean)`; `request_supplement(uuid,text)→uuid` / `bill_supplement(uuid,numeric)`; `record_service_invoice(uuid,text,text)`; `serving_numbers_on_status()` trigger present; `restore_serving_number` **absent** (dropped `0182`) | |
-| P8 Matrix server-side | read live `role_permissions where allowed` over the Management API | matches the verified matrix above — cashier has **no** `hold_reject_orders`/`complete_orders`; the six request/approve gates land on the rows above; 0 mismatch | |
-| P9 Playwright Phase-1 | `BASE_URL=https://portal.ktcterminal.com npm run test:e2e -- e2e/smoke.spec.ts` | all unauth smoke pass (routing, AuthRail menu, protected-route redirects, SPA rewrite, Turnstile) | |
+| P7 Charge RPCs resolve (latest defs) | over the Management API, confirm: `add_charge` / `approve_charge` / `record_charge_invoice` / `submit_charge_payment` / `confirm_charge_payment` / `reverse_charge` / `create_payment_order` / `confirm_payment_order` / `admin_cancel_job_order` exist; the **dropped** RPCs (`review_payment`, `record_service_invoice`, `bill_supplement`, `request_supplement`, `add_supplement`) are **absent**; `jo_supplements` table **gone** (`0220`) | |
+| P8 Smoke (unauth) | `BASE_URL=https://portal.ktcterminal.com npm run test:e2e -- e2e/smoke.spec.ts` | all pass (incl. the new billing-route + deleted-route checks) | |
 
 If any preflight check fails, pause and fix first.
 
 ---
 
-## Lane A — Roles re-split: each role lands on its staff-PWA screen + the new matrix holds (server-side)
+## Lane A — Roles land right; the cashier works Payment Orders (not the deleted station)
 
-### Route A — `/app/*` landings, the six new gates, CSR-can't-approve, cashier-money-only
+### Route A — `/app/*` landings + the deleted billing screens are truly gone
 
-**Objective:** Each staff role lands on its **focused `/app/*` screen** (full portal one tap away); the Roles & Gates matrix matches the verified table including the six ADR-0035 gates; the **`0171`** separation-of-duties holds (CSR no order approval, cashier no hold-reject/complete) — enforced **server-side**, not just hidden.
+**Objective:** Each staff role lands on its focused `/app/*` screen; the **cashier lands on `/app/payment-orders`** (the old `/app/cashier` is gone); the customer `/job-order/:id/pay` page and `/admin/cashier` no longer exist; the charge gates are server-enforced.
 **Start state:** Owner on `/admin/settings`; the st06* staff created (or create them here).
 
-| Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects to Check | Guardrail Test | Result | Evidence / Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| A-1 | `/admin/settings` | Create `st06ops` / `st06cash` / `st06check` / `st06csr` with their roles | owner session | `create_staff` | each appears with a role badge | staff list refreshes | staff creation is owner-only (RPC denies a non-owner) | | |
-| A-2 | `/login` → `/` | Sign in as each role; observe the landing | role users | `RoleLanding` | **operations → `/app/operations`** · **cashier → `/app/cashier`** · **checker → `/app/checker`** · **csr → `/app/support`** · admin/owner → `/admin` | a staff-PWA shell with an **"Open full portal"** affordance; bottom-tab/nav shows only that role's tabs | a role can't deep-link a tab it lacks (URL bounce / empty, no data flash) | | |
-| A-3 | `/admin/settings` → Roles & Gates | Confirm the matrix matches the verified table, focusing the six new gates + the `0171` deltas | owner session | role-permission matrix | ops = `request_priority`/`request_rexray`/`request_supplement` (+ accept/process/complete/hold-reject/RPS/vessels/view_xray); cashier = `review_payments`/`record_invoice`/**`bill_supplement`** only (**no** hold-reject/complete); checker = `confirm_xray`+`request_rexray`; csr = +`request_priority`, **no** order status; admin = +`approve_priority`/`approve_rexray`, no `confirm_xray` | each column matches; the cashier column has **no** hold-reject/complete; CSR has **no** accept/hold-reject | the matrix is the source of truth; the server enforces the **live** matrix | | |
-| A-4 | `/app/operations` (cashier login) | As `st06cash`, try to **accept** or **hold/reject** a `submitted` JO | cashier session | `staff_transition_order` | **no** accept/hold/reject control for the cashier; a forced RPC call **denies** | the cashier sees the money lane, not the order-status controls | `accept_orders`/`hold_reject_orders` deny the cashier (gate removed `0171`) | | |
-| A-5 | `/app/support` (csr login) | As `st06csr`, try to **accept**/**approve** an order | csr session | `staff_transition_order` | **no** order-status control; forced accept **denies** | CSR can file-on-behalf + support + request priority, never approve | a CSR can file AND approve would be a maker-checker gap — `0171` closed it | | |
+| Action ID | Screen / Route | UI Action | Backend Owner | Expected State / Data | Guardrail Test | Result |
+|---|---|---|---|---|---|---|
+| A-1 | `/admin/settings` | Create `st06ops` / `st06cash` / `st06check` / `st06csr` | `create_staff` | each appears with a role badge | staff creation is owner-only | |
+| A-2 | `/login` → `/` | Sign in as each role; observe the landing | `RoleLanding` | ops → `/app/operations` · **cashier → `/app/payment-orders`** · checker → `/app/checker` · csr → `/app/support` · admin/owner → `/admin` | a role can't deep-link a tab it lacks (URL bounce, no data flash) | |
+| A-3 | `/job-order/<any-id>/pay` (customer) | Navigate directly | — (no route) | the catch-all redirects to `/`; **no Pay page** — billing is per-charge in My Job Orders | the old `/pay` page is deleted (`joPayment.ts` gone) | |
+| A-4 | `/admin/cashier` + `/app/cashier` (cashier) | Navigate directly | — (no route) | redirect to `/`; the cashier works **`/app/payment-orders`** instead | the CashierStation is deleted | |
+| A-5 | `/app/payment-orders` (cashier login) | As `st06cash`, try to **accept / hold / complete** an order | `staff_transition_order` | **no** order-status controls; a forced RPC **denies** | cashier is money-only (review_payments + record_invoice) | |
 
 #### Route closure
-- [ ] Every role lands on its **`/app/*`** focused screen (full portal one tap away); owner/admin → `/admin`
-- [ ] The matrix matches the verified table incl. the six request/approve gates; cashier is money-only; CSR can't approve
-- [ ] The `0171` removals are enforced **server-side** (forced RPC denies, not just hidden)
-
-#### Lane closeout
-- [ ] Roles re-split + `/app/*` landings + new matrix coherent end-to-end
+- [ ] Every role lands on its `/app/*` screen; **cashier → `/app/payment-orders`**
+- [ ] The deleted billing routes (`/job-order/:id/pay`, `/admin/cashier`, `/app/cashier`) no longer render — catch-all → `/`
+- [ ] Cashier money-only is server-enforced
 
 ---
 
-## Lane B — Automatic serving-number lifecycle + lane sort
+## Lane B — Serving number: monthly reset, displayed `YYMM-XXXX`
 
-### Route B — Numbers assign on submitted, vacate on exit, new tail on re-entry; queue sorts priority → regular → re-X-ray
+### Route B — Numbers assign on `submitted`, reset MONTHLY, render `YYMM-XXXX`; charge-only work skips the queue
 
-**Objective:** A serving number is **assigned automatically** when a JO hits `submitted`/`processing` and **vacated** when it leaves to `on_hold`/`rejected`/`cancelled`/`completed`; re-entering the line gets a **new tail number** (never the old one); the manual queue-jump (`restore_serving_number`) is gone; the checker/ops queue **sorts** priority lane first, then regular, then re-X-ray.
-**Start state:** Signed in as `st06ops` (and `st06check` for the queue); a `submitted` JO and a 2nd JO to hold.
+**Objective:** A serving number is assigned automatically when a JO hits `submitted`/`processing`, is vacated when it leaves, and is **displayed as `YYMM-XXXX`** (was weekly `#N`). The counter **resets on the first of each month** (PH time). Priority and re-X-ray lanes prefix `P-`/`R-`. The customer never sees a serving number.
+**Start state:** Signed in as `st06ops` (and `st06check` for the queue); a `submitted` JO.
 
-| Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects to Check | Guardrail Test | Result | Evidence / Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| B-1 | (DB / `/app/operations`) | Confirm a freshly `submitted` JO has an active serving-number row | a `submitted` JO | `serving_numbers_on_status` trigger | a `serving_numbers` row exists, `service_line='queue'`, `vacated_at` NULL | the order sits in the queue/checker list | the number is assigned by the **trigger**, not a manual click | | |
-| B-2 | `/app/operations` | **Hold** the JO (→ `on_hold`), then check the serving row | `hold_reject_orders` (ops) | `staff_transition_order` + trigger | the active number is **vacated** (`vacated_at` set) — off the board | the order leaves the active queue | a vacated number is **not** reused by the next order | | |
-| B-3 | `/app/operations` + `/job-orders` | Customer responds to the hold (→ `submitted` again); check the serving row | on_hold JO | `resubmit_needs_info` + trigger | a **new** `serving_numbers` row at the **tail** (a fresh number; the old one stays vacated) | the order re-enters the queue at the back | re-entry never restores the old number (manual `restore_serving_number` **dropped**, `0182`) | | |
-| B-4 | `/app/checker` (checker) | Open the X-ray Queue with a mix of regular + (Lane C) priority + (Lane D) re-X-ray orders | checker session | queue read + lane sort | the list sorts **priority lane first → regular → re-X-ray last**; each lane numbers independently | priority rows carry a **★ Priority** chip; re-X-ray rows a **Re-X-ray** chip | a regular order never sorts ahead of a granted-priority order | | |
-| B-5 | `/job-orders` (customer) | Open My Job Orders | customer session | select own (RLS) | **no** "Now serving" strip and **no** priority/serving number shown to the customer (retired `0151`) | orders grouped by Batch; aging chip is staff-only | the lane bookkeeping is staff-side; the customer sees no serving number | | |
+| Action ID | Screen / Route | UI Action | Backend Owner | Expected State / Data | Guardrail Test | Result |
+|---|---|---|---|---|---|---|
+| B-1 | `/app/checker` (checker) | Open the X-ray Queue; read the serving tag on the active van | `assign_serving_numbers` + `servingTag()` (`src/lib/serving.ts`) | the tag renders as **`YYMM-XXXX`** — e.g. `2606-0001` for June 2026 (priority `P-2606-0001`, re-X-ray `R-2606-0001`) | the format is `YYMM-XXXX`, NOT `#1` / a weekly batch | |
+| B-2 | (DB) | Confirm the reset boundary | `serving_week()` → first of month (PH) | the `week_start` column holds the **month-start** date; `max(serving_no)+1` is scoped to it, so numbering restarts each month | crossing into a new month restarts at `…-0001` | |
+| B-3 | `/app/operations` | **Hold** the JO (→ `on_hold`), then re-submit (customer responds) | `staff_transition_order` + serving trigger | the active number is **vacated**; re-entry gets a **new tail** number (the old one stays burned) | a vacated number is never reused | |
+| B-4 | `/job-orders` (customer) | Open My Job Orders | select own (RLS) | **no** serving/priority number shown to the customer | the lane bookkeeping is staff-only | |
 
 #### Route closure
-- [ ] Serving numbers assign on `submitted`/`processing` and vacate on `on_hold`/`rejected`/`cancelled`/`completed` (trigger-driven)
-- [ ] Re-entry gets a **new tail number**; the manual `restore_serving_number` queue-jump is gone (`0182`)
-- [ ] The staff queue sorts **priority → regular → re-X-ray**; the customer sees no serving number
-
-#### Lane closeout
-- [ ] Automatic serving-number lifecycle + lane sort coherent end-to-end
+- [ ] Serving numbers render **`YYMM-XXXX`** and reset **monthly**
+- [ ] Vacate-on-exit + new-tail-on-re-entry still hold; the customer sees no serving number
 
 ---
 
-## Lane C — Priority lane: request → admin approve → served ahead
+## Lane C — Priority lane: request → admin approve → served ahead (unchanged by the cutover)
 
-### Route C — CS/ops request priority; admin approves (or denies); granted orders sort first
+### Route C — Ops/CSR request priority; an admin approves; granted orders sort first
 
-**Objective:** Operations or CSR **requests** priority on an open order (`request_priority`); an **admin approves** (`review_priority`), moving it to the **priority lane** (served ahead) — or **denies**, clearing the flag. The requester can't self-approve.
-**Start state:** Signed in as `st06ops` (or `st06csr`), a `submitted`/`processing` JO; then the admin.
+**Objective:** Operations or CSR **requests** priority (`request_priority`); an **admin approves** (`review_priority`) moving it to the priority lane — or denies. The requester can't self-approve.
+**Start state:** `st06ops` (or `st06csr`), an open JO; then the admin.
 
-| Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects to Check | Guardrail Test | Result | Evidence / Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| C-1 | `/app/operations` (ops) | On an open JO, click **Request priority** | `request_priority` (ops/csr/admin) | `request_priority(p_id)` | `priority_status='requested'` | a **"Priority requested"** chip on the row | only `request_priority` roles see it; an already-granted order can't be re-requested | | |
-| C-2 | `/app/operations` (ops) | Look for an **Approve priority** control | ops session | — | **no** approve control for ops | ops can request, not approve | `review_priority` denies ops (forced call) — no self-approve | | |
-| C-3 | `/admin/job-orders` (admin) | **Approve priority** on the requested JO | `approve_priority` (admin) | `review_priority(p_id,true)` | `priority_status='granted'`; the old queue number is vacated + a **priority-lane** number assigned | a **★ Priority** chip; the order jumps ahead in the checker/ops queue | approving a **non-requested** order raises "Priority request not found or already decided." (`0183`) | | |
-| C-4 | `/admin/job-orders` (admin) | On a different requested JO, **Deny priority** | admin session | `review_priority(p_id,false)` | `priority_status` cleared (back to NULL); stays in the regular lane | the "Priority requested" chip clears | denying a non-requested order raises "Priority request not found." (`0183`) | | |
-| C-5 | `/app/checker` (checker) | Confirm the granted-priority JO sorts ahead of regular orders | the C-3 grant | queue sort | the priority order is at the **top** of the lane sort | served-ahead behavior visible | a regular order with a lower JO number does **not** sort above it | | |
+| Action ID | Screen / Route | UI Action | Backend Owner | Expected State / Data | Guardrail Test | Result |
+|---|---|---|---|---|---|---|
+| C-1 | `/app/operations` (ops) | **Request priority** on an open JO | `request_priority(p_id)` | `priority_status='requested'`; a "Priority requested" chip | only `request_priority` roles see it | |
+| C-2 | `/app/operations` | Look for an **Approve priority** control | — | **no** approve control for ops | `review_priority` denies ops (forced call) | |
+| C-3 | `/admin/job-orders` (admin) | **Approve priority** | `review_priority(p_id,true)` | `priority_status='granted'`; a `P-YYMM-XXXX` priority-lane number; sorts ahead | approving a non-requested order raises (state guard) | |
+| C-4 | `/app/checker` (checker) | Confirm the granted JO sorts ahead | queue sort | the priority order tops the lane sort | a regular order never sorts above a granted-priority one | |
 
 #### Route closure
-- [ ] Ops/CSR can **request** priority; only an **admin** approves/denies (no self-approve)
-- [ ] Approve moves the order to the **priority lane** (served ahead, ★ chip); deny clears it
-- [ ] A decide on an already-decided/never-requested order raises (state guard, `0183`)
-
-#### Lane closeout
-- [ ] Priority lane request→approve coherent end-to-end
+- [ ] Ops/CSR request; only admin approves/denies; granted → priority lane (`P-…`), served ahead
 
 ---
 
-## Lane D — Re-X-ray lane: request on a completed JO → child JO-####A → admin approve, with guards
+## Lane D — Re-X-ray lane: request on a completed JO → internal child → admin approve (unchanged)
 
 ### Route D — Checker/ops request a re-X-ray; a suffixed internal child runs its own lifecycle
 
-**Objective:** On a **completed** JO, a checker or ops **requests a re-X-ray** (`request_rexray`), creating a **child** order (`JO-000001A`, containers copied) that an **admin approves** (`review_rexray`) into the re-X-ray queue. The child is **internal**: no customer notifications, the customer can't see/cancel/edit it, and it can't be X-rayed before approval. Free by default (`rexray_billable=false`).
-**Start state:** A **completed** JO from ST05 Lane E; signed in as `st06check` (or ops), then admin, then the test customer.
+**Objective:** On a **completed** JO, a checker/ops **requests a re-X-ray** (`request_rexray`) → a **child** order (`JO-000001A`, containers copied) an **admin approves** (`review_rexray`). The child is **internal** (no customer notifications, customer can't see/cancel/edit it, can't be X-rayed before approval). Free by default → no charges → completes on services-done alone.
+**Start state:** A **completed** JO; `st06check` (or ops), then admin, then the customer.
 
-| Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects to Check | Guardrail Test | Result | Evidence / Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| D-1 | `/app/checker` (checker) | On the completed JO, click **Request re-X-ray** → confirm | `request_rexray` (checker/ops/admin) | `request_rexray(p_parent)` | a **child** `job_orders` row: `is_rexray=true`, `parent_job_order_id` set, `rexray_status='requested'`, `jo_number='JO-000001A'`, containers copied from the parent, `status='submitted'` | confirm popup names the suffixed child; **staff** are pinged (`notify_staff('approve_rexray',…)`, `0183`) | request only on a **`completed`** non-re-X-ray order (else raises); an advisory lock prevents a concurrent-suffix collision (`0183`) | | |
-| D-2 | `/job-orders` (customer) | Open My Job Orders as the parent's customer | customer session | select own (RLS) | the **child is NOT visible** to the customer; **no** notification fired for it | no `JO-000001A` row, no bell | the re-X-ray child emits **no** customer notifications (internal, `0178`/`0183`) | | |
-| D-3 | `/app/checker` (checker) | Try to **confirm a van's X-ray** on the still-`requested` child | child unapproved | `record_van_xray` | **blocked** — raises "This re-X-ray hasn't been approved by an admin yet." | no van flips to CLEARED | can't X-ray a re-X-ray before admin approval (`0181`) | | |
-| D-4 | `/admin/job-orders` (admin) | **Approve re-X-ray** (free; leave billable off) | `approve_rexray` (admin) | `review_rexray(p_id,true,false)` | child `rexray_status='approved'`, `status='processing'`, `rexray_billable=false`; enters the **re-X-ray lane** | a **Re-X-ray** chip; the child shows in the checker re-X-ray lane | approving via the generic `accept_orders` path is **blocked** — raises "Use Approve re-X-ray…" (`0178`) | | |
-| D-5 | `/app/checker` (checker) | Confirm the child's X-ray vans | child approved | `record_van_xray` | last van rolls up X-ray done → **free re-X-ray auto-completes** (no payment gate) | child → `completed` | a **billable** re-X-ray (if set) would require payment before completing | | |
-| D-6 | `/job-orders` (customer) | Attempt to cancel/edit the child (e.g. forced RPC) | customer session | `cancel_job_order` / `update_job_order` | **blocked** — "This is an internal KTC re-X-ray and can't be cancelled/edited here." | no customer controls on the child | the customer can't cancel or edit a re-X-ray child (`0181`/`0183`) | | |
+| Action ID | Screen / Route | UI Action | Backend Owner | Expected State / Data | Guardrail Test | Result |
+|---|---|---|---|---|---|---|
+| D-1 | `/app/checker` (checker) | **Request re-X-ray** on the completed JO → confirm | `request_rexray(p_parent)` | a child `job_orders` row: `is_rexray=true`, `parent_job_order_id` set, `rexray_status='requested'`, `jo_number='…A'`, containers copied, `status='submitted'`; staff pinged | request only on a **completed** non-re-X-ray order | |
+| D-2 | `/job-orders` (customer) | Open My Job Orders | select own (RLS) | the child is **NOT** visible; no notification | the re-X-ray child emits no customer notifications | |
+| D-3 | `/admin/job-orders` (admin) | **Approve re-X-ray** (free) | `review_rexray(p_id,true,false)` | child `rexray_status='approved'`, `status='processing'`, no charges; enters the re-X-ray lane (`R-…`) | can't X-ray before approval; can't be accepted via the generic path | |
+| D-4 | `/app/checker` (checker) | Confirm the child's X-ray vans | `record_van_xray` | last van → services done → **free re-X-ray auto-completes** (no charges to pay) | a **billable** re-X-ray (a charge added) would need that charge confirmed before completing | |
 
 #### Route closure
-- [ ] Re-X-ray only on a **completed** order; builds a suffixed **child** (containers copied); staff pinged
-- [ ] The child is **internal** — invisible to the customer, no customer notifications, customer can't cancel/edit it
-- [ ] Can't X-ray before admin approval; can't be accepted via the generic path; free re-X-ray auto-completes on services-done
-
-#### Lane closeout
-- [ ] Re-X-ray lane + guards coherent end-to-end
+- [ ] Re-X-ray only on a completed order; child is internal; free child auto-completes on services-done (no charge gate)
 
 ---
 
-## Lane E — Charges = ops-request → cashier-bill → pay → confirm
+## Lane E — Charges = add → (approve add-ons) → per-charge pay → confirm
 
-### Route E — Ops requests a charge (label only); cashier sets the amount; un-priced never blocks completion
+### Route E — Staff add a charge; add-ons are maker-checker; the customer pays each charge inline; the cashier confirms
 
-**Objective:** Operations **requests** an additional charge with a **label only** (`request_supplement`, no amount); the **cashier bills** it by setting the amount (`bill_supplement`), creating the payable + notifying the customer; the customer pays; the cashier confirms. A **requested (un-priced)** charge does **not** block completion or show a phantom balance; billing on a completed order does **not** reopen it.
-**Start state:** A `processing` JO; signed in as `st06ops`, then `st06cash`, then the test customer.
+**Objective:** Staff **add a charge** (`add_charge`): a `service`/`rps` charge bills immediately (priced off the rate spine); an **`addon` is PROPOSED** and needs **approval by a different staffer** (`approve_charge`) before it bills. The customer sees every charge itemized in **`JobOrderCharges`** and **pays each one inline** (`submit_charge_payment`); the cashier **confirms** (`confirm_charge_payment`) — gated on the FINAL invoice (Lane F).
+**Start state:** A `processing` JO; signed in as `st06ops`, a 2nd staffer (admin) for the approval, then the test customer, then `st06cash`.
 
-| Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects to Check | Guardrail Test | Result | Evidence / Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| E-1 | `/app/operations` (ops) | **Request charge** — pick a charge type / label, **no amount** | `request_supplement` (ops/admin) | `request_supplement(p_jo,p_label)` | a `jo_supplements` row `JO-####-A`, `amount=NULL`, `bill_status='requested'` | the **cashier** is pinged ("Charge requested — set the amount to bill it", `0183`) | ops **can't** set the amount (the amount field is cashier-only); a requested charge isn't yet a payable | | |
-| E-2 | `/app/operations` | Verify the un-priced request does **not** block completion / show a balance | E-1 done, JO otherwise ready | `jo_ready_to_complete` / `sync_open_supplement` | the JO is **not** held back by the requested charge; `has_open_supplement` stays false (only **billed**-unpaid sets it, `0182`) | no phantom "Balance" on the customer's order | a `requested` (un-priced) supplement never blocks the two-gate (`0181`) | | |
-| E-3 | `/app/cashier` (cashier) | In **Additional charges**, **bill** the requested charge — enter the amount (> 0) | `bill_supplement` (cashier/admin) | `bill_supplement(p_id,p_amount)` | supplement `amount` set, `bill_status='billed'`; now a payable; customer **notified** | the charge appears as its own PaySection for the customer; `has_open_supplement=true` | a **zero/negative** amount is rejected; billing a non-`requested` supplement is rejected (no double-bill) | | |
-| E-4 | `/job-order/:id/pay` (customer) | Pay the billed supplement (upload proof) | supplement billed | `submit_supplement_proof` | supplement `payment_status='submitted'` | the cashier's Additional-charges section lists it | proof scoped to this supplement only | | |
-| E-5 | `/app/cashier` (cashier) | **Confirm** the supplement | proof submitted | `review_supplement_payment` / `record_supplement_office_payment` | supplement `confirmed`; if it was the last open gate the JO **auto-(re)completes** | the charge clears | completion needs every **billed** supplement confirmed | | |
-| E-6 | `/app/cashier` (cashier) | Bill a charge on an **already-completed** JO | a completed JO | `bill_supplement` / `add_supplement` | the order **stays `completed`** (not reverted); flagged `has_open_supplement` until paid | the "Cleared for release" badge reflects the open balance, not a status flip | billing on a completed order does **not** reopen it (`0183`) | | |
+| Action ID | Screen / Route | UI Action | Backend Owner | Expected State / Data | Guardrail Test | Result |
+|---|---|---|---|---|---|---|
+| E-0 | `/job-orders` (customer) | Open the order filed earlier; confirm the **base X-ray charge** is already there | filing seed (`0212`) | the **Charges** panel ("Every charge on this order — itemized and verifiable. No hidden fees.") lists the base `service` charge with a **Draft invoice** + **Unpaid** chip | filing auto-seeds the base charge — nothing is hidden | |
+| E-1 | `/admin/charges` (ops/admin) | **Add charge** → type **Add-on**, label + qty (e.g. "Reefer monitoring" / 1) | `add_charge(p_jo,'addon',…)` | a `charges` row `bill_status='proposed'`, `created_by` = ops; shows **"Awaiting approval"** to the customer, **not yet billable** | only add-charge roles; a zero/negative qty is rejected | |
+| E-2 | `/admin/charges` (same ops user) | Try to **Approve charge** on your own proposed add-on | `approve_charge` | **blocked** — "A charge must be approved by someone other than who created it." | maker-checker: approver ≠ creator (`0206`) | |
+| E-3 | `/admin/charges` (admin) | **Approve charge** (a different staffer) | `approve_charge` | `bill_status='billed'`, `approved_by` recorded; now billable + customer-payable | "Created by" / "Approved by" both attributed (accountability) | |
+| E-4 | `/job-orders` (customer) | On the billed charge, **Pay this charge** → upload a slip → **Submit to KTC** | `submit_charge_payment(p_charge,p_proof)` | charge `payment_status='submitted'`; "Your proof is with KTC for review" | proof scoped to this charge only (its own folder) | |
+| E-5 | `/app/payment-orders` (cashier) | Find the submitted proof; try **Confirm payment** **before** recording the invoice | `confirm_charge_payment(p_charge,true)` | **blocked** — "Record the FINAL ERP + BIR invoice before confirming this charge." (→ Lane F) | no charge confirms without a final invoice (every type) | |
 
 #### Route closure
-- [ ] Ops **requests** (label only); cashier **bills** (sets the amount > 0); ops can't price, cashier can't request
-- [ ] A **requested** (un-priced) charge never blocks completion or shows a phantom balance
-- [ ] Customer pays → cashier confirms → auto-(re)complete; billing on a completed order doesn't reopen it
-
-#### Lane closeout
-- [ ] Charges request→bill loop coherent end-to-end
+- [ ] `service`/`rps` charges bill immediately; an `addon` is **proposed** and needs a **different** staffer to approve
+- [ ] The customer pays **per charge** inline (`Pay this charge` → `Submit to KTC`); no `/pay` page
+- [ ] A charge confirm is blocked until its FINAL invoice is on file
 
 ---
 
-## Lane F — Payment requires invoice (online + walk-in)
+## Lane F — The invoice gate + Payment Orders (collection)
 
-### Route F — Confirming the base payment requires the ERP invoice + BIR pad serial; recording them is the confirm
+### Route F — Record the FINAL ERP+BIR invoice per charge; bundle into a Payment Order; collect with ONE OR
 
-**Objective:** The cashier **cannot confirm a base payment** until the **ERP service invoice + BIR pad serial** are on file (`record_service_invoice`); the same gate applies to the **walk-in/office** payment path. RPS is unaffected (no invoice gate). Recording the numbers is the one-step confirm.
-**Start state:** A `processing` JO with a submitted base-payment proof; signed in as `st06cash`.
+**Objective:** A charge confirms **only** against a FINAL ERP + BIR invoice (`record_charge_invoice`). The cashier can confirm a single charge, **or** bundle several whole charges of **one customer** into a **Payment Order** (`create_payment_order`) and collect them with **one OR** (`confirm_payment_order`) — each still gated on its own final invoice.
+**Start state:** Lane E's submitted charge proof(s); signed in as `st06cash`.
 
-| Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects to Check | Guardrail Test | Result | Evidence / Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| F-1 | `/app/cashier` (cashier) | Try to **Confirm** the base payment **before** recording the invoice | proof submitted, no invoice | `review_payment(p_id,true,…,'base')` | **blocked** — raises "Record the ERP service invoice + BIR pad serial before confirming the payment." | the confirm is gated until the invoice fields are filled | base confirm without an invoice is refused (`0177`) | | |
-| F-2 | `/app/cashier` | **Record invoice #** — ERP control no. (`OR-INV-…` cash / `BI-INV-…` credit) + BIR pad / serial no. → Save | `record_invoice` (cashier) | `record_service_invoice(p_id,inv,pad)` | `service_invoice_no` normalized (e.g. `OR-INV-00135921`), `invoice_pad_no` set (digits, 4–8, non-zero), `invoice_recorded_at` stamped | live padded preview; helper "Cash: OR-INV-… · Credit: BI-INV-…" | all-zeros ERP rejected; bad pad serial rejected; `record_invoice`-gated | | |
-| F-3 | `/app/cashier` | Now **Confirm** the base payment | invoice on file | `review_payment(p_id,true,…,'base')` | base `payment_status='confirmed'`; may auto-complete if services done | balance drops; customer pay page shows confirmed | confirm acts only on a `submitted` proof (idempotent) | | |
-| F-4 | `/app/cashier` | On a **different** JO, try **Record office (walk-in) payment** for the base **without** an invoice | no invoice | `record_office_payment(p_id,'base',…)` | **blocked** — same invoice gate raises | the walk-in path can't bypass the invoice gate (`0178`) | the office/walk-in side-door is closed | | |
-| F-5 | `/job-order/:id/pay` + `/app/cashier` | Confirm an **RPS** payment (no invoice) | RPS assessed + proof | `review_payment(p_id,true,…,'rps')` | RPS confirms **without** an invoice (RPS has no invoice gate) | RPS section clears | the invoice gate is **base-only**; RPS is unaffected | | |
+| Action ID | Screen / Route | UI Action | Backend Owner | Expected State / Data | Guardrail Test | Result |
+|---|---|---|---|---|---|---|
+| F-1 | `/app/payment-orders` (cashier) | **Record invoice** on the charge — ERP control no. (`OR-INV-…` cash / `BI-INV-…` credit) + BIR pad serial → Save | `record_charge_invoice(p_charge,erp,bir)` | `invoice_state='final'`, `erp_invoice_no` normalized (e.g. `OR-INV-00135921`), `bir_invoice_no` set (digits, 4–8, non-zero); customer's charge shows **"Final invoice"** + "Invoice on file: …" | all-zeros ERP rejected; bad pad serial rejected; `record_invoice`-gated | |
+| F-2 | `/app/payment-orders` (cashier) | Now **Confirm payment** on that charge | `confirm_charge_payment(p_charge,true)` | charge `payment_status='confirmed'`; if it was the last billed-unpaid charge and services are done, the JO **auto-completes** (Lane G) | confirm acts only on a `submitted` proof (idempotent) | |
+| F-3 | `/app/payment-orders` (cashier) | **Reject** a different charge's proof with a note | `confirm_charge_payment(p_charge,false,note)` | charge `payment_status='rejected'`; the customer can re-upload | reject requires a non-empty note | |
+| F-4 | `/admin/payment-orders` (cashier) | Bundle ≥2 billed charges of **one customer** into a **Payment Order**, then **Collect** with one OR | `create_payment_order` + `confirm_payment_order(p_po,or_no)` | a `PO-######`; **all** bundled charges confirmed; ONE `collection_or_no` recorded | bundling charges of two customers is rejected; collection is blocked unless **every** bundled charge has its FINAL invoice | |
+| F-5 | `/admin/charges` (admin/owner) | **Reverse (credit note)** a confirmed charge with a reason | `reverse_charge(p_charge,reason)` | `payment_status='reversed'` (credit note + audit), never a silent delete; reason required | only owner/admin can reverse; reverses only a `confirmed` charge | |
 
 #### Route closure
-- [ ] Confirming a **base** payment is blocked until the ERP invoice + BIR pad serial are recorded (`0177`)
-- [ ] The **walk-in/office** payment path is gated the same way (`0178` — no side-door)
-- [ ] RPS confirms without an invoice (gate is base-only); recording the numbers is the one-step confirm
-
-#### Lane closeout
-- [ ] Payment-requires-invoice coherent end-to-end (online + walk-in)
+- [ ] A charge confirms **only** against a FINAL ERP+BIR invoice — every type (`service`/`rps`/`addon`)
+- [ ] Payment Orders bundle whole charges of one customer, collect with **one OR**, each still invoice-gated
+- [ ] Reversal is explicit (credit note + audit), owner/admin only
 
 ---
 
-## Lane G — Automatic completion (no manual button)
+## Lane G — One-rule completion (no manual button)
 
-### Route G — The order self-completes from whichever side finishes last
+### Route G — A JO auto-completes the instant the rule is met: all services done AND every billed charge confirmed
 
-**Objective:** A JO reaches **`completed`** **automatically** when the last gate (services *or* payment) lands — there is **no "Mark completed" button**. Verified from both directions: services-last and payment-last.
-**Start state:** A `processing` JO with X-ray vans confirmable + a base payment to confirm (and Lane F's invoice path available).
+**Objective:** A JO reaches `completed` from **exactly one rule** (`jo_ready_to_complete`, `0216`): **all services done AND no billed charge is unconfirmed/unreversed**. There is **no "Mark completed" button**. Verified from both directions.
+**Start state:** A `processing` JO with X-ray vans confirmable + a billed charge to confirm (its invoice recorded, Lane F).
 
-| Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects to Check | Guardrail Test | Result | Evidence / Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| G-1 | `/app/operations` / `/app/cashier` | Look for a **Mark completed** button on a ready JO | services + payment both done | — | **no** manual complete button anywhere | completion is implicit | the manual complete path is retired (ADR-0035); `staff_transition_order→completed` only as an admin override | | |
-| G-2 | `/app/cashier` (payment-last) | With all services done, **confirm the base payment** (after recording the invoice, Lane F) | services done, payment open | `complete_on_payment_confirmed` trigger | the JO **auto-completes** the instant the payment confirms; `completed_at` stamped | "Cleared for release" badge; completed bell | completion auto-fires on the **last** gate — no click | | |
-| G-3 | `/app/checker` (services-last) | On a 2nd JO already **paid**, confirm the **final X-ray van** | payment confirmed, last service pending | `complete_on_service_done` trigger | the JO **auto-completes** when the last service lands; `completed_at` stamped | completed from the services side | services-last completes too (the symmetric trigger, `0172`) | | |
-| G-4 | `/verify/:id` | Open the public verify page on the completed JO | order completed + paid | anon `verify_job_order` | shows **✓ PAID** + **Completed** | matches the auto-complete state | a not-fully-paid order shows **⚠ NOT PAID** | | |
+| Action ID | Screen / Route | UI Action | Backend Owner | Expected State / Data | Guardrail Test | Result |
+|---|---|---|---|---|---|---|
+| G-1 | `/app/operations` / `/app/payment-orders` | Look for a **Mark completed** button | — | **no** manual complete button anywhere | completion is implicit (ADR-0035 + `0216`) | |
+| G-2 | `/app/payment-orders` (charge-last) | With all services done, **confirm the last billed charge** (after recording its invoice) | `complete_jo_on_charge_confirmed` (trigger `charges_autocomplete`) | the JO **auto-completes** the instant the last charge confirms; `completed_at` stamped | completion fires on the last gate — no click; the `enforce_two_gate_complete` backstop agrees | |
+| G-3 | `/app/checker` (services-last) | On a 2nd JO already fully paid, confirm the **final X-ray van** | `record_van_xray` → service-completion → `jo_ready_to_complete` | the JO **auto-completes** when the last service lands | services-last completes too (same single rule) | |
+| G-4 | `/verify/:id` | Open the public verify page on the completed JO | anon `verify_job_order` + `VerifyCharges` | shows **✓ PAID** + **Completed**, and the **authentic charge list** (QR charge-authenticity, `0211`) | a JO with a billed-unpaid charge shows **NOT fully paid**; the QR reveals the true charges/amounts | |
 
 #### Route closure
-- [ ] There is **no manual complete button** — completion is automatic
-- [ ] The order auto-completes from **both** the payment-last and services-last directions
-- [ ] The verify page reflects PAID + Completed only when both gates are met
+- [ ] No manual complete button — completion is automatic from the single rule
+- [ ] Auto-completes from both charge-last and services-last; verify page reflects PAID + Completed only when the rule is met
 
-#### Lane closeout
-- [ ] Automatic completion coherent end-to-end
+---
+
+## Lane H — Cancel: customer self-cancel blocks once billing starts; admin-cancel with a reason
+
+### Route H — The pristine-charge guard + the new admin-only cancel
+
+**Objective:** A customer can self-cancel a `submitted`/`on_hold` order **only while every charge is pristine**; once any charge has a payment in flight, a recorded invoice, or is bundled, self-cancel is **blocked** with a clear message. A new **admin-only** `admin_cancel_job_order(p_id, p_reason)` can always cancel an open order with a recorded reason.
+**Start state:** Two `submitted` JOs for the test customer — one pristine, one with a charge moved past pristine; then the admin.
+
+| Action ID | Screen / Route | UI Action | Backend Owner | Expected State / Data | Guardrail Test | Result |
+|---|---|---|---|---|---|---|
+| H-1 | `/job-orders` (customer) | On the **pristine** order, **Cancel this order** → "Yes, cancel it" | `cancel_job_order(p_id)` | `status='cancelled'`; serving number vacated | cancel allowed while pristine (`submitted`/`on_hold`) | |
+| H-2 | `/job-orders` (customer) | On the order whose charge left pristine (proof submitted / invoice recorded / bundled), try **Cancel this order** | `cancel_job_order` | **blocked** — "This order already has billing in progress — please contact KTC admin to cancel." | a charge past pristine blocks customer self-cancel (`0219`) | |
+| H-3 | `/admin/job-orders` (admin) | Use the order **Cancel** action → enter a reason | `admin_cancel_job_order(p_id,p_reason)` | `status='cancelled'`; the reason is logged to the timeline (customer-visible) | admin-only; an empty reason is refused; can't cancel a `completed`/`cancelled`/`rejected` order | |
+
+#### Route closure
+- [ ] Customer self-cancel works while pristine, **blocks** once a charge is past pristine
+- [ ] `admin_cancel_job_order` cancels an open order with a required reason (admin/owner only)
 
 ---
 
@@ -282,14 +257,15 @@ If any preflight check fails, pause and fix first.
 
 | Lane | Status | Key Findings | Go / Hold |
 |---|---|---|---|
-| A — Roles re-split + `/app/*` landings + matrix | | | |
-| B — Auto serving-number lifecycle + lane sort | | | |
-| C — Priority lane (request→approve) | | | |
-| D — Re-X-ray lane + guards | | | |
-| E — Charges request→bill | | | |
-| F — Payment requires invoice | | | |
-| G — Automatic completion | | | |
+| A — Landings + deleted billing screens gone | | | |
+| B — Monthly serving `YYMM-XXXX` | | | |
+| C — Priority lane | | | |
+| D — Re-X-ray lane | | | |
+| E — Charges add → approve → per-charge pay | | | |
+| F — Invoice gate + Payment Orders | | | |
+| G — One-rule completion | | | |
+| H — Cancel guard + admin-cancel | | | |
 
 ## Reuse rule
 
-Keep the canonical Route/Click/Backend-Contract structure (`docs/smoke-test-template-canonical.md`). ST06 is the **ADR-0035 deltas** pass; for the broad onboarding / X-ray / payments / release walkthrough see **ST05** (`docs/smoke-test-05-portal.md`), for the **break-test-derived full-lifecycle + adversarial + load** pass see **ST07** (`docs/smoke-test-07-portal.md`), and for the release/pull-out deep dive **ST04**. See `docs/agent/testing-and-release.md`.
+Keep the canonical Route/Click/Backend-Contract structure (`docs/smoke-test-template-canonical.md`). ST06 is now the **billing-cutover owner** (ADR-0037). For onboarding / X-ray confirmation / release walk see **ST05**, for the full-lifecycle + adversarial + load pass see **ST07** — both defer their **billing/cashier/serving** content to this doc. The automated counterpart is `e2e/customer-lifecycle.spec.ts` (per-charge billing wire) + the `test.fixme` charge lanes in `e2e/authenticated.spec.ts`.

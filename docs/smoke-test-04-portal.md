@@ -13,6 +13,8 @@ The **release / pull-out blind walkthrough**: a human walks the live portal end-
 
 > **Out of scope / future:** the JO "cleared for release" cross-link and container/EIR grain (ADR-0024 P3, deferred) — v1 stands alone keyed by consignee + BL + uploaded docs. The release module is **separate from the Job Order** (ADR-0022 — most containers have no JO); the JO spine itself is exercised by ST03, not here. BI / credit ERP control numbers are deferred for the release path (cash / `OR-INV-` only); the JO path still accepts both. The configurable ERP series window (`pricing_settings.erp_series_min`/`erp_series_max`) is intentionally **left unset/open** — do not enforce a narrow series here.
 
+> **⚠️ Updated for the v2.0.0 X-ray billing cutover (ADR-0037, migrations `0203`–`0222`).** The release **desk screens** here are **KEPT**, but two things changed underneath: (1) the **cashier route is now `/admin/payment-orders`** (PWA `/app/payment-orders`) — the **CashierStation** `/admin/cashier` + `/app/cashier` are **deleted**; read every `/admin/cashier` below as `/admin/payment-orders`. (2) Release **billing now rides the same uniform `charges` spine** (`0214`/`0215`) — release "supplements" are charges; a charge confirms only against a **FINAL ERP+BIR invoice**, and the per-JO `charges`/payment-order model is owned by **[ST06](smoke-test-06-portal.md)**. The customer **Payment page** (`/job-order/:id/pay`) is gone (per-charge inline only). The release-doc-verify, no-zero-number, cancel-guard, and access lanes here still apply as written.
+
 ## Result codes
 
 PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`).

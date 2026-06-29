@@ -57,13 +57,16 @@ test.describe('KTC portal — authenticated (Phase 2)', () => {
     await expect(page.getByRole('link', { name: 'New Job Order', exact: true })).toBeVisible()
   })
 
-  test('approved broker can open New Job Order and search the consignee master list', async ({ page }) => {
+  test('approved broker can open New Job Order and search consignees via the search_consignees RPC', async ({ page }) => {
     test.skip(!BROKER, 'set E2E_BROKER_EMAIL to run')
     await mintSession(page, BROKER!)
     await page.goto('/job-order')
+    // ADR-0037 / migration 0218: a broker can NO LONGER SELECT the full consignee
+    // master list (anti-scrape). The picker calls the `search_consignees` RPC, which
+    // returns only id/code/name. This just drives the typeahead input.
     const box = page.getByPlaceholder(/Search consignee/i)
     await expect(box).toBeVisible()
-    await box.fill('aa') // >=2 chars triggers the server-side typeahead
+    await box.fill('aa') // the picker debounces + queries the RPC server-side
     await expect(box).toHaveValue('aa')
   })
 
@@ -71,34 +74,40 @@ test.describe('KTC portal — authenticated (Phase 2)', () => {
     test.skip(!STAFF, 'set E2E_STAFF_EMAIL (e.g. <username>@ktc-staff.local) to run')
     await mintSession(page, STAFF!)
     await page.goto('/')
-    // RoleLanding (src/App.tsx): admin/owner → /admin; operational roles
-    // (operations/cashier/checker/csr) now land on their focused staff-PWA screen.
-    await expect(page).toHaveURL(/\/(admin|app(\/(operations|cashier|checker|support))?)$/)
+    // RoleLanding (src/App.tsx): admin/owner → /admin; operational roles land on
+    // their focused staff-PWA screen. NOTE (ADR-0037, v2.0.0): the cashier now lands
+    // on the Payment Order desk — `/app/payment-orders`, not the retired `/app/cashier`.
+    await expect(page).toHaveURL(/\/(admin|app(\/(operations|payment-orders|checker|support))?)$/)
   })
 
-  // Mutation-heavy ST01 lanes — implement against the seeded TEST project once
-  // E2E_* is wired. Kept as fixme so they don't accidentally mutate prod data.
+  // Mutation-heavy lanes — implement against the seeded TEST project once E2E_* is
+  // wired. Kept as fixme so they don't accidentally mutate prod data. (The prod
+  // round-trip + the NEW per-charge billing wires are exercised live by
+  // customer-lifecycle.spec.ts against a throwaway, self-purged customer.)
   test.fixme('registration → pending → admin approval (ST01 Lane 2)', async () => {})
   test.fixme('consignee CRUD: add, duplicate guard, accredit, approve (ST01 Lane 3)', async () => {})
-  test.fixme('submit a job order against a master-list consignee (ST01 Lane 4)', async () => {})
+  test.fixme('submit a job order against a search_consignees pick → filing auto-seeds the base service charge (0212)', async () => {})
   test.fixme('owner creates staff; staff signs in; owner non-revocable (ST01 Lane 5)', async () => {})
 
-  // Release / pull-out module (ADR-0024) — the automated counterpart to ST04.
-  // Run against the seeded TEST project; do not mutate prod.
-  test.fixme('customer files a release: consignee + BL + DO/BL upload → submitted (ST04 Lane A)', async () => {})
-  test.fixme('CSR verifies release docs → docs_verified; hold → on_hold → customer resubmits (ST04 Lane B)', async () => {})
-  test.fixme('staff sets charges once (>0) → payable; adds a supplement (ST04 Lane C)', async () => {})
-  test.fixme('customer pays → cashier confirms → paid (ST04 Lane D)', async () => {})
-  test.fixme('record OR: BIR OR ≤6 digits + ERP OR-INV cash-only → released; OR blocked by unpaid supplement (ST04 Lane E)', async () => {})
-  test.fixme('cancel a pre-payment release (customer + staff) (ST04 Lane F)', async () => {})
+  // Release / pull-out module (ADR-0024). The release DESK screens are unchanged, but
+  // release billing now rides the same `charges` spine (0214/0215). Run on the TEST project.
+  test.fixme('customer files a release: consignee + BL + DO/BL upload → submitted', async () => {})
+  test.fixme('CSR verifies release docs → docs_verified; hold → on_hold → customer resubmits', async () => {})
+  test.fixme('record the release collection OR + ERP control no. → released; gated on every charge confirmed', async () => {})
 
-  // Job-order ops overhaul (ADR-0035) — the automated counterpart to ST06. Run against
-  // the seeded TEST project; do not mutate prod. Each maps to an ST06 lane.
-  test.fixme('roles re-split: each role lands on its /app/* screen; cashier money-only; CSR no approval (ST06 Lane A)', async () => {})
-  test.fixme('serving number auto-assigns on submitted, vacates on exit, new tail on re-entry (ST06 Lane B)', async () => {})
-  test.fixme('priority lane: ops/CSR request_priority → admin review_priority → served ahead (ST06 Lane C)', async () => {})
-  test.fixme('re-X-ray: checker/ops request_rexray on a completed JO → child JO-####A → admin review_rexray; child is internal (ST06 Lane D)', async () => {})
-  test.fixme('charges request→bill: ops request_supplement (label only) → cashier bill_supplement (amount) → pay → confirm (ST06 Lane E)', async () => {})
-  test.fixme('payment requires invoice: record_service_invoice before review_payment confirms base (online + walk-in) (ST06 Lane F)', async () => {})
-  test.fixme('automatic completion: no manual button; auto-completes from services-last and payment-last (ST06 Lane G)', async () => {})
+  // Job-order ops (ADR-0035) — queue/priority/re-X-ray lanes that SURVIVED the cutover.
+  test.fixme('roles: each role lands on its /app/* screen (cashier → /app/payment-orders); server-enforced gates', async () => {})
+  test.fixme('priority lane: ops/CSR request_priority → admin review_priority → served ahead', async () => {})
+  test.fixme('re-X-ray: checker/ops request_rexray on a completed JO → child JO-####A → admin review_rexray; child is internal', async () => {})
+
+  // X-ray billing cutover (ADR-0037, v2.0.0) — the uniform `charges` table is the ONLY
+  // billing path (the old base/RPS/supplement/service-invoice billing was DELETED). Run
+  // against the seeded TEST project; do not mutate prod.
+  test.fixme('charges: add_charge service/rps auto-bill; addon is proposed → approve_charge (maker-checker, approver ≠ creator)', async () => {})
+  test.fixme('per-charge pay: customer submit_charge_payment (proof) in JobOrderCharges → cashier confirm_charge_payment', async () => {})
+  test.fixme('invoice gate: confirm_charge_payment / confirm_payment_order are BLOCKED until record_charge_invoice sets a FINAL ERP+BIR invoice', async () => {})
+  test.fixme('payment orders: create_payment_order bundles whole charges (one customer) → confirm_payment_order records ONE collection OR', async () => {})
+  test.fixme('one-rule completion: a JO auto-completes only when all services are done AND every billed charge is confirmed (or reversed)', async () => {})
+  test.fixme('serving number: assigns on submitted, resets MONTHLY, displays YYMM-XXXX (e.g. 2606-0001); charge-only work skips the queue', async () => {})
+  test.fixme('admin-only cancel: customer self-cancel blocked once a charge leaves pristine; admin_cancel_job_order(p_id,p_reason) cancels with a reason', async () => {})
 })

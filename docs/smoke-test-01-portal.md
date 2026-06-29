@@ -131,20 +131,20 @@ PASS / AMBER / FAIL / BLOCKED / N/A (see template).
 
 ### Route 4A — Submit against an approved consignee
 
-**Objective:** An approved broker submits a job order with service lines against a consignee chosen from the master list; both broker and admin can see it.
-**Start state:** Approved broker session. (No accreditation prerequisite — per ADR-0007 the broker picks from the consignee master list.)
+**Objective:** An approved broker submits a job order with container/service lines against a consignee chosen via the **`search_consignees`** typeahead; filing **auto-seeds the base `service` charge**; both broker and admin can see it.
+**Start state:** Approved broker session. (No accreditation prerequisite — per ADR-0007 the broker picks any consignee; ADR-0037/`0218` scopes the read so the picker returns **id/code/name only**.)
 
 | Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects | Guardrail Test | Result | Evidence |
 |---|---|---|---|---|---|---|---|---|---|
-| 4A-1 | `/job-order` | Open New Job Order; type ≥2 chars in the Consignee box | approved broker | `consignees` `.or` ilike `.limit(40)` | Typeahead returns master-list matches | Results list renders; "Type at least 2 characters" before that | Server-side search (handles >1000 rows); submit blocked until one is selected | | |
-| 4A-2 | `/job-order` | Select a consignee + add service line(s) | search results shown | `SERVICE_REQUESTS` enum | Consignee chosen (box shows code – name, "Change" appears); lines added | Line UI updates | Only valid service types; "Select a consignee" error if none chosen | | |
-| 4A-3 | `/job-order` | Submit | lines present | insert `job_orders` + `job_order_lines` | Header + lines persisted | Confirmation / redirect | — | | |
-| 4A-4 | `/job-orders` | Open My Job Orders | submitted | select own job orders | The new order appears | Lines + consignee shown (via `one<T>()`) | Broker sees only own orders (RLS) | | |
+| 4A-1 | `/job-order` | Open New Job Order; type ≥1 char in the Consignee box (`#consignee`) | approved broker | **`search_consignees`** RPC (id/code/name only) | Typeahead returns matches (results are `role=listbox` buttons) | Results render after the debounce; "Type at least N characters" before that | **Anti-scrape (`0218`):** a broker can NO LONGER SELECT the full consignee list — only the RPC's id/code/name; submit blocked until one is selected | | |
+| 4A-2 | `/job-order` | Select a consignee + add container/service line(s) | search results shown | `service_rates` (catalogued, active) | Consignee chosen (box shows code – name, "Change" appears); lines added | Line UI updates | Only catalogued active services file; "Select a consignee" error if none chosen | | |
+| 4A-3 | `/job-order` | Review → **Confirm & submit** | lines present | `file_job_order` → inserts `job_orders` + `job_order_lines`, then **`seed_job_order_billing`** (`0212`) | Header + lines persisted; the **base `service` charge** + container identity auto-created | Success notice with the assigned `JO-######` | Filing seeds exactly one base charge per distinct service (re-seed/money-safe) | | |
+| 4A-4 | `/job-orders` | Open My Job Orders; open the order | submitted | select own job orders + embedded `charges` | The new order appears; its detail shows the **Charges** panel ("Every charge on this order — itemized and verifiable") with the base charge (Draft invoice · Unpaid) | Lines + consignee + per-charge **Pay this charge** action shown | Broker sees only own orders + own charges (RLS) | | |
 | 4A-5 | `/admin/job-orders` (owner) | Open admin list | order exists | select all | The order is visible to admin | Broker + consignee resolved | Admin sees all orders | | |
 
 #### Route closure
-- [ ] Job order targets only approved consignees
-- [ ] Header + lines persist; visible to broker (own) and admin (all)
+- [ ] Consignee is chosen via `search_consignees` (no full-list select); only approved consignees can be filed against
+- [ ] Header + lines persist and filing **auto-seeds the base charge**; visible to broker (own) and admin (all)
 
 #### Lane closeout
 - [ ] Job-order submission coherent end-to-end

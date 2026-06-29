@@ -81,7 +81,7 @@ const cnt = async (tbl: string, col: string, val: string, extraCol?: string, ext
   return (await q).count ?? 0
 }
 
-test.describe('customer lifecycle (live v1.7.0)', () => {
+test.describe('customer lifecycle (live v2.0.0 — charges cutover)', () => {
   test.skip(!configured, 'set VITE_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (prod) to run')
   test.describe.configure({ timeout: 240000 })
 
@@ -119,14 +119,17 @@ test.describe('customer lifecycle (live v1.7.0)', () => {
     if (customerId) {
       await admin.from('release_orders').delete().eq('customer_id', customerId)
       await admin.from('support_tickets').delete().eq('customer_id', customerId)
-      await admin.from('job_orders').delete().eq('broker_id', customerId)
+      // job_orders.broker_id was renamed to customer_id (migration 0021); deleting the
+      // order cascades to its `charges` rows (FK on delete cascade, 0203) — no separate
+      // charge cleanup needed.
+      await admin.from('job_orders').delete().eq('customer_id', customerId)
       await admin.from('consignees').delete().eq('requested_by', customerId)
       await admin.from('notifications').delete().eq('customer_id', customerId)
     }
     const { error: delErr } = await admin.auth.admin.deleteUser(userId)
     const residual: Record<string, number> = {}
     if (customerId) {
-      for (const [tbl, col] of [['release_orders', 'customer_id'], ['support_tickets', 'customer_id'], ['job_orders', 'broker_id'], ['consignees', 'requested_by']] as const) {
+      for (const [tbl, col] of [['release_orders', 'customer_id'], ['support_tickets', 'customer_id'], ['job_orders', 'customer_id'], ['consignees', 'requested_by']] as const) {
         const c = await cnt(tbl, col, customerId)
         if (c) residual[tbl] = c
       }
@@ -193,8 +196,11 @@ test.describe('customer lifecycle (live v1.7.0)', () => {
     // The JO form is a 3-step Wizard; on the desktop Playwright viewport it stacks
     // ALL steps on one page with a single submit (no Next buttons), so we drive
     // consignee + entry + vessel + container, then confirm the review modal.
+    let joId = ''
     if (!seedOk) {
       verdicts.jobOrder = 'SKIPPED (no approved consignee + current vessel)'
+      verdicts.baseCharge = 'SKIPPED (no JO to bill)'
+      verdicts.chargeUi = 'SKIPPED (no JO to bill)'
     } else {
       try {
         // Search by a REAL approved consignee code so the typeahead is guaranteed
@@ -202,8 +208,9 @@ test.describe('customer lifecycle (live v1.7.0)', () => {
         const { data: cc } = await admin.from('consignees').select('code').eq('status', 'approved').limit(1).maybeSingle()
         const term = (cc as { code?: string } | null)?.code ?? 'a'
         await page.goto(`${BASE}/job-order`); await settle(page)
-        // 1) consignee typeahead (id=consignee, minChars=1; results are <button>s
-        //    inside role=listbox — NOT role=option).
+        // 1) consignee typeahead (id=consignee, minChars=1) — now backed by the
+        //    `search_consignees` RPC (ADR-0037/0218: id/code/name only, no full-list
+        //    select). Results are <button>s inside role=listbox — NOT role=option.
         await page.locator('#consignee').fill(term)
         const opt = page.locator('[role=listbox] button').first()
         await opt.waitFor({ timeout: 10000 })
@@ -219,11 +226,42 @@ test.describe('customer lifecycle (live v1.7.0)', () => {
         // submit → review modal → confirm
         await page.getByRole('button', { name: /Submit Job Order/i }).click({ timeout: 6000 })
         await page.getByRole('button', { name: /Confirm & submit/i }).click({ timeout: 8000 })
-        await expect.poll(() => cnt('job_orders', 'broker_id', customerId), { timeout: 15000 }).toBeGreaterThan(0)
+        await expect.poll(() => cnt('job_orders', 'customer_id', customerId), { timeout: 15000 }).toBeGreaterThan(0)
+        // Capture the filed order's id so we can verify its auto-seeded charge below.
+        const { data: jo } = await admin.from('job_orders').select('id').eq('customer_id', customerId).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        joId = (jo as { id: string } | null)?.id ?? ''
         verdicts.jobOrder = 'ALIVE'
       } catch (e) {
         const formErr = await page.getByText(/Select a consignee|Enter the Entry|Select the vessel|Add at least one/i).first().textContent().catch(() => null)
         verdicts.jobOrder = `INCONCLUSIVE (JO wizard not driven${formErr ? ` — form said: "${formErr.slice(0, 50)}"` : ''}): ` + String(e).slice(0, 70)
+      }
+
+      // ── HAPPY 4b · Per-charge billing (the v2.0.0 charges spine) ─────────────
+      // Filing AUTO-SEEDS the base 'service' charge + links containers (migration
+      // 0212). This is now the ONLY billing path — the old /job-order/:id/pay page
+      // and cashier station are deleted. Assert the seed wire (DB), then that the
+      // customer's itemized JobOrderCharges renders with a PER-CHARGE pay action.
+      if (!joId) {
+        verdicts.baseCharge = 'SKIPPED (filing not confirmed in UI)'
+        verdicts.chargeUi = 'SKIPPED (filing not confirmed in UI)'
+      } else {
+        try {
+          await expect.poll(() => cnt('charges', 'job_order_id', joId), { timeout: 15000 }).toBeGreaterThan(0)
+          verdicts.baseCharge = 'ALIVE'
+        } catch (e) { verdicts.baseCharge = 'DEAD WIRE: filing did not seed the base charge — ' + String(e).slice(0, 90) }
+
+        try {
+          // Open the order in My Job Orders → the detail modal embeds JobOrderCharges.
+          await page.goto(`${BASE}/job-orders`); await settle(page)
+          await page.locator('.ktc-jo-zcard, .ktc-jo-litem').first().click({ timeout: 8000 })
+          const panel = page.locator('.ktc-modal-panel')
+          // The itemized charge breakdown rendered (subtitle is a unique marker)…
+          await expect(panel.getByText(/Every charge on this order/i)).toBeVisible({ timeout: 8000 })
+          // …and the auto-billed base charge exposes its own inline pay action
+          // (replaces the old per-order /pay page).
+          await expect(panel.getByText(/Pay this charge/i).first()).toBeVisible()
+          verdicts.chargeUi = 'ALIVE'
+        } catch (e) { verdicts.chargeUi = 'INCONCLUSIVE (charge UI not confirmed): ' + String(e).slice(0, 90) }
       }
     }
 
@@ -237,10 +275,10 @@ test.describe('customer lifecycle (live v1.7.0)', () => {
       const asUser = createClient(URL, ANON, { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false, autoRefreshToken: false } })
       const { data: custs } = await asUser.from('customers').select('id')
       const { data: rels } = await asUser.from('release_orders').select('customer_id')
-      const { data: jos } = await asUser.from('job_orders').select('broker_id')
+      const { data: jos } = await asUser.from('job_orders').select('customer_id')
       const leakCust = (custs ?? []).some((r) => (r as { id: string }).id !== customerId) || (custs ?? []).length > 1
       const leakRel = (rels ?? []).some((r) => (r as { customer_id: string }).customer_id !== customerId)
-      const leakJo = (jos ?? []).some((r) => (r as { broker_id: string }).broker_id !== customerId)
+      const leakJo = (jos ?? []).some((r) => (r as { customer_id: string }).customer_id !== customerId)
       verdicts.rls = (leakCust || leakRel || leakJo) ? 'LEAK: RLS returned another customer rows' : 'BLOCKED'
     } catch (e) { verdicts.rls = 'ERROR: ' + String(e).slice(0, 120) }
 

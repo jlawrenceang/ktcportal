@@ -54,12 +54,11 @@ export default function BottomNav() {
 
   const ordersActive = loc.pathname.startsWith('/job-order') // /job-order, /job-orders, detail routes
 
-  // Orders needing the customer's action (on hold / fixable rejection / payment
-  // issue) → a badge on the Orders tab. Refetched on navigation so it stays fresh.
+  // Orders needing the customer's action (on hold / a rejected charge proof) → a
+  // badge on the Orders tab. Server-side via the RPC (spans job_orders → charges
+  // post-cutover). Refetched on navigation so it stays fresh.
   useEffect(() => {
-    void supabase.from('job_orders').select('id', { count: 'exact', head: true })
-      .or('status.eq.on_hold,and(payment_status.eq.rejected,status.in.(submitted,processing,completed))')
-      .then(({ count }) => setAttention(count ?? 0))
+    void supabase.rpc('my_attention_count').then(({ data }) => setAttention((data as number) ?? 0))
   }, [loc.pathname])
 
   async function handleSignOut() {

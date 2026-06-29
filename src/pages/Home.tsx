@@ -33,12 +33,13 @@ export default function Home() {
       // Exclude re-X-ray children — they're internal KTC orders hidden from the customer's
       // list (MyJobOrders filters is_rexray=false), so counting them desyncs tile vs list.
       supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false).in('status', ['submitted', 'processing', 'on_hold']),
-      supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false)
-        .or('status.eq.on_hold,and(payment_status.eq.rejected,status.in.(submitted,processing,completed))'),
+      // Needs-attention (on_hold OR a rejected charge) — server-side via the RPC,
+      // since post-cutover it spans job_orders → charges (no single .or() works).
+      supabase.rpc('my_attention_count'),
     ])
     const err = activeRes.error || attentionRes.error
     if (err) { setLoadError(err.message); return }
-    setStats({ active: activeRes.count ?? 0, orderAttention: attentionRes.count ?? 0 })
+    setStats({ active: activeRes.count ?? 0, orderAttention: (attentionRes.data as number) ?? 0 })
   }
   useEffect(() => {
     void loadStats()

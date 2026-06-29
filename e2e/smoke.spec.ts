@@ -69,11 +69,42 @@ test.describe('KTC portal — unauthenticated smoke', () => {
   })
 
   // Staff PWA (/app/*) — the focused single-purpose screens that operational roles now
-  // land on by default (ADR-0035 era). They're admin-gated, so a logged-out hit redirects.
+  // land on by default. They're admin-gated, so a logged-out hit redirects. NOTE the
+  // billing cutover (ADR-0037, v2.0.0): the cashier screen is now the Payment Order
+  // desk — `/app/cashier` is GONE, replaced by `/app/payment-orders`.
   test('protected staff-PWA routes redirect to /login when logged out', async ({ page }) => {
-    for (const path of ['/app', '/app/operations', '/app/cashier', '/app/checker', '/app/support']) {
+    for (const path of ['/app', '/app/operations', '/app/payment-orders', '/app/checker', '/app/support']) {
       await page.goto(path)
       await expect(page).toHaveURL(/\/login$/)
+    }
+  })
+
+  // Billing cutover (ADR-0037, v2.0.0) — the uniform `charges` table is the ONLY
+  // X-ray billing path. The cashier collects via the Payment Order desk and adds/
+  // approves charges via Charge Approval; both are admin-gated, so a logged-out hit
+  // redirects, and the SPA rewrite serves them (no hard 404).
+  test('protected admin billing routes (payment-orders + charges) redirect to /login when logged out', async ({ page }) => {
+    for (const path of ['/admin/payment-orders', '/admin/charges']) {
+      await page.goto(path)
+      await expect(page).toHaveURL(/\/login$/)
+    }
+  })
+
+  test('SPA deep-link /admin/payment-orders is served by the rewrite (HTTP 200)', async ({ page }) => {
+    const res = await page.goto('/admin/payment-orders')
+    expect(res?.status()).toBe(200)
+  })
+
+  // The DELETED billing routes (ADR-0037): the customer Pay page (/job-order/:id/pay)
+  // and the cashier station (/admin/cashier, /app/cashier) no longer exist. They match
+  // no <Route>, so App.tsx's catch-all navigates to "/" (the RootGate) — which for a
+  // logged-out visitor renders the public access menu. The point: served by the SPA
+  // rewrite (HTTP 200) and bounced to "/", never a dead screen.
+  test('deleted billing routes fall through to the root access menu (not a hard 404)', async ({ page }) => {
+    for (const path of ['/job-order/00000000/pay', '/admin/cashier', '/app/cashier']) {
+      const res = await page.goto(path)
+      expect(res?.status()).toBe(200)
+      await expect(page).toHaveURL(/\/$/)
     }
   })
 

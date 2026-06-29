@@ -484,6 +484,7 @@
   .ktc-chip--progress { background: var(--tone-progress-bg); color: var(--tone-progress-ink); }
   .ktc-chip--warning { background: var(--tone-warning-bg); color: var(--tone-warning-ink); }
   .ktc-chip--danger { background: var(--tone-danger-bg); color: var(--tone-danger-ink); }
+  .ktc-chip--error  { background: var(--tone-danger-bg); color: var(--tone-danger-ink); } /* alias — admin charge screens use --error for rejected/cancelled */
   .ktc-chip--accent { background: var(--tone-accent-bg); color: var(--tone-accent-ink); }
 
   /* Modal system — dimmed blurred backdrop + spring scale-in panel */
