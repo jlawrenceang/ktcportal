@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { CheckCircleIcon, AlertTriangleIcon } from '../components/icons'
+import VerifyCharges from '../components/VerifyCharges'
 
 // Public slip-verification page (the slip QR points here). No login: it calls
 // the anon `verify_job_order` RPC and confirms, LIVE against the KTC database,
@@ -77,6 +78,9 @@ export default function Verify() {
                   {v!.completed_at && <Row k="Completed" val={new Date(v!.completed_at).toLocaleString()} />}
                 </tbody>
               </table>
+
+              {/* Authoritative charges — a forged/edited paper invoice won't match these amounts. */}
+              <VerifyCharges jobOrderId={id!} />
 
               <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 10, background: '#f3f6fb', border: '1px solid #dde6f1', fontSize: 11.5, color: '#46566c', lineHeight: 1.5 }}>
                 <b>Check this against the paper.</b> Match the JO number and container numbers above to the physical slip and the actual containers. Genuine KTC verification appears only at <b>portal.ktcterminal.com</b>.

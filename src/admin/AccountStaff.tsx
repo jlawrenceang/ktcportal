@@ -4,6 +4,7 @@ import AdminShell from './AdminShell'
 import Notice, { type NoticeTone } from '../components/Notice'
 import PasswordInput from '../components/PasswordInput'
 import PasswordStrength from '../components/PasswordStrength'
+import MfaRecoveryCodes from '../components/MfaRecoveryCodes'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import { useAuth } from '../lib/AuthContext'
@@ -117,6 +118,9 @@ export default function AccountStaff() {
             </Link>
           </div>
         )}
+
+        {/* One-time recovery codes — break-glass for a lost authenticator device. */}
+        {(broker?.is_admin || broker?.is_owner) && <MfaRecoveryCodes />}
       </div>
     </AdminShell>
   )

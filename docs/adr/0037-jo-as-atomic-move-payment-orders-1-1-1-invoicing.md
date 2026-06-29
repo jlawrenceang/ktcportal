@@ -94,3 +94,13 @@ The portal is **pre-launch** — only seed/test data on prod, no real customer t
 
 * The 2026-06-29 security audit (finding #4 — the invoice-gate bypass) and v1.7.3 `0201` (base-only patch; RPS exempt).
 * Co-design conversation, 2026-06-29 (owner + engineering).
+
+## Addendum 2026-06-29 — Phase A refinement: a uniform charge layer under the JO (not charge-as-JO)
+
+At Phase A build kickoff the owner clarified that KTC's **existing TOS already owns the container move-ledger** (gate-in→gate-out); the portal carries only a **dormant** `container_cycles`/`container_events` scaffold as the future integration seam, and the immediate driver is the X-ray service + **discovered invoice fraud** (fictitious/copied invoices + unwarranted charges). Given that, the body's literal *"every add-on/RPS becomes its own linked Job Order"* is refined:
+
+* The **Job Order remains the customer service request** (X-ray these vans; it owns the queue position, status, consignee).
+* Each billable — base X-ray, RPS move, add-on — is a row in **one uniform `charges` table** hanging off the JO, individually carrying its **ERP + BIR invoice** (draft→final), payment, **maker-checker approval** (add-ons), attribution, and `payment_order_id`.
+* **Payment Orders** bundle whole charges (N:1). `parent_job_order_id` is retained for genuine re-X-ray **child JOs**, not for charges.
+
+**Rationale.** This preserves every Phase-A goal (one billing pipeline; invoice-before-confirm for *every* charge type; compliance + anti-fraud by construction; payment-order collection) and matches the four-layer shape **container → moves → charges → payment orders**, keeping *charge* and *move* as distinct concepts rather than re-collapsing them into the JO. Because the move ledger lives in the TOS (mirrored later via the dormant scaffold), charge-as-JO would add status/serving/consignee baggage + a queue-skip hack without buying the move-spine here. Net: charge=JO (body) → **charge=row-under-JO** (this addendum). Same intent, lighter realization, better layering for the pre-launch POC. The four anti-fraud controls — **authenticity** (QR-verifiable, server-issued), **authorization** (maker-checker), **accountability** (per-charge attribution), **reconciliation** (monthly containers×rate vs cash) — ride on this charge layer. Spec: `docs/specs/xray-phase-a-anti-fraud-billing.md`.

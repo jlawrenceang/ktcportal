@@ -4,6 +4,32 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.8.0 — 2026-06-29 (X-ray Phase A: anti-fraud billing foundation — pre-cutover)
+
+The **ADR-0037 Phase A** build — an anti-fraud reshape of X-ray billing, driven by the June-4 open forum (queue / "questionable charges" / bad CS) **and the owner's discovery of invoice fraud** (fictitious + copied invoices, unwarranted charges). A pre-launch POC; Frappe ERP integration deliberately deferred (manual invoice entry). **All additive, applied to prod, jarvis-verified — the new model is NOT yet wired into the live flow** (the old base/RPS/supplement payment path is still operational); the **cutover is a deferred, dedicated session** (surgical, large blast radius).
+
+**Architecture (ADR-0037 + a dated addendum):** the Job Order stays the X-ray service request; each billable (base X-ray, RPS move, add-on) is a row in a uniform **`charges`** table — *not* charge-as-its-own-JO. Layers: **container → moves (dormant; owned by KTC's existing TOS) → charges → payment orders**. Four anti-fraud controls — **authenticity** (server-issued, QR-verifiable charges), **authorization** (add-ons are maker-checker), **accountability** (every charge/approval/payment attributed in `charge_audit`; ~400 staff), **reconciliation** (monthly containers×rate vs cash).
+
+**Backend (migrations 0202–0211, additive, prod):**
+- **0202** `containers` (ISO-6346 check-digit validated) + dormant `container_cycles`/`container_events` scaffold (RLS-locked — the future TOS-integration seam).
+- **0203** `charges` + `payment_orders` + `job_order_lines.container_id`.
+- **0204** `consignee_rate_overrides` — per-consignee special rates on the single price spine.
+- **0205** `mfa_recovery_codes` + `notification_settings` (per-event email/sms/both/off).
+- **0206** charge lifecycle RPCs — the **universal invoice-before-confirm gate** (every charge type), maker-checker add-ons, payment orders, reversal, `charge_audit`.
+- **0207** MFA recovery RPCs (generate/redeem + owner-only reset) — makes mandating MFA for money roles safe.
+- **0208** `search_consignees` (PII-scoped, anti-scrape) + rate/notification editors + admin-gated monthly reconciliation.
+- **0209** charge-gate hardening — folded the jarvis money-core findings (ad-hoc price is add-on-only; no confirm on a cancelled/rejected JO; null-creator can't self-approve; terminal `reversed` state).
+- **0210** **admin-only** billing cancellation (`cancel_charge`/`cancel_payment_order`; `reverse_charge` already admin/owner).
+- **0211** `verify_job_order_charges` — public anti-forgery RPC for the QR page.
+
+**Frontend (10 new screens, additive, typecheck clean):** customer **JobOrderCharges** (itemized transparent charges) + **VerifyCharges** (public QR charge-authenticity) — both wired; cashier **PaymentOrderDesk**; admin **ChargeApproval** + **Reconciliation** + **ChargeAuditView**; Settings gained **rate-override** + **notification-channel** editors; MFA gained **recovery-code** enrolment + a **lost-device redeem** path + an owner-only **"Reset 2FA"** button.
+
+**UI fix:** the terminal-photo backgrounds were broken (code referenced `/photos/hero-1..5.jpg` + `dash-admin.jpg`, which don't exist — the real files are `/photos/1..23.jpg`). Repointed them and added a **per-role `AppBackdrop`** so every logged-in role (the previously-blank admin/staff shell included) gets a dimmed KTC aerial, with a theme-aware scrim.
+
+**Deferred to the cutover session:** `file_job_order` base-charge creation + container upsert; one-rule completion; monthly serving `YYMM-XXXX`; consignee broker-read RLS tightening (picker → `search_consignees`); staff JO-cancel → admin-only; the destructive drops (`rps_payment_*`, supplements-as-billing, `terminal_rates`, old invoice fields) — atomic, with jarvis + e2e + a data-isolated break-test. Plus the user-facing manuals / tours / walkthrough video.
+
+`APP_VERSION` v1.7.5 → v1.8.0. tsc clean; build + i18n verified at ship.
+
 ## v1.7.5 — 2026-06-29 (MFA gate covers the whole app)
 
 Follow-up to v1.7.4: the MFA challenge lived at the route level (`ProtectedRoute`), so App-root overlays (`FirstRunSetup`, `SessionSupersededOverlay`) sat *beside* it and could surface at aal1. Added a **top-level `MfaGate`** in `App.tsx`: when a session is at aal1 with `nextLevel='aal2'`, it renders **only** `MfaChallenge` — the entire app (routes, both shells, notifications, Lara, tours, modals, the setup modal) is now *behind* the gate. The connectivity banner (`ServerBusyBanner`) is the one intentional exception. Public/logged-out paths (`/login`, `/agreement`, `/confirmed`, `/verify/:id`) bypass it; `/verify-id` stays gated. jarvis-verified: no aal1 leak, uncircumventable (backend also fails closed at aal1), no lockout/loop. A wrong MFA code does not kick you out — you retry.

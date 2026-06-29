@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 // Public landing hero background — a dependency-free crossfade slideshow of the
 // owner's real KTC terminal aerials. Five 1920px-wide optimized JPEGs
-// (public/photos/hero-1..5.jpg) are stacked and cross-faded ~5s apart.
+// (public/photos/*.jpg — the owner's real KTC aerials) are stacked + cross-faded ~5s apart.
 //
 // Behaviour:
 //  · prefers-reduced-motion → no timer, no transition; ONLY the first slide is
@@ -21,11 +21,11 @@ type Slide = { src: string; pos: string }
 // pos = object-position focal point so the cranes / yard / waterline stay in
 // frame when the 16:9 photo is cover-cropped (notably a phone's tall viewport).
 const SLIDES: Slide[] = [
-  { src: '/photos/hero-1.jpg', pos: 'center 48%' }, // wide aerial — terminal peninsula, cranes, water
-  { src: '/photos/hero-2.jpg', pos: 'center 52%' }, // colourful container stacks + red gantry cranes
-  { src: '/photos/hero-3.jpg', pos: 'center 50%' }, // ship-to-shore quay cranes head-on
-  { src: '/photos/hero-4.jpg', pos: 'center 50%' }, // container vessel berthed + city backdrop
-  { src: '/photos/hero-5.jpg', pos: 'center 42%' }, // wide aerial — blue sea + horizon
+  { src: '/photos/1.jpg', pos: 'center 55%' },  // wide aerial — terminal peninsula, cranes, water
+  { src: '/photos/16.jpg', pos: 'center 50%' }, // two vessels berthed at the quay
+  { src: '/photos/8.jpg', pos: 'center 50%' },  // yard + teal waterline + cement silos
+  { src: '/photos/3.jpg', pos: 'center 50%' },  // terminal aerial
+  { src: '/photos/11.jpg', pos: 'center 50%' }, // terminal aerial
 ]
 
 const INTERVAL_MS = 5000

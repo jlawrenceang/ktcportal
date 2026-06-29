@@ -131,7 +131,7 @@ export default function Dashboard() {
     <AdminShell>
       <div
         className="ktc-photo-banner ktc-photo-banner--tight"
-        style={{ backgroundImage: "url('/photos/dash-admin.jpg')" }}
+        style={{ backgroundImage: "url('/photos/16.jpg')" }}
         aria-hidden="true"
       />
       <div className="ktc-home-head">

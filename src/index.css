@@ -41,6 +41,26 @@
     background: radial-gradient(circle at 60% 60%, rgba(38, 106, 175, 0.08), rgb(var(--acc-rgb) / 0.05) 55%, transparent 72%);
     animation: ktc-drift-b 32s var(--ease-spring) infinite alternate;
   }
+  /* Logged-in app backdrop — a dimmed KTC terminal aerial behind the shell, one
+     per role (set by <AppBackdrop/> via --app-bg-photo). The scrim adapts to
+     light/dark through --cc-canvas so dense ops content stays readable; the photo
+     reads through the gutters and behind the glass. */
+  .ktc-app-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to bottom,
+        color-mix(in srgb, var(--cc-canvas) 85%, transparent),
+        color-mix(in srgb, var(--cc-canvas) 70%, transparent) 42%,
+        color-mix(in srgb, var(--cc-canvas) 88%, transparent)),
+      var(--app-bg-photo, none);
+    background-size: cover, cover;
+    background-position: center, center;
+    background-repeat: no-repeat, no-repeat;
+  }
+
   @keyframes ktc-drift-a {
     from { transform: translate(0, 0) scale(1); }
     to { transform: translate(6vmax, 4vmax) scale(1.08); }

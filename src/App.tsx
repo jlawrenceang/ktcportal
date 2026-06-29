@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Suspense, useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react'
 import { lazyWithReload } from './lib/lazyWithReload'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './lib/AuthContext'
@@ -62,6 +62,10 @@ const AccountStaff = lazyWithReload(() => import('./admin/AccountStaff'))
 const SupportInbox = lazyWithReload(() => import('./admin/SupportInbox'))
 const AdminNotifications = lazyWithReload(() => import('./admin/NotificationsPage'))
 const AdminReleases = lazyWithReload(() => import('./admin/Releases'))
+const PaymentOrderDesk = lazyWithReload(() => import('./admin/PaymentOrderDesk'))
+const ChargeApproval = lazyWithReload(() => import('./admin/ChargeApproval'))
+const Reconciliation = lazyWithReload(() => import('./admin/Reconciliation'))
+const ChargeAuditView = lazyWithReload(() => import('./admin/ChargeAuditView'))
 
 function Protected({ children }: { children: ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>
@@ -138,6 +142,35 @@ function PublicBackdrop() {
   )
 }
 
+// Logged-in app backdrop — a dimmed KTC terminal aerial behind the shell, one per
+// role (the staff side was previously blank). Skips the public auth flow (PublicBackdrop
+// owns that) and the public /verify QR page. Edit ROLE_PHOTO to re-assign images.
+const APP_BG_PUBLIC = new Set([
+  '/', '/login', '/register', '/confirmed', '/forgot-password', '/reset-password',
+  '/agreement', '/irr', '/terms', '/privacy',
+])
+const ROLE_PHOTO: Record<string, number> = {
+  customer: 1, owner: 3, admin: 16, operations: 11, cashier: 8, checker: 20, csr: 5,
+}
+function AppBackdrop() {
+  const { session } = useAuth()
+  const { broker } = useBroker()
+  const { pathname } = useLocation()
+  if (!session || APP_BG_PUBLIC.has(pathname) || pathname.startsWith('/verify/')) return null
+  const role = !broker ? 'customer'
+    : broker.is_owner ? 'owner'
+    : broker.staff_role ? broker.staff_role
+    : broker.is_admin ? 'admin' : 'customer'
+  const n = ROLE_PHOTO[role] ?? 1
+  return (
+    <div
+      className="ktc-app-backdrop"
+      aria-hidden
+      style={{ '--app-bg-photo': `url('/photos/${n}.jpg')` } as CSSProperties}
+    />
+  )
+}
+
 // Pre-auth / public paths where a (possibly transient) session must NOT be
 // MFA-gated: the login flow, email-confirmation, password reset, the public
 // agreement, and the public slip-verification QR target (/verify/:id).
@@ -189,6 +222,7 @@ export default function App() {
         <FirstRunSetup />
         <SessionSupersededOverlay />
         <PublicBackdrop />
+        <AppBackdrop />
         <Suspense fallback={<RouteLoader />}>
         <RouteFade>
         <Routes>
@@ -235,6 +269,7 @@ export default function App() {
           <Route path="/app" element={<Protected><AppHome /></Protected>} />
           <Route path="/app/checker" element={<Admin><AppChecker /></Admin>} />
           <Route path="/app/cashier" element={<Admin><CashierStation app /></Admin>} />
+          <Route path="/app/payment-orders" element={<Admin><PaymentOrderDesk app /></Admin>} />
           <Route path="/app/support" element={<Admin><SupportInbox app /></Admin>} />
           <Route path="/app/operations" element={<Admin><AllJobOrders app /></Admin>} />
 
@@ -249,6 +284,10 @@ export default function App() {
           <Route path="/admin/new-job-order" element={<Admin><AdminNewJobOrder /></Admin>} />
           <Route path="/admin/checker" element={<Admin><Checker /></Admin>} />
           <Route path="/admin/cashier" element={<Admin><CashierStation /></Admin>} />
+          <Route path="/admin/payment-orders" element={<Admin><PaymentOrderDesk /></Admin>} />
+          <Route path="/admin/charges" element={<Admin><ChargeApproval /></Admin>} />
+          <Route path="/admin/reconciliation" element={<Admin><Reconciliation /></Admin>} />
+          <Route path="/admin/charge-audit" element={<Admin><ChargeAuditView /></Admin>} />
           <Route path="/admin/releases" element={<Admin><AdminReleases /></Admin>} />
           <Route path="/admin/vessel-schedule" element={<Admin><VesselSchedule /></Admin>} />
           <Route path="/admin/logs" element={<Admin><Logs /></Admin>} />

@@ -43,6 +43,10 @@ const BulletinIcon = () => (<svg {...ip}><path d="M3 11l15-7v16l-15-7z" /><path 
 const DashIcon = GridIcon
 
 const ReleaseIcon = () => (<svg {...ip}><rect x="2" y="7" width="13" height="11" rx="1" /><path d="M15 11h4l3 3v4h-7" /><path d="M6 18.5a1.5 1.5 0 0 0 3 0M16 18.5a1.5 1.5 0 0 0 3 0" /></svg>)
+const ReceiptIcon = () => (<svg {...ip}><path d="M5 3v18l2-1.5L9 21l2-1.5L13 21l2-1.5L17 21l2-1.5V3l-2 1.5L15 3l-2 1.5L11 3 9 4.5 7 3 5 4.5z" /><path d="M8 8.5h8M8 12h8M8 15.5h5" /></svg>)
+const TagIcon = () => (<svg {...ip}><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.83 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z" /><path d="M7 7h.01" /></svg>)
+const ScaleIcon = () => (<svg {...ip}><path d="M12 3v18M5 21h14M6 7l-3 7h6zM18 7l-3 7h6zM6 7l6-1.5L18 7" /></svg>)
+const HistoryIcon = () => (<svg {...ip}><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 4v4h4" /><path d="M12 8v4l3 2" /></svg>)
 
 export type Dest = { to: string; label: string; perm?: Permission; anyPerm?: Permission[]; icon: ReactNode; end?: boolean }
 export const canSee = (d: Dest, can: (p: Permission) => boolean) =>
@@ -56,6 +60,9 @@ export const GRID: Dest[] = [
   { to: '/admin/new-job-order', label: 'New JO', perm: 'file_job_orders', icon: <NewIcon /> },
   { to: '/admin/checker', label: 'X-ray Queue', perm: 'view_xray_queue', icon: <CheckerIcon /> },
   { to: '/admin/cashier', label: 'Cashier', perm: 'review_payments', icon: <CashIcon /> },
+  { to: '/admin/payment-orders', label: 'Payment Orders', perm: 'review_payments', icon: <ReceiptIcon /> },
+  { to: '/admin/charges', label: 'Charges', perm: 'complete_orders', icon: <TagIcon /> },
+  { to: '/admin/charge-audit', label: 'Charge Audit', perm: 'review_payments', icon: <HistoryIcon /> },
   { to: '/admin/releases', label: 'Releases', anyPerm: ['verify_release_docs', 'review_payments'], icon: <ReleaseIcon /> },
   { to: '/admin/approvals', label: 'Approvals', perm: 'manage_approvals', icon: <ApprovalsIcon /> },
   { to: '/admin/customers', label: 'Customers', perm: 'manage_customers', icon: <UsersIcon /> },
@@ -64,6 +71,7 @@ export const GRID: Dest[] = [
   { to: '/calculator', label: 'Rate Calculator', icon: <CalcIcon /> },
   { to: '/admin/bulletin', label: 'Bulletin', perm: 'manage_pricing', icon: <BulletinIcon /> },
   { to: '/admin/settings', label: 'Settings', perm: 'manage_pricing', icon: <GearIcon /> },
+  { to: '/admin/reconciliation', label: 'Reconciliation', perm: 'manage_approvals', icon: <ScaleIcon /> },
   { to: '/admin/logs', label: 'Logs', perm: 'manage_approvals', icon: <LogsIcon /> },
   { to: '/admin/support', label: 'Support', perm: 'manage_support', icon: <SupportIcon /> },
   { to: '/admin/security', label: '2FA', perm: 'manage_approvals', icon: <ShieldIcon /> },

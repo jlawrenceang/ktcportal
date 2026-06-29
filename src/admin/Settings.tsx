@@ -13,6 +13,8 @@ import { peso } from '../lib/pricing'
 import { SHIPPING_LINES, TERMINAL_CHARGE_SERVICES, CHARGE_RULE_ACTIONS, tradeLabel, type Origin } from '../lib/shippingLines'
 import OriginPill from '../components/OriginPill'
 import { LockIcon, PencilIcon } from '../components/icons'
+import SettingsRateOverrides from './SettingsRateOverrides'
+import SettingsNotifications from './SettingsNotifications'
 
 // Per-service rate granularity (0157): each service's rate can vary by any subset
 // of these dimensions (or none = uniform). Storage is handled separately (tiered).
@@ -710,6 +712,18 @@ export default function Settings() {
     await load()
   }
 
+  // Owner-only: clear a staff member's two-factor factor + recovery codes (lost
+  // device). Server-enforced owner-only (reset_staff_mfa, 0207) — a click instead
+  // of raw DB surgery; they re-enroll on next sign-in.
+  async function resetStaffMfa(b: Broker) {
+    if (b.is_owner) return
+    setBusy(true); setError(null); setNotice(null)
+    const { error } = await supabase.rpc('reset_staff_mfa', { p_user: b.id })
+    setBusy(false)
+    if (error) return setError(error.message)
+    setNotice(t('Two-factor reset for {email} — they can re-enroll on next sign-in.', { email: b.email ?? '' }))
+  }
+
   // T2-26: matrix rows = distinct permissions present in role_permissions,
   // ordered by GATE_LABELS, with any unlabeled/future gate sorted alphabetically
   // after the known set (and shown by its raw key).
@@ -815,6 +829,8 @@ export default function Settings() {
           )}
         </div>
       )}
+
+      {tab === 'ops' && <SettingsNotifications />}
 
       <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'pricing' ? undefined : 'none' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
@@ -1381,6 +1397,8 @@ export default function Settings() {
         </div>
       </div>
 
+      {tab === 'pricing' && <SettingsRateOverrides />}
+
       {isOwner && (
         <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'access' ? undefined : 'none' }}>
           <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Roles & gates')}</h2>
@@ -1482,6 +1500,9 @@ export default function Settings() {
                         {t('Send reset email')}
                       </button>
                     )}
+                    <button className="ktc-link" disabled={busy} onClick={() => void resetStaffMfa(b)} style={{ fontSize: 13 }}>
+                      {t('Reset 2FA')}
+                    </button>
                     <button className="ktc-link" disabled={busy} onClick={() => revoke(b)} style={{ fontSize: 13, fontWeight: 600 }}>
                       {t('Revoke access')}
                     </button>

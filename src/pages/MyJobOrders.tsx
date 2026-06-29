@@ -13,6 +13,7 @@ import { useBroker } from '../lib/useBroker'
 import JoTimeline from '../components/JoTimeline'
 import EditJobOrderForm from '../components/EditJobOrderForm'
 import ReleaseTracks from '../components/ReleaseTracks'
+import JobOrderCharges from '../components/JobOrderCharges'
 import SearchPicker, { type PickerItem } from '../components/SearchPicker'
 import ContainerLinesEditor, { emptyLine, type LineDraft } from '../components/ContainerLinesEditor'
 import { searchConsignees } from '../lib/pickerSearches'
@@ -490,7 +491,10 @@ export default function MyJobOrders() {
                 </div>
 
                 {['submitted', 'processing', 'on_hold', 'completed'].includes(o.status) && (
-                  <div style={{ marginTop: 16 }}><ReleaseTracks o={o} /></div>
+                  <>
+                    <div style={{ marginTop: 16 }}><ReleaseTracks o={o} /></div>
+                    <div style={{ marginTop: 16 }}><JobOrderCharges jobOrderId={o.id} /></div>
+                  </>
                 )}
 
                 <div style={{ marginTop: 16 }}>

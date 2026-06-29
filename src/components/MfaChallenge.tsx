@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { useT } from '../lib/i18n'
+import MfaRecoveryRedeem from './MfaRecoveryRedeem'
 
 // Shown after password sign-in when the account has a verified TOTP factor
 // but the session is still aal1. Verifying upgrades the session to aal2 —
@@ -79,6 +80,8 @@ export default function MfaChallenge({ onVerified }: { onVerified: () => void })
             {t('Sign out')}
           </button>
         </form>
+        {/* Lost-device break-glass: redeem a one-time recovery code to drop MFA and re-enroll. */}
+        <MfaRecoveryRedeem />
       </div>
     </div>
   )
