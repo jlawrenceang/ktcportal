@@ -135,14 +135,6 @@ export interface JoSupplement {
   created_at?: string
 }
 
-/** True when an order carries an additional charge that isn't yet paid —
- *  the order is "under review" until it's settled. */
-export function hasOutstandingSupplements(
-  o: { supplements?: JoSupplement[] | null },
-): boolean {
-  return (o.supplements ?? []).some((s) => s.amount > 0 && s.payment_status !== 'confirmed')
-}
-
 export interface JobOrderEvent {
   id: string
   event: string
