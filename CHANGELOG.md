@@ -4,6 +4,27 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v2.0.0 — 2026-06-29 (X-ray Phase A CUTOVER — charges are the ONLY billing path)
+
+The **ADR-0037 cutover**: the new `charges` spine is now the only X-ray billing path; the old base/RPS/supplement/service-invoice billing is **deleted**. Ruthless + atomic, pre-launch (disposable data). Verified — independent **Jarvis** review (found 2 money edges, both fixed), ~10 transactional DB probes (apply→assert→rollback), security invariants, i18n, typecheck + build — all green. Spec: `docs/specs/xray-phase-a-cutover.md`.
+
+**Stage 1 — build the charges flow to parity (additive):**
+- **0212** filing (`file_job_order` / `admin_file_job_order` / `update_job_order`) seeds the base `service` charge off `effective_rate` + find-or-creates + links containers (`seed_job_order_billing`, money-safe re-seed).
+- **0213** RPS assessment seeds `rps` charges off `move_rates` (`seed_rps_charges`).
+- **0214 / 0215** charges go release-aware (nullable `release_order_id` + XOR parent + `release` type); release base + supplements dual-write into charges; `confirm_charge_payment` / `create_payment_order` / `confirm_payment_order` made parent-aware (job order **or** release).
+
+**Stage 2 — the flip + the drops:**
+- **0216** one-rule completion — services done **and** every billed charge paid (reversed exempt); auto-complete moved from the old payment column to a `charges` trigger.
+- **0217** serving number resets **monthly**, displayed `YYMM-XXXX`.
+- **0218** tighten consignee read — no mass PII scrape; full row only for own requested/ordered consignees; browse via `search_consignees` (id/code/name).
+- **0219** customer self-cancel blocked once billing is in flight; new **admin-only** `admin_cancel_job_order(reason)`.
+- **0220** **DROP** the old X-ray billing — `jo_supplements`, the `job_orders` payment / rps-payment / `service_invoice_no` / `invoice_pad_no` / `has_open_supplement` columns, and ~14 dead RPCs; 7 dependent functions recreated charge-derived (incl. `verify_job_order` with an unchanged public signature).
+- **0221** revoke the charge auto-complete trigger function's PostgREST ACL (security invariant).
+- **0222** close 2 Jarvis money edges — a reversed (credit-note) charge can no longer be re-confirmed via a payment order; editing a JO is blocked once a charge is past pristine (closes an under-bill window).
+- **Frontend (charges-only):** deleted `CashierStation` + the customer `Payment` page + `lib/joPayment`; `chargeState` / `chargeHasProofToReview` replace the old payment helper across MyJobOrders / AllJobOrders / Dashboard / counts / chat / release.ts; consignee picker → `search_consignees`; serving display → `YYMM-XXXX`; admin "Cancel order" action.
+
+**Kept:** the release desk (charge-shadowed — full UI switch is a fast-follow), `terminal_rates` (the calculator's terminal tariff, not a billing duplicate), `rps_moves` / `rps_status` (X-ray assessment). **Deferred:** e2e spec update + data-isolated sandbox break-test + the manuals / demo tours / walkthrough video.
+
 ## v1.8.0 — 2026-06-29 (X-ray Phase A: anti-fraud billing foundation — pre-cutover)
 
 The **ADR-0037 Phase A** build — an anti-fraud reshape of X-ray billing, driven by the June-4 open forum (queue / "questionable charges" / bad CS) **and the owner's discovery of invoice fraud** (fictitious + copied invoices, unwarranted charges). A pre-launch POC; Frappe ERP integration deliberately deferred (manual invoice entry). **All additive, applied to prod, jarvis-verified — the new model is NOT yet wired into the live flow** (the old base/RPS/supplement payment path is still operational); the **cutover is a deferred, dedicated session** (surgical, large blast radius).
