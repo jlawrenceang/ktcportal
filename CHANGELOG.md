@@ -4,6 +4,14 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v2.0.4 — 2026-06-29 (seeded battery — Payment-Order collection fix)
+
+The seeded test-project suite (authenticated e2e + gated roast/ux + the 5-gate money break-test, on an isolated project with real seeded charges) confirmed the cutover is sound — **all 5 anti-fraud gates BLOCKED, the charge path ALIVE, the authenticated mutation lanes pass 5/5, the gated screens score 92/100, photos load, a11y labels render** — and caught the sibling of the `0225` bug:
+
+- **CRITICAL (`0226`):** `confirm_payment_order` declared a loop var `c record` that collided with the table alias `public.charges c` in the `0222` cancelled/rejected guard → PL/pgSQL bound `c.*` to the unassigned record, so every call raised `record "c" is not assigned yet`. The cashier's "Collect & confirm" on a bundled Payment Order always errored — collection was non-functional since `0222` (anti-fraud still held: the txn rolled back). Fixed: renamed the loop var to `rec`. Verified end-to-end on the seeded project (create → confirm → collected, both charges confirmed).
+
+Also un-fixme'd the X-ray billing mutation lanes in `authenticated.spec.ts` (real minted-JWT RPC tests) + fixed two `mintSession` harness gaps, so the authenticated suite runs against a seeded project.
+
 ## v2.0.3 — 2026-06-29 (re-confirm battery — Payment-Order desk fix)
 
 The re-run battery confirmed the v2.0.1/v2.0.2 remediation held on prod (orphans gone, charge path now e2e-verified, photos load, a11y labels landed, `0224` holds, **all 5 money gates intact**) and caught one more latent blocker:

@@ -45,6 +45,16 @@ export async function mintSession(page: Page, email: string): Promise<void> {
   const link = data.properties?.action_link
   if (!link) throw new Error(`no action_link returned for ${email}`)
 
+  // Skip the per-user first-run "Quick setup" overlay (language + notifications),
+  // which is keyed per-uid in localStorage and otherwise covers the page on a fresh
+  // browser context — blocking the RootGate redirect to /admin or the broker home.
+  const uid = data.user?.id
+  if (uid) {
+    await page.addInitScript((u) => {
+      try { localStorage.setItem(`ktc_lang_chosen_${u}`, '1'); localStorage.setItem(`ktc_setup_done_${u}`, '1') } catch { /* ignore */ }
+    }, uid)
+  }
+
   // Start clean, then follow the magic link to establish the session.
   await page.goto(`${BASE_URL}/login`)
   await page.evaluate(() => window.localStorage.clear())
@@ -57,4 +67,15 @@ export async function mintSession(page: Page, email: string): Promise<void> {
     undefined,
     { timeout: 20000 },
   )
+
+  // KTC enforces ONE session per account (claim_session). If the account already has
+  // an active session elsewhere, the app shows an "Already signed in on another device"
+  // guard that covers the page and blocks the role redirect. Claim this browser as the
+  // active session so the caller lands cleanly. (No-op for an account with no prior session.)
+  await page.goto(`${BASE_URL}/`).catch(() => {})
+  const term = page.getByRole('button', { name: /Terminate other session/i })
+  // Wait up to 6s for the guard to render (it boots async); click to claim. Times out
+  // harmlessly for a fresh account that has no other session.
+  try { await term.waitFor({ state: 'visible', timeout: 6000 }); await term.click(); await page.waitForTimeout(800) } catch { /* no guard */ }
+  if (await term.isVisible().catch(() => false)) { await term.click().catch(() => {}); await page.waitForTimeout(800) }
 }
