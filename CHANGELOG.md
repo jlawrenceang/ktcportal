@@ -4,6 +4,12 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.7.4 — 2026-06-29 (MFA-ordering fix)
+
+**Bug:** on login, the first-run setup modal (language + notifications) appeared **before** the MFA challenge, because `FirstRunSetup` renders at the App root (outside `ProtectedRoute`, where the aal2 gate lives) and didn't check the MFA level. **Fix:** `FirstRunSetup` now reads the authenticator-assurance level and stays hidden while the MFA challenge is pending — so MFA always comes first, then the setup.
+
+`APP_VERSION` v1.7.3 → v1.7.4. tsc clean.
+
 ## v1.7.3 — 2026-06-29 (Security audit fixes + Hybrid admin layout)
 
 The security-audit remediation (adversarially verified — 7 confirmed of 15, 8 false-positives refuted) + the roast's admin-layout fix. jarvis verified the whole batch and caught two blockers before prod (an RPS-confirm break + a customer-nav-loss) — both fixed.

@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useT, type Lang } from '../lib/i18n'
 import { pushSupported, isPushOn, enablePush } from '../lib/push'
+import { supabase } from '../lib/supabase'
 import { GlobeIcon, BellIcon } from './icons'
 
 // Public / auth-flow routes where setup must NOT appear — most importantly
@@ -33,6 +34,7 @@ export default function FirstRunSetup() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [done, setDone] = useState(false) // session-local dismiss — survives a failed localStorage write
+  const [mfaPending, setMfaPending] = useState(false) // hold setup until the MFA challenge is satisfied
 
   // Reflect an already-subscribed device as "On"; if permission was already
   // granted on this device but there's no subscription yet, re-subscribe quietly
@@ -50,7 +52,18 @@ export default function FirstRunSetup() {
     return () => { cancelled = true }
   }, [supported, session])
 
-  if (!session || setupDone || done || PRE_AUTH_PATHS.has(pathname)) return null
+  // MFA comes FIRST: don't show setup over the aal2 challenge. Wait until the
+  // factor is satisfied (or there's no MFA requirement) before the setup modal.
+  useEffect(() => {
+    if (!session) { setMfaPending(false); return }
+    let active = true
+    supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data }) => {
+      if (active) setMfaPending((data?.nextLevel ?? 'aal1') === 'aal2' && (data?.currentLevel ?? 'aal1') !== 'aal2')
+    }).catch(() => { if (active) setMfaPending(false) })
+    return () => { active = false }
+  }, [session])
+
+  if (!session || mfaPending || setupDone || done || PRE_AUTH_PATHS.has(pathname)) return null
 
   const langs: { value: Lang; label: string }[] = [
     { value: 'en', label: 'English' },
