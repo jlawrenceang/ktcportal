@@ -16,6 +16,11 @@
 export const tl: Record<string, string> = {
   "Awaiting ops acceptance": "Naghihintay na tanggapin ng operations",
   "Admin sections": "Mga seksyon ng admin",
+  // --- cutover: admin cancel-order ---
+  "Cancel order": "Kanselahin ang order",
+  "A reason is required to cancel an order.": "Kailangan ng dahilan para kanselahin ang isang order.",
+  "Cancel this order? Enter a reason (the customer and the timeline will see it).": "Kanselahin ang order na ito? Maglagay ng dahilan (makikita ito ng customer at sa timeline).",
+  "Archives every completed & fully-paid order. Also runs automatically every Monday.": "Ina-archive ang bawat completed at fully-paid na order. Awtomatiko ring tumatakbo tuwing Lunes.",
   // --- Phase-5 batch: error-blind loaders + specific highs ---
   "Couldn't load — tap Retry": "Hindi ma-load — i-tap ang Subukan ulit",
   "Retry": "Subukan ulit",
