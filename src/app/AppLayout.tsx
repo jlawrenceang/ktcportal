@@ -30,7 +30,7 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
 
   async function lock() {
     await signOut()
-    navigate('/login', { replace: true })
+    navigate('/', { replace: true })
   }
 
   const idleWarning = useIdleLogout(() => {

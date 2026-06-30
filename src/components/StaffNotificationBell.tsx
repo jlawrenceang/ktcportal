@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate, type NavigateFunction } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
-import PushToggle from './PushToggle'
 import NotificationRow from './NotificationRow'
 import { useT } from '../lib/i18n'
 import { BellIcon, CreditCardIcon, ChatIcon, IdCardIcon, BuildingIcon, ReceiptIcon, RefreshIcon, type IconProps } from './icons'
@@ -62,6 +61,7 @@ export default function StaffNotificationBell() {
   const [readIds, setReadIds] = useState<Set<string>>(new Set())
   const [unread, setUnread] = useState(0)
   const [open, setOpen] = useState(false)
+  const [hideRead, setHideRead] = useState(false)
   const wrapRef = useRef<HTMLSpanElement>(null)
 
   // Exact unread badge (0189) — not derived from the latest-20 window, which
@@ -152,13 +152,13 @@ export default function StaffNotificationBell() {
             )}
           </div>
 
-          {items.length === 0 ? (
+          {items.filter((x) => !hideRead || !readIds.has(x.id)).length === 0 ? (
             <p className="ktc-label" style={{ fontSize: 12.5, padding: '18px 14px', opacity: 0.75, margin: 0 }}>
               {t('No notifications yet.')}
             </p>
           ) : (
             <div style={{ maxHeight: 360, overflowY: 'auto', padding: 6 }}>
-              {items.map((n) => (
+              {items.filter((x) => !hideRead || !readIds.has(x.id)).map((n) => (
                 <NotificationRow
                   key={n.id}
                   icon={(ICON[n.kind] ?? BellIcon)({ size: 17 })}
@@ -178,7 +178,16 @@ export default function StaffNotificationBell() {
           >
             {t('View all')}
           </button>
-          <PushToggle variant="bell" />
+          {items.some((x) => readIds.has(x.id)) && (
+            <button
+              type="button"
+              className="ktc-link"
+              style={{ display: 'block', width: '100%', textAlign: 'center', fontSize: 12, padding: '0 14px 10px' }}
+              onClick={() => setHideRead((v) => !v)}
+            >
+              {hideRead ? t('Show read notifications') : t('Hide read notifications')}
+            </button>
+          )}
         </div>
       )}
     </span>

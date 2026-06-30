@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useT } from '../lib/i18n'
 import { supabase } from '../lib/supabase'
 import { isNativeApp } from '../lib/nativeDevice'
+import Notice from './Notice'
 
 // The menu ("/") — the ways in: Sign in / Create an account / (optionally) Continue with Google.
 // Google is HIDDEN until the provider + consent-screen branding are configured in Supabase
@@ -15,6 +16,18 @@ export default function AuthRail() {
   const { t } = useT()
   const nativeApp = isNativeApp()
   const [oauthError, setOauthError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (sessionStorage.getItem('ktc_idle_logout')) {
+      const mins = sessionStorage.getItem('ktc_idle_logout')
+      setNotice(t('You were signed out after {mins} minutes of inactivity. Please sign in again.', { mins: /^\d{2,}$/.test(mins ?? '') ? (mins ?? '15') : '15' }))
+      sessionStorage.removeItem('ktc_idle_logout')
+    } else if (sessionStorage.getItem('ktc_session_superseded')) {
+      setNotice(t('You were signed out because this account signed in on another device or browser. If that wasn’t you, change your password now.'))
+      sessionStorage.removeItem('ktc_session_superseded')
+    }
+  }, [t])
 
   async function signInWithGoogle() {
     // New Google users come back with a verified email but no consent/contact — ProtectedRoute
@@ -30,6 +43,7 @@ export default function AuthRail() {
   return (
     <>
       <div className="ktc-landing__cta">
+        {notice && <Notice tone="info">{notice}</Notice>}
         <Link to="/login" className="ktc-btn" style={{ textDecoration: 'none' }}>
           {t('Sign in')}
         </Link>

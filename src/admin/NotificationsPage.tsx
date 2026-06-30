@@ -21,6 +21,7 @@ export default function NotificationsPage() {
   const [limit, setLimit] = useState(PAGE)
   const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [hideRead, setHideRead] = useState(false)
 
   const load = useCallback(async (lim: number) => {
     const [{ data: notifs }, { data: reads }] = await Promise.all([
@@ -48,22 +49,36 @@ export default function NotificationsPage() {
     }
     routeStaffNotif(n, navigate)
   }
+  function markAll() {
+    setReadIds((prev) => {
+      const next = new Set(prev)
+      items.forEach((n) => next.add(n.id))
+      return next
+    })
+    void supabase.rpc('mark_staff_notifications_read', { p_ids: null }).then(() => undefined, () => undefined)
+  }
+
+  const visibleItems = items.filter((x) => !hideRead || !readIds.has(x.id))
 
   return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 18 }}>
         <h1 className="ktc-title">{t('Notifications')}</h1>
         <p className="ktc-sub" style={{ marginBottom: 14 }}>{t('Staff notifications you can see, newest first.')}</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          {items.some((x) => !readIds.has(x.id)) && <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={markAll}>{t('Mark all as read')}</button>}
+          {items.some((x) => readIds.has(x.id)) && <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => setHideRead((v) => !v)}>{hideRead ? t('Show read notifications') : t('Hide read notifications')}</button>}
+        </div>
 
         {loading ? (
           <div style={{ display: 'grid', gap: 10 }}>
             {[52, 52, 52, 52].map((h, i) => <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 10 }} />)}
           </div>
-        ) : items.length === 0 ? (
+        ) : visibleItems.length === 0 ? (
           <p className="ktc-label" style={{ fontSize: 14 }}>{t('No notifications yet.')}</p>
         ) : (
           <div style={{ display: 'grid', gap: 2 }}>
-            {items.map((n) => (
+            {visibleItems.map((n) => (
               <NotificationRow
                 key={n.id}
                 icon={(ICON[n.kind] ?? BellIcon)({ size: 17 })}

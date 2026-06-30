@@ -68,6 +68,10 @@ function SlipCharge({ label, value }: { label: string; value: string }) {
   )
 }
 
+function printEstimate() {
+  window.print()
+}
+
 export default function Calculator() {
   const { t } = useT()
   usePageTour('calculator', calculatorSteps)
@@ -122,6 +126,9 @@ export default function Calculator() {
   }, [])
 
   useEffect(() => { setGenerated(false) }, [line, vesselVisit, origin, trade, pickupDate, cells, addedSvcs, svcCounts, reeferVans, plugIn, plugOut])
+  useEffect(() => {
+    if (trade === 'transhipment') setTrade('import')
+  }, [trade])
 
   const lineVessels = useMemo(
     () => (line ? vessels.filter((v) => normLine(v.shipping_line) === normLine(line)) : vessels),
@@ -391,8 +398,6 @@ export default function Calculator() {
                 seg(trade, setTrade, [
                   { v: 'import' as Trade, label: `${tradeLabel('import', origin)} (${tradeAction('import')})` },
                   { v: 'export' as Trade, label: `${tradeLabel('export', origin)} (${tradeAction('export')})` },
-                  // Transhipment is foreign-only (its own storage bands).
-                  ...(origin === 'foreign' ? [{ v: 'transhipment' as Trade, label: tradeLabel('transhipment', origin) }] : []),
                 ]),
               )}
               {fieldRow(
@@ -537,10 +542,14 @@ export default function Calculator() {
               <p className="ktc-label" style={{ fontSize: 11.5, marginTop: 12 }}>
                 {t('Other services (RPS, equipment rental, stripping) are quoted per request — ask KTC.')}
               </p>
-              <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => window.print()}
-                style={{ width: '100%', marginTop: 12 }}>
-                {t('Print / Save as PDF')}
-              </button>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+                <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={printEstimate} disabled={!generated}>
+                  {t('Print')}
+                </button>
+                <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={printEstimate} disabled={!generated}>
+                  {t('Save as PDF')}
+                </button>
+              </div>
             </>
           )}
         </div>

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
@@ -17,6 +17,7 @@ import BottomNav from './BottomNav'
 import Clock from './Clock'
 import ChatWidget from './chat/ChatWidget'
 import NeedHelp from './NeedHelp'
+import Modal from './Modal'
 
 const IDLE_LOGOUT_MS = 15 * 60 * 1000 // auto sign-out after 15 min of inactivity (warning at 14)
 
@@ -37,10 +38,9 @@ export default function Shell({ children, wide }: { children: ReactNode; wide?: 
   // Routes a pending customer may still open inside the Shell. /verify-id (ID upload)
   // is a standalone non-Shell page and stays reachable on its own; the Agreement is
   // also a public route. Everything else is replaced by the verify-only panel.
-  // /support is whitelisted so a pending (verify-only) customer still has an in-app
-  // support channel — open_ticket allows pending accounts (0112). (T1-06)
-  const pendingAllowed = pathname === '/account' || pathname === '/agreement' || pathname === '/support'
+  const pendingAllowed = pathname === '/account' || pathname === '/agreement'
   const verifyOnly = pending && !pendingAllowed
+  const [pendingModal, setPendingModal] = useState<null | 'feature' | 'support' | 'tour'>(null)
 
   // While pending, auto-pull the account status every 60s (visible tab only)
   // so approval shows up without a reload; manual ↻ is limited to one per 10s.
@@ -48,7 +48,7 @@ export default function Shell({ children, wide }: { children: ReactNode; wide?: 
 
   async function handleSignOut() {
     await signOut()
-    navigate('/login', { replace: true })
+    navigate('/', { replace: true })
   }
 
   // One session per account: sign out (locally) if a newer login claimed it.
@@ -89,7 +89,7 @@ export default function Shell({ children, wide }: { children: ReactNode; wide?: 
               <Link to="/verify-id" className="ktc-btn" style={{ textDecoration: 'none' }}>{t('Upload valid ID')}</Link>
               <Link to="/account" className="ktc-link">{t('My Account')}</Link>
               <Link to="/agreement" className="ktc-link">{t('Customer Agreement')}</Link>
-              <Link to="/support" className="ktc-link">{t('Get help')}</Link>
+              <button type="button" className="ktc-link" onClick={() => setPendingModal('support')}>{t('Get help')}</button>
             </div>
             <div style={{ marginTop: 14 }}><NeedHelp /></div>
           </div>
@@ -112,11 +112,29 @@ export default function Shell({ children, wide }: { children: ReactNode; wide?: 
         </div>
       </footer>
 
-      {/* Bottom tabs link into the (now-blocked) portal — hide them while pending too. */}
-      {!locked && !pending && <BottomNav />}
+      {/* Pending users keep the rail; restricted taps show a clear block message. */}
+      {!locked && <BottomNav pendingMode={pending} onPendingBlocked={(kind) => setPendingModal(kind)} />}
       {/* Lara — customer help assistant; not for the locked or verify-only (pending) screens */}
       {!locked && !pending && <ChatWidget />}
       {idleWarning && <IdleWarning />}
+      <Modal open={!!pendingModal} onClose={() => setPendingModal(null)} title={pendingModal === 'support' ? t('Contact KTC directly') : t('Pending verification')}>
+        {pendingModal === 'support' ? (
+          <div style={{ display: 'grid', gap: 12 }}>
+            <p className="ktc-label" style={{ margin: 0, lineHeight: 1.6 }}>
+              {t('Your account is still pending verification. For urgent concerns, please contact us directly.')}
+            </p>
+            <NeedHelp />
+          </div>
+        ) : pendingModal === 'tour' ? (
+          <p className="ktc-label" style={{ margin: 0, lineHeight: 1.6 }}>
+            {t('Your account is still pending verification. Please upload your valid ID and wait for admin approval before you can use the system.')}
+          </p>
+        ) : (
+          <p className="ktc-label" style={{ margin: 0, lineHeight: 1.6 }}>
+            {t('This feature is unavailable while your account is pending verification.')}
+          </p>
+        )}
+      </Modal>
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { useTour } from './TourProvider'
 import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
 import { GearIcon, GlobeIcon, MoonIcon, SignOutIcon, UserIcon } from './icons'
+import Modal from './Modal'
 
 const iconWrap = { width: 20, display: 'inline-flex', justifyContent: 'center', flex: '0 0 auto', color: 'hsl(var(--ink-2))' } as const
 
@@ -43,6 +44,7 @@ export default function AccountMenu({ settingsTo, settingsLabel, accountTo, acco
   const { replayPageTour, hasPageTour } = useTour()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const [pendingTour, setPendingTour] = useState(false)
   const wrapRef = useRef<HTMLSpanElement>(null)
 
   // Close on outside click / Escape (mirrors the notification bell).
@@ -58,7 +60,7 @@ export default function AccountMenu({ settingsTo, settingsLabel, accountTo, acco
   async function handleSignOut() {
     setOpen(false)
     await signOut()
-    navigate('/login', { replace: true })
+    navigate('/', { replace: true })
   }
   function go(to: string) { setOpen(false); navigate(to) }
 
@@ -68,6 +70,7 @@ export default function AccountMenu({ settingsTo, settingsLabel, accountTo, acco
   // Tint the avatar with the role color too, so the role reads at a glance from
   // the rail without opening the menu (customers have no role → brand accent).
   const avatarBg = (role && ROLE_BG[role]) || ACCENT_BG
+  const pending = !broker?.is_admin && !broker?.is_owner && !broker?.staff_role && broker?.status === 'pending'
 
   return (
     <span ref={wrapRef} style={{ position: 'relative', display: 'inline-flex', flex: '0 0 auto' }}>
@@ -121,7 +124,7 @@ export default function AccountMenu({ settingsTo, settingsLabel, accountTo, acco
             </button>
           )}
           {hasPageTour && (
-            <button type="button" role="menuitem" className="ktc-menu-setting" onClick={() => { setOpen(false); replayPageTour() }}>
+            <button type="button" role="menuitem" className="ktc-menu-setting" onClick={() => { setOpen(false); pending ? setPendingTour(true) : replayPageTour() }}>
               <span aria-hidden className="ktc-nav-help-q">?</span>
               <span style={{ flex: 1 }}>{t('Quick tour')}</span>
             </button>
@@ -143,6 +146,11 @@ export default function AccountMenu({ settingsTo, settingsLabel, accountTo, acco
           </button>
         </div>
       )}
+      <Modal open={pendingTour} onClose={() => setPendingTour(false)} title={t('Pending verification')}>
+        <p className="ktc-label" style={{ margin: 0, lineHeight: 1.6 }}>
+          {t('Your account is still pending verification. Please upload your valid ID and wait for admin approval before you can use the system.')}
+        </p>
+      </Modal>
     </span>
   )
 }

@@ -89,6 +89,7 @@ export default function FileViewerModal({
   const { t } = useT()
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [kind, setKind] = useState<'image' | 'pdf' | null>(null)
+  const [imageReady, setImageReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmDel, setConfirmDel] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -110,6 +111,7 @@ export default function FileViewerModal({
         // otherwise render (and try to print) as a broken image.
         const isPdf = blob.type === 'application/pdf' || /\.pdf$/i.test(fileName)
         setKind(isPdf ? 'pdf' : 'image')
+        setImageReady(false)
         setBlobUrl(objectUrl)
       } catch {
         if (active) setError(t('Could not load the file. Please try again.'))
@@ -238,7 +240,25 @@ export default function FileViewerModal({
               <iframe ref={pdfFrameRef} src={blobUrl} title={title} style={{ width: '100%', height: '70vh', border: 0 }} />
             )
           ) : (
-            <img src={blobUrl} alt={title} style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 10, boxShadow: 'var(--shadow-md)' }} />
+            <div style={{ display: 'grid', placeItems: 'center', width: '100%', minHeight: 220 }}>
+              {!imageReady && <div className="ktc-skeleton" style={{ width: '70%', height: 220, gridArea: '1 / 1' }} />}
+              <img
+                src={blobUrl}
+                alt={title}
+                decoding="async"
+                onLoad={() => setImageReady(true)}
+                onError={() => setError(t('Could not load the image. Please try a smaller or clearer file.'))}
+                style={{
+                  gridArea: '1 / 1',
+                  maxWidth: '100%',
+                  maxHeight: '70vh',
+                  borderRadius: 10,
+                  boxShadow: 'var(--shadow-md)',
+                  opacity: imageReady ? 1 : 0,
+                  transition: 'opacity 180ms ease',
+                }}
+              />
+            </div>
           )}
         </div>
       </div>

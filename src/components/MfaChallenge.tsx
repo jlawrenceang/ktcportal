@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { useT } from '../lib/i18n'
@@ -16,8 +16,7 @@ export default function MfaChallenge({ onVerified }: { onVerified: () => void })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function submit(e: FormEvent) {
-    e.preventDefault()
+  async function verifyCode() {
     if (busy || code.trim().length < 6) return
     setBusy(true)
     setError(null)
@@ -53,6 +52,16 @@ export default function MfaChallenge({ onVerified }: { onVerified: () => void })
     setBusy(false)
     onVerified()
   }
+  function submit(e: FormEvent) {
+    e.preventDefault()
+    void verifyCode()
+  }
+
+  useEffect(() => {
+    if (code.length === 6 && !busy) void verifyCode()
+    // verifyCode intentionally closes over the latest code/busy values.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, busy])
 
   return (
     <div style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', padding: 24 }}>

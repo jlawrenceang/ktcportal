@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type MouseEvent } from 'react'
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { supabase } from '../lib/supabase'
@@ -43,7 +43,13 @@ const GRID = [
   { to: '/support', label: 'Help & Support', icon: <SupportIcon /> },
 ]
 
-export default function BottomNav() {
+export default function BottomNav({
+  pendingMode = false,
+  onPendingBlocked,
+}: {
+  pendingMode?: boolean
+  onPendingBlocked?: (kind: 'feature' | 'support' | 'tour') => void
+}) {
   const { t } = useT()
   const { signOut } = useAuth()
   const navigate = useNavigate()
@@ -53,18 +59,29 @@ export default function BottomNav() {
   const [attention, setAttention] = useState(0)
 
   const ordersActive = loc.pathname.startsWith('/job-order') // /job-order, /job-orders, detail routes
+  const restricted = new Set(['/job-order', '/job-orders', '/releases', '/vessels', '/calculator', '/support'])
+  function blockPending(kind: 'feature' | 'support' | 'tour' = 'feature') {
+    setSheet(null)
+    onPendingBlocked?.(kind)
+  }
+  function pendingLinkClick(e: MouseEvent, to: string) {
+    if (!pendingMode || !restricted.has(to)) return
+    e.preventDefault()
+    blockPending(to === '/support' ? 'support' : 'feature')
+  }
 
   // Orders needing the customer's action (on hold / a rejected charge proof) → a
   // badge on the Orders tab. Server-side via the RPC (spans job_orders → charges
   // post-cutover). Refetched on navigation so it stays fresh.
   useEffect(() => {
+    if (pendingMode) { setAttention(0); return }
     void supabase.rpc('my_attention_count').then(({ data }) => setAttention((data as number) ?? 0))
-  }, [loc.pathname])
+  }, [loc.pathname, pendingMode])
 
   async function handleSignOut() {
     setSheet(null)
     await signOut()
-    navigate('/login', { replace: true })
+    navigate('/', { replace: true })
   }
 
   return (
@@ -79,18 +96,18 @@ export default function BottomNav() {
           <span className="ktc-tab-label">{t('Home')}</span>
         </NavLink>
         <button type="button" className={`ktc-tab${ordersActive || sheet === 'orders' ? ' is-active' : ''}`}
-          data-tour="tab-orders" aria-expanded={sheet === 'orders'} onClick={() => setSheet(sheet === 'orders' ? null : 'orders')}>
+          data-tour="tab-orders" aria-expanded={sheet === 'orders'} onClick={() => pendingMode ? blockPending('feature') : setSheet(sheet === 'orders' ? null : 'orders')}>
           <span className="ktc-tab-icon">
             <OrdersIcon />
             {attention > 0 && <span aria-hidden className="ktc-tab-badge">{attention > 9 ? '9+' : attention}</span>}
           </span>
           <span className="ktc-tab-label">{t('Orders')}</span>
         </button>
-        <NavLink to="/vessels" data-tour="tab-vessels" className={({ isActive }) => `ktc-tab${isActive ? ' is-active' : ''}`}>
+        <NavLink to="/vessels" data-tour="tab-vessels" onClick={(e) => pendingLinkClick(e, '/vessels')} className={({ isActive }) => `ktc-tab${isActive ? ' is-active' : ''}`}>
           <span className="ktc-tab-icon"><VesselIcon /></span>
           <span className="ktc-tab-label">{t('Vessels')}</span>
         </NavLink>
-        <NavLink to="/calculator" data-tour="tab-rates" className={({ isActive }) => `ktc-tab${isActive ? ' is-active' : ''}`}>
+        <NavLink to="/calculator" data-tour="tab-rates" onClick={(e) => pendingLinkClick(e, '/calculator')} className={({ isActive }) => `ktc-tab${isActive ? ' is-active' : ''}`}>
           <span className="ktc-tab-icon"><CalcIcon /></span>
           <span className="ktc-tab-label">{t('Rates')}</span>
         </NavLink>
@@ -113,7 +130,7 @@ export default function BottomNav() {
             </div>
             <div className="ktc-menu-grid ktc-menu-grid--orders" style={{ gridTemplateColumns: '1fr 1fr' }}>
               {ORDER_LINKS.map((g) => (
-                <Link key={g.to} to={g.to} className="ktc-menu-tile" onClick={() => setSheet(null)}>
+                <Link key={g.to} to={g.to} className="ktc-menu-tile" onClick={(e) => { if (pendingMode) { e.preventDefault(); blockPending('feature') } else setSheet(null) }}>
                   <span className="ktc-menu-tile-icon">{g.icon}</span>
                   <span className="ktc-menu-tile-label">{t(g.label)}</span>
                 </Link>
@@ -134,7 +151,7 @@ export default function BottomNav() {
             </div>
             <div className="ktc-menu-grid">
               {GRID.map((g) => (
-                <Link key={g.to + g.label} to={g.to} className="ktc-menu-tile" onClick={() => setSheet(null)}>
+                <Link key={g.to + g.label} to={g.to} className="ktc-menu-tile" onClick={(e) => { if (pendingMode && restricted.has(g.to)) { e.preventDefault(); blockPending(g.to === '/support' ? 'support' : 'feature') } else setSheet(null) }}>
                   <span className="ktc-menu-tile-icon">{g.icon}</span>
                   <span className="ktc-menu-tile-label">{t(g.label)}</span>
                 </Link>
@@ -143,7 +160,7 @@ export default function BottomNav() {
             <div className="ktc-menusheet-foot">
               <span className="ktc-drawer-label" style={{ padding: '0 0 8px 2px' }}>{t('Settings')}</span>
               {hasPageTour && (
-                <button type="button" className="ktc-menu-setting" onClick={() => { setSheet(null); replayPageTour() }}>
+                <button type="button" className="ktc-menu-setting" onClick={() => { setSheet(null); pendingMode ? blockPending('tour') : replayPageTour() }}>
                   <span className="ktc-nav-help-q" aria-hidden>?</span>
                   <span style={{ flex: 1 }}>{t('Quick tour')}</span>
                 </button>

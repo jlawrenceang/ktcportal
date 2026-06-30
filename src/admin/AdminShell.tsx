@@ -38,7 +38,7 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
 
   async function handleSignOut() {
     await signOut()
-    navigate('/login', { replace: true })
+    navigate('/', { replace: true })
   }
 
   // One session per account: sign out (locally) if a newer login claimed it.

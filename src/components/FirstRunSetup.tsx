@@ -140,7 +140,7 @@ export default function FirstRunSetup() {
           {t('Continue to portal')}
         </button>
         <p className="ktc-label" style={{ margin: '12px 0 0', fontSize: 11.5, opacity: 0.72, textAlign: 'center', lineHeight: 1.5 }}>
-          {t('You can change these anytime — language from the menu, notifications from the 🔔 bell.')}
+          {t('You can change these anytime — language from the menu, notifications from My Account / Settings.')}
         </p>
       </div>
     </div>

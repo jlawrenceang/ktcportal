@@ -87,6 +87,18 @@ export default function Releases() {
   // raises otherwise. Unlike job orders (which let a `pending` broker file a
   // held order), pending may NOT file a release. Gate the form upfront.
   const approved = broker?.status === 'approved'
+  const brokerForBanner = broker ?? undefined
+
+  return (
+    <Shell>
+      <div className="ktc-glass" style={{ padding: 22, marginTop: 14 }}>
+        <h1 className="ktc-title">{t('Release / Pull-out')}</h1>
+        <Notice tone="info" style={{ marginTop: 14 }}>
+          {t('Coming soon. This feature is not yet available.')}
+        </Notice>
+      </div>
+    </Shell>
+  )
 
   // List of the customer's own release orders (read directly via RLS).
   const [rows, setRows] = useState<ReleaseOrder[]>([])
@@ -167,9 +179,9 @@ export default function Releases() {
     await loadList()
   }
 
-  const qrPath = info.get('qr_path')
+  const qrPath = info.get('qr_path') ?? ''
   const qrUrl = qrPath ? supabase.storage.from('payment-qr').getPublicUrl(qrPath).data.publicUrl : null
-  const qrFileName = (qrPath?.split('/').pop()) || 'ktc-payment-qr.png'
+  const qrFileName = qrPath.split('/').pop() || 'ktc-payment-qr.png'
 
   return (
     <Shell>
@@ -186,7 +198,7 @@ export default function Releases() {
           banner instead of the form; their existing releases stay visible. */}
       {!approved ? (
         <div style={{ marginBottom: 16 }}>
-          {broker && <BrokerStatusBanner broker={broker} />}
+          {brokerForBanner ? <BrokerStatusBanner broker={brokerForBanner as NonNullable<typeof broker>} /> : null}
           <Notice tone="warning">
             {t('Your account must be approved before you can file a release / pull-out request.')}
           </Notice>
@@ -236,7 +248,7 @@ export default function Releases() {
                 <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>{t('Optional now — KTC verifies the document before assessing the charges.')}</span>
               </>
             ) : (
-              <div><FileChip file={docFile} onRemove={() => setDocFile(null)} disabled={filing} /></div>
+              <div><FileChip file={docFile as File} onRemove={() => setDocFile(null)} disabled={filing} /></div>
             )}
           </div>
           <button
@@ -295,7 +307,7 @@ export default function Releases() {
       {/* Detail modal */}
       {selected && (
         <ReleaseDetail
-          release={selected}
+          release={selected as ReleaseOrder}
           uid={uid}
           info={info}
           qrUrl={qrUrl}
@@ -307,7 +319,7 @@ export default function Releases() {
       )}
 
       {qrOpen && qrUrl && (
-        <FileViewerModal title={t('KTC Payment QR (QRPH)')} fileName={qrFileName} url={qrUrl} onClose={() => setQrOpen(false)} />
+        <FileViewerModal title={t('KTC Payment QR (QRPH)')} fileName={qrFileName} url={qrUrl as string} onClose={() => setQrOpen(false)} />
       )}
     </Shell>
   )

@@ -45,7 +45,7 @@ export function passwordScore(pw: string): 0 | 1 | 2 | 3 | 4 {
   return Math.min(s, 4) as 2 | 3 | 4
 }
 
-export const MAX_UPLOAD_MB = 5
+export const MAX_UPLOAD_MB = 4
 const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 const ALLOWED_UPLOAD_TYPES = [
   'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif',
@@ -57,7 +57,7 @@ const COMPRESSIBLE = ['image/jpeg', 'image/png', 'image/webp']
 /**
  * Prepare a picked file for upload: oversized browser-decodable images are
  * downscaled (max 2200px long edge) and re-encoded as JPEG, stepping quality
- * down until they fit the 5 MB cap. Returns the (possibly compressed) file,
+ * down until they fit the 4 MB cap. Returns the (possibly compressed) file,
  * or an error message when it can't be made to fit (PDF/HEIC over the cap,
  * or an image that won't decode).
  */

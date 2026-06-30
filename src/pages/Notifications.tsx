@@ -21,6 +21,7 @@ export default function Notifications() {
   const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [hideRead, setHideRead] = useState(false)
 
   const load = useCallback(async (lim: number) => {
     // Fetch one past the limit to know whether a "Show more" is warranted.
@@ -45,12 +46,28 @@ export default function Notifications() {
     }
     routeCustomerNotif(n, navigate)
   }
+  function markAll() {
+    const now = new Date().toISOString()
+    setItems((prev) => prev.map((x) => ({ ...x, read_at: x.read_at ?? now })))
+    void supabase.rpc('mark_notifications_read', { p_ids: null }).then(() => undefined, () => undefined)
+  }
+  function clearRead() {
+    setItems((prev) => prev.filter((x) => !x.read_at))
+    void supabase.rpc('clear_read_notifications').then(() => undefined, () => undefined)
+  }
+
+  const visibleItems = items.filter((x) => !hideRead || !x.read_at)
 
   return (
     <Shell>
       <div className="ktc-glass" style={{ padding: 18 }}>
         <h1 className="ktc-title">{t('Notifications')}</h1>
         <p className="ktc-sub" style={{ marginBottom: 14 }}>{t('All your notifications, newest first.')}</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          {items.some((x) => !x.read_at) && <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={markAll}>{t('Mark all as read')}</button>}
+          {items.some((x) => x.read_at) && <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => setHideRead((v) => !v)}>{hideRead ? t('Show read notifications') : t('Hide read notifications')}</button>}
+          {items.some((x) => x.read_at) && <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={clearRead}>{t('Clear read notifications')}</button>}
+        </div>
 
         {loading ? (
           <div style={{ display: 'grid', gap: 10 }}>
@@ -58,11 +75,11 @@ export default function Notifications() {
           </div>
         ) : loadError ? (
           <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load(limit)}>{t('Retry')}</button>}>{loadError}</Notice>
-        ) : items.length === 0 ? (
+        ) : visibleItems.length === 0 ? (
           <p className="ktc-label" style={{ fontSize: 14 }}>{t('No notifications yet.')}</p>
         ) : (
           <div style={{ display: 'grid', gap: 2 }}>
-            {items.map((n) => (
+            {visibleItems.map((n) => (
               <NotificationRow
                 key={n.id}
                 icon={(ICON[n.kind] ?? BellIcon)({ size: 17 })}

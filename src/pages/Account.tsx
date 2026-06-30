@@ -11,6 +11,7 @@ import PasswordStrength from '../components/PasswordStrength'
 import { usePageTour } from '../components/TourProvider'
 import { accountSteps } from '../components/WelcomeTour'
 import { useT } from '../lib/i18n'
+import PushToggle from '../components/PushToggle'
 
 type Msg = { tone: NoticeTone; text: string } | null
 
@@ -218,10 +219,19 @@ export default function Account() {
           </button>
         </form>
 
-        {/* SMS preference */}
+        {/* Notification preferences */}
         <div className="ktc-glass" style={{ padding: 18, display: 'grid', gap: 14 }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{t('SMS updates')}</h2>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{t('Notification preferences')}</h2>
+            <p className="ktc-label" style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.5 }}>
+              {t('Choose how this device and phone number receive KTC updates. The notification bell only shows your notification list.')}
+            </p>
+          </div>
+          <div style={{ display: 'grid', gap: 10 }}>
+            <PushToggle variant="menu" />
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{t('SMS updates')}</h3>
             <p className="ktc-label" style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.5 }}>
               {t('Receive text messages for urgent order, payment, and release updates. In-app notifications still work either way.')}
             </p>
