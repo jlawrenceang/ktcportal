@@ -9,7 +9,7 @@ Ships the internal staff APK lane and keeps cloud push dormant until credentials
 - **Native checker workflow.** The installed app is staff-only; customer accounts are blocked and sent to the web portal. Checker gets ML-Kit scan feedback, haptics, and a device-local offline outbox that queues only `record_van_xray` confirmations. Money, invoices, payment proof, Payment Orders, and OR actions remain online-only and server-gated.
 - **Device surface.** `/app/device` shows device/network/OTA state, native push toggle, local notification test, share-sheet status, yard notes, and the X-ray outbox.
 - **Native push scaffold (`0232`).** Added `native_push_tokens`, RLS, notification triggers, and `send-native-push` function source for FCM delivery. `0232` is applied to prod, but cloud native push stays dormant until the Edge Function is deployed with a valid Supabase PAT and Firebase/native-push secrets are armed.
-- **Smoke test expanded.** `docs/go-live-smoke-test.md` now includes the Android internal-app lane and the sandbox APK hash to record during the later real-device smoke.
+- **Smoke test expanded.** `docs/smoke-test-08-go-live.md` now includes the Android internal-app lane and the sandbox APK hash to record during the later real-device smoke.
 
 Verification: `npm run target:status`, `npm run lint`, `npm run check:i18n`, `npm run build:test`, `node scripts/check-security-invariants.mjs`, and `npm run build:android:test` all passed. Sandbox APK SHA256: `FEE72FD96A2D505E2F7B340F65E51D14552BC4B154DAC7F3B716B2DD978B4158`. Real-device smoke is intentionally deferred.
 

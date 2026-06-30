@@ -18,7 +18,7 @@ last_updated: 2026-06-30
 - **Native push scaffold (`0232`)** - `native_push_tokens` + RLS + notification triggers are live. `send-native-push` source is present, but Management API deploy failed with local `SUPABASE_ACCESS_TOKEN` 401; cloud native push remains dormant until a valid `sbp_` PAT deploys the function and Firebase/native-push secrets are set.
 - **Verified before ship** - `target:status`, `lint`, `check:i18n`, `build:test`, `check-security-invariants`, and `build:android:test` passed. Real-device Part 15 smoke is intentionally deferred.
 
-**Next** - run `docs/go-live-smoke-test.md` Part 15 on an Android device, then the all-roles/all-lanes smoke; arm native cloud push only after valid PAT + Firebase service-account secrets exist.
+**Next** - run `docs/smoke-test-08-go-live.md` Part 15 on an Android device, then the all-roles/all-lanes smoke; arm native cloud push only after valid PAT + Firebase service-account secrets exist.
 
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
@@ -33,7 +33,7 @@ last_updated: 2026-06-30
 - **Go-live hardening pass 3 DEPLOYED (v2.0.9, 2026-06-30, codex; `0230` applied)** — customer self-service writes now use `current_customer_id()` instead of the broader profile helper, blocking staff/admin rows from customer business RPCs by direct call (JO file/edit/cancel, release file/resubmit/pay, charge proof submit, support tickets, consignee request/resubmit). `/app/operations` no longer opens for broad read-only `view_job_orders`; Payment Order desk filters stale selected IDs to `unpaid`/`rejected`; the operations smoke row is monitor-only for X-ray. Google OAuth button is enabled through `VITE_GOOGLE_OAUTH_ENABLED=true` now that the provider is active.
 - **SMS/Capacitor readiness (v2.0.10, 2026-06-30; `0231` applied)** — SMS remains dormant until gateway credentials are present and an admin sets selected notification rows to SMS/both. `send-sms` now uses SMSGate's current `/3rdparty/v1/messages` payload, `setup-sms.mjs` disarms Vault when gateway creds are absent, the trigger respects `notification_settings`, and `/account` exposes the customer SMS opt-out. Capacitor Android doctor/sync/debug build pass locally; release signing still needs the actual keystore password/new release keystore.
 - **Pay-before-final-invoice is intentional** — the final ERP/BIR invoice is released only after payment, so it acts as the gate pass; customers may submit proof before the final invoice (owner-confirmed 2026-06-30). NOT a gap.
-- **Next** — run `docs/go-live-smoke-test.md` (all roles + all lanes); operational onboarding (DEA rate, staff/broker accounts); owner side-by-side smoke walk; launch call.
+- **Next** — run `docs/smoke-test-08-go-live.md` (all roles + all lanes); operational onboarding (DEA rate, staff/broker accounts); owner side-by-side smoke walk; launch call.
 
 ## 2026-06-29 — X-ray Phase A anti-fraud billing BUILT (backend + frontend) — PRE-CUTOVER, old flow still live
 

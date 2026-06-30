@@ -26,7 +26,7 @@ Legend: **COMPLETED** · **NOW** · **NEXT** · **LATER** · **PARKED** · **NOR
 
 ## NOW - Go-live smoke + internal Android device check
 
-1. **Run `docs/go-live-smoke-test.md`** end to end: public/customer/staff/RBAC/money invariants plus **Part 15 Android internal app** on a real device. The sandbox APK already builds; device camera/offline-sync/local-notification behavior still needs physical validation.
+1. **Run `docs/smoke-test-08-go-live.md`** end to end: public/customer/staff/RBAC/money invariants plus **Part 15 Android internal app** on a real device. The sandbox APK already builds; device camera/offline-sync/local-notification behavior still needs physical validation.
 2. **Operational onboarding** - staff/broker test accounts, DEA/service rates, bank/GCash/QR payment details, and owner side-by-side smoke.
 3. **ADR-0037 cutover done** - charges/payment-orders live; old billing path retired; v2.0.7-v2.0.11 hardening layered on top.
 

@@ -2,7 +2,7 @@
 title: Home
 tags: [index]
 type: home
-last_updated: 2026-06-30
+last_updated: 2026-07-01
 ---
 
 # KTC Portal Knowledge Home
@@ -18,9 +18,9 @@ KTC Container Terminal Corp. — the **KTC Online Portal** for port / container-
 | Public face | signed-out `/` = a public **Landing** (terminal-photo hero); **Lara** non-LLM customer assistant; **"Continue with Google"** sign-in |
 | Access hardening | pending customers **verify-only** at the RLS layer (`0163`); consent **server-enforced** (`0162`); disposable-email block (`0164`) |
 | Staff roles | admin · operations · cashier · checker · csr (+ owner / root owner) — gated by `has_permission`. `purchaser` (fuel desk) exists in the DB but is **frontend-deferred** |
-| Completion | **two-gate** — all services + base payment + RPS (if needed) + every supplement, all confirmed; derived "✓ Cleared for release" badge |
-| Active focus | **ADR-0037 charges cutover SHIPPED + go-live hardening DEPLOYED; internal Android staff-app lane shipped as `v2.0.11` with migration `0232` applied.** Charges/payment-orders are the live money path; the internal APK is staff-only, sandbox-buildable, and has an offline X-ray-confirmation outbox only. Native cloud push is scaffolded but dormant until a valid Supabase PAT + Firebase/native-push secrets are armed. **Now: go-live execution** — all-roles/all-lanes manual smoke plus the Android Part 15 device smoke. Fuel still parked after Phase 0. See [[target-architecture-jo-payment-invoice]] · `docs/go-live-smoke-test.md` |
-| Go-live gate | `docs/go-live-smoke-test.md` (all roles + Android internal app lane) + `docs/go-live-todo.md` — done: ADR-0037 cutover, v2.0.7-v2.0.11 engineering hardening, Google OAuth flag enabled, MFA enrolled, owner password rotated. Still: real-device APK smoke · Agreement v4 counsel pass + NPC/DPO · payment details (bank/GCash/QR) · owner side-by-side smoke walk · launch call |
+| Completion | **two-gate** - all services done + every billed, non-reversed `charges` row confirmed; cleared-for-release state follows the charge/payment-order spine |
+| Active focus | **ADR-0037 charges cutover SHIPPED + go-live hardening DEPLOYED; internal Android staff-app lane shipped as `v2.0.11` with migration `0232` applied.** Charges/payment-orders are the live money path; the internal APK is staff-only, sandbox-buildable, and has an offline X-ray-confirmation outbox only. Native cloud push is scaffolded but dormant until a valid Supabase PAT + Firebase/native-push secrets are armed. **Now: go-live execution** — all-roles/all-lanes manual smoke plus the Android Part 15 device smoke. Fuel still parked after Phase 0. See [[target-architecture-jo-payment-invoice]] · `docs/smoke-test-08-go-live.md` (ST08 active/current; `docs/go-live-smoke-test.md` is only a pointer) |
+| Go-live gate | `docs/smoke-test-08-go-live.md` (ST08 active/current; all roles + Android internal app lane) + `docs/go-live-todo.md` — done: ADR-0037 cutover, v2.0.7-v2.0.11 engineering hardening, Google OAuth flag enabled, MFA enrolled, owner password rotated. Still: real-device APK smoke · Agreement v4 counsel pass + NPC/DPO · payment details (bank/GCash/QR) · owner side-by-side smoke walk · launch call |
 | Prod data | test data purged 2026-06-23 — first real order = `JO-000001` (0 orders / 0 customers / 0 releases) |
 
 ## Where the rules and memory live

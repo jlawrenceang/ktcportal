@@ -20,11 +20,11 @@ ADR-0037 cutover is live; v2.0.11 adds the internal Android staff-app lane. Outs
 - [ ] **Test-environment setup** - a Supabase branch of the project (prod-faithful) or a refreshed test project, so the sandbox + MFA/step-up tests run with all security ON and never touch live data.
 - [ ] **Domain consolidation** - `ktcport.com` (WordPress marketing site) + `erp.ktcport.com` (Frappe ERP) + `ktcterminal.com` (portal + email). Confirm who runs what + the consolidation plan.
 
-## ST05 smoke test — open items (NOW)
+## ST08 go-live smoke test - open items (NOW)
 
-Preflight **P1–P8 re-run green** through `0158` (2026-06-23; + new Lane L container rate matrix; server-side **Lane J-3** role-matrix check = **0 mismatch**, incl. `purchaser`/fuel + `review_consignee_requests` gates; read-only RPC backbone check of the release/JO guards).
+Legacy ST05 preflight **P1-P8 re-run green** through `0158` (2026-06-23; + Lane L container rate matrix; server-side **Lane J-3** role-matrix check = **0 mismatch**, incl. `purchaser`/fuel + `review_consignee_requests` gates; read-only RPC backbone check of the release/JO guards). ST08 is now the active/current go-live smoke.
 
-- [ ] **Run manual lanes with the owner** using `docs/go-live-smoke-test.md` (now includes Android Part 15).
+- [ ] **Run manual lanes with the owner** using `docs/smoke-test-08-go-live.md` (now includes Android Part 15).
 - [x] **Defect D-01 (Low) — CLOSED 2026-06-25 (`0159`, v1.6.13):** the release-desk **hold/reject reason note is now server-enforced** — `verify_release_order`, `confirm_release_payment`, and `confirm_release_supplement_payment` RAISE on a blank reason on the reject/hold branch (`p_ok = false`), mirroring the JO side. Verified live: all three function bodies carry the guard.
 - [x] **Tagalog copy for previously-untranslated strings DONE 2026-06-25 (v1.6.15):** 174 entries added (release desk, supplements, bulletin, JO lifecycle) — the strings that fell back to English are now translated (tl ~1,469 keys). English was first re-toned formal (v1.6.14). **Owner still reviews the wording before go-live** (both the formal English and the Tagalog).
 
@@ -43,15 +43,15 @@ Phase 0 (schema + derived views + `purchaser` role) is **live in prod and commit
 - [ ] **Set the 120 new `terminal_rates` cells** (empty/full × dry/reefer combos seeded `null`) with the owner — until then the calculator flags "rate not set" for them.
 - [x] **DONE 2026-06-25 (v1.6.14):** the `Settings.tsx` "Current staff" label map now renders **`csr`** and **`purchaser`** correctly (previously fell through to "Admin").
 
-## ST05 / trial run (NOW)
+## ST08 / trial run (NOW)
 
-- [ ] **Manual Lanes A–K** on `portal.ktcterminal.com` (see the ST05 section above; preflight P1–P8 ✅ through `0158`). Owner walking lanes now.
+- [ ] **Manual go-live lanes** on `portal.ktcterminal.com` using `docs/smoke-test-08-go-live.md` (active/current; includes Android Part 15). Owner walking lanes now.
 - [ ] **P9 / data entry:** real X-Ray rate + the merged admin & print fee, bank/GCash details + QR upload (Settings, owner).
 - [x] **Teardown done (2026-06-23):** test orders purged to a clean slate, `jo_number_seq` reset (safe at zero orders) so the first real order is `JO-000001`; 0 releases.
 
 ## Go-live gate (NEXT) — owner checklist in `docs/go-live-todo.md`
 
-- [ ] **Google OAuth config** — finish the Supabase URL config (Site URL + redirect allow-list) + set the consent-screen app-name branding, then smoke the flow end-to-end (**ST05 Lane M**). Until enabled the button returns "provider not enabled."
+- [x] **Google OAuth config** - Supabase URL config and consent-screen app-name branding are done; keep the final live login check inside ST08.
 - [ ] **Re-enable security before the staff dry-run** — Turnstile (Managed CAPTCHA) + MFA enrolment (owner + staff) + rotate the owner password (all down for testing).
 - [ ] **Counsel sign-off on Customer Agreement v4** — final PH-counsel pass; NPC registration; dedicated DPO mailbox; confirm the **₱100k** liability-cap floor. Bump `AGREEMENT_VERSION` on material change. *(Server-side consent recording + the affirmative-re-acceptance clause are done — `0162` / Agreement v4; the in-app re-acceptance gate on a version bump is still unbuilt.)*
 - [ ] **Lara document-verification guide** — owner supplies the content; wire it into Lara's waiting release slot (currently a holding answer). See [[Lara (Customer Assistant)]].

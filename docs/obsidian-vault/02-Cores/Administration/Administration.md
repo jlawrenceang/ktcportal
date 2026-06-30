@@ -5,59 +5,49 @@ type: core
 wave: 1
 status: live
 owner: Owner
-last_updated: 2026-06-28
+last_updated: 2026-07-01
 ---
 
-# 🛡️ Administration Core
+# Administration Core
 
-> **Maturity:** LIVE — multi-role back office on an owner-tunable permission matrix
+> **Maturity:** LIVE - multi-role back office on an owner-tunable permission matrix.
 
 ## Purpose
 
-The internal staff portal: approvals, customer + consignee management, job-order processing across stations (operations / checker / cashier / CSR), payment review, rates/fees config, support inbox, owner-only staff & access settings, and ops/health tooling.
+The internal staff portal: approvals, customer + consignee management, job-order processing across stations, charge/payment-order billing, release desk, support inbox, owner-only staff/access settings, and ops/health tooling.
 
 ## Roles & stations
 
-Staff capabilities run on the [[Staff Roles & Gates]] matrix (`role_permissions` + `has_permission`, owner-tunable in Settings → **Roles & Gates**). Roles: **admin · operations · cashier · checker · csr** (+ owner/root owner). Each lands where its role works (`RoleLanding`).
+Staff capabilities run on [[Staff Roles & Gates]] (`role_permissions` + `has_permission`). Roles: **admin**, **operations**, **cashier**, **checker**, **csr**, plus owner/root owner.
 
-- **Operations** (`/admin/job-orders`) — accept orders, assess RPS, mark DEA/OOG done, monitor X-ray, **request additional charges** (cashier bills, `0176`); **edit JO headers** (`staff_edit_job_order`, `0103`); manage the vessel schedule. Completion is **automatic** (ADR-0035) — no manual "complete" step.
-- **Checker** (`/admin/checker`) — **per-van X-ray entry confirmation only** (`record_van_xray`, `confirm_xray`; tablet-first tap list). View only otherwise.
-- **Cashier** ([[Cashier Station]], `/admin/cashier`) — **money-only** payments desk: review online proofs, **record walk-in/office payments**, **bill** ops-requested additional charges + review supplement payments, record the ERP invoice (= PAID); edit JO headers. Completion is **automatic** on the last confirmed payment (`0171`/`0172`) — the cashier no longer completes orders.
-- **CSR** (`/admin/support`) — file JOs for customers + work the [[Support Tickets|support inbox]]; never changes order status.
-- **Admin / owner** (`/admin`) — full back office (admin holds every gate **except `confirm_xray`**, `0095`).
+- **Operations** (`/app/operations`, full page `/admin/job-orders`) - accept orders, hold/reject, assess RPS, mark DEA/OOG done, monitor X-ray, request priority/re-X-ray, add operational charges where permitted, edit JO headers, manage vessel schedule.
+- **Checker** (`/app/checker`, full page `/admin/checker`) - per-van X-ray entry confirmation only (`record_van_xray`, `confirm_xray`). View-only otherwise.
+- **Cashier** (`/app/payment-orders`, full page `/admin/payment-orders`) - money-only desk: record final charge invoices, confirm/reject charge proofs, bundle charges into Payment Orders, collect Payment Orders, and handle release payment/OR work. No order-status power.
+- **CSR** (`/app/support`, full page `/admin/support`) - file JOs for customers, work support inbox, review consignee requests, request priority, and verify release documents where gated.
+- **Admin / owner** (`/admin`) - full back office. Admin does not hold `confirm_xray`; owner bypasses through the failsafe.
 
-## Runtime routes (key)
+Retired: `/admin/cashier` and `/app/cashier`.
 
-- `/admin` — dashboard · `/admin/approvals` — account approvals
-- `/admin/customers[/:id]` — customer management · `/admin/consignees` — consignees (see [[Consignees]])
-- `/admin/job-orders` — JO queue + gated transitions (excludes `held`)
-- `/admin/new-job-order` — file on behalf · `/admin/checker` — X-ray station · `/admin/cashier` — [[Cashier Station]]
-- `/admin/vessel-schedule` · `/admin/support` — [[Support Tickets|support inbox]]
-- `/admin/logs` · `/admin/security` · `/admin/settings` · `/admin/manual`
-- Admin shell: top rail (logo + role badge + [[Staff Notifications|staff bell]]) + `AdminBottomNav` (floating bottom tabs, permission-gated, mirrors the customer nav).
+## Runtime routes
 
-## Job-order processing (gated transitions)
+- `/admin` - dashboard.
+- `/admin/approvals`, `/admin/customers[/:id]`, `/admin/consignees` - account and master-data administration.
+- `/admin/job-orders`, `/admin/new-job-order`, `/admin/checker` - JO operations.
+- `/admin/payment-orders`, `/admin/charges`, `/admin/reconciliation`, `/admin/charge-audit` - charge/payment-order spine.
+- `/admin/releases` - release/pull-out desk.
+- `/admin/vessel-schedule`, `/admin/support`, `/admin/logs`, `/admin/security`, `/admin/settings`, `/admin/manual`.
+- Staff app routes: `/app`, `/app/device`, `/app/operations`, `/app/checker`, `/app/payment-orders`, `/app/support`.
 
-The old admin-only direct UPDATE is gone — explicit actions go through **`staff_transition_order`** with the **split gates** (`accept_orders` / `hold_reject_orders` / `complete_orders`, `0086`/`0097`). Completion now fires **automatically** from whichever side finishes last (ADR-0035, `0171`/`0172`) and obeys [[Two-Gate Completion]]; the manual "Mark completed" button remains only a rare ready-state fallback. See [[Job Order Lifecycle]].
+## Job-order processing
 
-## Settings (owner-only unless gated)
+Explicit status changes go through `staff_transition_order`. Completion normally auto-fires from the service/charge readiness rule; manual complete is only a ready-state fallback.
 
-- **Create staff** — `rpc('create_staff', {username, password, full_name, role})` (role ∈ admin/operations/cashier/checker/csr); username login, no email.
-- **Roles & Gates** — toggle each role × permission ([[Staff Roles & Gates]]).
-- **Owner access** — root-only `set_owner_access` grants/revokes secondary owners ([[Multi-Owner & Root Grants]]).
-- **Service rates & fees**, **terminal tariff**, **per-line charge rules**, **RPS move rates**, **payment details (bank/GCash/QR)**, **support contact channels**, **bulletins**.
+## Settings
 
-## Notifications & ops
-
-- **[[Staff Notifications]]** (`0085`) — permission-routed staff bell: payment proof → `review_payments`, support message → `manage_support`, account ID → `manage_approvals`; owner sees all.
-- **Privilege-grant alerting** (`0092`) + **System health** / Logs / 15-min ops watchdog.
-
-## Deployment / ops
-
-- Vercel project `ktc-joborderform` → `portal.ktcterminal.com` (DNS on Vercel). `vercel.json` ships full security headers. See `docs/agent/runtime-data-safety.md` and [[Current State]].
+Owner/admin settings cover staff creation, roles/gates, root-owner access, pricing/rates, charge types, payment details, support contact channels, bulletins, notification routing, and system controls.
 
 ## Related
 
-- [[Authentication]] · [[Brokers]] · [[Consignees]] · [[Job Orders]] · [[Owner Failsafe]]
-- [[Staff Roles & Gates]] · [[Multi-Owner & Root Grants]] · [[Two-Gate Completion]] · [[Cashier Station]] · [[Support Tickets]] · [[Staff Notifications]]
-- ADR-0001, ADR-0004, ADR-0006, ADR-0014
+- [[Authentication]] - [[Brokers]] - [[Consignees]] - [[Job Orders]] - [[Owner Failsafe]]
+- [[Staff Roles & Gates]] - [[Multi-Owner & Root Grants]] - [[Two-Gate Completion]] - [[Cashier Station]] - [[Support Tickets]] - [[Staff Notifications]]
+- ADR-0035, ADR-0037, and `docs/smoke-test-08-go-live.md`.

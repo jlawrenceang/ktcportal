@@ -2,42 +2,39 @@
 title: Two-Gate Completion
 tags: [concept, job-orders, payments, invariant]
 type: concept
-last_updated: 2026-06-28
+last_updated: 2026-07-01
 ---
 
-# ✅ Two-Gate Completion
+# Two-Gate Completion
 
-A Job Order may only reach `completed` (and be released) when **both** the operations side **and** the money side are fully cleared. This is a hard server invariant — there is no staff button that can shortcut it.
+A Job Order may only reach `completed` when the operations side and the money side are fully cleared. This is a hard server invariant; no staff button can shortcut it.
 
-## The readiness rule — `jo_ready_to_complete(jo)`
+## The readiness rule - `jo_ready_to_complete(jo)`
 
-An order is "ready" when **ALL** hold (`0086` → `0097` → `0101`):
+An order is ready when both hold:
 
-1. **Every service line is done** — `jo_all_services_done` (X-ray, incl. **every van**, plus DEA/OOG/other in `service_completions`).
-2. **Base payment confirmed** — `payment_status = 'confirmed'`.
-3. **RPS cleared** — `rps_status <> 'needed'` **OR** `rps_payment_status = 'confirmed'` (`0097` folded RPS into the gate — an unpaid RPS could previously slip through and show PAID on the verify QR).
-4. **No billed-but-unpaid supplement** — no `jo_supplements` row with `bill_status = 'billed'` **AND** `payment_status <> 'confirmed'` (`0181`, was "any supplement <> confirmed"). A charge that ops only **requested** but the cashier hasn't **billed** yet does **not** block completion. See [[Additional-Charge Supplements]].
+1. **Every service line is done** - `jo_all_services_done` covers X-ray, including every van, plus DEA/OOG/other rows in `service_completions`.
+2. **Every billed charge is confirmed** - all billed, non-reversed `charges` rows for the JO are settled. The old base/RPS/supplement columns are retired from the completion rule; base X-ray, RPS, and add-ons are all charge rows after ADR-0037.
 
-**Re-X-ray exemption** (`0175`/`0181`): a **free** re-X-ray child (`is_rexray AND NOT rexray_billable`) completes on **services-done alone** — gates 2–4 are skipped (there is nothing to pay). A billable re-X-ray still runs the full gate.
+**Re-X-ray exemption:** a free re-X-ray child (`is_rexray AND NOT rexray_billable`) completes on services-done alone. A billable re-X-ray still runs the charge gate.
 
-## How it fires (whoever does the last step trips it)
+## How it fires
 
-- **Services-last** → `record_service_done` / `record_van_xray` call `jo_ready_to_complete` after recording, and set `completed` if ready.
-- **Payment-last** → the BEFORE-UPDATE trigger **`complete_on_payment_confirmed`** (on `payment_status, rps_payment_status`) flips `status` to `completed` + stamps `completed_at` in the same update when the last payment lands and services are done.
-- **Supplement-last** → `review_supplement_payment` / `record_supplement_office_payment` re-complete an under-review order when the final charge clears.
-- **Raw-update backstop** — `enforce_two_gate_complete` (BEFORE update) raises `check_violation` if anything sets `status='completed'` without readiness — closes the direct-write hole.
-- **Manual** — `staff_transition_order(..., 'completed')` checks `complete_orders` **and** `jo_ready_to_complete`, else raises.
+- **Services-last** - `record_service_done` / `record_van_xray` call `jo_ready_to_complete` after recording, and set `completed` if ready.
+- **Payment-last** - charge confirmation/payment-order collection paths call the same readiness rule; when the final billed charge clears and services are done, the JO completes.
+- **Raw-update backstop** - `enforce_two_gate_complete` raises if anything sets `status='completed'` without readiness.
+- **Manual fallback** - `staff_transition_order(..., 'completed')` checks `complete_orders` and `jo_ready_to_complete`, else raises. In normal use, auto-complete wins first.
 
 ## Why it matters
 
-The completed slip carries a PAID badge + a public **verify QR** ([[Verify-QR Anti-Forgery]]). If completion didn't require all payments, a guard scanning the QR could see "PAID/COMPLETED" on an order that still owes RPS or a supplement. The gate keeps the slip's claim true.
+The completed slip carries a PAID badge and a public verify QR ([[Verify-QR Anti-Forgery]]). If completion did not require every billed charge, a guard scanning the QR could see "PAID/COMPLETED" on an order that still owes money. The gate keeps the slip's claim true.
 
 ## Gotcha
 
-The completion trigger is a **BEFORE UPDATE OF `payment_status`, `rps_payment_status`** trigger — touching only `has_open_supplement` (the `0104` denormalized flag) deliberately does **not** fire it (`sync_open_supplement` updates that column alone).
+The old `payment_status` / `rps_payment_status` / `jo_supplements` trigger path is retired. Post-cutover, use `charges` as the authoritative payment state.
 
 ## Related
 
-- [[Job Order Lifecycle]] · [[Additional-Charge Supplements]] · [[Verify-QR Anti-Forgery]] · [[Staff Roles & Gates]]
+- [[Job Order Lifecycle]] - [[Additional-Charge Supplements]] - [[Verify-QR Anti-Forgery]] - [[Staff Roles & Gates]]
 - [[Operational Invariants]]
-- Migrations `0086` (initial two-gate), `0087` (per-van + auto-complete trigger), `0091` (office payment trips it), `0094` (backstop), `0096` (`completed_at` on payment path), `0097` (RPS folded in), `0101` (supplements folded in), `0175` (free re-X-ray exemption), `0181` (gate on **billed-unpaid** supplements only + matching backstop)
+- Key cutover migration: `0216` (completion reads the `charges` spine). See `docs/smoke-test-06-portal.md (closed legacy ADR-0037 proof)` for the executable cutover proof.

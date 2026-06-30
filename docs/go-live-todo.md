@@ -39,7 +39,7 @@ that only the owner can complete. Keep this current — tick items as they're do
 
 ## 3. Google OAuth
 - [x] **Finish the Supabase URL config** (Site URL + redirect allow-list) and
-      **test the flow** end-to-end (smoke: ST05 Lane M).
+      **test the flow** end-to-end (covered by ST08).
 - [x] **Set the app-name branding** ("KTC Online Portal") in the Google consent
       screen so the sign-in page doesn't show the raw `…supabase.co` domain.
 
@@ -47,4 +47,4 @@ that only the owner can complete. Keep this current — tick items as they're do
 - [ ] **Document-verification guide** — owner supplies the content; wire it into
       Lara's waiting slot (currently a holding answer).
 - [x] Seed the support contact (`support_contact`) — done.
-- [ ] **Run ST05** (the go-live blind walkthrough) on the live site before launch.
+- [ ] **Run ST08** (`docs/smoke-test-08-go-live.md`, the active/current go-live blind walkthrough) on the live site before launch.

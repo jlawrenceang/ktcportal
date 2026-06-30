@@ -1,56 +1,50 @@
-# Testing and Release
+﻿# Testing and Release
 
-## Pre-ship checks
+## Pre-ship Checks
 
-Before declaring a change ready (post-change — distinct from the pre-change *baseline-green* check in `coding-guardrails.md`):
-- `npm run lint` (= `tsc --noEmit`) — must be clean.
-- `npm run build` (= `tsc && vite build`) — must succeed.
-- A targeted smoke test on every touched flow (below).
+Before declaring a change ready:
+
+- `npm run lint` must be clean.
+- `npm run build` must succeed for frontend/runtime changes.
+- Run a targeted smoke test on every touched flow.
 
 A green build is not a release signal. A green smoke run on the touched lane is.
 
-## Operational verification (not build-only)
+## Runtime Targets
 
-After workflow changes, exercise the real flow on the deployed site (`portal.ktcterminal.com`) or local dev:
-- **Auth:** sign in as owner → lands on **Admin Portal** (`/admin`), not broker home. Broker sign-in → broker home. CAPTCHA widget renders and a token is required.
-- **Broker onboarding:** register (with valid-ID upload) → appears as `pending` → admin approves → broker gains access.
-- **Consignees:** search, paginate, add (duplicate guard), edit, approve, accreditation doc upload + view.
-- **Job orders:** submit against an approved consignee; verify lines + service requests persist.
-- **Staff:** owner creates a staff account in Settings → that username can sign in → lands on admin.
+Production is the runtime contract. Sandbox mirrors the same migrations, schema, and functions for isolated testing with separate environment variables, secrets, and seed data. Do not copy prod data or prod secrets wholesale into sandbox.
 
-## Server-side CAPTCHA check (no browser needed)
+KTC production Supabase ref: `mdlnfhyylvapzdubhyic`.
+E2E sandbox Supabase ref: `zwvzadkgeyhkhyshkwhc`.
 
-Confirm enforcement by hitting the auth endpoint without a token — Supabase should reject with `captcha_failed`:
+## Operational Verification
 
-```sh
-curl -s -X POST "https://mdlnfhyylvapzdubhyic.supabase.co/auth/v1/token?grant_type=password" \
-  -H "apikey: <ANON_KEY>" -H "Content-Type: application/json" \
-  -d '{"email":"x@example.com","password":"wrong"}'
-```
+After workflow changes, exercise the real flow on the deployed site or local preview:
 
-## Deploy verification
+- Auth: owner lands on `/admin`; customer lands on the customer shell; CAPTCHA is enforced when enabled.
+- Customer onboarding: pending stays verify-only until admin approval.
+- Consignees: search, pagination, request/review, BIR 2303 guard.
+- Job orders: approved filing, processing, per-van X-ray, charges, Payment Orders, verify QR.
+- Staff: invite-only staff creation; role landings and gates match [[Staff Roles & Gates]].
 
-- `curl -s https://portal.ktcterminal.com` → SPA shell loads.
-- Confirm the deployed bundle points at the KTC Supabase project and (if enabled) inlines the Turnstile site key.
-- SPA deep-links (e.g. `/admin/consignees`) return `200`, not `404` (the `vercel.json` rewrite).
+## Smoke Test Governance
 
-## Smoke test governance
+- **Exactly one active manual smoke test is allowed.** The active file must say `ACTIVE / CURRENT` in its header.
+- **Current active smoke:** `docs/smoke-test-08-go-live.md` for v2.0.11 / migration 0232, including Android Part 15.
+- **Compatibility pointer:** `docs/go-live-smoke-test.md` points to the active file only. It must not contain test rows.
+- **Closed legacy:** ST05, ST06, and ST07 are closed legacy stubs. They must not be executed for current go-live.
+- When a newer smoke replaces ST08, mark ST08 `CLOSED / LEGACY` or `INACTIVE`, create the new active smoke, and update this file plus `docs/go-live-smoke-test.md` in the same commit.
 
-- Manual smoke tests use the canonical Route/Click/Backend-Contract format: `docs/smoke-test-template-canonical.md`.
-- Every test action names its owning backend (RPC / table write / storage), expected state change, side effects, and the guardrail it proves.
-- The current portal smoke tests are **ST05** (`docs/smoke-test-05-portal.md`) — the broad go-live blind walkthrough (onboarding · Job Orders · Releases · roles · security) — **ST06** (`docs/smoke-test-06-portal.md`) — the focused **ADR-0035** ops-overhaul deltas (auto-complete · serving lanes · priority · re-X-ray · request→bill charges · invoice-gated payment · role re-split) — and **ST07** (`docs/smoke-test-07-portal.md`) — the **break-test-derived full-lifecycle + adversarial + load** pass (whole file→released spine · every branch · evil-input/permission-bypass/RLS/cap walls · 50×10 concurrency), first run as a 17-agent sandbox emulation on the isolated test project and re-verified after migration `0186`/v1.6.76; its Defects tracker is pre-populated from `docs/audits/2026-06-28-breaktest-findings.md` (all critical+high FIXED + re-verified 14/14; KTC-04 downgraded; mediums/lows open). **ST04** is the release/pull-out deep dive; **ST01** is the original auth/onboarding/consignees walk. Each test's preflight lane (P1–P10) is automatable; the lane tables are manual browser walks (or, for ST07, a re-runnable sandbox emulation).
+## Automated E2E
 
-## Automated E2E (Playwright)
-
-Headless smoke tests live in `e2e/` (config `playwright.config.ts`). Default target is the deployed site; override with `BASE_URL`.
+Headless smoke tests live in `e2e/`.
 
 ```sh
-npm run test:e2e                                   # against portal.ktcterminal.com
-BASE_URL=http://localhost:4173 npm run test:e2e    # against a local `npm run preview`
-npm run test:e2e:ui                                # interactive
+npm run test:e2e
+BASE_URL=http://localhost:4173 npm run test:e2e
+npm run test:e2e:ui
 ```
 
-- **`e2e/smoke.spec.ts` — Phase 1, active (15 tests).** Unauthenticated smoke: routing, the public **AuthRail** access menu at `/`, login render, protected-route redirects (broker · admin · release · **`/app/*` staff PWA**), SPA rewrite, the inline agreement + consent ticks, Turnstile mounts + submit gated. Runs without completing a login, so the server-side CAPTCHA does not block it — the automated counterpart to ST01/ST05's no-auth checks. (Verified green against the live deploy 2026-06-27.)
-- **`e2e/authenticated.spec.ts` — Phase 2 (skips by default).** Authenticated flows (ST01 Lanes 1–5). Uses `mintSession()` (`e2e/helpers/session.ts`) — service-role magic-link login, so CAPTCHA is never in the way and never disabled (ADR-0010). Runs only when `E2E_SUPABASE_URL` + `E2E_SERVICE_ROLE_KEY` are set (point at a dedicated test project for mutation lanes); skips cleanly otherwise. Mutation-heavy lanes are `test.fixme` until pointed at a seeded test project. Setup in `e2e/README.md`. Never disable prod CAPTCHA or mutate prod data to test.
+Authenticated/mutating lanes must point at the dedicated sandbox project. Never disable prod CAPTCHA or mutate prod data to test.
 
 There is no Vitest unit suite. When adding coverage for a new workflow, write the Playwright smoke first.

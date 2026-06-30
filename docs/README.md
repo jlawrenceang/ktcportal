@@ -1,6 +1,6 @@
 # Documentation Map (Current-State First)
 
-Last updated: 2026-06-25
+Last updated: 2026-07-01
 
 This repository uses **runtime-first documentation governance** (governing rules: `docs/agent/doc-governance.md`):
 
@@ -38,7 +38,9 @@ This repository uses **runtime-first documentation governance** (governing rules
 ## 4) Smoke tests
 
 - `docs/smoke-test-template-canonical.md` — canonical structure for all smoke tests.
-- `docs/smoke-test-01-portal.md` … `docs/smoke-test-05-portal.md` — ST01–ST05. **ST05 is the current go-live gate** (closeout: manual Lanes A–K; Defect D-01 closed in `0159`); ST01–ST04 are prior runs.
+- `docs/smoke-test-08-go-live.md` - **ST08 / ACTIVE / CURRENT**, the current go-live gate and only active manual smoke.
+- `docs/go-live-smoke-test.md` - pointer-only compatibility file that points to ST08.
+- `docs/smoke-test-01-portal.md` ... `docs/smoke-test-07-portal.md` - closed legacy/reference smoke tests; ST05/ST06/ST07 are not active go-live scripts.
 
 ## 5) Other
 

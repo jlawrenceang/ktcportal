@@ -20,7 +20,7 @@ Shipped the internal Android staff-app lane as `v2.0.11` on top of the already-l
 - Added `/app/device` for device status, push toggle, local alert test, share-sheet status, yard notes, and the yard outbox.
 - Added native checker haptics and an offline outbox that queues only `record_van_xray`; queued items bind to the original signed-in staff user before replay.
 - Added `0232_native_push_tokens.sql` and `send-native-push` source for native FCM delivery.
-- Expanded `docs/go-live-smoke-test.md` with Android Part 15.
+- Expanded `docs/smoke-test-08-go-live.md` with Android Part 15.
 
 ## Verification
 
@@ -35,6 +35,6 @@ Shipped the internal Android staff-app lane as `v2.0.11` on top of the already-l
 
 ## Not shipped / pending
 
-- Real-device Android smoke is deferred to `docs/go-live-smoke-test.md` Part 15.
+- Real-device Android smoke is deferred to `docs/smoke-test-08-go-live.md` Part 15.
 - `send-native-push` Edge Function deployment failed through the local Management API token (`401`); regenerate a valid Supabase `sbp_` PAT, deploy the function, then arm Firebase/native-push secrets.
 - Native cloud push is configuration-pending, not active. Local notifications are still part of the APK smoke.
