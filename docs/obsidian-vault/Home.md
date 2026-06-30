@@ -13,7 +13,7 @@ KTC Container Terminal Corp. — the **KTC Online Portal** for port / container-
 
 | Metric | Value |
 |---|---|
-| Version | `v2.0.10` live/applying on `portal.ktcterminal.com` |
+| Version | `v2.0.10` live on `portal.ktcterminal.com` |
 | Migrations | **~231 files** (`0001` … `0231`), all tracked (split portal + fuel lanes); `0228` (release-payable + container-cap 200) + `0229` (PO submitted/consignee guards) + `0230` (customer-only self-service guards) + `0231` (SMS activation safety) applied to prod 2026-06-30 |
 | Public face | signed-out `/` = a public **Landing** (terminal-photo hero); **Lara** non-LLM customer assistant; **"Continue with Google"** sign-in |
 | Access hardening | pending customers **verify-only** at the RLS layer (`0163`); consent **server-enforced** (`0162`); disposable-email block (`0164`) |
