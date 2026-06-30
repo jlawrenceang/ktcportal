@@ -4,6 +4,16 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v2.0.9 — 2026-06-30 (customer-only self-service guards + Google OAuth flag)
+
+Final role-boundary hardening before the owner smoke:
+
+- **Customer-only self-service (`0230`).** Added `current_customer_id()` and rewired customer write RPCs through it so staff/admin rows cannot use customer-facing business actions by direct RPC: job order file/edit/cancel, release file/resubmit/pay, charge proof submit, support ticket open, and consignee request/resubmit.
+- **Focused operations app gate.** `/app/operations` now requires operational action gates instead of broad `view_job_orders`, so read-only roles do not land in the focused operations work app by direct URL.
+- **Payment Order desk backstop.** `createPo()` now filters selected charge IDs to `unpaid`/`rejected` before calling the RPC, matching the checkbox and the `0229` server guard.
+- **Smoke-test correction.** Operations smoke now treats X-ray as monitor-only; van confirmation belongs to Checker (`confirm_xray`).
+- **Google OAuth activation.** Production build flag `VITE_GOOGLE_OAUTH_ENABLED=true` enables the already-built "Continue with Google" rail once the Supabase/Google provider config is active.
+
 ## v2.0.8 — 2026-06-30 (Payment Order settlement guards — codex review)
 
 Two `create_payment_order` gaps + two route/page gate mismatches found in a second codex pass (Jarvis-verified):

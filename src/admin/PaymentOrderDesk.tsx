@@ -260,7 +260,9 @@ export default function PaymentOrderDesk({ app = false }: { app?: boolean }) {
   }
 
   async function createPo(g: Group) {
-    const ids = g.charges.filter((c) => selected.has(c.id) && c.invoice_state === 'final').map((c) => c.id)
+    const ids = g.charges
+      .filter((c) => selected.has(c.id) && c.invoice_state === 'final' && (c.payment_status === 'unpaid' || c.payment_status === 'rejected'))
+      .map((c) => c.id)
     if (!g.consigneeId || ids.length === 0) return
     setBusyId(g.key); setError(null)
     const { error: e } = await supabase.rpc('create_payment_order', { p_consignee: g.consigneeId, p_charge_ids: ids })

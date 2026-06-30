@@ -268,7 +268,7 @@ export default function App() {
           <Route path="/app/checker" element={<Admin perm="confirm_xray"><AppChecker /></Admin>} />
           <Route path="/app/payment-orders" element={<Admin perm="review_payments"><PaymentOrderDesk app /></Admin>} />
           <Route path="/app/support" element={<Admin perm="manage_support"><SupportInbox app /></Admin>} />
-          <Route path="/app/operations" element={<Admin perm="view_job_orders"><AllJobOrders app /></Admin>} />
+          <Route path="/app/operations" element={<Admin perm={['accept_orders', 'process_job_orders', 'hold_reject_orders', 'assess_rps', 'complete_orders']}><AllJobOrders app /></Admin>} />
 
           {/* Admin portal */}
           {/* perm mirrors the AdminBottomNav GRID 1:1 (see AdminRoute). Routes left

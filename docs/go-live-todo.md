@@ -38,9 +38,9 @@ that only the owner can complete. Keep this current — tick items as they're do
       write a short spec + Jarvis review before building. (Phase-4 batch 4d.)
 
 ## 3. Google OAuth
-- [ ] **Finish the Supabase URL config** (Site URL + redirect allow-list) and
+- [x] **Finish the Supabase URL config** (Site URL + redirect allow-list) and
       **test the flow** end-to-end (smoke: ST05 Lane M).
-- [ ] **Set the app-name branding** ("KTC Online Portal") in the Google consent
+- [x] **Set the app-name branding** ("KTC Online Portal") in the Google consent
       screen so the sign-in page doesn't show the raw `…supabase.co` domain.
 
 ## 4. Other
