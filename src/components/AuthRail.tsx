@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { useT } from '../lib/i18n'
 import { supabase } from '../lib/supabase'
+import { isNativeApp } from '../lib/nativeDevice'
 
 // The menu ("/") — the ways in: Sign in / Create an account / (optionally) Continue with Google.
 // Google is HIDDEN until the provider + consent-screen branding are configured in Supabase
@@ -12,6 +13,7 @@ const GOOGLE_OAUTH_ENABLED = import.meta.env.VITE_GOOGLE_OAUTH_ENABLED === 'true
 
 export default function AuthRail() {
   const { t } = useT()
+  const nativeApp = isNativeApp()
   const [oauthError, setOauthError] = useState<string | null>(null)
 
   async function signInWithGoogle() {
@@ -31,10 +33,12 @@ export default function AuthRail() {
         <Link to="/login" className="ktc-btn" style={{ textDecoration: 'none' }}>
           {t('Sign in')}
         </Link>
-        <Link to="/register" className="ktc-btn-secondary" style={{ textDecoration: 'none' }}>
-          {t('Create an account')}
-        </Link>
-        {GOOGLE_OAUTH_ENABLED && (
+        {!nativeApp && (
+          <Link to="/register" className="ktc-btn-secondary" style={{ textDecoration: 'none' }}>
+            {t('Create an account')}
+          </Link>
+        )}
+        {!nativeApp && GOOGLE_OAUTH_ENABLED && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '2px 0' }}>
               <span style={{ flex: 1, height: 1, background: 'var(--glass-brd)' }} />
@@ -59,7 +63,9 @@ export default function AuthRail() {
         )}
       </div>
       <p className="ktc-label" style={{ margin: '6px 0 0', fontSize: 12.5, lineHeight: 1.55, textAlign: 'center' }}>
-        {t('Create an account to begin accreditation.')}
+        {nativeApp
+          ? t('This installed app is for KTC staff yard devices. Customer accounts should use the web portal.')
+          : t('Create an account to begin accreditation.')}
       </p>
     </>
   )

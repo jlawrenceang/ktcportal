@@ -5,7 +5,21 @@ type: memory
 last_updated: 2026-06-30
 ---
 
+
 # 📌 Current State (Runtime-Aligned)
+
+## 2026-06-30 - Internal Android staff app SHIPPED (v2.0.11, migration 0232)
+
+**`APP_VERSION` = `v2.0.11`; migrations through `0232` applied to prod.** This ship adds the internal Android staff-app lane on top of the already-live ADR-0037 charges cutover. The APK is staff-only, target-guarded, and built for sandbox device smoke; it does **not** open offline money workflows.
+
+- **Target-safe build commands** - `target:status`, `dev:test`, `build:test`, `preview:test`, `build:android:test`, and live equivalents now make the Supabase target explicit. Sandbox builds refuse the production ref and show a yellow `SANDBOX DB` badge.
+- **Bundled staff APK** - Capacitor packages built assets instead of loading `portal.ktcterminal.com` directly. Sandbox APK label = **KTC Test**; latest local build SHA256 `FEE72FD96A2D505E2F7B340F65E51D14552BC4B154DAC7F3B716B2DD978B4158`.
+- **Native checker/device workflow** - customer accounts are blocked inside the APK and sent to the web portal. Staff get role-aware homes, native ML-Kit scanner feedback, haptics, local alerts, share-sheet status, `/app/device`, and a device-local outbox. The outbox queues **only** X-ray confirmations (`record_van_xray`) and binds them to the original signed-in staff user; payments/invoices/OR/Payment Orders remain online-only.
+- **Native push scaffold (`0232`)** - `native_push_tokens` + RLS + notification triggers are live. `send-native-push` source is present, but Management API deploy failed with local `SUPABASE_ACCESS_TOKEN` 401; cloud native push remains dormant until a valid `sbp_` PAT deploys the function and Firebase/native-push secrets are set.
+- **Verified before ship** - `target:status`, `lint`, `check:i18n`, `build:test`, `check-security-invariants`, and `build:android:test` passed. Real-device Part 15 smoke is intentionally deferred.
+
+**Next** - run `docs/go-live-smoke-test.md` Part 15 on an Android device, then the all-roles/all-lanes smoke; arm native cloud push only after valid PAT + Firebase service-account secrets exist.
+
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
 

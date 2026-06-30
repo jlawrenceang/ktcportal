@@ -2,7 +2,7 @@
 title: Roadmap
 tags: [memory, roadmap, planning]
 type: memory
-last_updated: 2026-06-29
+last_updated: 2026-06-30
 ---
 
 # 🧭 Roadmap (Phased)
@@ -13,7 +13,7 @@ Legend: **COMPLETED** · **NOW** · **NEXT** · **LATER** · **PARKED** · **NOR
 
 > **Active focus (2026-06-22):** portal / job-orders. The **fuel-monitoring** module ([ADR-0025](../../adr/0025-fuel-monitoring-derived-variance-on-moves-spine.md)) was started as a parallel lane and is **parked after Phase 0** (schema live, no frontend) — see PARKED below.
 
-> **Active focus (2026-06-29):** Phase-5 verification + **v1.7.0→v1.7.5 shipped**, and **[ADR-0037](../../adr/0037-jo-as-atomic-move-payment-orders-1-1-1-invoicing.md) Phase A is now BUILT** — the **anti-fraud X-ray billing spine**: backend migrations `0202`–`0211` (applied to prod, **additive** — nothing dropped, Jarvis-verified) + **10 new frontend screens** (typecheck-clean, additive). It is **NOT yet wired into the live flow** — the **old base/RPS/supplement payment model is still operational**. **Next major work = the ADR-0037 CUTOVER:** the surgical, large-blast-radius switch onto the `charges`/`payment_orders` spine (`file_job_order` creates the base charge + upserts containers; one-rule completion; monthly serving `YYMM-XXXX`; consignee-read RLS tightened to `search_consignees`; staff-cancel → admin-only; **then** the destructive drops of the old billing tables — atomic, together → Jarvis + e2e + a data-isolated break-test). The **user-facing manuals + demo tours + walkthrough video land WITH the cutover.** See [[2026-06-29 X-ray Phase A Anti-Fraud Billing Build (backend + frontend, cutover deferred)]] + [[target-architecture-jo-payment-invoice]]. Carry-over backlog: [[Pending Items]].
+> **Active focus (2026-06-30):** ADR-0037 cutover is live; the charges/payment-orders spine is the operational money path. v2.0.11 adds the internal Android staff-app lane: sandbox/live target guardrails, bundled APK, staff-only native gate, offline X-ray-confirmation outbox, `/app/device`, and dormant native push scaffolding (`0232`). Next work is **go-live execution**, not another billing cutover: run the all-roles/all-lanes smoke plus the Android Part 15 device smoke, finish owner/business checklist items, then launch.
 
 ## COMPLETED ✅ (through v1.1.0, 2026-06-13)
 
@@ -24,18 +24,17 @@ Legend: **COMPLETED** · **NOW** · **NEXT** · **LATER** · **PARKED** · **NOR
 - Roles & security: cashier/checker + role matrix, TOTP 2FA, single session, idle timeouts, auto-suspend + watchdog, CSP/headers, ID retention.
 - Per-role manuals + tours; version provenance; layered docs system + Playwright (16/16).
 
-## NOW 🎯 — ADR-0037 cutover (pre-launch reshape) → trial run → go-live
+## NOW - Go-live smoke + internal Android device check
 
-1. **ADR-0037 cutover (next-up; pre-launch reshape).** Wire the live money path onto the now-**BUILT** `charges`/`payment_orders` spine, then drop the old billing tables (atomic) → Jarvis + e2e + a data-isolated break-test. The **user-facing manuals + demo tours + walkthrough video land with it.** See the active-focus callout above + [[Pending Items]].
-2. **ST05 manual Lanes A–K** on live (owner) + **P9** rates/payment-details entry; preflight P1–P8 green through `0158`. See [[Pending Items]]. (Defect D-01 **closed** `0159`.)
-3. ✅ **Teardown done (2026-06-23)** — test data purged + `jo_number_seq` reset so the first real order is `JO-000001`.
+1. **Run `docs/go-live-smoke-test.md`** end to end: public/customer/staff/RBAC/money invariants plus **Part 15 Android internal app** on a real device. The sandbox APK already builds; device camera/offline-sync/local-notification behavior still needs physical validation.
+2. **Operational onboarding** - staff/broker test accounts, DEA/service rates, bank/GCash/QR payment details, and owner side-by-side smoke.
+3. **ADR-0037 cutover done** - charges/payment-orders live; old billing path retired; v2.0.7-v2.0.11 hardening layered on top.
 
 ## NEXT — Launch gate (owner checklist: `docs/go-live-todo.md`)
 
-3. **Google OAuth config** — Supabase URL config + consent-screen branding, then smoke (ST05 Lane M).
-4. **Re-enable security** — Turnstile + MFA enrolment + owner password rotation (all down for testing).
-5. **Counsel sign-off on Customer Agreement v4** (final PH pass; NPC registration; DPO mailbox; ₱100k cap). Server-side consent enforcement is already live (`0162`).
-6. **Public launch** — remove the prod-testing restriction.
+1. **Native cloud push activation** - regenerate a valid Supabase `sbp_` PAT, deploy `send-native-push`, then set Firebase service-account secrets plus `native_push_url`/`native_push_secret` in Vault. Until then, native cloud push is configuration-pending, not a smoke failure.
+2. **Counsel sign-off on Customer Agreement v4** (final PH pass; NPC registration; DPO mailbox; liability cap). Server-side consent enforcement is already live (`0162`).
+3. **Public launch** - remove the prod-testing restriction after smoke sign-off.
 
 ## LATER — Hardening & integrations
 

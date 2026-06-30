@@ -1,5 +1,18 @@
 # Changelog
 
+## v2.0.11 — 2026-06-30 (internal Android staff app + sandbox targets)
+
+Ships the internal staff APK lane and keeps cloud push dormant until credentials are armed:
+
+- **Sandbox/live target guardrails.** Added explicit `dev:test`, `build:test`, `preview:test`, `build:android:test`, and live equivalents so sandbox builds cannot accidentally point at the production Supabase ref. `npm run target:status` prints the live/test refs before a run.
+- **Bundled internal staff APK.** Capacitor now packages the built portal assets for internal yard devices instead of loading the live site directly. The sandbox APK is branded **KTC Test** and displays a yellow `SANDBOX DB` badge.
+- **Native checker workflow.** The installed app is staff-only; customer accounts are blocked and sent to the web portal. Checker gets ML-Kit scan feedback, haptics, and a device-local offline outbox that queues only `record_van_xray` confirmations. Money, invoices, payment proof, Payment Orders, and OR actions remain online-only and server-gated.
+- **Device surface.** `/app/device` shows device/network/OTA state, native push toggle, local notification test, share-sheet status, yard notes, and the X-ray outbox.
+- **Native push scaffold (`0232`).** Added `native_push_tokens`, RLS, notification triggers, and `send-native-push` function source for FCM delivery. `0232` is applied to prod, but cloud native push stays dormant until the Edge Function is deployed with a valid Supabase PAT and Firebase/native-push secrets are armed.
+- **Smoke test expanded.** `docs/go-live-smoke-test.md` now includes the Android internal-app lane and the sandbox APK hash to record during the later real-device smoke.
+
+Verification: `npm run target:status`, `npm run lint`, `npm run check:i18n`, `npm run build:test`, `node scripts/check-security-invariants.mjs`, and `npm run build:android:test` all passed. Sandbox APK SHA256: `FEE72FD96A2D505E2F7B340F65E51D14552BC4B154DAC7F3B716B2DD978B4158`. Real-device smoke is intentionally deferred.
+
 All notable changes to the KTC broker portal. Newest first. Dates are absolute (YYYY-MM-DD).
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.

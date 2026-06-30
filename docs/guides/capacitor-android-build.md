@@ -4,21 +4,17 @@ This guide lets the owner produce, sign, install, and hand out a working Android
 app for the KTC Online Portal **without the developer present**. Follow the
 numbered steps in order. Plain language throughout — no shortcuts assumed.
 
-> **Where things stand (read first).** The native Android project is already set
-> up and committed in this repo (`android/` folder). Phases 1, 2, and 3 are done:
-> the project was initialised, the native QR scanner was wired into the Checker,
-> and the app was set to load the live website. What is left is **your** part:
-> install the build tools, add one missing camera-permission line, then build,
-> sign, and install. Most of the hard work is finished.
+> **Where things stand (read first).** The native Android project is already set up and committed in this repo (`android/` folder). The app now bundles the built portal assets for internal staff devices, includes the native Checker scanner, and has a staff-only device lane with an offline X-ray outbox. The camera permission is already present. What remains for rollout is real-device smoke, release signing, and optional native cloud-push activation.
 
 Real values used by this app (do not change them unless told to):
 
 - **App ID (package name):** `com.ktcterminal.portal`
 - **App name shown on the phone:** `KTC Portal`
-- **Live site the app loads:** `https://portal.ktcterminal.com`
+- **Customer web portal opened from the staff app:** `https://portal.ktcterminal.com`
 - **Web folder bundled:** `dist`
 - **Capacitor version:** 8.4.1 (core, CLI, android)
 - **Native scanner plugin:** `@capacitor-mlkit/barcode-scanning` 8.1.0 (Google ML Kit)
+- **Native staff-device plugins:** Network, Preferences, Haptics, Local Notifications, Share, Push Notifications, Capgo Updater
 - **Android SDK levels:** minimum 24 (Android 7), target/compile 36
 
 ---
@@ -26,7 +22,8 @@ Real values used by this app (do not change them unless told to):
 ## 1. What the native app gives KTC, and who needs it
 
 The KTC Portal is a website. It works on any phone or tablet browser already. The
-**only** reason for a native Android app is the **Checker's QR scanner**.
+native Android app is for **internal staff devices**, especially the Checker yard
+workflow.
 
 - In a mobile **browser**, the QR scanner uses a web feature (`BarcodeDetector`)
   that is unreliable — it is missing on many phones and absent on iPhones. When it
@@ -40,24 +37,15 @@ code: `Capacitor.isNativePlatform()` decides this — see
 `src/app/AppChecker.tsx`.) You do not configure anything for this; the native
 build simply turns it on.
 
-**Who needs the native app:** only the staff who **scan** — the **X-ray
-checkers**, on the **tablets/phones they use at the gate/X-ray line**. Everyone
-else (brokers, cashiers, admins, ops) can keep using the website in a browser.
-Install the app on the handful of checker devices and nowhere else.
+**Who needs the native app:** KTC staff devices for the focused `/app/*` work surfaces, especially X-ray checkers at the gate/X-ray line. Customer accounts are blocked inside the APK and sent to the public web portal.
 
-### The most important idea: this app is a thin shell over the live site
+### The most important idea: this app bundles the portal for staff
 
-The app is configured with `server.url = https://portal.ktcterminal.com`. That
-means the app **does not carry its own copy of the website inside it** — it opens
-the live site, exactly like a browser pointed at one page, but with the native
-scanner switched on.
+The app now packages the built `dist/` assets into the APK. That means the APK can launch its own staff shell and keep a device-local X-ray outbox during weak/no signal. It still talks to Supabase for real work, and the offline outbox replays only the server-gated `record_van_xray` action.
 
 The practical effect:
 
-- **Day-to-day web changes ship instantly.** When the developer pushes a normal
-  update (a fix, a new screen, copy changes), it deploys to the live site and the
-  installed app picks it up the next time it is opened. **No new APK needed.**
-  This is the "over-the-air" (OTA) update model for this app.
+- **Day-to-day web changes ship to the website instantly.** The installed APK does not automatically get those bundled asset changes unless an OTA bundle is configured or a new APK is sideloaded.
 - **A new APK is only needed for native changes** — a new device feature/plugin,
   a Capacitor version bump, a permission change, or a change to the app's
   identity/icon/`server.url`. (Full list in step 8.)

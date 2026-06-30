@@ -56,9 +56,9 @@ export async function mintSession(page: Page, email: string): Promise<void> {
   }
 
   // Start clean, then follow the magic link to establish the session.
-  await page.goto(`${BASE_URL}/login`)
+  await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded' })
   await page.evaluate(() => window.localStorage.clear())
-  await page.goto(link)
+  await page.goto(link, { waitUntil: 'domcontentloaded' })
   // The verify redirect lands with tokens in the URL hash; supabase-js then
   // consumes them asynchronously. Navigating away before it persists the
   // session loses it — so wait for the auth token to hit localStorage.
@@ -72,7 +72,7 @@ export async function mintSession(page: Page, email: string): Promise<void> {
   // an active session elsewhere, the app shows an "Already signed in on another device"
   // guard that covers the page and blocks the role redirect. Claim this browser as the
   // active session so the caller lands cleanly. (No-op for an account with no prior session.)
-  await page.goto(`${BASE_URL}/`).catch(() => {})
+  await page.goto(`${BASE_URL}/`, { waitUntil: 'domcontentloaded' }).catch(() => {})
   const term = page.getByRole('button', { name: /Terminate other session/i })
   // Wait up to 6s for the guard to render (it boots async); click to claim. Times out
   // harmlessly for a fresh account that has no other session.

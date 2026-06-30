@@ -2,7 +2,7 @@ import { Suspense, useEffect, useRef, useState, type ReactNode, type CSSProperti
 import { lazyWithReload } from './lib/lazyWithReload'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './lib/AuthContext'
-import { I18nProvider } from './lib/i18n'
+import { I18nProvider, useT } from './lib/i18n'
 import TourProvider from './components/TourProvider'
 import { WalkthroughProvider } from './components/Walkthrough'
 import FirstRunSetup from './components/FirstRunSetup'
@@ -16,7 +16,9 @@ import HeroSlideshow from './components/HeroSlideshow'
 import PublicShell from './components/PublicShell'
 import AuthRail from './components/AuthRail'
 import { useBroker } from './lib/useBroker'
-import { hasAdminAccess } from './lib/types'
+import { hasAdminAccess, isStaff } from './lib/types'
+import { isNativeApp } from './lib/nativeDevice'
+import { Browser } from '@capacitor/browser'
 import Login from './pages/Login'
 import Confirmed from './pages/Confirmed'
 import ForgotPassword from './pages/ForgotPassword'
@@ -30,6 +32,9 @@ import MyJobOrders from './pages/MyJobOrders'
 import AdminRoute from './admin/AdminRoute'
 import { type Permission } from './lib/usePermissions'
 
+const APP_TARGET = import.meta.env.VITE_APP_TARGET ?? 'prod'
+const PUBLIC_PORTAL_URL = import.meta.env.VITE_PUBLIC_PORTAL_URL ?? 'https://portal.ktcterminal.com'
+
 // Code-split: customers never download the admin portal (and vice versa for
 // the rarely-visited print view) — keeps the first paint lean.
 const JobOrderPrint = lazyWithReload(() => import('./pages/JobOrderPrint'))
@@ -37,6 +42,7 @@ const Verify = lazyWithReload(() => import('./pages/Verify'))
 const Calculator = lazyWithReload(() => import('./pages/Calculator'))
 const AppHome = lazyWithReload(() => import('./app/AppHome'))
 const AppChecker = lazyWithReload(() => import('./app/AppChecker'))
+const NativeDevice = lazyWithReload(() => import('./app/NativeDevice'))
 const Vessels = lazyWithReload(() => import('./pages/Vessels'))
 const SupportTickets = lazyWithReload(() => import('./pages/SupportTickets'))
 const Releases = lazyWithReload(() => import('./pages/Releases'))
@@ -209,6 +215,60 @@ function MfaGate({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+function NativeStaffOnlyGate({ children }: { children: ReactNode }) {
+  const { t } = useT()
+  const { session } = useAuth()
+  const { broker, loading } = useBroker()
+  const { pathname } = useLocation()
+  if (!isNativeApp() || !session || APP_BG_PUBLIC.has(pathname) || pathname.startsWith('/verify/')) return <>{children}</>
+  if (loading) return <RouteLoader />
+  if (isStaff(broker)) return <>{children}</>
+  return (
+    <div className="ktc-page" style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 20 }}>
+      <div className="ktc-glass" style={{ width: '100%', maxWidth: 420, padding: 22, display: 'grid', gap: 12, textAlign: 'center' }}>
+        <img src="/ktc-logo.png" alt="KTC" style={{ height: 38, justifySelf: 'center' }} />
+        <h1 className="ktc-title" style={{ fontSize: 22 }}>{t('Internal staff app')}</h1>
+        <p className="ktc-label" style={{ margin: 0, fontSize: 14, lineHeight: 1.55 }}>
+          {t('This installed app is for KTC staff yard devices. Customer accounts should use the web portal.')}
+        </p>
+        <button type="button" className="ktc-btn" onClick={() => void Browser.open({ url: PUBLIC_PORTAL_URL })}>
+          {t('Open customer web portal')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function SandboxBanner() {
+  if (APP_TARGET !== 'sandbox') return null
+  let ref = 'sandbox'
+  try {
+    ref = new URL(import.meta.env.VITE_SUPABASE_URL).host.split('.')[0] || ref
+  } catch { /* keep fallback */ }
+  return (
+    <div
+      aria-label="Sandbox database build"
+      style={{
+        position: 'fixed',
+        left: 10,
+        bottom: 10,
+        zIndex: 2147483000,
+        pointerEvents: 'none',
+        padding: '5px 9px',
+        borderRadius: 8,
+        background: '#facc15',
+        color: '#111827',
+        border: '1px solid rgba(17,24,39,.25)',
+        font: '700 11px/1.2 system-ui, sans-serif',
+        letterSpacing: 0,
+        boxShadow: '0 8px 20px rgba(15,23,42,.18)',
+      }}
+    >
+      SANDBOX DB · {ref}
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -217,7 +277,9 @@ export default function App() {
         <WalkthroughProvider>
         <TourProvider>
         <ServerBusyBanner />
+        <SandboxBanner />
         <MfaGate>
+        <NativeStaffOnlyGate>
         <FirstRunSetup />
         <SessionSupersededOverlay />
         <PublicBackdrop />
@@ -264,7 +326,8 @@ export default function App() {
           <Route path="/manual" element={<Protected><Manual /></Protected>} />
 
           {/* Installable staff app (focused, role-aware) */}
-          <Route path="/app" element={<Protected><AppHome /></Protected>} />
+          <Route path="/app" element={<Admin><AppHome /></Admin>} />
+          <Route path="/app/device" element={<Admin><NativeDevice /></Admin>} />
           <Route path="/app/checker" element={<Admin perm="confirm_xray"><AppChecker /></Admin>} />
           <Route path="/app/payment-orders" element={<Admin perm="review_payments"><PaymentOrderDesk app /></Admin>} />
           <Route path="/app/support" element={<Admin perm="manage_support"><SupportInbox app /></Admin>} />
@@ -300,6 +363,7 @@ export default function App() {
         </Routes>
         </RouteFade>
         </Suspense>
+        </NativeStaffOnlyGate>
         </MfaGate>
         </TourProvider>
         </WalkthroughProvider>

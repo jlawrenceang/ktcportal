@@ -14,6 +14,14 @@ import { test, expect } from '@playwright/test'
 const DEPLOYED = process.env.BASE_URL && !process.env.BASE_URL.includes('localhost')
   ? process.env.BASE_URL
   : 'https://portal.ktcterminal.com'
+const isLoopbackTarget = (() => {
+  try {
+    const host = new URL(DEPLOYED).hostname
+    return host === 'localhost' || host === '127.0.0.1' || host === '::1'
+  } catch {
+    return false
+  }
+})()
 
 test.describe('KTC portal — unauthenticated smoke', () => {
   test.use({ baseURL: DEPLOYED })
@@ -21,7 +29,7 @@ test.describe('KTC portal — unauthenticated smoke', () => {
   // PublicShell — orientation + the three ways in — NOT a redirect to /login (the
   // public Landing shipped 2026-06-26).
   test('root shows the public access menu (AuthRail) when logged out', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/$/) // stays at the root, not bounced to /login
     // href-based (language-agnostic — link labels are translated in Tagalog).
     await expect(page.locator('a[href="/login"]').first()).toBeVisible()
@@ -29,7 +37,7 @@ test.describe('KTC portal — unauthenticated smoke', () => {
   })
 
   test('login page renders core elements', async ({ page }) => {
-    await page.goto('/login')
+    await page.goto('/login', { waitUntil: 'domcontentloaded' })
     // Structural selectors (the heading + button text are translated in Tagalog).
     await expect(page.getByAltText('KTC Container Terminal Corp')).toBeVisible()
     await expect(page.locator('#email')).toBeVisible()
@@ -38,33 +46,33 @@ test.describe('KTC portal — unauthenticated smoke', () => {
   })
 
   test('protected admin route redirects to /login when logged out', async ({ page }) => {
-    await page.goto('/admin/consignees')
+    await page.goto('/admin/consignees', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/login$/)
   })
 
   test('protected broker route redirects to /login when logged out', async ({ page }) => {
-    await page.goto('/job-order')
+    await page.goto('/job-order', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/login$/)
   })
 
   test('SPA deep-link is served by the rewrite (HTTP 200, not a hard 404)', async ({ page }) => {
-    const res = await page.goto('/admin/consignees')
+    const res = await page.goto('/admin/consignees', { waitUntil: 'domcontentloaded' })
     expect(res?.status()).toBe(200)
   })
 
   // Release / pull-out module (ADR-0024) — routes exist and are auth-gated.
   test('protected customer releases route redirects to /login when logged out', async ({ page }) => {
-    await page.goto('/releases')
+    await page.goto('/releases', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/login$/)
   })
 
   test('protected admin releases route redirects to /login when logged out', async ({ page }) => {
-    await page.goto('/admin/releases')
+    await page.goto('/admin/releases', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/login$/)
   })
 
   test('SPA deep-link /admin/releases is served by the rewrite (HTTP 200)', async ({ page }) => {
-    const res = await page.goto('/admin/releases')
+    const res = await page.goto('/admin/releases', { waitUntil: 'domcontentloaded' })
     expect(res?.status()).toBe(200)
   })
 
@@ -74,7 +82,7 @@ test.describe('KTC portal — unauthenticated smoke', () => {
   // desk — `/app/cashier` is GONE, replaced by `/app/payment-orders`.
   test('protected staff-PWA routes redirect to /login when logged out', async ({ page }) => {
     for (const path of ['/app', '/app/operations', '/app/payment-orders', '/app/checker', '/app/support']) {
-      await page.goto(path)
+      await page.goto(path, { waitUntil: 'domcontentloaded' })
       await expect(page).toHaveURL(/\/login$/)
     }
   })
@@ -85,13 +93,13 @@ test.describe('KTC portal — unauthenticated smoke', () => {
   // redirects, and the SPA rewrite serves them (no hard 404).
   test('protected admin billing routes (payment-orders + charges) redirect to /login when logged out', async ({ page }) => {
     for (const path of ['/admin/payment-orders', '/admin/charges']) {
-      await page.goto(path)
+      await page.goto(path, { waitUntil: 'domcontentloaded' })
       await expect(page).toHaveURL(/\/login$/)
     }
   })
 
   test('SPA deep-link /admin/payment-orders is served by the rewrite (HTTP 200)', async ({ page }) => {
-    const res = await page.goto('/admin/payment-orders')
+    const res = await page.goto('/admin/payment-orders', { waitUntil: 'domcontentloaded' })
     expect(res?.status()).toBe(200)
   })
 
@@ -102,7 +110,7 @@ test.describe('KTC portal — unauthenticated smoke', () => {
   // rewrite (HTTP 200) and bounced to "/", never a dead screen.
   test('deleted billing routes fall through to the root access menu (not a hard 404)', async ({ page }) => {
     for (const path of ['/job-order/00000000/pay', '/admin/cashier', '/app/cashier']) {
-      const res = await page.goto(path)
+      const res = await page.goto(path, { waitUntil: 'domcontentloaded' })
       expect(res?.status()).toBe(200)
       await expect(page).toHaveURL(/\/$/)
     }
@@ -111,20 +119,20 @@ test.describe('KTC portal — unauthenticated smoke', () => {
   // App.tsx's catch-all route now navigates to "/" (the RootGate); for a signed-out
   // visitor that renders the AuthRail access menu (it no longer lands on /login).
   test('unknown route falls through to the root access menu', async ({ page }) => {
-    await page.goto('/this-route-does-not-exist')
+    await page.goto('/this-route-does-not-exist', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/$/)
     await expect(page.locator('a[href="/register"]').first()).toBeVisible()
   })
 
   test('can switch to Create account (valid ID moved to post-confirmation)', async ({ page }) => {
-    await page.goto('/register') // the walk-in QR target opens straight in sign-up mode
+    await page.goto('/register', { waitUntil: 'domcontentloaded' }) // the walk-in QR target opens straight in sign-up mode
     await expect(page.locator('#fullName')).toBeVisible()
     await expect(page.locator('#contactNumber')).toBeVisible()
     await expect(page.locator('#validId')).toHaveCount(0) // ID is uploaded after email confirmation now
   })
 
   test('public Agreement page renders without auth', async ({ page }) => {
-    const res = await page.goto('/agreement')
+    const res = await page.goto('/agreement', { waitUntil: 'domcontentloaded' })
     expect(res?.status()).toBe(200)
     await expect(page).toHaveURL(/\/agreement$/) // public — not redirected to /login
     await expect(page.getByRole('heading', { name: /KTC Customer Agreement/i }).first()).toBeVisible()
@@ -132,13 +140,13 @@ test.describe('KTC portal — unauthenticated smoke', () => {
 
   test('old legal routes redirect to /agreement', async ({ page }) => {
     for (const path of ['/irr', '/terms', '/privacy']) {
-      await page.goto(path)
+      await page.goto(path, { waitUntil: 'domcontentloaded' })
       await expect(page).toHaveURL(/\/agreement$/)
     }
   })
 
   test('registration shows the inline agreement + Terms and DPA consent tick', async ({ page }) => {
-    await page.goto('/register')
+    await page.goto('/register', { waitUntil: 'domcontentloaded' })
     await expect(page.getByRole('checkbox')).toHaveCount(1) // one tick = Terms + NDA + DPA (consolidated)
     // The agreement proper noun appears in the inline doc body (legal text isn't
     // translated), so it's a language-agnostic marker that the agreement rendered.
@@ -153,10 +161,10 @@ test.describe('KTC portal — unauthenticated smoke', () => {
     // BASE_URL is ignored and the run targets prod, where the Turnstile gate (a
     // non-negotiable) MUST be exercised — keying off raw BASE_URL skipped it.
     test.skip(
-      !!process.env.E2E_SUPABASE_URL && DEPLOYED.includes('localhost'),
-      'CAPTCHA is intentionally disabled on the localhost test build',
+      !!process.env.E2E_SUPABASE_URL && isLoopbackTarget,
+      'CAPTCHA is intentionally disabled on the loopback sandbox test build',
     )
-    await page.goto('/login')
+    await page.goto('/login', { waitUntil: 'domcontentloaded' })
     // The Turnstile API script is loaded by src/components/Turnstile.tsx.
     await expect(
       page.locator('script[src*="challenges.cloudflare.com/turnstile"]'),

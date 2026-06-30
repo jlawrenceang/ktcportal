@@ -11,7 +11,10 @@ import NowServing from '../components/NowServing'
 import { usePageTour } from '../components/TourProvider'
 import { checkerSteps } from '../admin/AdminTour'
 import { Capacitor } from '@capacitor/core'
+import { Network } from '@capacitor/network'
 import { BarcodeScanner, BarcodeFormat } from '@capacitor-mlkit/barcode-scanning'
+import { isNativeApp, queueNativeXrayConfirm, syncNativeOutbox } from '../lib/nativeDevice'
+import { nativeFeedback } from '../lib/nativeUX'
 
 // Checker app screen: scan the slip QR (encodes /verify/<jo-id>) with the
 // camera, or type the JO number, then confirm X-ray per van. Reuses the same
@@ -136,9 +139,10 @@ export default function AppChecker() {
         const { barcodes } = await BarcodeScanner.scan({ formats: [BarcodeFormat.QrCode] })
         const raw = barcodes[0]?.rawValue
         const id = raw ? matchVerify(raw) : null
-        if (id) void openOrder(id)
-        else if (raw) setError(t('No job order found for that code.'))
+        if (id) { await nativeFeedback('success'); void openOrder(id) }
+        else if (raw) { await nativeFeedback('error'); setError(t('No job order found for that code.')) }
       } catch {
+        await nativeFeedback('error')
         setError(t('Could not open the camera. Allow camera access, or type the JO number.'))
       }
       return
@@ -181,9 +185,36 @@ export default function AppChecker() {
 
   async function confirmVan(lineId: string) {
     setBusyLine(lineId); setError(null)
+    if (isNativeApp()) {
+      const status = await Network.getStatus()
+      if (!status.connected) {
+        await queueNativeXrayConfirm({
+          lineId,
+          container: confirmTarget?.container ?? '',
+          jo: confirmTarget?.jo ?? active?.jo_number ?? '—',
+        })
+        setBusyLine(null); setConfirmTarget(null)
+        setError(t('Offline — X-ray confirmation saved on this device and will sync when reconnected.'))
+        return
+      }
+    }
     const { error: rpcErr } = await supabase.rpc('record_van_xray', { p_line_id: lineId })
     setBusyLine(null); setConfirmTarget(null)
-    if (rpcErr) { setError(rpcErr.message); return }
+    if (rpcErr) {
+      if (isNativeApp() && /fetch|network|failed|timeout/i.test(rpcErr.message)) {
+        await queueNativeXrayConfirm({
+          lineId,
+          container: confirmTarget?.container ?? '',
+          jo: confirmTarget?.jo ?? active?.jo_number ?? '—',
+        })
+        setError(t('Connection dropped — X-ray confirmation saved on this device and will sync when reconnected.'))
+        return
+      }
+      if (isNativeApp()) await nativeFeedback('error')
+      setError(rpcErr.message); return
+    }
+    if (isNativeApp()) await nativeFeedback('success')
+    if (isNativeApp()) void syncNativeOutbox()
     if (active) await openOrder(active.id)
     void load()
   }

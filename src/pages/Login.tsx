@@ -10,6 +10,7 @@ import PasswordInput from '../components/PasswordInput'
 import PasswordStrength from '../components/PasswordStrength'
 import { passwordIssue } from '../lib/validation'
 import { useT } from '../lib/i18n'
+import { isNativeApp } from '../lib/nativeDevice'
 
 // Client-side brute-force deterrent: after MAX_FAILS wrong passwords for an
 // email, disable sign-in for LOCK_MS. (Supabase's server-side auth rate limits
@@ -64,8 +65,9 @@ export default function Login() {
   const { signIn, signUp, session } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const nativeApp = isNativeApp()
   // The /register URL (the walk-in QR target) opens straight in sign-up mode.
-  const [mode, setMode] = useState<'signin' | 'signup'>(location.pathname === '/register' ? 'signup' : 'signin')
+  const [mode, setMode] = useState<'signin' | 'signup'>(nativeApp ? 'signin' : location.pathname === '/register' ? 'signup' : 'signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -243,6 +245,7 @@ export default function Login() {
 
   // Already signed in → don't show the login page; send to the role landing (/).
   if (session) return <Navigate to="/" replace />
+  if (nativeApp && location.pathname === '/register') return <Navigate to="/login" replace />
 
 
   return (
@@ -253,9 +256,11 @@ export default function Login() {
       <div className="ktc-authform">
         {/* Back to the main menu — swaps this right column back to the Sign in / Create
             account buttons (the card chrome stays put). */}
-        <Link to="/" className="ktc-link" style={{ justifySelf: 'start', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, textDecoration: 'none' }}>
-          {t('← Back to menu')}
-        </Link>
+        {!nativeApp && (
+          <Link to="/" className="ktc-link" style={{ justifySelf: 'start', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, textDecoration: 'none' }}>
+            {t('← Back to menu')}
+          </Link>
+        )}
         {notice && <Notice tone="success" style={{ marginBottom: 14 }}>{notice}</Notice>}
         {isLocked && (
           <Notice tone="warning" style={{ marginBottom: 14 }}>
@@ -387,13 +392,15 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="ktc-label" style={{ marginTop: 18, fontSize: 13 }}>
-          {isSignup ? t('Already have an account? ') : t("Don't have an account? ")}
-          <button className="ktc-link" type="button"
-            onClick={() => { setMode(isSignup ? 'signin' : 'signup'); setError(null); setNotice(null); setShowResend(false); resetCaptcha(); setAgreedTerms(false) }}>
-            {isSignup ? t('Sign in') : t('Create one')}
-          </button>
-        </p>
+        {!nativeApp && (
+          <p className="ktc-label" style={{ marginTop: 18, fontSize: 13 }}>
+            {isSignup ? t('Already have an account? ') : t("Don't have an account? ")}
+            <button className="ktc-link" type="button"
+              onClick={() => { setMode(isSignup ? 'signin' : 'signup'); setError(null); setNotice(null); setShowResend(false); resetCaptcha(); setAgreedTerms(false) }}>
+              {isSignup ? t('Sign in') : t('Create one')}
+            </button>
+          </p>
+        )}
       </div>
 
       {showAgreement && (

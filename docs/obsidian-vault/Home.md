@@ -2,7 +2,7 @@
 title: Home
 tags: [index]
 type: home
-last_updated: 2026-06-29
+last_updated: 2026-06-30
 ---
 
 # KTC Portal Knowledge Home
@@ -13,14 +13,14 @@ KTC Container Terminal Corp. — the **KTC Online Portal** for port / container-
 
 | Metric | Value |
 |---|---|
-| Version | `v2.0.10` live on `portal.ktcterminal.com` |
-| Migrations | **~231 files** (`0001` … `0231`), all tracked (split portal + fuel lanes); `0228` (release-payable + container-cap 200) + `0229` (PO submitted/consignee guards) + `0230` (customer-only self-service guards) + `0231` (SMS activation safety) applied to prod 2026-06-30 |
+| Version | `v2.0.11` live on `portal.ktcterminal.com` after this ship |
+| Migrations | **~232 files** (`0001` ... `0232`), all tracked (split portal + fuel lanes); `0228` (release-payable + container-cap 200) + `0229` (PO submitted/consignee guards) + `0230` (customer-only self-service guards) + `0231` (SMS activation safety) + `0232` (native push token scaffold) applied to prod 2026-06-30 |
 | Public face | signed-out `/` = a public **Landing** (terminal-photo hero); **Lara** non-LLM customer assistant; **"Continue with Google"** sign-in |
 | Access hardening | pending customers **verify-only** at the RLS layer (`0163`); consent **server-enforced** (`0162`); disposable-email block (`0164`) |
 | Staff roles | admin · operations · cashier · checker · csr (+ owner / root owner) — gated by `has_permission`. `purchaser` (fuel desk) exists in the DB but is **frontend-deferred** |
 | Completion | **two-gate** — all services + base payment + RPS (if needed) + every supplement, all confirmed; derived "✓ Cleared for release" badge |
-| Active focus | **ADR-0037 charges cutover SHIPPED + codex-review fixes DEPLOYED — `v2.0.10`, migration `0231` applied** (the move-spine: every move = a JO; 1:1:1 ERP/BIR invoicing; Payment-Order N:1; payment-before-movement; supplements retired). Fully break-tested (gates/RLS/RBAC/writes hold). 2026-06-30 deploys: v2.0.7 (release charges payable, Verify-QR all-charge PAID, per-route admin guards, container cap 200) + v2.0.8 (PO can't bundle a proof-submitted charge, PO enforces one consignee, charge-audit/checker gate alignment) + v2.0.9 (customer-only self-service guards, operations app gate, Google OAuth flag) + v2.0.10 (SMS activation safety, customer SMS opt-out, Capacitor build readiness). **Now: go-live execution** — the all-roles/all-lanes manual smoke test (`docs/go-live-smoke-test.md`) + operational onboarding (DEA rate, staff/broker accounts). Fuel still parked after Phase 0. See [[target-architecture-jo-payment-invoice]] · memory `cutover-shipped-go-live-status` |
-| Go-live gate | `docs/go-live-smoke-test.md` (all roles + all lanes) + `docs/go-live-todo.md` — done: ADR-0037 cutover, v2.0.7-v2.0.9 codex fixes (`0228`-`0230` applied), Google OAuth flag enabled, MFA enrolled, owner password rotated. Still: Agreement v4 counsel pass + NPC/DPO · payment details (bank/GCash/QR) · owner side-by-side smoke walk · launch call |
+| Active focus | **ADR-0037 charges cutover SHIPPED + go-live hardening DEPLOYED; internal Android staff-app lane shipped as `v2.0.11` with migration `0232` applied.** Charges/payment-orders are the live money path; the internal APK is staff-only, sandbox-buildable, and has an offline X-ray-confirmation outbox only. Native cloud push is scaffolded but dormant until a valid Supabase PAT + Firebase/native-push secrets are armed. **Now: go-live execution** — all-roles/all-lanes manual smoke plus the Android Part 15 device smoke. Fuel still parked after Phase 0. See [[target-architecture-jo-payment-invoice]] · `docs/go-live-smoke-test.md` |
+| Go-live gate | `docs/go-live-smoke-test.md` (all roles + Android internal app lane) + `docs/go-live-todo.md` — done: ADR-0037 cutover, v2.0.7-v2.0.11 engineering hardening, Google OAuth flag enabled, MFA enrolled, owner password rotated. Still: real-device APK smoke · Agreement v4 counsel pass + NPC/DPO · payment details (bank/GCash/QR) · owner side-by-side smoke walk · launch call |
 | Prod data | test data purged 2026-06-23 — first real order = `JO-000001` (0 orders / 0 customers / 0 releases) |
 
 ## Where the rules and memory live

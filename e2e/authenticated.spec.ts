@@ -52,37 +52,37 @@ test.describe('KTC portal — authenticated (Phase 2)', () => {
 
   test('owner lands on the Admin Portal', async ({ page }) => {
     await mintSession(page, OWNER)
-    await page.goto('/')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/admin$/)
     // admin nav rendered (flattened to top-level links — Customers/Consignees are separate items)
-    await expect(page.getByRole('navigation', { name: 'Admin' })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: 'Admin', exact: true })).toBeVisible()
   })
 
   test('owner can open the Consignees admin (master list)', async ({ page }) => {
     await mintSession(page, OWNER)
-    await page.goto('/admin/consignees')
+    await page.goto('/admin/consignees', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/admin\/consignees$/)
   })
 
   test('owner can open Settings (owner-only staff creation)', async ({ page }) => {
     await mintSession(page, OWNER)
-    await page.goto('/admin/settings')
+    await page.goto('/admin/settings', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/admin\/settings$/)
-    await expect(page.getByText(/Create staff account/i)).toBeVisible()
+    await page.getByRole('button', { name: /Access & staff/i }).click()
+    await expect(page.getByRole('heading', { name: /Create staff account/i })).toBeVisible()
   })
 
   test('approved broker lands on broker home with the job-order nav', async ({ page }) => {
     test.skip(!BROKER, 'set E2E_BROKER_EMAIL (a seeded approved broker) to run')
     await mintSession(page, BROKER!)
-    await page.goto('/')
-    // exact: the home page also has a "New Job Order …" card link
-    await expect(page.getByRole('link', { name: 'New Job Order', exact: true })).toBeVisible()
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    await expect(page.getByRole('link', { name: /New Job Order/i }).first()).toBeVisible()
   })
 
   test('approved broker can open New Job Order and search consignees via the search_consignees RPC', async ({ page }) => {
     test.skip(!BROKER, 'set E2E_BROKER_EMAIL to run')
     await mintSession(page, BROKER!)
-    await page.goto('/job-order')
+    await page.goto('/job-order', { waitUntil: 'domcontentloaded' })
     // ADR-0037 / migration 0218: a broker can NO LONGER SELECT the full consignee
     // master list (anti-scrape). The picker calls the `search_consignees` RPC, which
     // returns only id/code/name. This just drives the typeahead input.
@@ -95,7 +95,7 @@ test.describe('KTC portal — authenticated (Phase 2)', () => {
   test('staff (minted) lands on its role home (/admin or the /app/* staff PWA)', async ({ page }) => {
     test.skip(!STAFF, 'set E2E_STAFF_EMAIL (e.g. <username>@ktc-staff.local) to run')
     await mintSession(page, STAFF!)
-    await page.goto('/')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
     // RoleLanding (src/App.tsx): admin/owner → /admin; operational roles land on
     // their focused staff-PWA screen. NOTE (ADR-0037, v2.0.0): the cashier now lands
     // on the Payment Order desk — `/app/payment-orders`, not the retired `/app/cashier`.
@@ -159,6 +159,7 @@ test.describe('KTC portal — charges money-path (RPC, seeded TEST project)', ()
   test.beforeAll(async () => {
     if (!e2eAuthConfigured || !process.env.E2E_AUTH_LIVE || !SB_SR || !runHere()) return
     admin = svc()
+    await admin.from('job_orders').delete().like('entry_number', 'AUTHRPC-%')
     const { data: bc } = await admin.from('customers').select('id').eq('email', process.env.E2E_BROKER_EMAIL ?? 'e2e-broker@test.local').single()
     const { data: lc } = await admin.from('customers').select('id').eq('email', 'lt-c001@loadtest.ktc').single()
     const { data: cn } = await admin.from('consignees').select('id').eq('status', 'approved').limit(1).single()

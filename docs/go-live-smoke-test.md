@@ -2,9 +2,25 @@
 
 **All roles · all lanes · positive + negative.** This is the owner's authoritative walk-through before go-live. Work it top to bottom. Every row has an **Expected** result and a blank **Result** box — write PASS / FAIL / note. A lane is "green" only when every row passes.
 
-- **Version under test:** v2.0.9 · latest migration 0230 (deployed to prod 2026-06-30; update if newer when you run).
-- **Site:** the live production site (Supabase prod ref `mdlnfhyylvapzdubhyic`). The connected MCP Supabase tools point at a *different* project — never use them against this.
+- **Version under test:** v2.0.11 - latest migration 0232 (prod applied 2026-06-30).
+- **Android app build under test:** sandbox internal debug APK `KTC-Test-sandbox-debug.apk` (staff-only, sideloaded, app label **KTC Test**). Latest local SHA256: `FEE72FD96A2D505E2F7B340F65E51D14552BC4B154DAC7F3B716B2DD978B4158`; record the actual APK SHA256 beside the Result when you run Part 15.
+- **Site:** for internal testing, use the e2e sandbox Supabase ref `zwvzadkgeyhkhyshkwhc`, not prod ref `mdlnfhyylvapzdubhyic`. Sandbox builds show a yellow **SANDBOX DB** badge.
 - **How to record:** print this file or copy it; fill the Result column. Anything that is not exactly the Expected result is a FAIL — log what you actually saw.
+
+### Sandbox build commands
+
+Run these from the repo root when preparing internal testing:
+
+```powershell
+npm run target:status
+npm run seed:e2e:owner
+npm run seed:e2e:consignees
+npm run dev:test
+npm run preview:test
+npm run build:android:test
+```
+
+Use `dev:test` for live local testing, `preview:test` for a production-like local web bundle, and `build:android:test` for the sideload APK. The test scripts refuse to run if the sandbox Supabase ref resolves to production. `seed:e2e:owner` makes `jlawrenceang@gmail.com` the e2e root owner too, so the owner account stays the same across live and test.
 
 ---
 
@@ -12,7 +28,7 @@
 
 - 🟢 **Positive test** — the role/lane should be able to do this.
 - 🔴 **Negative test** — the role should be *blocked*; a "PASS" means it was correctly refused.
-- ⚠️ **SHIPPED v2.0.7+** — a gap fixed **and deployed** this session (migrations 0228-0230 applied; frontend live). The **Expected** shown is the live behavior — test it as a normal row; if you instead see the old behavior, the Vercel build may still be propagating (give it a few minutes).
+- ⚠️ **SHIPPED v2.0.7+** — a gap fixed **and deployed** this session (migrations 0228-0232 applied; frontend live). The **Expected** shown is the live behavior — test it as a normal row; if you instead see the old behavior, the Vercel build may still be propagating (give it a few minutes).
 - 💰 **Money/contract invariant** — billing-integrity check; treat a FAIL here as a go-live blocker.
 
 ---
@@ -301,6 +317,41 @@ These are the contract invariants. A FAIL here blocks go-live regardless of UI p
 
 ---
 
+# PART 15 — Android internal app lane (staff APK only)
+
+Use a real Android phone/tablet. Sideload the current internal sandbox debug APK (`KTC-Test-sandbox-debug.apk`) and record its SHA256. This lane is **not** for customers: customer accounts use the web portal only.
+
+Preconditions:
+- Android 7+ device, camera available, network toggle available (Wi-Fi or mobile data off/on).
+- Current debug APK installed fresh, or app data cleared before the run.
+- Test the app in both light/dark and en/fil if you are doing the full lifecycle matrix.
+- Native push requires Firebase `google-services.json` + Supabase native-push secrets; until those are armed, treat cloud push registration as **configuration-pending**, not a smoke FAIL. Local notifications must still work.
+
+| ID | Test | Expected | Result |
+|---|---|---|---|
+| APK-01 | 🟢 Install / open the internal APK | App installs as **KTC Portal**, launches without a browser address bar, and shows the normal login flow | |
+| APK-02 | 🔴 Log in as **Customer A** inside the APK | Customer is blocked by the **Internal staff app** screen; app explains customers should use the web portal and the **Open customer web portal** button opens `https://portal.ktcterminal.com` outside the app | |
+| APK-03 | 🟢 Log in as **Checker** | Lands on `/app/checker`; bottom/footer shows **Device** and **Open full portal**; scanner screen uses large touch targets | |
+| APK-04 | 🟢 Native QR scan | Camera permission prompt appears; granting it opens the ML-Kit QR scanner; a real `/verify/<id>` QR opens the matching order | |
+| APK-05 | 🟢 Native haptics on scanner outcome | Successful scan / confirmed X-ray gives a success vibration; invalid QR or scan error gives error feedback. If the device has no haptic motor, note N/A | |
+| APK-06 | 🟢 Confirm X-ray while online | `record_van_xray` succeeds; the order refreshes; van row changes to confirmed; no duplicate confirmation is created on refresh | |
+| APK-07 | 🟢 Yard offline outbox | Turn network off, open a processing X-ray order already loaded, confirm a van. The app does **not** attempt money/payment work offline; it queues only the yard X-ray confirmation and shows the offline saved message | |
+| APK-08 | 🟢 Reconnect / background sync | Turn network back on or reopen/resume the app. Queued X-ray confirmation syncs through the normal server RPC, moves to **Synced**, and local alert says sync finished | |
+| APK-09 | 🔴 Offline money guard | While offline in the APK, try to reach cashier/payment lanes by role or direct URL as checker/ops/customer | Wrong roles are refused by route permission; no payment proof, invoice, Payment Order, OR, or money action is queued locally | |
+| APK-10 | 🟢 `/app/device` native-only screen | Shows platform/model/Android version/network/OTA bundle, push toggle, local yard note, and yard outbox; screen is reachable only for staff in the APK | |
+| APK-11 | 🟢 Local device storage workflow | Save a **Yard note**; it persists after app close/reopen; **Clear local** removes local notes/outbox rows after confirmation | |
+| APK-12 | 🟢 Local notifications | Tap **Test local alert** on `/app/device`; Android notification permission appears if needed; local alert fires on the device | |
+| APK-13 | 🟢 Share sheet | Tap **Share device status**; Android share sheet opens with platform/network/outbox/OTA status text and can send to SMS/Viber/Messenger manually | |
+| APK-14 | 🟢 OTA readiness | `/app/device` shows an OTA bundle status (built-in/current bundle or a readable updater error). The app does not crash if Capgo is not yet activated | |
+| APK-15 | 🟢 Role-aware APK homes | Operations → `/app/operations`; Cashier → `/app/payment-orders`; CSR → `/app/support`; Admin/Owner → `/admin`; each still obeys Part 10 RBAC direct-URL refusals | |
+| APK-16 | 🟢 Lock / shared tablet behavior | Tap **Lock** or wait for idle timeout; app signs out and returns to login. Next user does not see the prior user's role/outbox state except device-local unsynced yard items | |
+| APK-17 | 🟢 Android permissions audit | App requests only expected permissions: internet, camera, notification, network state, vibration, FCM/wake/boot support for notifications. No contacts/location/storage permission prompt appears | |
+| APK-18 | 🟢 App lifecycle matrix | Repeat APK-03 to APK-13 in light/dark and en/fil at least once; no clipped text, broken Tagalog strings, or role leak in either mode | |
+
+> Android go-live note: this debug APK is acceptable for internal sideload testing. For a wider internal rollout, create a release-signed APK/AAB and document the signing key custody. OTA can update web assets only; adding/changing native plugins still requires a new APK.
+
+---
+
 # Sign-off
 
 | Lane | Owner verdict (date / initials) |
@@ -319,6 +370,7 @@ These are the contract invariants. A FAIL here blocks go-live regardless of UI p
 | Release / two-gate | |
 | Secondary lanes | |
 | Device / PWA | |
+| Android internal app | |
 
 **Go-live decision:** all lanes green + zero open 💰 invariant FAILs + zero RBAC content-leaks → cleared. Any FAIL → fix → re-run the affected lane before clearing.
 

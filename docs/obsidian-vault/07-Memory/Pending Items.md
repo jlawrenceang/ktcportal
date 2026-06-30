@@ -2,31 +2,29 @@
 title: Pending Items
 tags: [memory, pending, backlog]
 type: memory
-last_updated: 2026-06-29
+last_updated: 2026-06-30
 ---
 
 # 📋 Pending Items
 
 Detailed backlog. For sequencing, see [[Roadmap]]. (Completed items moved to [[Completed Milestones]] / `CHANGELOG.md`.)
 
-## 2026-06-29 carry-over — next session (NOW)
+## 2026-06-30 carry-over - ship-now/native lane
 
-The Phase-5 verification + v1.7.0→v1.7.5 + the MFA gate all shipped (see [[Current State]]). **[ADR-0037](../../adr/0037-jo-as-atomic-move-payment-orders-1-1-1-invoicing.md) Phase A is now BUILT** — backend migrations `0202`–`0211` (applied to prod, **additive** — nothing dropped, **Jarvis-verified**) + **10 new frontend screens** (typecheck-clean, additive) — but **NOT yet wired into the live flow**; the old base/RPS/supplement payment model is still operational. See [[2026-06-29 X-ray Phase A Anti-Fraud Billing Build (backend + frontend, cutover deferred)]]. Outstanding:
+ADR-0037 cutover is live; v2.0.11 adds the internal Android staff-app lane. Outstanding:
 
-- [ ] **ADR-0037 — the CUTOVER (next-up; surgical, large blast radius):** switch the live money path onto the now-BUILT `charges`/`payment_orders` spine. Steps: modify `file_job_order` to **create the base charge + upsert containers/`container_id`**; **one-rule completion** reading `charges`; **monthly serving `YYMM-XXXX`**; **tighten the consignee broker-read RLS** (picker → `search_consignees`); **staff JO-cancel → admin-only** + block customer self-cancel once billing exists; **then the destructive drops** (`rps_payment_*`, `jo_supplements`/`release_supplements` as billing, `terminal_rates`, old invoice fields) — **atomic, shipped together** → **Jarvis on the cutover + e2e + a data-isolated break-test**. The **user-facing manuals + demo tours + the walkthrough video land WITH the cutover.**
-- [x] **Phase A backend BUILT (`0202`–`0211`, applied to prod, additive, Jarvis-verified):** containers + a dormant `container_cycles`/`container_events` TOS-seam scaffold (`0202`); `charges` + `payment_orders` + `job_order_lines.container_id` (`0203`); `consignee_rate_overrides` (`0204`); `mfa_recovery_codes` + `notification_settings` (`0205`); charge-lifecycle RPCs — the **universal invoice-before-confirm gate for every charge type** + maker-checker + payment orders + reversal + `charge_audit` (`0206`); MFA recovery RPCs (`0207`); `search_consignees` (PII-scoped, anti-scrape) + rate/notification editors + `get_xray_monthly_reconciliation` (`0208`); charge-gate hardening folding the Jarvis findings (`0209`); admin-only billing cancellation (`0210`); the public `verify_job_order_charges` anti-forgery RPC (`0211`).
-- [x] **Phase A frontend BUILT (10 screens, ultracode, typecheck-clean, additive — built/wired but the old flow stays live):** customer **JobOrderCharges** + **VerifyCharges** (into MyJobOrders + Verify); cashier **PaymentOrderDesk**; admin **ChargeApproval** + **Reconciliation** + **ChargeAuditView**; Settings **SettingsRateOverrides** + **SettingsNotifications**; MFA **MfaRecoveryCodes** + **MfaRecoveryRedeem** + an owner-only **"Reset 2FA"** button. Tagalog copy pass in progress.
-- [ ] **Staged MFA work (deferred from v1.7.5 for owner-lockout safety):** A2 mandatory-enrollment gate · B step-up re-auth on the crown-jewel actions · C out-of-band email/SMS alert on staff-mint/owner-grant/password-reset. The DB-side aal2 prevention (`0198`) is already live. The A2 gate must **exempt automated test accounts**. *(Proper **backup/recovery codes** are now **BUILT** — `mfa_recovery_codes` (`0205`) + generate/redeem/owner-reset RPCs (`0207`) + the `MfaRecoveryCodes`/`MfaRecoveryRedeem` screens + an owner-only "Reset 2FA" — which lets MFA be **mandated for the money roles** in the staged gate above.)*
-- [ ] **Security audit-low #5 — consignee-PII scoping:** approved consignees expose TIN/email/mobile to every approved broker. The **PII-scoped, anti-scrape `search_consignees` RPC is now BUILT** (`0208`); the **broker-read RLS tightening** (swap the open picker → `search_consignees`, without breaking the typeahead) is **folded into the ADR-0037 cutover** above. Deferred 2026-06-29.
-- [ ] **Full sandbox break-test** — params in memory `sandbox-breaktest-params.md` (100 users, ~1000 consignees, ~10 containers/JO up to 150; 20→50→100→200 load ramp; GoTrue minting needs **different IPs** / admin API; 8-config UI lens). Run on the isolated test env, never prod.
-- [ ] **Test-environment setup** — a Supabase **branch** of the project (prod-faithful) or a refreshed test project, so the sandbox + the MFA/step-up tests run with all security ON and never touch live data.
-- [ ] **Domain consolidation** — `ktcport.com` (a real **WordPress** marketing site) + `erp.ktcport.com` (**Frappe** ERP, the official BIR-invoice system of record, not API-integrated) + `ktcterminal.com` (the portal + email). Confirm who runs what + the consolidation plan; the docs don't yet record the WP site. (The old `ktcbbernal` ktcport.com app-password was revoked 2026-06-29.)
+- [ ] **Real-device Android Part 15 smoke:** install `KTC-Test-sandbox-debug.apk`, verify staff-only gate, native scanner, haptics, offline X-ray outbox, reconnect sync, `/app/device`, local notifications, share sheet, and permission audit. Latest local sandbox APK SHA256: `FEE72FD96A2D505E2F7B340F65E51D14552BC4B154DAC7F3B716B2DD978B4158`.
+- [ ] **Native cloud push activation:** local Management API deploy failed with `SUPABASE_ACCESS_TOKEN` 401. Regenerate a valid Supabase `sbp_` PAT, deploy `send-native-push`, then set Firebase service-account secrets and `native_push_url`/`native_push_secret` in Vault. Until armed, native cloud push is configuration-pending.
+- [x] **ADR-0037 cutover shipped:** live money path is `charges`/`payment_orders`; old base/RPS/supplement billing path retired; hardening through v2.0.11 applied.
+- [ ] **Full sandbox break-test** - params in memory `sandbox-breaktest-params.md` (100 users, ~1000 consignees, ~10 containers/JO up to 150; 20->50->100->200 load ramp; GoTrue minting needs different IPs / admin API; 8-config UI lens). Run on the isolated test env, never prod.
+- [ ] **Test-environment setup** - a Supabase branch of the project (prod-faithful) or a refreshed test project, so the sandbox + MFA/step-up tests run with all security ON and never touch live data.
+- [ ] **Domain consolidation** - `ktcport.com` (WordPress marketing site) + `erp.ktcport.com` (Frappe ERP) + `ktcterminal.com` (portal + email). Confirm who runs what + the consolidation plan.
 
 ## ST05 smoke test — open items (NOW)
 
 Preflight **P1–P8 re-run green** through `0158` (2026-06-23; + new Lane L container rate matrix; server-side **Lane J-3** role-matrix check = **0 mismatch**, incl. `purchaser`/fuel + `review_consignee_requests` gates; read-only RPC backbone check of the release/JO guards).
 
-- [ ] **Run manual Lanes A–K** with the owner on `portal.ktcterminal.com`.
+- [ ] **Run manual lanes with the owner** using `docs/go-live-smoke-test.md` (now includes Android Part 15).
 - [x] **Defect D-01 (Low) — CLOSED 2026-06-25 (`0159`, v1.6.13):** the release-desk **hold/reject reason note is now server-enforced** — `verify_release_order`, `confirm_release_payment`, and `confirm_release_supplement_payment` RAISE on a blank reason on the reject/hold branch (`p_ok = false`), mirroring the JO side. Verified live: all three function bodies carry the guard.
 - [x] **Tagalog copy for previously-untranslated strings DONE 2026-06-25 (v1.6.15):** 174 entries added (release desk, supplements, bulletin, JO lifecycle) — the strings that fell back to English are now translated (tl ~1,469 keys). English was first re-toned formal (v1.6.14). **Owner still reviews the wording before go-live** (both the formal English and the Tagalog).
 

@@ -15,7 +15,7 @@ const SCREENS = ['/', '/login', '/register', '/agreement', '/forgot-password']
 
 for (const path of SCREENS) {
   test(`no horizontal overflow · ${path}`, async ({ page }, testInfo) => {
-    await page.goto(path)
+    await page.goto(path, { waitUntil: 'domcontentloaded' })
     await page.waitForLoadState('domcontentloaded')
     // Let the SPA hydrate + fonts settle (a pre-hydration shell has no overflow).
     await page.waitForTimeout(900)

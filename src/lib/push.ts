@@ -1,4 +1,8 @@
 import { supabase } from './supabase'
+import { Capacitor } from '@capacitor/core'
+import { Device } from '@capacitor/device'
+import { Preferences } from '@capacitor/preferences'
+import { PushNotifications, type Token } from '@capacitor/push-notifications'
 
 // Web Push client helpers — register the service worker, subscribe the browser
 // (storing the PushSubscription for the send-push Edge Function), and tear it
@@ -6,10 +10,28 @@ import { supabase } from './supabase'
 // env var is needed.
 
 export function pushSupported(): boolean {
+  if (Capacitor.isNativePlatform()) return true
   return typeof window !== 'undefined'
     && 'serviceWorker' in navigator
     && 'PushManager' in window
     && 'Notification' in window
+}
+
+const NATIVE_PUSH_ON = 'ktc_native_push_on'
+const NATIVE_PUSH_TOKEN = 'ktc_native_push_token'
+let nativeHandlersInstalled = false
+
+function isNativePush(): boolean {
+  return Capacitor.isNativePlatform()
+}
+
+export function installNativePushHandlers() {
+  if (!isNativePush() || nativeHandlersInstalled) return
+  nativeHandlersInstalled = true
+  void PushNotifications.addListener('pushNotificationActionPerformed', (event) => {
+    const url = typeof event.notification.data?.url === 'string' ? event.notification.data.url : '/'
+    if (url.startsWith('/')) window.location.assign(url)
+  })
 }
 
 function urlB64ToUint8(base64: string): Uint8Array {
@@ -22,12 +44,60 @@ function urlB64ToUint8(base64: string): Uint8Array {
 }
 
 export async function isPushOn(): Promise<boolean> {
+  if (isNativePush()) {
+    const { value } = await Preferences.get({ key: NATIVE_PUSH_ON })
+    return value === '1'
+  }
   if (!pushSupported()) return false
   try {
     const reg = await navigator.serviceWorker.getRegistration()
     const sub = await reg?.pushManager.getSubscription()
     return !!sub
   } catch { return false }
+}
+
+async function saveNativeToken(token: string): Promise<{ ok: boolean; error?: string }> {
+  const uid = (await supabase.auth.getUser()).data.user?.id
+  if (!uid) return { ok: false, error: 'Please sign in again.' }
+  const [info, id] = await Promise.all([Device.getInfo(), Device.getId()])
+  const { error } = await supabase.from('native_push_tokens').upsert({
+    user_id: uid,
+    token,
+    platform: info.platform,
+    device_id: id.identifier,
+    device_name: [info.manufacturer, info.model].filter(Boolean).join(' ').trim() || null,
+    app_version: null,
+    enabled: true,
+    last_seen_at: new Date().toISOString(),
+  }, { onConflict: 'token' })
+  if (error) return { ok: false, error: error.message }
+  await Preferences.set({ key: NATIVE_PUSH_TOKEN, value: token })
+  await Preferences.set({ key: NATIVE_PUSH_ON, value: '1' })
+  return { ok: true }
+}
+
+async function enableNativePush(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    let perm = await PushNotifications.checkPermissions()
+    if (perm.receive === 'prompt') perm = await PushNotifications.requestPermissions()
+    if (perm.receive !== 'granted') return { ok: false, error: 'Notifications are blocked — allow them in Android app settings.' }
+    installNativePushHandlers()
+    const token = await new Promise<string>((resolve, reject) => {
+      const timer = window.setTimeout(() => reject(new Error('Connecting to the notification service timed out — please try again.')), 20_000)
+      void PushNotifications.addListener('registration', (t: Token) => {
+        clearTimeout(timer)
+        resolve(t.value)
+      })
+      void PushNotifications.addListener('registrationError', (err) => {
+        clearTimeout(timer)
+        reject(new Error(JSON.stringify(err)))
+      })
+      void PushNotifications.register()
+    })
+    return await saveNativeToken(token)
+  } catch (e) {
+    return { ok: false, error: (e as Error)?.message || 'Could not enable alerts. Please try again.' }
+  }
 }
 
 // Bound any single step so a stalled browser API / push service (e.g. a network
@@ -85,6 +155,7 @@ async function subscribeAndSave(vapid: string): Promise<{ ok: boolean; error?: s
 // caller's busy state ("…") can never get stuck forever, and every step after
 // it is individually capped.
 export async function enablePush(): Promise<{ ok: boolean; error?: string }> {
+  if (isNativePush()) return enableNativePush()
   if (!pushSupported()) return { ok: false, error: 'Notifications aren’t supported on this browser.' }
   if (isIos() && !isStandalone()) {
     return { ok: false, error: 'On iPhone/iPad: tap Share → “Add to Home Screen”, then open the app from there to turn on notifications.' }
@@ -110,6 +181,15 @@ export async function enablePush(): Promise<{ ok: boolean; error?: string }> {
 }
 
 export async function disablePush(): Promise<void> {
+  if (isNativePush()) {
+    try {
+      const token = (await Preferences.get({ key: NATIVE_PUSH_TOKEN })).value
+      if (token) await supabase.from('native_push_tokens').update({ enabled: false }).eq('token', token)
+      await Preferences.remove({ key: NATIVE_PUSH_ON })
+      await PushNotifications.unregister()
+    } catch { /* best-effort */ }
+    return
+  }
   try {
     const reg = await navigator.serviceWorker.getRegistration()
     const sub = await reg?.pushManager.getSubscription()

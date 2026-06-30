@@ -11,6 +11,7 @@ import { useTour } from '../components/TourProvider'
 import { useT } from '../lib/i18n'
 import { staffHome } from '../lib/types'
 import { LockIcon } from '../components/icons'
+import { isNativeApp } from '../lib/nativeDevice'
 
 // Focused "app mode" chrome for the installed staff app — a slim top bar (logo
 // + role + bell + Lock) and the screen, nothing else. Single-purpose, big touch
@@ -78,6 +79,7 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
         {/* Self-hides unless the browser offers install + not already standalone —
             so a gate tablet that opened the app in a browser can still install it. */}
         <div style={{ maxWidth: 260, margin: '0 auto 6px' }}><InstallButton /></div>
+        {isNativeApp() && <Link to="/app/device" className="ktc-foot-link" style={{ marginRight: 12 }}>{t('Device')}</Link>}
         {/* Open each role on its own work home, not a Dashboard they can't act on. */}
         <Link to={staffHome(broker)} className="ktc-foot-link">{t('Open full portal')}</Link>
       </footer>
