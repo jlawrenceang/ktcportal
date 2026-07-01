@@ -30,7 +30,7 @@ After workflow changes, exercise the real flow on the deployed site or local pre
 ## Smoke Test Governance
 
 - **Exactly one active manual smoke test is allowed.** The active file must say `ACTIVE / CURRENT` in its header.
-- **Current active smoke:** `docs/smoke-test-08-go-live.md` for v2.0.11 / migration 0232, including Android Part 15.
+- **Current active smoke:** `docs/smoke-test-08-go-live.md` for v2.0.11+ go-live hardening / migration 0236, including Android Part 15 plus the 2026-07-01 route/menu, trusted-MFA, email-change, Lara, tariff, bulletin, CIS, and request-tracking checks.
 - **Compatibility pointer:** `docs/go-live-smoke-test.md` points to the active file only. It must not contain test rows.
 - **Closed legacy:** ST05, ST06, and ST07 are closed legacy stubs. They must not be executed for current go-live.
 - When a newer smoke replaces ST08, mark ST08 `CLOSED / LEGACY` or `INACTIVE`, create the new active smoke, and update this file plus `docs/go-live-smoke-test.md` in the same commit.

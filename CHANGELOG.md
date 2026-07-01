@@ -1,5 +1,19 @@
 # Changelog
 
+## v2.0.11+ - 2026-07-01 (go-live walkthrough hardening checkpoints)
+
+Runtime footer still reports `v2.0.11`; this entry tracks post-v2.0.11 deployment provenance: commits `9ee653d` and `830bd2a`, latest production deployment `ktc-joborderform-6bbtfhqfl`, and migrations through `0236`.
+
+- **Blind-walkthrough hardening checkpoint.** Added Lara's new avatar and compact chat UI, removed the admin dashboard port tile, aligned vessel schedule views/Show Past behavior, fixed filled CIS printing, and surfaced consignee request tracking.
+- **Bulletin archive (`0233`).** Admin/owner can archive/restore posts; archived posts no longer appear in the active customer board.
+- **Published tariff images (`0234`).** Admin can upload up to 5 tariff images; customers can view published tariffs in the calculator modal.
+- **Customer email-change flow (`0235`).** Confirmation goes to the new email; the old email receives a security notice; the account email changes only after the new email confirms.
+- **Route/menu transition hardening.** Replaced route reflow fade with a deliberate KTC transition overlay visible for the route-frame window; stabilized menu sheet grid rendering.
+- **Trusted MFA sessions (`0236`).** Owner/admin MFA challenge can trust the current browser for the day using hashed trusted-device tokens and server-side session trust. Backend `aal_satisfied()` and `claim_session()` use the same contract.
+- **Docs and review.** ST08 remains the single active smoke test and now includes rows for the July 1 fixes. Independent review notes added at `docs/audits/2026-07-01-go-live-hardening-independent-review.md`.
+
+Verification: `npm run lint`, `npm run build`, local Playwright route timing check, production deployment READY, Vercel log scan clean, and `0236` DB objects verified on production and sandbox.
+
 ## v2.0.11 — 2026-06-30 (internal Android staff app + sandbox targets)
 
 Ships the internal staff APK lane and keeps cloud push dormant until credentials are armed:

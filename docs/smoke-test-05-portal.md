@@ -8,7 +8,7 @@ ST05 is retained only as a historical pointer. It predates the ADR-0035 operatio
 
 ## Current Smoke Sources
 
-- **Current go-live script:** `docs/smoke-test-08-go-live.md` for v2.0.11 / migration 0232, including Android Part 15.
+- **Current go-live script:** `docs/smoke-test-08-go-live.md` for v2.0.11+ / migration 0236, including Android Part 15 and the July 1 hardening rows.
 - **Billing cutover proof:** `docs/smoke-test-06-portal.md (closed legacy)` for ADR-0037 charges/payment-orders.
 - **Adversarial/load reference:** `docs/smoke-test-07-portal.md (closed legacy)`.
 - **Release deep dive:** `docs/smoke-test-04-portal.md`.

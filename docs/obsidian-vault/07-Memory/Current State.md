@@ -2,11 +2,23 @@
 title: Current State
 tags: [memory, current]
 type: memory
-last_updated: 2026-06-30
+last_updated: 2026-07-01
 ---
 
 
 # 📌 Current State (Runtime-Aligned)
+
+## 2026-07-01 - Go-live walkthrough hardening checkpoints shipped (v2.0.11+, migrations 0233-0236)
+
+**Runtime footer still reports `APP_VERSION` = `v2.0.11`; deployed provenance is commit `830bd2a`, production deployment `ktc-joborderform-6bbtfhqfl`, and migrations through `0236` applied to production and mirrored to sandbox.** This is a post-v2.0.11 go-live hardening checkpoint, not a new semantic app-version bump.
+
+- **Blind-walkthrough hardening checkpoint (`9ee653d`)** - new Lara avatar/compact chat; admin dashboard port tile removed; vessel schedule view parity and Show Past calendar behavior; bulletin archive (`0233`); published tariff images (`0234`); customer email-change confirmation to the new email (`0235`); filled CIS print; consignee request tracking.
+- **Route/menu flicker + trusted 2FA checkpoint (`830bd2a`)** - route reflow fade replaced by a KTC transition overlay that stays visible for the intended route-frame window; bottom menu sheets get stable grid rows and no grid-template flash; owner/admin MFA now supports "Trust this device for today" using hashed trusted-device tokens and server-side session trust (`0236`).
+- **Verification** - `npm run lint`, `npm run build`, local Playwright route timing check, production deploy READY, Vercel logs clean for the new deployment window, and `0236` objects verified on prod + sandbox.
+- **Docs** - ST08 remains the only active smoke test. New rows were added for the July 1 fixes; independent review notes live at `docs/audits/2026-07-01-go-live-hardening-independent-review.md`.
+- **Important caveat** - the blind-walkthrough list is not fully closed. Remaining items still require implementation, explicit deferral, or ST08 evidence before go-live.
+
+**Next** - execute the updated ST08 rows for route/menu transition, trusted MFA, email change, Lara, bulletin archive, tariff images, CIS print, and request tracking; then continue the all-roles/all-lanes smoke and Android Part 15.
 
 ## 2026-06-30 - Internal Android staff app SHIPPED (v2.0.11, migration 0232)
 
@@ -199,7 +211,7 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` through **`0232_native_push_tokens`** are applied and tracked in `public._migrations`. RLS + role-permission matrix (`has_permission`) + `session_alive()` remain load-bearing across helpers; owner failsafe/root-owner grants, customer approval, payment gates, and server-side CAPTCHA must not be weakened. Email (Resend) is live; SMS and native cloud push are dormant until their secrets/functions are explicitly armed.
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` through **`0236_trusted_mfa_sessions`** are applied to production; the July 1 trusted-MFA migration was mirrored to sandbox. RLS + role-permission matrix (`has_permission`) + `session_alive()` remain load-bearing across helpers; owner failsafe/root-owner grants, customer approval, payment gates, and server-side CAPTCHA must not be weakened. Email (Resend) is live; SMS and native cloud push are dormant until their secrets/functions are explicitly armed.
 
 ## In progress / not yet
 
@@ -211,4 +223,4 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## Immediate priorities
 
-**See [[Roadmap]] for authoritative sequencing; the owner-actioned launch checklist is `docs/go-live-todo.md`.** Summary: (1) run Android Part 15 real-device smoke; (2) run all-roles/all-lanes go-live smoke; (3) arm native cloud push only after valid PAT + Firebase/native-push secrets exist; (4) finish legal/NPC/DPO launch items; (5) public-launch call.
+**See [[Roadmap]] for authoritative sequencing; the owner-actioned launch checklist is `docs/go-live-todo.md`.** Summary: (1) run the new July 1 ST08 rows for route/menu, trusted MFA, email change, Lara, bulletin, tariff, CIS, and request tracking; (2) run Android Part 15 real-device smoke; (3) run all-roles/all-lanes go-live smoke; (4) arm native cloud push only after valid PAT + Firebase/native-push secrets exist; (5) finish legal/NPC/DPO launch items; (6) public-launch call.

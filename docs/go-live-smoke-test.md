@@ -4,6 +4,6 @@
 
 The active/current smoke test is:
 
-- `docs/smoke-test-08-go-live.md` - **ST08 / ACTIVE / CURRENT**
+- `docs/smoke-test-08-go-live.md` - **ST08 / ACTIVE / CURRENT** for v2.0.11+ go-live hardening through migration `0236`.
 
 Only one smoke test may be active at a time. When a replacement smoke test becomes active, update this pointer and mark the old active smoke as closed/legacy/inactive.

@@ -2,7 +2,7 @@
 title: Roadmap
 tags: [memory, roadmap, planning]
 type: memory
-last_updated: 2026-06-30
+last_updated: 2026-07-01
 ---
 
 # 🧭 Roadmap (Phased)
@@ -13,7 +13,7 @@ Legend: **COMPLETED** · **NOW** · **NEXT** · **LATER** · **PARKED** · **NOR
 
 > **Active focus (2026-06-22):** portal / job-orders. The **fuel-monitoring** module ([ADR-0025](../../adr/0025-fuel-monitoring-derived-variance-on-moves-spine.md)) was started as a parallel lane and is **parked after Phase 0** (schema live, no frontend) — see PARKED below.
 
-> **Active focus (2026-06-30):** ADR-0037 cutover is live; the charges/payment-orders spine is the operational money path. v2.0.11 adds the internal Android staff-app lane: sandbox/live target guardrails, bundled APK, staff-only native gate, offline X-ray-confirmation outbox, `/app/device`, and dormant native push scaffolding (`0232`). Next work is **go-live execution**, not another billing cutover: run the all-roles/all-lanes smoke plus the Android Part 15 device smoke, finish owner/business checklist items, then launch.
+> **Active focus (2026-07-01):** ADR-0037 cutover is live; the charges/payment-orders spine is the operational money path. v2.0.11 added the internal Android staff-app lane, and July 1 go-live hardening shipped through `0236` (bulletin archive, tariff images, email-change flow, trusted MFA sessions, route/menu transition hardening, Lara avatar/chat, CIS print, request tracking). Next work is **ST08 execution**, not another cutover: run the new July 1 rows first, then all-roles/all-lanes plus Android Part 15, finish owner/business checklist items, then launch.
 
 ## COMPLETED ✅ (through v1.1.0, 2026-06-13)
 
@@ -26,9 +26,9 @@ Legend: **COMPLETED** · **NOW** · **NEXT** · **LATER** · **PARKED** · **NOR
 
 ## NOW - Go-live smoke + internal Android device check
 
-1. **Run `docs/smoke-test-08-go-live.md`** end to end: public/customer/staff/RBAC/money invariants plus **Part 15 Android internal app** on a real device. The sandbox APK already builds; device camera/offline-sync/local-notification behavior still needs physical validation.
+1. **Run `docs/smoke-test-08-go-live.md`** end to end: start with the July 1 hardening rows, then public/customer/staff/RBAC/money invariants plus **Part 15 Android internal app** on a real device. The sandbox APK already builds; device camera/offline-sync/local-notification behavior still needs physical validation.
 2. **Operational onboarding** - staff/broker test accounts, DEA/service rates, bank/GCash/QR payment details, and owner side-by-side smoke.
-3. **ADR-0037 cutover done** - charges/payment-orders live; old billing path retired; v2.0.7-v2.0.11 hardening layered on top.
+3. **ADR-0037 cutover done** - charges/payment-orders live; old billing path retired; v2.0.7-v2.0.11+ hardening layered on top.
 
 ## NEXT — Launch gate (owner checklist: `docs/go-live-todo.md`)
 

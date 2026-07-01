@@ -8,6 +8,10 @@ type: moc
 
 Chronological log of development sessions. Each note captures what was done, decided, and pending.
 
+## 2026-07
+
+- [[2026-07-01 Blind Walkthrough Hardening + ST08 Update]] - shipped the blind-walkthrough hardening checkpoints through commit `830bd2a` and migration `0236`: Lara avatar/chat, vessel/admin hardening, bulletin archive, tariff images, email-change flow, CIS/request tracking, route/menu transition overlay, and trusted MFA sessions. ST08 remains the only active smoke and now has July 1 rows; independent review notes added under `docs/audits/`.
+
 ## 2026-06
 
 - [[2026-06-30 Internal Android Staff App + Native Push Scaffold]] - shipped `v2.0.11`: sandbox/live target guardrails, bundled internal staff APK, staff-only native gate, offline X-ray-confirmation outbox, `/app/device`, native haptics/local notification/share helpers, `0232` native-push token scaffold applied to prod, and Android Part 15 added to the go-live smoke test. Real-device smoke and native cloud-push secret arming remain pending.

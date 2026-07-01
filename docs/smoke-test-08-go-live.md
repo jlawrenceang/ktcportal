@@ -7,7 +7,7 @@
 **All roles / all lanes / positive + negative.** This is the owner's authoritative walk-through before go-live. Work it top to bottom. Every row has an **Expected** result and a blank **Result** box - write PASS / FAIL / note. A lane is "green" only when every row passes.
 
 - **Active-smoke rule:** this is the only active manual smoke test. ST05/ST06/ST07 are closed legacy/reference stubs. If a newer smoke replaces this file, mark ST08 closed/legacy/inactive in this header and update `docs/go-live-smoke-test.md` plus `docs/agent/testing-and-release.md`.
-- **Version under test:** v2.0.11 - latest migration 0232 (prod applied 2026-06-30).
+- **Version under test:** v2.0.11+ go-live hardening - latest migration 0236 (prod and sandbox applied 2026-07-01). Latest frontend checkpoint: commit `830bd2a`, deployment `ktc-joborderform-6bbtfhqfl`.
 - **Android app build under test:** sandbox internal debug APK `KTC-Test-sandbox-debug.apk` (staff-only, sideloaded, app label **KTC Test**). Latest local SHA256: `FEE72FD96A2D505E2F7B340F65E51D14552BC4B154DAC7F3B716B2DD978B4158`; record the actual APK SHA256 beside the Result when you run Part 15.
 - **Site:** for internal testing, use the e2e sandbox Supabase ref `zwvzadkgeyhkhyshkwhc`, not prod ref `mdlnfhyylvapzdubhyic`. Sandbox builds show a yellow **SANDBOX DB** badge.
 - **How to record:** print this file or copy it; fill the Result column. Anything that is not exactly the Expected result is a FAIL - log what you actually saw.
@@ -33,7 +33,7 @@ Use `dev:test` for live local testing, `preview:test` for a production-like loca
 
 - ðŸŸ¢ **Positive test** â€” the role/lane should be able to do this.
 - ðŸ”´ **Negative test** â€” the role should be *blocked*; a "PASS" means it was correctly refused.
-- âš ï¸ **SHIPPED v2.0.7+** â€” a gap fixed **and deployed** this session (migrations 0228-0232 applied; frontend live). The **Expected** shown is the live behavior â€” test it as a normal row; if you instead see the old behavior, the Vercel build may still be propagating (give it a few minutes).
+- âš ï¸ **SHIPPED v2.0.7+** â€” a gap fixed **and deployed** during go-live hardening (migrations 0228-0236 applied; frontend live). The **Expected** shown is the live behavior â€” test it as a normal row; if you instead see the old behavior, the Vercel build may still be propagating (give it a few minutes).
 - ðŸ’° **Money/contract invariant** â€” billing-integrity check; treat a FAIL here as a go-live blocker.
 
 ---
@@ -136,6 +136,8 @@ Login as **Customer A** (`+custa`).
 | CUST-32 | ðŸŸ¢ `/vessels` | Vessel schedule renders (read-only for customer) | |
 | CUST-33 | ðŸŸ¢ `/notifications` + enable push | Push permission prompt; a later staff action delivers a push | |
 | CUST-34 | ðŸ”´ Direct-URL any `/admin/*` route as the customer | Bounced to `/` â€” never renders admin | |
+| CUST-35 | ðŸŸ¢ SHIPPED 2026-07-01 - email change confirmation | In `/account`, request Email 1 -> Email 2. Confirmation must go to Email 2; Email 1 receives only a security notice. Account email changes only after Email 2 confirms. | |
+| CUST-36 | ðŸŸ¢ SHIPPED 2026-07-01 - Lara compact avatar/chat | Lara launcher uses the new avatar, stays pinned to screen edges after moving, and the chat window has compact Messenger-style options plus minimize/close controls. | |
 
 ---
 
@@ -152,6 +154,8 @@ Login as **Owner** (`jlawrenceang@gmail.com`).
 | OWN-05 | ðŸŸ¢ Grant/revoke owner via `set_owner_access` (root-owner only) | Only the root owner can; a non-root owner cannot mint owners | |
 | OWN-06 | ðŸ”´ Confirm owner **cannot be locked out** | Even with role rows removed, `jlawrenceang@gmail.com` still resolves as owner (email failsafe) | |
 | OWN-07 | ðŸŸ¢ MFA crown-jewel gate | Owner-only sensitive RPCs require MFA (aal2) satisfied | |
+| OWN-08 | ðŸŸ¢ SHIPPED 2026-07-01 - trusted 2FA device | Complete owner/admin MFA with **Trust this device for today** checked, sign out, then sign in again on the same browser. The app should resume without another code while backend gates still pass. In a private/new browser, MFA should still be required. | |
+| OWN-09 | ðŸ”´ Trusted 2FA does not bypass password/session | Clearing browser storage or using a different device removes the trusted-device shortcut. A password-only session without the trusted token must still stop at the MFA challenge before admin content or privileged RPCs render. | |
 
 ---
 
@@ -308,6 +312,10 @@ These are the contract invariants. A FAIL here blocks go-live regardless of UI p
 | SEC-03 | ðŸŸ¢ Bulletin board: admin posts (with attachment) â†’ customer sees it | Post + attachment visible to customers | |
 | SEC-04 | ðŸŸ¢ Web push: staff action â†’ customer/staff bell + push | Notification delivered (check the bell and the device) | |
 | SEC-05 | â„¹ï¸ SMS / BOC mirror | **Dormant** â€” out of scope unless activated this session (see the SMS activation guide) | |
+| SEC-06 | ðŸŸ¢ SHIPPED 2026-07-01 - bulletin archive | Admin/owner can archive a bulletin post; it disappears from the active customer board and remains recoverable in the archive section. Restore returns it to active view. | |
+| SEC-07 | ðŸŸ¢ SHIPPED 2026-07-01 - published tariff images | Admin uploads up to 5 tariff images in Settings; customers open **View Published Tariff** in the rate calculator and see readable images with loading/error states. Uploads above the configured size are rejected. | |
+| SEC-08 | ðŸŸ¢ SHIPPED 2026-07-01 - filled CIS print | Create/review a consignee request with CIS details; **Print Filled CIS** must render the entered fields, while blank CIS remains available. | |
+| SEC-09 | ðŸŸ¢ SHIPPED 2026-07-01 - consignee request tracking | Customer-submitted consignee requests appear in `/requests` with submitted date, status, and admin remarks when present. | |
 
 ---
 
@@ -319,6 +327,8 @@ These are the contract invariants. A FAIL here blocks go-live regardless of UI p
 | DEV-02 | ðŸŸ¢ Checker scans a real container QR on a tablet | Native/Web camera opens; QR resolves to the order; X-ray confirm works | |
 | DEV-03 | ðŸŸ¢ Mobile layout on the customer filing + payment screens | Usable on a phone; no overflow/clipping; Tagalog copy renders if locale = tl | |
 | DEV-04 | ðŸŸ¢ Single-session enforcement | Logging in on a 2nd device prompts terminate/cancel on the first | |
+| DEV-05 | ðŸŸ¢ SHIPPED 2026-07-01 - route transition loader | Navigate between public/auth pages and authenticated app pages. The KTC transition overlay appears as an intentional route-frame loader for about 1-1.5 seconds, then clears; the routed page must not blink, remount, or show a blank/template flash. | |
+| DEV-06 | ðŸŸ¢ SHIPPED 2026-07-01 - menu sheet stability | Open customer and admin bottom-nav menus repeatedly on mobile width. The sheet fades in with stable tile rows; no grid-template/frame flash appears before the tiles render. | |
 
 ---
 
@@ -378,6 +388,22 @@ Preconditions:
 | Android internal app | |
 
 **Go-live decision:** all lanes green + zero open ðŸ’° invariant FAILs + zero RBAC content-leaks â†’ cleared. Any FAIL â†’ fix â†’ re-run the affected lane before clearing.
+
+---
+
+## Fixes shipped 2026-07-01 - go-live walkthrough hardening (prod + sandbox through migration 0236)
+
+These rows were added after the blind walkthrough hardening checkpoints and are live on production deployment `ktc-joborderform-6bbtfhqfl` (commit `830bd2a`). DB migrations `0233`-`0236` are applied to production and mirrored to sandbox:
+
+1. **Bulletin archive (`0233`)** - archived posts disappear from active customer board and remain restorable. -> SEC-06.
+2. **Published tariff images (`0234`)** - admin upload up to 5 tariff images; customers view them in the calculator modal. -> SEC-07.
+3. **Customer email-change flow (`0235`)** - confirmation goes to the new email; old email receives a security notice only. -> CUST-35.
+4. **Trusted MFA sessions (`0236`)** - owner/admin can trust the current browser for the day after a real MFA challenge; backend gates still use `aal_satisfied()`. -> OWN-08/09.
+5. **Route/menu transition hardening** - route-frame KTC loader appears for about 1-1.5s and menu sheets no longer flash a grid template. -> DEV-05/06.
+6. **Lara avatar/chat polish** - new avatar image, edge-pinned movable launcher, compact chatbot options, minimize/close. -> CUST-36.
+7. **CIS and request tracking** - filled CIS print mirrors entered data; customer consignee requests show status/date/remarks. -> SEC-08/09.
+
+The blind-walkthrough list is **not fully closed** by these fixes. Continue using the Result column to record any mismatch; use `docs/audits/2026-07-01-go-live-hardening-independent-review.md` for the current review/open-risk notes.
 
 ---
 

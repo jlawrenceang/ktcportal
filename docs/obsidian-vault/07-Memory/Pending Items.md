@@ -2,20 +2,22 @@
 title: Pending Items
 tags: [memory, pending, backlog]
 type: memory
-last_updated: 2026-06-30
+last_updated: 2026-07-01
 ---
 
 # 📋 Pending Items
 
 Detailed backlog. For sequencing, see [[Roadmap]]. (Completed items moved to [[Completed Milestones]] / `CHANGELOG.md`.)
 
-## 2026-06-30 carry-over - ship-now/native lane
+## 2026-07-01 carry-over - go-live hardening and smoke
 
-ADR-0037 cutover is live; v2.0.11 adds the internal Android staff-app lane. Outstanding:
+ADR-0037 cutover is live; v2.0.11 added the internal Android staff-app lane; July 1 hardening shipped through migration `0236`. Outstanding:
 
+- [ ] **Run the new July 1 ST08 rows first:** route/menu transition, trusted MFA device, email-change confirmation, Lara avatar/chat, bulletin archive, published tariff images, filled CIS print, and consignee request tracking.
 - [ ] **Real-device Android Part 15 smoke:** install `KTC-Test-sandbox-debug.apk`, verify staff-only gate, native scanner, haptics, offline X-ray outbox, reconnect sync, `/app/device`, local notifications, share sheet, and permission audit. Latest local sandbox APK SHA256: `FEE72FD96A2D505E2F7B340F65E51D14552BC4B154DAC7F3B716B2DD978B4158`.
 - [ ] **Native cloud push activation:** local Management API deploy failed with `SUPABASE_ACCESS_TOKEN` 401. Regenerate a valid Supabase `sbp_` PAT, deploy `send-native-push`, then set Firebase service-account secrets and `native_push_url`/`native_push_secret` in Vault. Until armed, native cloud push is configuration-pending.
 - [x] **ADR-0037 cutover shipped:** live money path is `charges`/`payment_orders`; old base/RPS/supplement billing path retired; hardening through v2.0.11 applied.
+- [x] **July 1 go-live hardening shipped:** bulletin archive (`0233`), tariff image uploads (`0234`), email-change confirmation flow (`0235`), trusted MFA sessions (`0236`), route/menu transition hardening, Lara avatar/chat, CIS print, and consignee request tracking.
 - [ ] **Full sandbox break-test** - params in memory `sandbox-breaktest-params.md` (100 users, ~1000 consignees, ~10 containers/JO up to 150; 20->50->100->200 load ramp; GoTrue minting needs different IPs / admin API; 8-config UI lens). Run on the isolated test env, never prod.
 - [ ] **Test-environment setup** - a Supabase branch of the project (prod-faithful) or a refreshed test project, so the sandbox + MFA/step-up tests run with all security ON and never touch live data.
 - [ ] **Domain consolidation** - `ktcport.com` (WordPress marketing site) + `erp.ktcport.com` (Frappe ERP) + `ktcterminal.com` (portal + email). Confirm who runs what + the consolidation plan.
@@ -52,7 +54,7 @@ Phase 0 (schema + derived views + `purchaser` role) is **live in prod and commit
 ## Go-live gate (NEXT) — owner checklist in `docs/go-live-todo.md`
 
 - [x] **Google OAuth config** - Supabase URL config and consent-screen app-name branding are done; keep the final live login check inside ST08.
-- [ ] **Re-enable security before the staff dry-run** — Turnstile (Managed CAPTCHA) + MFA enrolment (owner + staff) + rotate the owner password (all down for testing).
+- [x] **Owner security re-enabled for go-live hardening** - Google OAuth is enabled, owner MFA is enrolled, owner password was rotated, and trusted-MFA sessions are server-backed (`0236`). Continue verifying staff MFA/trusted-device behavior in ST08.
 - [ ] **Counsel sign-off on Customer Agreement v4** — final PH-counsel pass; NPC registration; dedicated DPO mailbox; confirm the **₱100k** liability-cap floor. Bump `AGREEMENT_VERSION` on material change. *(Server-side consent recording + the affirmative-re-acceptance clause are done — `0162` / Agreement v4; the in-app re-acceptance gate on a version bump is still unbuilt.)*
 - [ ] **Lara document-verification guide** — owner supplies the content; wire it into Lara's waiting release slot (currently a holding answer). See [[Lara (Customer Assistant)]].
 - [ ] Public-launch call (remove the prod-testing restriction).
