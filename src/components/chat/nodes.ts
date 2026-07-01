@@ -86,6 +86,7 @@ export const NODES: NodeRegistry = {
     kind: 'message', ticketCategory: 'job_order',
     body: 'To file a Job Order, open New Job Order: 1) pick an approved consignee from KTC’s master list (type a few letters; if it is not listed, request a new consignee and wait for approval), 2) enter your Entry Number (your C-number), 3) pick the Vessel & Voyage, 4) add containers, one row each, and choose its service. Use Bulk paste for a long list. Review, then Confirm. Verified accounts get a JO number on submit. KTC aims to complete special services within 24 hours so you avoid storage charges.',
     then: [
+      { label: 'File with Lara', to: 'file.lara.entry' },
       { label: 'Open New Job Order', to: 'nav.newJO' },
       { label: 'What do I need to file?', to: 'file.requirements' },
       { label: 'What services can I request?', to: 'file.services' },
@@ -93,6 +94,32 @@ export const NODES: NodeRegistry = {
       { label: 'Back to menu', to: 'root' },
     ],
   },
+
+  'file.lara.entry': {
+    kind: 'input',
+    say: 'I can help draft the basics, then open the real New Job Order form for final review.',
+    prompt: 'What is the Entry Number?',
+    placeholder: 'e.g. C-0000012345', storeAs: 'entry', submitLabel: 'Continue',
+    next: 'file.lara.vessel',
+    validate: (raw) => {
+      const compact = raw.trim().toUpperCase().replace(/\s+/g, '')
+      const value = compact.startsWith('C-') ? compact : compact.startsWith('C') ? `C-${compact.slice(1).replace(/^-+/, '')}` : `C-${compact.replace(/^-+/, '')}`
+      return /^C-[A-Z0-9][A-Z0-9-]*$/.test(value)
+        ? { ok: true, value }
+        : { ok: false, error: 'Please enter an Entry Number starting with C-.' }
+    },
+    altOption: { label: 'Open New Job Order instead', to: 'nav.newJO' },
+  },
+
+  'file.lara.vessel': {
+    kind: 'input',
+    prompt: 'What vessel or voyage should I look for on the form?',
+    placeholder: 'e.g. MV Example / V-123N', storeAs: 'vessel', submitLabel: 'Save draft',
+    next: 'file.lara.save', validate: nonEmpty,
+    altOption: { label: 'Open New Job Order instead', to: 'nav.newJO' },
+  },
+
+  'file.lara.save': { kind: 'action', action: 'startJobOrderDraft' },
 
   'file.requirements': {
     kind: 'message', ticketCategory: 'job_order',
@@ -648,7 +675,7 @@ export const NODES: NodeRegistry = {
 
   'login.help': {
     kind: 'message', ticketCategory: 'account',
-    body: 'Signed in but having trouble? A few common ones: the portal signs you out after 15 minutes idle (just sign in again); only one device stays signed in at a time, so a newer login signs the older one out; to change your password use My Account → Password, or Forgot password? on the login page. If you’re fully locked out and can’t even reach this screen, use Forgot password on the login page — or I can open an account ticket.',
+    body: 'Signed in but having trouble? A few common ones: the portal signs you out after 30 minutes idle (just sign in again); only one device stays signed in at a time, so a newer login signs the older one out; to change your password use My Account → Password, or Forgot password? on the login page. If you’re fully locked out and can’t even reach this screen, use Forgot password on the login page — or I can open an account ticket.',
     then: [
       { label: 'Reset by email', to: 'nav.forgotPassword' },
       { label: 'Open My Account', to: 'nav.account' },
@@ -804,6 +831,7 @@ export const NODES: NodeRegistry = {
   'nav.myOrders': { kind: 'nav', route: '/job-orders', cta: 'Open My Job Orders', body: 'Here are all your Job Orders with their live status and balances.' },
   'nav.requests': { kind: 'nav', route: '/requests', cta: 'Open My Requests', body: 'Here are your consignee requests and their approval status.' },
   'nav.newJO': { kind: 'nav', route: '/job-order', cta: 'Open New Job Order', body: 'Let’s file it.' },
+  'nav.newJO.draft': { kind: 'nav', route: '/job-order?laraDraft=1', cta: 'Open New Job Order', body: 'Your Lara draft is ready on the form.' },
   'nav.support': { kind: 'nav', route: '/support', cta: 'Open Support', body: 'Your tickets and live-agent contact options are here.' },
   'nav.account': { kind: 'nav', route: '/account', cta: 'Open My Account', body: 'Manage your name, contact, email and password here.' },
   'nav.verifyId': { kind: 'nav', route: '/verify-id', cta: 'Open Verify ID', body: 'Upload your valid ID here.' },

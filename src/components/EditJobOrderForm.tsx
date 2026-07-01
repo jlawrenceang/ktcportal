@@ -5,6 +5,7 @@ import ContainerLinesEditor, { emptyLine, type LineDraft } from './ContainerLine
 import { searchConsignees } from '../lib/pickerSearches'
 import { useT } from '../lib/i18n'
 import type { JobOrder } from '../lib/types'
+import { formatEntryNumberInput, isCompleteEntryNumber, normalizeEntryNumber } from '../lib/entryNumber'
 
 // Edit an order's details BEFORE KTC accepts it (held / submitted only). Mirrors
 // the New Job Order form, pre-filled, and saves via the update_job_order RPC
@@ -25,7 +26,7 @@ export default function EditJobOrderForm({ order, onDone, onError, onCancel }: {
       ? { id: order.consignee_id, title: order.consignee.code, sub: order.consignee.name }
       : null,
   )
-  const [entryNumber, setEntryNumber] = useState(order.entry_number ?? '')
+  const [entryNumber, setEntryNumber] = useState(formatEntryNumberInput(order.entry_number ?? ''))
   const [lines, setLines] = useState<LineDraft[]>(
     order.lines && order.lines.length
       ? order.lines.map((l) => ({ container_number: l.container_number, service_request: l.service_request }))
@@ -44,7 +45,8 @@ export default function EditJobOrderForm({ order, onDone, onError, onCancel }: {
   async function save() {
     onError('')
     if (!consignee) { onError(t('Select a consignee from the list.')); return }
-    if (!entryNumber.trim()) { onError(t('Enter the Entry Number (C-…).')); return }
+    const normalizedEntry = normalizeEntryNumber(entryNumber)
+    if (!isCompleteEntryNumber(normalizedEntry)) { onError(t('Enter the Entry Number starting with C-.')); return }
     const sel = vessels.find((v) => v.vessel_visit === vesselVisit)
     if (!sel) { onError(t('Select the vessel & voyage from the list.')); return }
     const vVisit: string | null = sel.vessel_visit, vName = sel.vessel_name.toUpperCase(), vVoyage = sel.voyage_number.toUpperCase()
@@ -54,7 +56,7 @@ export default function EditJobOrderForm({ order, onDone, onError, onCancel }: {
     const { error } = await supabase.rpc('update_job_order', {
       p_id: order.id,
       p_consignee_id: consignee.id,
-      p_entry_number: entryNumber.trim().toUpperCase(),
+      p_entry_number: normalizedEntry,
       p_vessel_visit: vVisit,
       p_vessel_name: vName,
       p_voyage_number: vVoyage,
@@ -85,7 +87,10 @@ export default function EditJobOrderForm({ order, onDone, onError, onCancel }: {
       <div style={{ display: 'grid', gap: 6 }}>
         <label className="ktc-label" htmlFor="edit-entry">{t('Entry Number')} *</label>
         <input id="edit-entry" className="ktc-input" required placeholder={t('e.g. C-0000012345')}
-          value={entryNumber} onChange={(e) => setEntryNumber(e.target.value.toUpperCase())} style={{ textTransform: 'uppercase' }} />
+          value={entryNumber}
+          onChange={(e) => setEntryNumber(formatEntryNumberInput(e.target.value))}
+          onBlur={() => setEntryNumber((v) => normalizeEntryNumber(v))}
+          style={{ textTransform: 'uppercase' }} />
       </div>
 
       <div style={{ display: 'grid', gap: 6 }}>

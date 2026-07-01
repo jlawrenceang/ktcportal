@@ -175,4 +175,24 @@ export const listMyOrders: ActionFn = async (_vars, { t }) => {
   }
 }
 
-export const ACTIONS: Record<'trackOrder' | 'listMyOrders', ActionFn> = { trackOrder, listMyOrders }
+export const startJobOrderDraft: ActionFn = async (vars, { t }) => {
+  try {
+    sessionStorage.setItem('ktc_lara_job_order_draft', JSON.stringify({
+      entry: vars.entry ?? '',
+      vessel: vars.vessel ?? '',
+    }))
+  } catch {
+    // Local handoff is a convenience; the real form still works without it.
+  }
+  return {
+    bubbles: [
+      t('I saved those details as a draft. Open New Job Order to pick the consignee, attach documents, review containers, and submit.'),
+    ],
+    options: [
+      { label: 'Open New Job Order', to: 'nav.newJO.draft' },
+      { label: 'Start over', to: 'root' },
+    ],
+  }
+}
+
+export const ACTIONS: Record<'trackOrder' | 'listMyOrders' | 'startJobOrderDraft', ActionFn> = { trackOrder, listMyOrders, startJobOrderDraft }

@@ -86,10 +86,7 @@ export default function JobOrderCharges({ jobOrderId }: { jobOrderId: string }) 
 
   return (
     <section style={{ border: '1px solid var(--glass-brd)', borderRadius: 14, padding: '16px 18px' }}>
-      <h2 style={{ margin: 0, fontSize: 15, fontWeight: 650 }}>{t('Charges')}</h2>
-      <p className="ktc-label" style={{ fontSize: 12, marginTop: 4, marginBottom: 0 }}>
-        {t('Every charge on this order — itemized and verifiable. No hidden fees.')}
-      </p>
+      <h2 style={{ margin: 0, fontSize: 15, fontWeight: 650 }}>{t('Summary of Charges')}</h2>
 
       {loading ? (
         <div style={{ display: 'grid', gap: 8, marginTop: 14 }} aria-label={t('Loading charges')}>

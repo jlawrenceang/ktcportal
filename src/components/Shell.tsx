@@ -19,7 +19,7 @@ import ChatWidget from './chat/ChatWidget'
 import NeedHelp from './NeedHelp'
 import Modal from './Modal'
 
-const IDLE_LOGOUT_MS = 15 * 60 * 1000 // auto sign-out after 15 min of inactivity (warning at 14)
+const IDLE_LOGOUT_MS = 30 * 60 * 1000 // auto sign-out after 30 min of inactivity (warning at 29)
 
 export default function Shell({ children, wide }: { children: ReactNode; wide?: boolean }) {
   const { signOut } = useAuth()
@@ -54,10 +54,10 @@ export default function Shell({ children, wide }: { children: ReactNode; wide?: 
   // One session per account: sign out (locally) if a newer login claimed it.
   useSessionGuard()
 
-  // Idle timeout: sign customers out after 15 minutes of inactivity,
+  // Idle timeout: sign customers out after 30 minutes of inactivity,
   // with a "still there?" prompt one minute before.
   const idleWarning = useIdleLogout(() => {
-    sessionStorage.setItem('ktc_idle_logout', '15')
+    sessionStorage.setItem('ktc_idle_logout', '30')
     void handleSignOut()
   }, IDLE_LOGOUT_MS)
 

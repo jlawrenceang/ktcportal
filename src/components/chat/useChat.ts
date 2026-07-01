@@ -32,12 +32,13 @@ export interface ChatState {
   inputError: string | null
   resultOptions: ChatOption[] | null         // options from the last action result
   typing: boolean                            // Lara "is typing…" beat before a deterministic reply
+  history: NodeId[]
   seq: number
 }
 
 type Action =
-  | { type: 'OPEN' } | { type: 'CLOSE' } | { type: 'TOGGLE' }
-  | { type: 'GOTO'; id: NodeId; misses?: number }
+  | { type: 'OPEN' } | { type: 'CLOSE' } | { type: 'TOGGLE' } | { type: 'RESET' }
+  | { type: 'GOTO'; id: NodeId; misses?: number; back?: boolean }
   | { type: 'ENTER_ACTION'; id: NodeId }
   | { type: 'ACTION_RESULT'; bubbles: string[]; options: ChatOption[] }
   | { type: 'PUSH_BOT'; text: string; literal?: boolean; vars?: Record<string, string | number> }
@@ -52,7 +53,7 @@ type Action =
 function initial(): ChatState {
   return {
     open: false, currentNodeId: 'root', messages: [], vars: {}, lastUserText: null,
-    pendingCategory: null, busy: false, misses: 0, inputError: null, resultOptions: null, typing: false, seq: 0,
+    pendingCategory: null, busy: false, misses: 0, inputError: null, resultOptions: null, typing: false, history: [], seq: 0,
   }
 }
 
@@ -81,6 +82,7 @@ function reducer(state: ChatState, action: Action): ChatState {
     case 'OPEN': return { ...state, open: true }
     case 'CLOSE': return { ...state, open: false }
     case 'TOGGLE': return { ...state, open: !state.open }
+    case 'RESET': return { ...initial(), open: state.open }
 
     case 'GOTO': {
       const id = action.id in NODES ? action.id : 'root'
@@ -93,6 +95,11 @@ function reducer(state: ChatState, action: Action): ChatState {
         ...state,
         currentNodeId: id,
         messages: [...state.messages, ...msgs],
+        history: action.back
+          ? state.history.slice(0, -1)
+          : state.messages.length === 0 || state.currentNodeId === id
+            ? state.history
+            : [...state.history, state.currentNodeId].slice(-20),
         inputError: null,
         resultOptions: null,
         misses: action.misses ?? 0,
@@ -102,7 +109,15 @@ function reducer(state: ChatState, action: Action): ChatState {
     }
 
     case 'ENTER_ACTION':
-      return { ...state, currentNodeId: action.id, busy: true, resultOptions: null, inputError: null, misses: 0 }
+      return {
+        ...state,
+        currentNodeId: action.id,
+        history: state.currentNodeId === action.id ? state.history : [...state.history, state.currentNodeId].slice(-20),
+        busy: true,
+        resultOptions: null,
+        inputError: null,
+        misses: 0,
+      }
 
     case 'ACTION_RESULT': {
       let seq = state.seq
@@ -153,7 +168,7 @@ export function useChat() {
     }
   }, [t])
 
-  const goTo = useCallback((id: NodeId, opts?: { misses?: number; vars?: Record<string, string> }) => {
+  const goTo = useCallback((id: NodeId, opts?: { misses?: number; vars?: Record<string, string>; back?: boolean }) => {
     const node = NODES[id]
     if (!node) { dispatch({ type: 'GOTO', id: 'root' }); return }
     if (node.kind === 'action') {
@@ -161,13 +176,13 @@ export function useChat() {
       void runAction(id, opts?.vars)
       return
     }
-    dispatch({ type: 'GOTO', id, misses: opts?.misses })
+    dispatch({ type: 'GOTO', id, misses: opts?.misses, back: opts?.back })
   }, [runAction])
 
   // Show Lara "typing…" for a beat before a deterministic reply lands, so the chat
   // feels conversational. Action nodes skip it — they show their own "Please wait…".
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const goToTyping = useCallback((id: NodeId, opts?: { misses?: number; vars?: Record<string, string> }) => {
+  const goToTyping = useCallback((id: NodeId, opts?: { misses?: number; vars?: Record<string, string>; back?: boolean }) => {
     const target = NODES[id]
     if (!target || target.kind === 'action') { goTo(id, opts); return }
     if (typingTimer.current) clearTimeout(typingTimer.current)
@@ -180,6 +195,17 @@ export function useChat() {
     if (stateRef.current.messages.length === 0) goTo('root')
   }, [goTo])
   const close = useCallback(() => dispatch({ type: 'CLOSE' }), [])
+  const back = useCallback(() => {
+    const last = stateRef.current.history[stateRef.current.history.length - 1]
+    if (!last || stateRef.current.busy || stateRef.current.typing) return
+    dispatch({ type: 'PUSH_USER', text: 'Back' })
+    goToTyping(last, { back: true })
+  }, [goToTyping])
+  const reset = useCallback(() => {
+    if (typingTimer.current) clearTimeout(typingTimer.current)
+    dispatch({ type: 'RESET' })
+    goTo('root')
+  }, [goTo])
   const toggle = useCallback(() => {
     const wasOpen = stateRef.current.open
     dispatch({ type: 'TOGGLE' })
@@ -283,5 +309,5 @@ export function useChat() {
     }
   }, [t])
 
-  return { state, open, close, toggle, tapOption, submitText, submitInput, submitTicketText, confirmTicket }
+  return { state, open, close, toggle, back, reset, tapOption, submitText, submitInput, submitTicketText, confirmTicket }
 }

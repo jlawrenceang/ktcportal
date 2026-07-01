@@ -28,6 +28,14 @@ type: session
 - `docs/agent/testing-and-release.md` names ST08 as current through migration `0236`.
 - Independent review notes added at `docs/audits/2026-07-01-go-live-hardening-independent-review.md`.
 
+## Current workspace batch 2
+
+- Implemented after docs checkpoint `c309cbd`: New JO `C-` entry formatting, 2-step mobile filing, first-screen vessel + up to 10 verification images, review container count, and post-submit supporting image upload through existing `jo-documents` / `add_jo_support`.
+- Auth/session hardening: Google OAuth sign-ins stamp fresh activity, customer web idle window is now 30 minutes, MFA assurance reads do not reload on token refresh, and MFA read failure shows retry/sign-out instead of indefinite loading.
+- UI hardening: form routes skip global route transition overlay; Lara uses the supplied avatar, avoids mobile auto-focus jump, has Back/Start over, and can hand off a safe local JO draft; customer vessels calendar honors Show past/cancelled with a current + 7-day history window; JO detail removes release-ready language and simplifies charge/detail actions.
+- Added `docs/lara-chatbot-map.md`.
+- Local `npm run lint` passed; build/deploy/live ST08 evidence still pending for this batch.
+
 ## Still open
 
 - The blind-walkthrough task list is **not fully closed**. Remaining items need implementation, explicit deferral, or ST08 evidence.

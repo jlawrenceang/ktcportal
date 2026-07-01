@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import MfaChallenge from './MfaChallenge'
+import MfaGateError from './MfaGateError'
 import SessionConflictModal from './SessionConflictModal'
 import FinishRegistration from './FinishRegistration'
 import ReConsent from './ReConsent'
@@ -67,6 +68,9 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   }
   if (!session) return <Navigate to="/login" replace />
 
+  if (mfa.error) {
+    return <MfaGateError message={mfa.error} onRetry={mfa.retry} />
+  }
   if (mfa.loading) {
     return <RouteLoader />
   }

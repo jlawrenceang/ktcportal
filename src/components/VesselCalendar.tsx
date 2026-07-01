@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 // Shared vessel-schedule presentation — used by both the admin/operations
 // editor (src/admin/VesselSchedule.tsx) and the read-only customer view
@@ -56,6 +56,22 @@ export function MonthCalendar({ rows }: { rows: VesselRow[] }) {
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const today = new Date()
   const isThisMonth = today.getFullYear() === year && today.getMonth() === month
+
+  useEffect(() => {
+    if (!rows.length || offset !== 0) return
+    const hasThisMonth = rows.some((r) => {
+      if (!r.actual_arrival) return false
+      const d = new Date(r.actual_arrival.slice(0, 10) + 'T00:00:00')
+      return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth()
+    })
+    if (hasThisMonth) return
+    const dated = rows
+      .map((r) => r.actual_arrival ? new Date(r.actual_arrival.slice(0, 10) + 'T00:00:00') : null)
+      .filter((d): d is Date => !!d && !Number.isNaN(d.getTime()))
+      .sort((a, b) => Math.abs(a.getTime() - today.getTime()) - Math.abs(b.getTime() - today.getTime()))
+    const nearest = dated[0]
+    if (nearest) setOffset((nearest.getFullYear() - today.getFullYear()) * 12 + nearest.getMonth() - today.getMonth())
+  }, [offset, rows, today])
 
   const byDay = new Map<number, VesselRow[]>()
   for (const r of rows) {

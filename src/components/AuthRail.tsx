@@ -21,7 +21,7 @@ export default function AuthRail() {
   useEffect(() => {
     if (sessionStorage.getItem('ktc_idle_logout')) {
       const mins = sessionStorage.getItem('ktc_idle_logout')
-      setNotice(t('You were signed out after {mins} minutes of inactivity. Please sign in again.', { mins: /^\d{2,}$/.test(mins ?? '') ? (mins ?? '15') : '15' }))
+      setNotice(t('You were signed out after {mins} minutes of inactivity. Please sign in again.', { mins: /^\d{2,}$/.test(mins ?? '') ? (mins ?? '30') : '30' }))
       sessionStorage.removeItem('ktc_idle_logout')
     } else if (sessionStorage.getItem('ktc_session_superseded')) {
       setNotice(t('You were signed out because this account signed in on another device or browser. If that wasn’t you, change your password now.'))

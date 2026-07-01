@@ -104,7 +104,7 @@ This is **separate from a Job Order** — use **Release / Pull-out** to request 
 
 ## 9 · Security — what to expect
 
-- Sessions **sign out after 15 idle minutes** — an "Are you still there?" prompt appears one minute before; any click keeps you signed in.
+- Sessions **sign out after 30 idle minutes** — an "Are you still there?" prompt appears one minute before; any click keeps you signed in.
 - **One active session per account:** signing in on a second device signs the first one out. If you're ever signed out "because this account signed in on another device" and it wasn't you — **change your password immediately**.
 - Five wrong passwords in a row pause login for 60 seconds.
 - KTC staff will never ask for your password.

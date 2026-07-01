@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import SessionSupersededOverlay from './components/SessionSupersededOverlay'
 import ServerBusyBanner from './components/ServerBusyBanner'
 import MfaChallenge from './components/MfaChallenge'
+import MfaGateError from './components/MfaGateError'
 import RouteLoader from './components/RouteLoader'
 import { useMfaGate } from './lib/useMfaGate'
 import HeroSlideshow from './components/HeroSlideshow'
@@ -117,20 +118,27 @@ function RouteFade({ children }: { children: ReactNode }) {
 
 function RouteTransitionOverlay() {
   const { pathname, search } = useLocation()
-  const previous = useRef<string | null>(null)
+  const previous = useRef<{ key: string; pathname: string } | null>(null)
   const [phase, setPhase] = useState<'hidden' | 'showing' | 'leaving'>('hidden')
 
   useEffect(() => {
     const key = `${pathname}${search}`
+    const skipTransition = (path: string) =>
+      path === '/job-order' || path.startsWith('/job-order/') || path === '/admin/new-job-order'
     if (previous.current === null) {
-      previous.current = key
+      previous.current = { key, pathname }
       return
     }
-    if (previous.current === key) return
-    previous.current = key
+    if (previous.current.key === key) return
+    const prev = previous.current
+    previous.current = { key, pathname }
+    if (skipTransition(prev.pathname) || skipTransition(pathname)) {
+      setPhase('hidden')
+      return
+    }
     setPhase('showing')
-    const leave = window.setTimeout(() => setPhase('leaving'), 1100)
-    const hide = window.setTimeout(() => setPhase('hidden'), 1300)
+    const leave = window.setTimeout(() => setPhase('leaving'), 1050)
+    const hide = window.setTimeout(() => setPhase('hidden'), 1500)
     return () => {
       window.clearTimeout(leave)
       window.clearTimeout(hide)
@@ -220,6 +228,7 @@ function MfaGate({ children }: { children: ReactNode }) {
 
   // Logged-out, or on a public/pre-auth path → never gate (login + public flow).
   if (!session || MFA_BYPASS.has(pathname) || pathname.startsWith('/verify/')) return <>{children}</>
+  if (mfa.error) return <MfaGateError message={mfa.error} onRetry={mfa.retry} />
   // Session present but the level isn't known yet → hold so the app can't flash first.
   if (mfa.loading) return <RouteLoader />
   // MFA enrolled but not yet satisfied → render ONLY the challenge, nothing else.

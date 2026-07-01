@@ -30,6 +30,17 @@ Verification performed:
 - **Blind-walkthrough list is not closed.** Remaining items still need audit/implementation or explicit deferral, including pending-account restriction edge cases, dark-mode contrast sweep, notification settings relocation, notification clear/hide options, large-image rendering limits, release/pull-out disablement, full rate-calculator tariff logic, tutorial video management, and broader smoke execution.
 - **Version label was not bumped.** Runtime still displays `v2.0.11`; provenance for this checkpoint is commit `830bd2a`, deployment `ktc-joborderform-6bbtfhqfl`, and migrations through `0236`.
 
+## Current Workspace Addendum - Batch 2
+
+After the docs checkpoint (`c309cbd`), the working tree now contains an additional front-end hardening batch covering New Job Order filing UX, OAuth/idle/MFA loader recovery, Lara mobile behavior and draft handoff, customer vessel-calendar filtering, and JO detail simplification. These are tracked in ST08 as CUST-37 through CUST-41, OWN-10, DEV-07, and DEV-08.
+
+Review status for this addendum:
+
+- `npm run lint` passed locally.
+- No new DB migration is included; supporting JO images reuse `jo-documents` + `add_jo_support`.
+- Live browser smoke and deployment verification are still pending for this addendum.
+- Screenshot prevention remains limited to practical deterrence (ProtectedDoc watermark/copy/print/save blocks); web browsers cannot fully prevent OS/device screenshots.
+
 ## Current Recommendation
 
 Keep ST08 as the only active smoke test. Execute the new July 1 rows first because they cover the latest changed surfaces, then continue the broader all-role lanes. Treat any money invariant, RBAC content leak, or trusted-MFA bypass as a go-live blocker.

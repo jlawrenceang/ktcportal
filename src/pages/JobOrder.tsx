@@ -2,16 +2,20 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
+import { prepareUpload } from '../lib/validation'
 import { useBroker } from '../lib/useBroker'
 import SearchPicker, { type PickerItem } from '../components/SearchPicker'
 import ConsigneeRequestForm from '../components/ConsigneeRequestForm'
 import ContainerLinesEditor, { emptyLine, type LineDraft } from '../components/ContainerLinesEditor'
 import { searchConsignees } from '../lib/pickerSearches'
+import { formatEntryNumberInput, isCompleteEntryNumber, normalizeEntryNumber } from '../lib/entryNumber'
 import { usePageTour } from '../components/TourProvider'
 import { jobOrderSteps } from '../components/WelcomeTour'
 import { useT } from '../lib/i18n'
 import Wizard, { type WizardStep } from '../components/Wizard'
 import Notice from '../components/Notice'
+
+const MAX_SUPPORTING_IMAGES = 10
 
 export default function JobOrder() {
   const { t } = useT()
@@ -22,7 +26,7 @@ export default function JobOrder() {
   // and so it resets to the first step when the demo finishes.
   const [wizStep, setWizStep] = useState(0)
   const tourSteps = useMemo(
-    () => jobOrderSteps.map((s, idx) => ({ ...s, onEnter: () => setWizStep(idx) })),
+    () => jobOrderSteps.map((s, idx) => ({ ...s, onEnter: () => setWizStep(Math.min(idx, 1)) })),
     [],
   )
   usePageTour('job-order', tourSteps, () => setWizStep(0))
@@ -32,6 +36,8 @@ export default function JobOrder() {
   const [consignee, setConsignee] = useState<PickerItem | null>(null)
   function pickConsignee(item: PickerItem | null) { setConsignee(item) }
   const [entryNumber, setEntryNumber] = useState('')
+  const [supportingDocs, setSupportingDocs] = useState<File[]>([])
+  const [docError, setDocError] = useState<string | null>(null)
   const [lines, setLines] = useState<LineDraft[]>([emptyLine()])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -41,7 +47,7 @@ export default function JobOrder() {
   const [reviewing, setReviewing] = useState(false)
   // On success we keep the customer on this page and confirm the filed order's
   // reference (the assigned JO number) rather than silently redirecting.
-  const [filed, setFiled] = useState<{ joNumber: string | null } | null>(null)
+  const [filed, setFiled] = useState<{ joNumber: string | null; warning?: string | null } | null>(null)
 
   // Vessel + voyage (required) — picked from the current vessel schedule ONLY.
   // A call not yet listed is operations' work: the customer contacts KTC CS to
@@ -54,11 +60,32 @@ export default function JobOrder() {
       .then(({ data }) => setVessels((data ?? []) as VesselOpt[]))
   }, [])
 
+  useEffect(() => {
+    let raw: string | null = null
+    try { raw = sessionStorage.getItem('ktc_lara_job_order_draft') } catch { /* ignore */ }
+    if (!raw) return
+    try {
+      const draft = JSON.parse(raw) as { entry?: string; vessel?: string }
+      if (draft.entry) setEntryNumber(formatEntryNumberInput(draft.entry))
+      if (draft.vessel && vessels.length) {
+        const needle = draft.vessel.toUpperCase()
+        const hit = vessels.find((v) =>
+          `${v.vessel_name} ${v.voyage_number} ${v.vessel_visit}`.toUpperCase().includes(needle),
+        )
+        if (hit) setVesselVisit(hit.vessel_visit)
+      }
+      if (!draft.vessel || vessels.length) sessionStorage.removeItem('ktc_lara_job_order_draft')
+    } catch {
+      try { sessionStorage.removeItem('ktc_lara_job_order_draft') } catch { /* ignore */ }
+    }
+  }, [vessels])
+
   // Per-step validation (used to gate Next on mobile; the full re-check still
   // runs in submit()). Step 1 needs a consignee AND the entry (C-) number.
   function step1Error() {
     if (!consignee) return t('Select a consignee from the list.')
-    if (!entryNumber.trim()) return t('Enter the Entry Number (C-…).')
+    if (!isCompleteEntryNumber(entryNumber)) return t('Enter the Entry Number starting with C-.')
+    const ev = vesselError(); if (ev) return ev
     return null
   }
   function vesselError() {
@@ -70,11 +97,57 @@ export default function JobOrder() {
   function openReview() {
     setError(null)
     const e1 = step1Error(); if (e1) { setError(e1); setWizStep(0); return }
-    const ev = vesselError(); if (ev) { setError(ev); setWizStep(1); return }
-    if (lines.filter((l) => l.container_number.trim()).length === 0) { setError(t('Add at least one container.')); setWizStep(2); return }
+    if (lines.filter((l) => l.container_number.trim()).length === 0) { setError(t('Add at least one container.')); setWizStep(1); return }
     setReviewing(true)
   }
   const reviewVessel = (() => { const s = vessels.find((v) => v.vessel_visit === vesselVisit); return s ? `${s.vessel_name.toUpperCase()} — ${s.voyage_number.toUpperCase()}` : '' })()
+  const filledLines = lines.filter((l) => l.container_number.trim())
+  const containerCountLabel = t(filledLines.length === 1 ? '{count} container van' : '{count} container vans', { count: filledLines.length })
+
+  function addSupportingImages(files: FileList | null) {
+    if (!files) return
+    setDocError(null)
+    const incoming = Array.from(files)
+    const images = incoming.filter((f) => f.type.startsWith('image/'))
+    if (images.length !== incoming.length) setDocError(t('Only image files are allowed for job order verification documents.'))
+    const room = MAX_SUPPORTING_IMAGES - supportingDocs.length
+    if (room <= 0) {
+      setDocError(t('You can attach up to {n} image(s).', { n: MAX_SUPPORTING_IMAGES }))
+      return
+    }
+    const next = images.slice(0, room)
+    if (images.length > room) setDocError(t('You can attach up to {n} image(s).', { n: MAX_SUPPORTING_IMAGES }))
+    setSupportingDocs((prev) => [...prev, ...next])
+  }
+
+  async function uploadSupportingImages(orderId: string): Promise<string | null> {
+    if (!broker || supportingDocs.length === 0) return null
+    const failed: string[] = []
+    for (const [idx, file] of supportingDocs.entries()) {
+      const prepared = await prepareUpload(file)
+      if ('error' in prepared) {
+        failed.push(`${file.name}: ${prepared.error}`)
+        continue
+      }
+      const safe = prepared.file.name.replace(/[^A-Za-z0-9._-]/g, '_')
+      const path = `${broker.user_id}/${orderId}/${Date.now()}_${idx}_${safe}`
+      const { error: upErr } = await supabase.storage.from('jo-documents').upload(path, prepared.file, { upsert: false })
+      if (upErr) {
+        failed.push(`${file.name}: ${upErr.message}`)
+        continue
+      }
+      const { error: rpcErr } = await supabase.rpc('add_jo_support', {
+        p_jo: orderId,
+        p_path: path,
+        p_filename: file.name,
+        p_note: t('Verification document attached during filing.'),
+      })
+      if (rpcErr) failed.push(`${file.name}: ${rpcErr.message}`)
+    }
+    return failed.length
+      ? t('Job Order filed, but some supporting images were not attached: {items}', { items: failed.join('; ') })
+      : null
+  }
 
   async function submit() {
     if (submittingRef.current) return
@@ -87,8 +160,9 @@ export default function JobOrder() {
       setError(t('Select a consignee from the list.'))
       return
     }
-    if (!entryNumber.trim()) {
-      setError(t('Enter the Entry Number (C-…).'))
+    const normalizedEntry = normalizeEntryNumber(entryNumber)
+    if (!isCompleteEntryNumber(normalizedEntry)) {
+      setError(t('Enter the Entry Number starting with C-.'))
       return
     }
     // Resolve vessel + voyage (required). Entry, vessel, voyage and container
@@ -98,89 +172,128 @@ export default function JobOrder() {
     const vVisit: string = sel.vessel_visit
     const vName = sel.vessel_name.toUpperCase()
     const vVoyage = sel.voyage_number.toUpperCase()
-    const filled = lines.filter((l) => l.container_number.trim())
+    const filled = filledLines
     if (filled.length === 0) {
       setError(t('Add at least one container.'))
       return
     }
     submittingRef.current = true
     setBusy(true)
-    // Atomic: the order + its lines are inserted in one transaction server-side
-    // (0098), so a failure can't leave an orphan line-less order. Pending vs
-    // approved (held/submitted) is decided in the RPC.
-    const { data: newId, error: fileErr } = await supabase.rpc('file_job_order', {
-      p_consignee: consignee.id,
-      p_entry_number: entryNumber.trim().toUpperCase(),
-      p_vessel_visit: vVisit,
-      p_vessel_name: vName,
-      p_voyage_number: vVoyage,
-      p_lines: filled.map((l) => ({ container_number: l.container_number.trim().toUpperCase(), service_request: l.service_request })),
-    })
-    if (fileErr) {
+    try {
+      // Atomic: the order + its lines are inserted in one transaction server-side
+      // (0098), so a failure can't leave an orphan line-less order. Pending vs
+      // approved (held/submitted) is decided in the RPC.
+      const { data: newId, error: fileErr } = await supabase.rpc('file_job_order', {
+        p_consignee: consignee.id,
+        p_entry_number: normalizedEntry,
+        p_vessel_visit: vVisit,
+        p_vessel_name: vName,
+        p_voyage_number: vVoyage,
+        p_lines: filled.map((l) => ({ container_number: l.container_number.trim().toUpperCase(), service_request: l.service_request })),
+      })
+      if (fileErr) {
+        setError(fileErr.message)
+        return
+      }
+      // The RPC returns the new order's id; look up its assigned JO number so we
+      // can confirm the reference to the customer (null while still "Draft").
+      let joNumber: string | null = null
+      let warning: string | null = null
+      if (newId) {
+        const id = newId as string
+        try { sessionStorage.setItem('ktc_jo_filed_id', id) } catch { /* ignore */ }
+        warning = await uploadSupportingImages(id)
+        const { data: row } = await supabase.from('job_orders').select('jo_number').eq('id', id).maybeSingle()
+        joNumber = row?.jo_number ?? null
+      }
+      setFiled({ joNumber, warning })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('Could not file the Job Order. Please try again.'))
+    } finally {
       setBusy(false)
       submittingRef.current = false
-      setError(fileErr.message)
-      return
     }
-    // The RPC returns the new order's id; look up its assigned JO number so we
-    // can confirm the reference to the customer (null while still "Draft").
-    let joNumber: string | null = null
-    if (newId) {
-      const { data: row } = await supabase.from('job_orders').select('jo_number').eq('id', newId as string).maybeSingle()
-      joNumber = row?.jo_number ?? null
-    }
-    setBusy(false)
-    setFiled({ joNumber })
   }
 
   const wizardSteps: WizardStep[] = [
     {
-      title: 'Consignee & entry',
+      title: 'Consignee, entry & vessel',
       validate: step1Error,
       content: (
-        <div className="ktc-fields" data-tour="jo-consignee">
-          <div style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
-            <label className="ktc-label" htmlFor="consignee">{t('Consignee')} *</label>
-            <SearchPicker
-              inputId="consignee"
-              placeholder={t('Search consignee by code or name…')}
-              selected={consignee}
-              onSelect={pickConsignee}
-              search={searchConsignees}
-              minChars={1}
-            />
-            <ConsigneeRequestForm />
+        <div style={{ display: 'grid', gap: 14 }}>
+          <div className="ktc-fields" data-tour="jo-consignee">
+            <div style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
+              <label className="ktc-label" htmlFor="consignee">{t('Consignee')} *</label>
+              <SearchPicker
+                inputId="consignee"
+                placeholder={t('Search consignee by code or name…')}
+                selected={consignee}
+                onSelect={pickConsignee}
+                search={searchConsignees}
+                minChars={1}
+              />
+              <ConsigneeRequestForm />
+            </div>
+            <div style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
+              <label className="ktc-label" htmlFor="entry">{t('Entry Number')} *</label>
+              <input
+                id="entry"
+                className="ktc-input"
+                required
+                placeholder={t('e.g. C-0000012345')}
+                value={entryNumber}
+                onChange={(e) => setEntryNumber(formatEntryNumberInput(e.target.value))}
+                onBlur={() => setEntryNumber((v) => normalizeEntryNumber(v))}
+                style={{ textTransform: 'uppercase' }}
+              />
+            </div>
           </div>
-          <div style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
-            <label className="ktc-label" htmlFor="entry">{t('Entry Number')} *</label>
+
+          <div data-tour="jo-vessel" style={{ display: 'grid', gap: 6 }}>
+            <label className="ktc-label" htmlFor="vessel">{t('Vessel & Voyage')} *</label>
+            <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
+              <option value="">{t('Select a vessel…')}</option>
+              {vessels.map((v) => (
+                <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name.toUpperCase()} — {v.voyage_number.toUpperCase()}</option>
+              ))}
+            </select>
+            <span className="ktc-label" style={{ fontSize: 11.5 }}>
+              {t('If the vessel isn’t listed here, please call KTC customer service for updates.')}
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
+              <label className="ktc-label" htmlFor="jo-supporting-images">{t('Verification documents')}</label>
+              <span className="ktc-label" style={{ fontSize: 11.5 }}>{supportingDocs.length}/{MAX_SUPPORTING_IMAGES}</span>
+            </div>
             <input
-              id="entry"
+              id="jo-supporting-images"
               className="ktc-input"
-              required
-              placeholder={t('e.g. C-0000012345')}
-              value={entryNumber}
-              onChange={(e) => setEntryNumber(e.target.value.toUpperCase())}
-              style={{ textTransform: 'uppercase' }}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => { addSupportingImages(e.target.files); e.currentTarget.value = '' }}
+              style={{ padding: '10px 13px' }}
             />
+            <span className="ktc-label" style={{ fontSize: 11.5, lineHeight: 1.45 }}>
+              {t('Optional: attach up to {n} image(s) that verify the legitimacy of this job order.', { n: MAX_SUPPORTING_IMAGES })}
+            </span>
+            {docError && <div role="alert" style={{ color: 'var(--acc-2)', fontSize: 12.5 }}>{docError}</div>}
+            {supportingDocs.length > 0 && (
+              <div style={{ display: 'grid', gap: 6 }}>
+                {supportingDocs.map((file, idx) => (
+                  <div key={`${file.name}-${idx}`} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '8px 10px', borderRadius: 9, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 12.5 }}>{file.name}</span>
+                    <button type="button" className="ktc-link" style={{ fontSize: 12.5, color: 'var(--acc-2)' }}
+                      onClick={() => setSupportingDocs((prev) => prev.filter((_, i) => i !== idx))}>
+                      {t('Remove')}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      ),
-    },
-    {
-      title: 'Vessel & voyage',
-      validate: vesselError,
-      content: (
-        <div data-tour="jo-vessel" style={{ display: 'grid', gap: 6 }}>
-          <label className="ktc-label" htmlFor="vessel">{t('Vessel & Voyage')} *</label>
-          <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
-            <option value="">{t('Select a vessel…')}</option>
-            {vessels.map((v) => (
-              <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name.toUpperCase()} — {v.voyage_number.toUpperCase()}</option>
-            ))}
-          </select>
-          <span className="ktc-label" style={{ fontSize: 11.5 }}>
-            {t('If the vessel isn’t listed here, please call KTC customer service for updates.')}
-          </span>
         </div>
       ),
     },
@@ -210,9 +323,14 @@ export default function JobOrder() {
               </button>
             }
           >
-            {filed.joNumber
-              ? <>{t('Your reference is')} <span className="ktc-mono" style={{ fontWeight: 700 }}>{filed.joNumber}</span></>
-              : t('Your job order has been filed.')}
+            <span>
+              {filed.joNumber
+                ? <>{t('Your reference is')} <span className="ktc-mono" style={{ fontWeight: 700 }}>{filed.joNumber}</span></>
+                : t('Your job order has been filed.')}
+              {filed.warning && (
+                <span style={{ display: 'block', marginTop: 8, color: 'var(--acc-2)', fontWeight: 600 }}>{filed.warning}</span>
+              )}
+            </span>
           </Notice>
         ) : (
           <Wizard
@@ -237,12 +355,16 @@ export default function JobOrder() {
             </div>
             <div style={{ overflowY: 'auto', padding: '14px 20px', display: 'grid', gap: 10, fontSize: 13.5 }}>
               <div><span className="ktc-label" style={{ fontSize: 12 }}>{t('Consignee')}</span><div style={{ fontWeight: 600 }}>{consignee?.title}{consignee?.sub ? ` — ${consignee.sub}` : ''}</div></div>
-              <div><span className="ktc-label" style={{ fontSize: 12 }}>{t('Entry Number')}</span><div style={{ fontWeight: 600 }}>{entryNumber.trim().toUpperCase()}</div></div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 10, alignItems: 'end' }}>
+                <div><span className="ktc-label" style={{ fontSize: 12 }}>{t('Entry Number')}</span><div style={{ fontWeight: 600 }}>{normalizeEntryNumber(entryNumber)}</div></div>
+                <div style={{ justifySelf: 'end' }}><span className="ktc-label" style={{ fontSize: 12 }}>{t('Containers')}</span><div style={{ fontWeight: 600 }}>{containerCountLabel}</div></div>
+              </div>
               <div><span className="ktc-label" style={{ fontSize: 12 }}>{t('Vessel & Voyage')}</span><div style={{ fontWeight: 600 }}>{reviewVessel}</div></div>
+              <div><span className="ktc-label" style={{ fontSize: 12 }}>{t('Verification documents')}</span><div style={{ fontWeight: 600 }}>{t('{n} image(s)', { n: supportingDocs.length })}</div></div>
               <div>
                 <span className="ktc-label" style={{ fontSize: 12 }}>{t('Containers')}</span>
                 <div style={{ display: 'grid', gap: 4, marginTop: 4 }}>
-                  {lines.filter((l) => l.container_number.trim()).map((l, i) => (
+                  {filledLines.map((l, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '6px 10px', borderRadius: 8, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
                       <span className="ktc-mono">{l.container_number.trim().toUpperCase()}</span>
                       <span className="ktc-label" style={{ fontSize: 12 }}>{l.service_request}</span>

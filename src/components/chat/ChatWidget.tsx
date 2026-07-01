@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as R
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useT } from '../../lib/i18n'
+import { useIsMobile } from '../../lib/useIsMobile'
 import { useChat, type ChatMsg } from './useChat'
 import { NODES } from './nodes'
 import type { ChatNode, ChatOption } from './types'
@@ -22,8 +23,9 @@ function msgText(m: ChatMsg, t: ReturnType<typeof useT>['t']): string {
 
 export default function ChatWidget() {
   const { t } = useT()
+  const isMobile = useIsMobile()
   const navigate = useNavigate()
-  const { state, open, close, tapOption, submitText, submitInput, submitTicketText, confirmTicket } = useChat()
+  const { state, open, close, back, reset, tapOption, submitText, submitInput, submitTicketText, confirmTicket } = useChat()
   const scrollRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLInputElement>(null)
   const launcherRef = useRef<HTMLButtonElement>(null)
@@ -70,10 +72,10 @@ export default function ChatWidget() {
   // No Tab trap / aria-modal on purpose — Tab must stay free to leave a non-modal
   // dialog (ARIA APG). Tracks prior open so we don't grab focus on first mount.
   useEffect(() => {
-    if (state.open) composerRef.current?.focus()
-    else if (wasOpenRef.current) launcherRef.current?.focus()
+    if (state.open && !isMobile) composerRef.current?.focus()
+    else if (wasOpenRef.current && !isMobile) launcherRef.current?.focus()
     wasOpenRef.current = state.open
-  }, [state.open])
+  }, [isMobile, state.open])
 
   // Keep the transcript pinned to the latest message.
   useEffect(() => {
@@ -93,7 +95,7 @@ export default function ChatWidget() {
 
   function clampLauncherTop(top: number) {
     const min = 8
-    const max = Math.max(min, window.innerHeight - 64)
+    const max = Math.max(min, window.innerHeight - 78)
     return Math.min(max, Math.max(min, top))
   }
 
@@ -109,7 +111,7 @@ export default function ChatWidget() {
     const moved = Math.abs(e.clientX - drag.startX) + Math.abs(e.clientY - drag.startY) > 6
     if (!moved && !drag.moved) return
     drag.moved = true
-    setLauncherPos((pos) => ({ ...pos, top: clampLauncherTop(e.clientY - 28) }))
+    setLauncherPos((pos) => ({ ...pos, top: clampLauncherTop(e.clientY - 38) }))
   }
 
   function onLauncherPointerUp(e: ReactPointerEvent<HTMLButtonElement>) {
@@ -122,7 +124,7 @@ export default function ChatWidget() {
       window.setTimeout(() => { suppressClickRef.current = false }, 0)
       setLauncherPos({
         side: e.clientX < window.innerWidth / 2 ? 'left' : 'right',
-        top: clampLauncherTop(e.clientY - 28),
+        top: clampLauncherTop(e.clientY - 38),
       })
     }
   }
@@ -145,7 +147,6 @@ export default function ChatWidget() {
       <button type="button" className={`${primary ? 'ktc-btn' : 'ktc-btn-secondary'} ktc-btn--sm`}
         onClick={() => tapOption(opt)} disabled={state.busy}
         style={{ width: '100%', justifyContent: 'flex-start', textAlign: 'left', fontSize: 12.5, lineHeight: 1.35 }}>
-        {opt.glyph ? <span aria-hidden style={{ marginRight: 6 }}>{opt.glyph}</span> : null}
         <span>{t(opt.label)}</span>
       </button>
     )
@@ -237,12 +238,12 @@ export default function ChatWidget() {
           onPointerDown={onLauncherPointerDown} onPointerMove={onLauncherPointerMove} onPointerUp={onLauncherPointerUp} onPointerCancel={onLauncherPointerUp}
           style={{
             position: 'fixed', zIndex: 60, touchAction: 'none', ...launcherPlacement,
-            width: 56, height: 56, borderRadius: 999, border: '1px solid var(--glass-brd)', cursor: 'pointer',
-            background: 'linear-gradient(135deg, var(--acc), var(--acc-2))', color: '#fff',
+            width: 76, height: 76, padding: 0, borderRadius: 999, border: '2px solid rgb(var(--acc-rgb) / 0.36)', cursor: 'pointer',
+            background: 'var(--c-w70)', color: '#fff', overflow: 'hidden',
             boxShadow: 'var(--shadow-lg), 0 10px 26px -8px rgb(var(--acc-rgb) / 0.5)',
             display: 'grid', placeItems: 'center',
           }}>
-          <LaraAvatar size={30} />
+          <LaraAvatar size={74} />
           {pulse && (
             <span aria-hidden style={{
               position: 'absolute', top: 8, right: 9, width: 11, height: 11, borderRadius: 999,
@@ -258,16 +259,16 @@ export default function ChatWidget() {
           onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); close() } }}
           style={{
             position: 'fixed', zIndex: 60, ...panelPlacement,
-            width: 'min(380px, calc(100vw - 24px))',
-            height: 'min(560px, calc(100dvh - 120px))',
+            width: 'min(350px, calc(100vw - 20px))',
+            height: 'min(510px, calc(100dvh - 120px))',
             display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden',
           }}>
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderBottom: '1px solid var(--glass-brd)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 12px', borderBottom: '1px solid var(--glass-brd)' }}>
             <span aria-hidden style={{
-              width: 32, height: 32, borderRadius: 999, flex: '0 0 auto', display: 'grid', placeItems: 'center',
-              background: 'linear-gradient(135deg, var(--acc), var(--acc-2))', color: '#fff',
-            }}><LaraAvatar size={20} /></span>
+              width: 34, height: 34, borderRadius: 999, flex: '0 0 auto', display: 'grid', placeItems: 'center',
+              background: 'var(--c-w70)', color: '#fff', overflow: 'hidden', border: '1px solid var(--glass-brd)',
+            }}><LaraAvatar size={34} /></span>
             <span style={{ minWidth: 0 }}>
               <b style={{ fontSize: 14, display: 'block' }}>{t('Lara')}</b>
               <span className="ktc-label" style={{ fontSize: 11 }}>{t('KTC Assistant')}</span>
@@ -282,11 +283,11 @@ export default function ChatWidget() {
           {/* Transcript — a polite live region so appended bot bubbles + the ticket
               success/failure confirmation are announced to screen readers. */}
           <div ref={scrollRef} aria-live="polite" aria-atomic="false"
-            style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             {state.messages.map((m) => (
               <div key={m.id} style={{ display: 'flex', justifyContent: m.from === 'user' ? 'flex-end' : 'flex-start' }}>
                 <div style={{
-                  maxWidth: '85%', padding: '8px 12px', borderRadius: 13, fontSize: 12.5, lineHeight: 1.5,
+                  maxWidth: '86%', padding: '8px 11px', borderRadius: 13, fontSize: 12.2, lineHeight: 1.48,
                   whiteSpace: 'pre-wrap', wordBreak: 'break-word',
                   background: m.from === 'user' ? 'var(--c-h210-60-94)' : 'var(--c-w60)',
                   border: '1px solid var(--glass-brd)',
@@ -303,6 +304,18 @@ export default function ChatWidget() {
             )}
             {/* Live controls for the current node */}
             <div style={{ marginTop: 2 }}><Controls /></div>
+
+            {!state.typing && state.messages.length > 1 && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
+                <button type="button" className="ktc-link" disabled={!state.history.length || state.busy}
+                  onClick={back} style={{ fontSize: 12.5, opacity: state.history.length ? 0.95 : 0.45 }}>
+                  {t('Back')}
+                </button>
+                <button type="button" className="ktc-link" disabled={state.busy} onClick={reset} style={{ fontSize: 12.5 }}>
+                  {t('Start over')}
+                </button>
+              </div>
+            )}
 
             {state.inputError && (
               <div role="alert" style={{ fontSize: 12, fontWeight: 500, color: 'var(--acc-2)' }}>{t(state.inputError)}</div>

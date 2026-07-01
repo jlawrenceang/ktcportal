@@ -152,7 +152,7 @@ migrations). Logged here so the ST02 record is complete.
 |---|---|---|---|
 | 7.1 | Owner: 2FA tab → enroll (scan QR, verify code) | "2FA is ON"; sign out → sign in → **code challenge** appears; wrong code rejected; right code lands in admin | |
 | 7.2 | Cashier opens `/admin/security` directly | "available for admin and owner accounts only" message | |
-| 7.3 | Idle: leave the customer portal untouched 14 min | **"Are you still there?"** prompt appears; any click/movement dismisses it and resets the timer; ignore it 1 more min → signed out, login notice says "after 15 minutes" (closed-browser return after 15 min also signs out) | |
+| 7.3 | Idle: leave the customer portal untouched 29 min | **"Are you still there?"** prompt appears; any click/movement dismisses it and resets the timer; ignore it 1 more min → signed out, login notice says "after 30 minutes" (closed-browser return after 30 min also signs out) | |
 | 7.3b | Idle (staff): same on the admin portal (any role incl. cashier/checker) | warning at 59 min, sign-out at 60 with "after 60 minutes" notice | |
 | 7.3c | Single session: sign the test customer in on a second browser (or private window) | first browser signs out ≤1 min (on focus: instantly) with "signed in on another device" notice; second browser unaffected. For the 2FA owner: password alone on browser 2 does NOT kick browser 1 — only completing the 6-digit verify does | |
 | 7.3d | Eviction audit: after 7.3c, owner opens Logs → Security | "Session evicted — account signed in on a new device" entry for the test customer; **no** owner alert email for it (routine event) | |

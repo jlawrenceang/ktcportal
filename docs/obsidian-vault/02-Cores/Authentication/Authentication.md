@@ -27,7 +27,7 @@ Identity, sign-in/registration, the role model (root owner / owner / 6 staff rol
 - **Root owner / owner:** server-only; root mints/revokes secondary owners (`set_owner_access`). Override everything, cannot be locked out. See [[Owner Failsafe]], [[Multi-Owner & Root Grants]].
 - **Staff roles:** `admin · operations · cashier · checker · csr · purchaser` (`purchaser` is the DB-only fuel desk, `0150` — frontend deferred), created only by the owner. Capabilities run on the owner-tunable [[Staff Roles & Gates]] matrix (`role_permissions` + `has_permission`) — restricted roles are **NOT** `is_admin`.
 - **Customers:** self-register, start `pending` (see [[Brokers]]).
-- **2FA / sessions:** TOTP 2FA enforced for admin/owner (server aal2); single session per account (last-login-wins, dead-session RLS cut-off); idle timeouts (customer 15 min / staff 60 min).
+- **2FA / sessions:** TOTP 2FA enforced for admin/owner (server aal2); single session per account (last-login-wins, dead-session RLS cut-off); idle timeouts (customer 30 min / staff 60 min).
 
 ## Sign-in mechanics
 

@@ -61,7 +61,7 @@ backend serves all surfaces.
   the `review_priority` / `review_rexray` RPCs. Confirming a **base payment
   requires the ERP service-invoice + BIR pad serial on file** (`record_service_invoice`, `0177`/`0178`).
 - **One session per account** (`claim_session` + `session_alive()` woven into the RLS helpers),
-  **idle auto-logout** (customer 15 min / staff 60 min), **server-side CAPTCHA** (Managed Turnstile).
+  **idle auto-logout** (customer 30 min / staff 60 min), **server-side CAPTCHA** (Managed Turnstile).
 - **MFA / aal2 enforced server-side *and* app-wide** — an account with a verified TOTP factor must reach
   aal2 (`aal_satisfied()` woven into `is_admin`/`is_owner`/`has_permission`, `0049`/`0055`); the owner's
   **crown-jewel RPCs** (`reset_staff_password` · `promote_new_staff` · `set_owner_access`) gate on the

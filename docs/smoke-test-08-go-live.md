@@ -138,6 +138,11 @@ Login as **Customer A** (`+custa`).
 | CUST-34 | ðŸ”´ Direct-URL any `/admin/*` route as the customer | Bounced to `/` â€” never renders admin | |
 | CUST-35 | ðŸŸ¢ SHIPPED 2026-07-01 - email change confirmation | In `/account`, request Email 1 -> Email 2. Confirmation must go to Email 2; Email 1 receives only a security notice. Account email changes only after Email 2 confirms. | |
 | CUST-36 | ðŸŸ¢ SHIPPED 2026-07-01 - Lara compact avatar/chat | Lara launcher uses the new avatar, stays pinned to screen edges after moving, and the chat window has compact Messenger-style options plus minimize/close controls. | |
+| CUST-37 | ðŸŸ¢ CURRENT WORKSPACE - New JO two-step filing | `/job-order` mobile shows Step 1 as consignee + C-entry + vessel + up to 10 verification images, Step 2 as containers. Desktop stacks the same sections as one page. Entry input normalizes to `C-...`; review shows entry + container count. | |
+| CUST-38 | ðŸŸ¢ CURRENT WORKSPACE - New JO supporting images | Attach 1-10 images on Step 1, file the order, then open `/job-orders`; uploaded images appear in the order timeline/documents. Over-limit/non-image files show clear messages. | |
+| CUST-39 | ðŸŸ¢ CURRENT WORKSPACE - Lara back/start/guided JO draft | Lara has Back and Start over controls, no mobile auto-focus jump, and **File with Lara** captures entry/vessel hints then opens New Job Order with the draft applied. | |
+| CUST-40 | ðŸŸ¢ CURRENT WORKSPACE - customer vessel calendar/window | `/vessels` Cards/Table/Calendar all honor Show past/cancelled. Customer history is limited to current calls plus the last 7 days; calendar opens on a month with visible calls when needed. | |
+| CUST-41 | ðŸŸ¢ CURRENT WORKSPACE - JO detail simplification | Opening a job order shows simpler JO typography, no release-ready block, **Summary of Charges**, Documents submitted jump, and a focused Containers/Qty modal. | |
 
 ---
 
@@ -156,6 +161,7 @@ Login as **Owner** (`jlawrenceang@gmail.com`).
 | OWN-07 | ðŸŸ¢ MFA crown-jewel gate | Owner-only sensitive RPCs require MFA (aal2) satisfied | |
 | OWN-08 | ðŸŸ¢ SHIPPED 2026-07-01 - trusted 2FA device | Complete owner/admin MFA with **Trust this device for today** checked, sign out, then sign in again on the same browser. The app should resume without another code while backend gates still pass. In a private/new browser, MFA should still be required. | |
 | OWN-09 | ðŸ”´ Trusted 2FA does not bypass password/session | Clearing browser storage or using a different device removes the trusted-device shortcut. A password-only session without the trusted token must still stop at the MFA challenge before admin content or privileged RPCs render. | |
+| OWN-10 | ðŸŸ¢ CURRENT WORKSPACE - 2FA recovery from interrupted browser/app swap | Start owner Google/password login, reach MFA, switch to authenticator, close/reopen or return to `https://portal.ktcterminal.com/#`. The app must either resume the MFA challenge or show a retry/sign-out security panel; it must not stay on an infinite loading bar. | |
 
 ---
 
@@ -329,6 +335,8 @@ These are the contract invariants. A FAIL here blocks go-live regardless of UI p
 | DEV-04 | ðŸŸ¢ Single-session enforcement | Logging in on a 2nd device prompts terminate/cancel on the first | |
 | DEV-05 | ðŸŸ¢ SHIPPED 2026-07-01 - route transition loader | Navigate between public/auth pages and authenticated app pages. The KTC transition overlay appears as an intentional route-frame loader for about 1-1.5 seconds, then clears; the routed page must not blink, remount, or show a blank/template flash. | |
 | DEV-06 | ðŸŸ¢ SHIPPED 2026-07-01 - menu sheet stability | Open customer and admin bottom-nav menus repeatedly on mobile width. The sheet fades in with stable tile rows; no grid-template/frame flash appears before the tiles render. | |
+| DEV-07 | ðŸŸ¢ CURRENT WORKSPACE - form routes do not transition-reset | While filling `/job-order`, switch steps/screens and return from app/browser focus changes. The form state remains intact; route transition animation is disabled on filing routes but still appears between modules. | |
+| DEV-08 | ðŸŸ¢ CURRENT WORKSPACE - customer idle timeout 30 minutes | Customer web session warns at ~29 minutes and signs out at ~30 minutes. A fresh Google OAuth sign-in must not immediately show an old inactivity message. Staff/admin timeout remains 60 minutes; staff app scoped timeout remains separate. | |
 
 ---
 
@@ -404,6 +412,19 @@ These rows were added after the blind walkthrough hardening checkpoints and are 
 7. **CIS and request tracking** - filled CIS print mirrors entered data; customer consignee requests show status/date/remarks. -> SEC-08/09.
 
 The blind-walkthrough list is **not fully closed** by these fixes. Continue using the Result column to record any mismatch; use `docs/audits/2026-07-01-go-live-hardening-independent-review.md` for the current review/open-risk notes.
+
+---
+
+## Current workspace addendum - 2026-07-01 batch 2 (pending deployment/smoke)
+
+Implemented in the current working tree after commit `c309cbd`; verify with build/deploy before marking shipped:
+
+1. **New Job Order filing UX** - `C-` entry formatter, 2-step mobile filing, vessel moved to first screen, up to 10 supporting images, review count. -> CUST-37/38.
+2. **Auth/session stability** - OAuth sign-ins stamp fresh activity, customer web idle window changed to 30 minutes, MFA assurance reads no longer reload on token refresh and show retry/sign-out on failure. -> OWN-10, DEV-08.
+3. **Form transition hardening** - route transition overlay skips filing routes to avoid form disruption while keeping module transitions. -> DEV-07.
+4. **Lara hardening** - larger supplied avatar, no mobile autofocus jump, no option glyphs, Back/Start over controls, guided JO draft handoff, documented map. -> CUST-39.
+5. **Customer vessel schedule** - Show past/cancelled applies to cards/table/calendar, with customer-visible history capped to current + 7 days. -> CUST-40.
+6. **Job-order detail simplification** - simpler JO typography, release-ready block removed, charge heading changed to Summary of Charges, documents jump and containers modal added. -> CUST-41.
 
 ---
 

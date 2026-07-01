@@ -47,4 +47,4 @@ that only the owner can complete. Keep this current — tick items as they're do
 - [ ] **Document-verification guide** — owner supplies the content; wire it into
       Lara's waiting slot (currently a holding answer).
 - [x] Seed the support contact (`support_contact`) — done.
-- [ ] **Run ST08** (`docs/smoke-test-08-go-live.md`, the active/current go-live blind walkthrough) on the live site before launch. Start with the July 1 hardening rows for route/menu transitions, trusted MFA, email change, Lara, bulletin archive, tariff images, CIS print, and request tracking.
+- [ ] **Run ST08** (`docs/smoke-test-08-go-live.md`, the active/current go-live blind walkthrough) on the live site before launch. Start with the July 1 hardening rows for route/menu transitions, trusted MFA, email change, Lara, bulletin archive, tariff images, CIS print, request tracking, New JO filing, vessel calendar, 2FA recovery, and 30-minute customer idle behavior.

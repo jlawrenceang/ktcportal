@@ -29,6 +29,14 @@ function Fact({ label, value, accent }: { label: string; value: string; accent?:
   )
 }
 
+const CUSTOMER_HISTORY_DAYS = 7
+
+function dateOnly(raw: string | null): Date | null {
+  if (!raw) return null
+  const d = new Date(raw.slice(0, 10) + 'T00:00:00')
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
 // Card-based browse: each vessel call is a scannable card with the Last Free Day
 // as the hero fact, grouped under date headers (arrival date, or "not yet
 // arrived"). Mobile-first — cards stack, no horizontal scroll like the Table view.
@@ -113,10 +121,17 @@ export default function Vessels() {
   }
   useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const visible = useMemo(
-    () => (showAll ? rows : rows.filter((r) => r.is_current && !r.cancelled)),
-    [rows, showAll],
-  )
+  const visible = useMemo(() => {
+    const cutoff = new Date()
+    cutoff.setHours(0, 0, 0, 0)
+    cutoff.setDate(cutoff.getDate() - CUSTOMER_HISTORY_DAYS)
+    const withinCustomerWindow = rows.filter((r) => {
+      if (r.is_current) return true
+      const d = dateOnly(r.actual_arrival) ?? dateOnly(r.finish_discharging) ?? dateOnly(r.last_free_day)
+      return !d || d >= cutoff
+    })
+    return showAll ? withinCustomerWindow : withinCustomerWindow.filter((r) => r.is_current && !r.cancelled)
+  }, [rows, showAll])
 
   const emptyMsg = showAll ? t('No vessel calls right now.') : t('No current vessel calls right now.')
 
@@ -136,12 +151,10 @@ export default function Vessels() {
           <button className={`ktc-btn ktc-btn--sm ${view === 'table' ? '' : 'ktc-btn-ghost'}`} type="button" aria-pressed={view === 'table'} onClick={() => setView('table')}>{t('Table')}</button>
           <button className={`ktc-btn ktc-btn--sm ${view === 'calendar' ? '' : 'ktc-btn-ghost'}`} type="button" aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}>{t('Calendar')}</button>
         </div>
-        <span style={{ flex: 1 }} />
-        {view !== 'calendar' && (
-          <label className="ktc-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> {t('Show past/cancelled')}
-          </label>
-        )}
+        <span style={{ flex: 1, minWidth: 8 }} />
+        <label className="ktc-label" style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '0 0 auto', marginLeft: 'auto' }}>
+          <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> {t('Show past/cancelled')}
+        </label>
       </div>
 
       {loading ? <p className="ktc-label">{t('Loading…')}</p>
@@ -149,7 +162,11 @@ export default function Vessels() {
           <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{loadError}</Notice>
         ) : (
           <ProtectedDoc>
-            {view === 'calendar' ? <MonthCalendar rows={visible} />
+            {view === 'calendar' ? (
+              visible.length === 0
+                ? <div className="ktc-glass ktc-glass--flat" style={{ padding: 18, textAlign: 'center', color: 'hsl(var(--ink-2))' }}>{emptyMsg}</div>
+                : <MonthCalendar rows={visible} />
+            )
               : view === 'cards' ? (
                 visible.length === 0
                   ? <div className="ktc-glass ktc-glass--flat" style={{ padding: 18, textAlign: 'center', color: 'hsl(var(--ink-2))' }}>{emptyMsg}</div>

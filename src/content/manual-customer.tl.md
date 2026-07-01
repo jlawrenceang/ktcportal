@@ -104,7 +104,7 @@ Pwede mong **i-cancel** ang sarili mong order mula sa card nito (may confirm pro
 
 ## 9 · Security — ano ang aasahan
 
-- Nag-si-sign out ang sessions **pagkatapos ng 15 idle minutes** — may "Are you still there?" na prompt na lalabas isang minuto bago iyon; kahit anong click ay panatilihin kang naka-sign in.
+- Nag-si-sign out ang sessions **pagkatapos ng 30 idle minutes** — may "Are you still there?" na prompt na lalabas isang minuto bago iyon; kahit anong click ay panatilihin kang naka-sign in.
 - **Isang active session kada account:** ang pag-sign in sa pangalawang device ay magsa-sign out sa una. Kung na-sign out ka "because this account signed in on another device" at hindi ikaw iyon — **palitan agad ang password mo**.
 - Limang maling password nang sunud-sunod ay magpa-pause sa login ng 60 segundo.
 - Hindi kailanman hihingiin ng KTC staff ang password mo.

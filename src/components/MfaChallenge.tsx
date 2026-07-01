@@ -68,12 +68,22 @@ export default function MfaChallenge({ onVerified }: { onVerified: () => void })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, busy])
 
+  useEffect(() => {
+    const id = window.setTimeout(() => { void signOut() }, 5 * 60 * 1000)
+    return () => window.clearTimeout(id)
+    // signOut is intentionally captured once for this challenge lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <div style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', padding: 24 }}>
       <div className="ktc-glass" style={{ padding: 32, maxWidth: 400, width: '100%' }}>
         <h1 style={{ margin: 0, fontSize: 20, fontWeight: 650 }}>{t('Two-factor authentication')}</h1>
         <p className="ktc-label" style={{ marginTop: 8, fontSize: 13.5, lineHeight: 1.6 }}>
           {t('Enter the 6-digit code from your authenticator app to finish signing in.')}
+        </p>
+        <p className="ktc-label" style={{ marginTop: 6, fontSize: 12, lineHeight: 1.5 }}>
+          {t('This verification screen expires after 5 minutes.')}
         </p>
         <form onSubmit={submit} style={{ display: 'grid', gap: 12, marginTop: 18 }}>
           <input

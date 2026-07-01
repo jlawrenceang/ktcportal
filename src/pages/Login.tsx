@@ -148,7 +148,7 @@ export default function Login() {
       // The flag's value carries the minutes ('15' customer / '60' staff);
       // a bare legacy '1' falls back to the customer wording.
       const mins = sessionStorage.getItem('ktc_idle_logout')
-      setNotice(t('You were signed out after {mins} minutes of inactivity. Please sign in again.', { mins: /^\d{2,}$/.test(mins ?? '') ? (mins ?? '15') : '15' }))
+      setNotice(t('You were signed out after {mins} minutes of inactivity. Please sign in again.', { mins: /^\d{2,}$/.test(mins ?? '') ? (mins ?? '30') : '30' }))
       sessionStorage.removeItem('ktc_idle_logout')
     }
   }, [])

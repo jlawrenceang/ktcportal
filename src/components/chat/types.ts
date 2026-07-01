@@ -15,7 +15,7 @@ export type TicketCategory =
   | 'accreditation' | 'job_order' | 'payment' | 'other'
 
 /** Deterministic, RLS-scoped DB lookups (no LLM). */
-export type ActionName = 'trackOrder' | 'listMyOrders'
+export type ActionName = 'trackOrder' | 'listMyOrders' | 'startJobOrderDraft'
 
 /** A tappable quick-reply / tile. `label` is a t() key. */
 export interface ChatOption {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import Shell from '../components/Shell'
 import Notice from '../components/Notice'
@@ -6,17 +6,16 @@ import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import type { JobOrder } from '../lib/types'
 import { chargeState } from '../lib/charges'
-import { releaseState } from '../lib/release'
 import { usePageTour } from '../components/TourProvider'
 import { myJobOrdersSteps } from '../components/WelcomeTour'
 import { useBroker } from '../lib/useBroker'
 import JoTimeline from '../components/JoTimeline'
 import EditJobOrderForm from '../components/EditJobOrderForm'
-import ReleaseTracks from '../components/ReleaseTracks'
 import JobOrderCharges from '../components/JobOrderCharges'
 import SearchPicker, { type PickerItem } from '../components/SearchPicker'
 import ContainerLinesEditor, { emptyLine, type LineDraft } from '../components/ContainerLinesEditor'
 import { searchConsignees } from '../lib/pickerSearches'
+import { formatEntryNumberInput, isCompleteEntryNumber, normalizeEntryNumber } from '../lib/entryNumber'
 import { useT } from '../lib/i18n'
 
 // Post-cutover billing (ADR-0037): an order's pay state derives entirely from its
@@ -100,18 +99,6 @@ function PayPill({ o }: { o: JoRow }) {
   return null
 }
 
-// "Cleared for release" — lights up only when BOTH gates converge (all services
-// done AND payment confirmed). Derived via releaseState; never shown otherwise.
-function ClearedBadge({ o }: { o: JobOrder }) {
-  const { t } = useT()
-  if (!releaseState(o).cleared) return null
-  return (
-    <span className="ktc-chip ktc-chip--success" title={t('Services done and payment confirmed — ready for release / pull-out.')}>
-      ✓ {t('Cleared for release')}
-    </span>
-  )
-}
-
 // Compact payment pill for the dense one-line list rows.
 function PayPillMini({ o }: { o: JoRow }) {
   const { t } = useT()
@@ -149,7 +136,7 @@ function NeedsInfoForm({ order, onDone, onError }: {
       ? { id: order.consignee_id, title: order.consignee.code, sub: order.consignee.name }
       : null,
   )
-  const [entry, setEntry] = useState(order.entry_number ?? '')
+  const [entry, setEntry] = useState(formatEntryNumberInput(order.entry_number ?? ''))
   const [vessels, setVessels] = useState<VesselOpt[]>([])
   const [vesselVisit, setVesselVisit] = useState(order.vessel_visit ?? '')
   const [lines, setLines] = useState<LineDraft[]>(
@@ -172,8 +159,9 @@ function NeedsInfoForm({ order, onDone, onError }: {
       payload.p_consignee_id = consignee.id
     }
     if (need('entry')) {
-      if (!entry.trim()) { onError(t('Enter the Entry Number (C-…).')); return }
-      payload.p_entry_number = entry.trim().toUpperCase()
+      const normalizedEntry = normalizeEntryNumber(entry)
+      if (!isCompleteEntryNumber(normalizedEntry)) { onError(t('Enter the Entry Number starting with C-.')); return }
+      payload.p_entry_number = normalizedEntry
     }
     if (need('vessel')) {
       const sel = vessels.find((v) => v.vessel_visit === vesselVisit)
@@ -210,7 +198,10 @@ function NeedsInfoForm({ order, onDone, onError }: {
       {need('entry') && (
         <div style={{ display: 'grid', gap: 6 }}>
           <label className="ktc-label" htmlFor="ni-entry">{t('Entry Number')} *</label>
-          <input id="ni-entry" className="ktc-input" value={entry} onChange={(e) => setEntry(e.target.value.toUpperCase())} style={{ textTransform: 'uppercase' }} placeholder={t('e.g. C-0000012345')} />
+          <input id="ni-entry" className="ktc-input" value={entry}
+            onChange={(e) => setEntry(formatEntryNumberInput(e.target.value))}
+            onBlur={() => setEntry((v) => normalizeEntryNumber(v))}
+            style={{ textTransform: 'uppercase' }} placeholder={t('e.g. C-0000012345')} />
         </div>
       )}
       {need('vessel') && (
@@ -248,6 +239,8 @@ export default function MyJobOrders() {
   const [orders, setOrders] = useState<JoRow[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<JoRow | null>(null) // order shown in the detail modal
+  const [containersOpen, setContainersOpen] = useState(false)
+  const timelineAnchorRef = useRef<HTMLDivElement | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null) // list-load failure (separate from action errors)
   const [respondingId, setRespondingId] = useState<string | null>(null)
@@ -323,7 +316,7 @@ export default function MyJobOrders() {
   // button is rate-limited to one pull per 10s.
   const { refresh, cooling } = useAutoRefresh(load)
 
-  function openOrder(o: JoRow) { setSelected(o); setRespondingId(null); setCancelId(null); setError(null) }
+  function openOrder(o: JoRow) { setSelected(o); setRespondingId(null); setCancelId(null); setContainersOpen(false); setError(null) }
 
   return (
     <Shell wide>
@@ -401,10 +394,9 @@ export default function MyJobOrders() {
                   <button key={o.id} type="button" className="ktc-jo-zcard" onClick={() => openOrder(o)}>
                     <div className="ktc-jo-zcard-head" style={{ justifyContent: 'space-between' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
-                        <b className="ktc-mono" style={{ fontSize: 14 }}>{o.jo_number ?? o.entry_number ?? '—'}</b>
+                        <b style={{ fontSize: 14, letterSpacing: 0 }}>{o.jo_number ?? o.entry_number ?? '—'}</b>
                         <StatusBadge status={o.status} />
                         <PayPill o={o} />
-                        <ClearedBadge o={o} />
                       </span>
                       <span className="ktc-label" style={{ fontSize: 12.5, whiteSpace: 'nowrap', flex: '0 0 auto' }}>{fmtDate(o.created_at)}</span>
                     </div>
@@ -424,7 +416,7 @@ export default function MyJobOrders() {
                 const vanLabel = t(count === 1 ? '{count} container van' : '{count} container vans', { count })
                 return (
                   <button key={o.id} type="button" className="ktc-jo-litem" onClick={() => openOrder(o)} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <b className="ktc-mono" style={{ fontSize: 13, flex: '0 0 auto' }}>{o.entry_number ?? o.jo_number ?? '—'}</b>
+                    <b style={{ fontSize: 13, flex: '0 0 auto', letterSpacing: 0 }}>{o.entry_number ?? o.jo_number ?? '—'}</b>
                     <span style={{ flex: 1, minWidth: 0, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.consignee ? o.consignee.name : t('No consignee')}</span>
                     <PayPillMini o={o} />
                     <span title={vanLabel} aria-label={vanLabel}
@@ -452,17 +444,16 @@ export default function MyJobOrders() {
       {selected && (() => {
         const o = selected
         const count = o.lines?.length ?? 0
-        const close = () => { setSelected(null); setRespondingId(null); setCancelId(null); setEditingId(null) }
+        const close = () => { setSelected(null); setRespondingId(null); setCancelId(null); setEditingId(null); setContainersOpen(false) }
         return (
           <div className="ktc-modal-backdrop" onClick={close}>
             <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()}
               style={{ width: '100%', maxWidth: 560, maxHeight: '88vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '15px 20px', borderBottom: '1px solid var(--glass-brd)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', minWidth: 0 }}>
-                  <b className="ktc-mono" style={{ fontSize: 15 }}>{o.jo_number ?? o.entry_number ?? '—'}</b>
+                  <b style={{ fontSize: 16, letterSpacing: 0 }}>{o.jo_number ?? o.entry_number ?? '—'}</b>
                   <StatusBadge status={o.status} />
                   <PayPill o={o} />
-                  <ClearedBadge o={o} />
                 </div>
                 <button type="button" aria-label={t('Close')} onClick={close}
                   style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))', flex: '0 0 auto' }}>✕</button>
@@ -488,10 +479,17 @@ export default function MyJobOrders() {
                   <Meta label={t('Vessel & Voyage')} value={o.vessel_name ? `${o.vessel_name}${o.voyage_number ? ' · ' + o.voyage_number : ''}` : '—'} />
                   <Meta label={t('Date filed')} value={fmtDate(o.created_at)} />
                 </div>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 14 }}>
+                  <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => setContainersOpen(true)}>
+                    {t('Containers')} | {t(count === 1 ? '{count} container van' : '{count} container vans', { count })}
+                  </button>
+                  <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => timelineAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+                    {t('Documents submitted')}
+                  </button>
+                </div>
 
                 {['submitted', 'processing', 'on_hold', 'completed'].includes(o.status) && (
                   <>
-                    <div style={{ marginTop: 16 }}><ReleaseTracks o={o} /></div>
                     <div style={{ marginTop: 16 }}><JobOrderCharges jobOrderId={o.id} /></div>
                   </>
                 )}
@@ -570,12 +568,14 @@ export default function MyJobOrders() {
                   </div>
 
                   {/* Timeline: lifecycle + supporting docs + two-way comments. */}
-                  <JoTimeline
-                    orderId={o.id}
-                    userId={broker?.user_id ?? ''}
-                    canComment
-                    canAttach={['submitted', 'processing', 'on_hold'].includes(o.status)}
-                  />
+                  <div ref={timelineAnchorRef}>
+                    <JoTimeline
+                      orderId={o.id}
+                      userId={broker?.user_id ?? ''}
+                      canComment
+                      canAttach={['submitted', 'processing', 'on_hold'].includes(o.status)}
+                    />
+                  </div>
 
                   {/* Cancel — only before processing starts (submitted/on_hold). */}
                   {['submitted', 'on_hold'].includes(o.status) && (
@@ -601,6 +601,26 @@ export default function MyJobOrders() {
                 )}
               </div>
             </div>
+            {containersOpen && (
+              <div className="ktc-modal-backdrop" onClick={(e) => { e.stopPropagation(); setContainersOpen(false) }} style={{ zIndex: 2147482600 }}>
+                <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()}
+                  style={{ width: '100%', maxWidth: 430, maxHeight: '80vh', padding: 0, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid var(--glass-brd)' }}>
+                    <b style={{ fontSize: 15 }}>{t('Containers')} | {t(count === 1 ? '{count} container van' : '{count} container vans', { count })}</b>
+                    <button type="button" aria-label={t('Close')} onClick={() => setContainersOpen(false)}
+                      style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))' }}>×</button>
+                  </div>
+                  <div style={{ overflowY: 'auto', padding: 16, display: 'grid', gap: 8 }}>
+                    {(o.lines ?? []).map((l, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, fontSize: 13, padding: '8px 12px', borderRadius: 9, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                        <span className="ktc-mono" style={{ fontWeight: 600 }}>{l.container_number}</span>
+                        <span className="ktc-label" style={{ fontSize: 12.5 }}>{t(l.service_request)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )
       })()}

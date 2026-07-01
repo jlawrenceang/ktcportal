@@ -20,25 +20,47 @@ function jwtSessionId(token?: string | null): string | null {
   }
 }
 
+function withTimeout<T>(promise: Promise<T>, ms = 8000): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Security check timed out.')), ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer)
+  })
+}
+
 export function useMfaGate(session: Session | null) {
   const sessionId = useMemo(() => jwtSessionId(session?.access_token), [session?.access_token])
   const [aal, setAal] = useState<AalState | null>(null)
   const [trusted, setTrusted] = useState(false)
   const [checkedTrustFor, setCheckedTrustFor] = useState<string | null>(null)
   const [checkingTrust, setCheckingTrust] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [retryNonce, setRetryNonce] = useState(0)
 
   useEffect(() => {
     setAal(null)
     setTrusted(false)
     setCheckedTrustFor(null)
     setCheckingTrust(false)
+    setError(null)
     if (!session) return
     let active = true
-    void supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data }) => {
-      if (active) setAal({ current: data?.currentLevel ?? 'aal1', next: data?.nextLevel ?? 'aal1' })
-    })
+    void withTimeout(supabase.auth.mfa.getAuthenticatorAssuranceLevel())
+      .then(({ data, error: aalError }) => {
+        if (!active) return
+        if (aalError) {
+          setError(aalError.message)
+          return
+        }
+        setAal({ current: data?.currentLevel ?? 'aal1', next: data?.nextLevel ?? 'aal1' })
+      })
+      .catch((e) => {
+        if (active) setError(e instanceof Error ? e.message : 'Security check failed.')
+      })
     return () => { active = false }
-  }, [session, sessionId])
+  }, [session?.user.id, sessionId, retryNonce])
 
   const needsServerMfa = !!aal && aal.next === 'aal2' && aal.current !== 'aal2'
 
@@ -47,21 +69,25 @@ export function useMfaGate(session: Session | null) {
     let active = true
     setCheckedTrustFor(sessionId)
     setCheckingTrust(true)
-    void resumeTrustedMfaSession().then((ok) => {
-      if (active && ok) setTrusted(true)
-    }).finally(() => {
-      if (active) setCheckingTrust(false)
-    })
+    void withTimeout(resumeTrustedMfaSession())
+      .then((ok) => {
+        if (active && ok) setTrusted(true)
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setCheckingTrust(false)
+      })
     return () => { active = false }
   }, [checkedTrustFor, needsServerMfa, session, sessionId, trusted])
 
-  const loading = !!session && (!aal || checkingTrust)
+  const loading = !!session && !error && (!aal || checkingTrust)
   const needsChallenge = !!session && needsServerMfa && !trusted && !checkingTrust
   const markVerified = useCallback(() => {
     setAal({ current: 'aal2', next: 'aal2' })
     setTrusted(true)
     if (sessionId) setCheckedTrustFor(sessionId)
   }, [sessionId])
+  const retry = useCallback(() => setRetryNonce((n) => n + 1), [])
 
-  return { loading, needsChallenge, markVerified }
+  return { loading, needsChallenge, markVerified, error, retry }
 }
