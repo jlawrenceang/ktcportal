@@ -136,7 +136,7 @@ export default function VesselSchedule() {
     window.setTimeout(() => { setSyncing(false); void load() }, 6000)
   }
 
-  const visible = useMemo(() => (showAll ? rows : rows.filter((r) => r.is_current)), [rows, showAll])
+  const visible = useMemo(() => (showAll ? rows : rows.filter((r) => r.is_current && !r.cancelled)), [rows, showAll])
 
   function startEdit(r: VesselRow) {
     setEditing(r.id)

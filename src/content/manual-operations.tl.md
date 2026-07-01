@@ -31,9 +31,8 @@ Pag pumasa sa X-ray ang container, i-tap ang **Confirm**:
 Makakapag-file lang ang mga customer ng Job Order kontra sa isang **current** na vessel/voyage, kaya ang pagpapanatiling updated nito ang nagbibigay-daan para makapag-file sila.
 
 - **Add a call:** vessel visit (hal. `26RUH02`), vessel name, voyage, shipping line, actual arrival, finish discharging, berth. Ang **Last Free Day ay kusang nako-compute** (finish discharging + ang free-days ng line na iyon, na set ng admin) — at awtomatikong **maaalis ang call** kapag lumipas na ang last free day nito. Walang manu-manong pagsasara.
-- **Bulk update:** i-tap ang **⬇ Template**, punan ang sheet (o i-paste mula sa sarili mo), tapos **⬆ Import** — magda-dagdag/mag-uupdate ito ayon sa **vessel visit**, kaya ligtas na i-re-import ang parehong sheet (walang mado-doble).
+- **Bulk update:** i-tap ang **Sync from Google Sheet** para hilahin ang pinakabagong mga call mula sa nakakonektang schedule sheet — magda-dagdag/mag-uupdate ito ayon sa **vessel visit**, kaya nag-a-update ang sync sa halip na mag-doble.
 - **Calendar** view ang nagpapakita ng mga arrival kada buwan.
-- **Snapshot** ay gumagawa ng malinis na imahe ng **active vessels** — sa phone, diretsong nai-share sa iyong **Viber group**; sa computer, nada-download ito para ma-attach mo.
 - Kung wala pa sa listahan ang vessel ng customer, **hindi sila makakapag-file dito** — i-add mo muna ang call sa schedule, tapos puwede na silang (o ikaw, para sa kanila) mag-file dito.
 
 ## 5 · Ang Job Orders tab

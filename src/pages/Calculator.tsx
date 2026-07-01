@@ -310,10 +310,12 @@ export default function Calculator() {
     const signed: TariffImage[] = []
     for (const file of files) {
       const { data: sig, error: signErr } = await supabase.storage.from('tariff-images').createSignedUrl(file.name, 300)
-      if (signErr || !sig?.signedUrl) { setTariffError(signErr?.message ?? t('Could not open one of the tariff images.')); continue }
+      if (signErr || !sig?.signedUrl) continue  // skip a single failure — don't hide the images that DID load
       signed.push({ name: file.name, url: sig.signedUrl })
     }
     setTariffImages(signed)
+    // Hard error only when files exist but NONE could be signed; a partial failure still shows what loaded.
+    if (files.length > 0 && signed.length === 0) setTariffError(t('Could not open the tariff images. Please try again.'))
     setTariffLoading(false)
   }
 

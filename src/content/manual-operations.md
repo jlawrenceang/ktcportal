@@ -31,9 +31,8 @@ When a container passes the X-ray, hit **Confirm**:
 Customers can only file a job order against a **current** vessel/voyage, so keeping this current is what lets them file.
 
 - **Add a call:** vessel visit (e.g. `26RUH02`), vessel name, voyage, shipping line, actual arrival, finish discharging, berth. The **Last Free Day computes itself** (finish discharging + that line's free-days, which admin sets) — and a call **drops off automatically** once its last free day passes. No manual closing.
-- **Bulk update:** tap **⬇ Template**, fill the sheet (or paste from your own), then **⬆ Import** — it adds/updates by **vessel visit**, so re-importing the same sheet is safe (no duplicates).
+- **Bulk update:** tap **Sync from Google Sheet** to pull the latest calls from the connected schedule sheet — it adds/updates by **vessel visit**, so a sync updates rather than duplicates.
 - **Calendar** view shows arrivals by month.
-- **Snapshot** makes a clean image of the **active vessels** — on a phone it shares straight to your **Viber group**; on a computer it downloads so you can attach it.
 - If a customer's vessel isn't listed yet, they **can't file against it** — add the call to the schedule first, then they (or you, on their behalf) can file under it.
 
 ## 5 · The Job Orders tab

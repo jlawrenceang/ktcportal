@@ -74,6 +74,14 @@ export const tl: Record<string, string> = {
   "Your account is still pending verification. For urgent concerns, please contact us directly.": "Pending pa ang verification ng iyong account. Para sa mga agarang concern, direktang makipag-ugnayan sa amin.",
   "Your account is still pending verification. Please upload your valid ID and wait for admin approval before you can use the system.": "Pending pa ang verification ng iyong account. Paki-upload ang iyong valid ID at hintayin ang pag-apruba ng admin bago mo magamit ang system.",
   // --- end 2026-07-01 go-live hardening pass ---
+  // --- 2026-07-02 tariff data-trap batch (CX-04/05/06/12) ---
+  "Could not open the tariff images. Please try again.": "Hindi mabuksan ang mga tariff image. Pakisubukan ulit.",
+  "Tariff images must be PNG, JPEG, or WEBP.": "Ang mga tariff image ay dapat PNG, JPEG, o WEBP.",
+  // --- 2026-07-02 walkthrough batch (CX-08): tour copy aligned to current UI ---
+  "Switch between the table and the month calendar view. Tick \"Show past/cancelled\" to also see recent past and cancelled calls.": "Magpalipat-lipat sa table at sa month calendar view. I-tick ang \"Show past/cancelled\" para makita rin ang mga kamakailang nakaraan at kanseladong tawag.",
+  "The calls customers file against. Add one with the form, or Sync from the connected Google Sheet to bulk-update (matched by vessel-visit, so a sync updates rather than duplicates).": "Ang mga tawag na fina-file-an ng mga customer. Magdagdag gamit ang form, o mag-Sync mula sa nakakonektang Google Sheet para mag-bulk-update (nakabatay sa vessel-visit, kaya nag-a-update ang sync sa halip na mag-duplicate).",
+  "Last free day & calendar": "Huling libreng araw at calendar",
+  "Last Free Day computes itself (finish discharging + the line's free-days), and past calls drop off automatically. Switch to the Calendar view to see arrivals by month.": "Awtomatikong nakuku-compute ang Last Free Day (finish discharging + free-days ng line), at kusang nawawala ang mga lumang tawag. Lumipat sa Calendar view para makita ang mga pagdating kada buwan.",
   // --- 2026-07-02 security batch (0237): trusted-device revoke control ---
   "Trusted browsers": "Mga pinagkatiwalaang browser",
   "Signs out \"trust this device\" on every browser — each will ask for a 2FA code next sign-in.": "Ina-sign out ang \"trust this device\" sa lahat ng browser — hihingi ang bawat isa ng 2FA code sa susunod na sign-in.",

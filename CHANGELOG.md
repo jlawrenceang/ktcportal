@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.0.13 — 2026-07-02 (review remediation: tariff data-traps + walkthrough/UX)
+
+Closes the two MEDIUM remediation batches from the 2026-07-01 review (`docs/audits/2026-07-02-codex-0701-batch-review.md`). Frontend-only, no migration.
+
+- **Tariff data-traps (CX-04/05/06/12).** Admin now lists **all** tariff objects (a file beyond the 5-cap — e.g. from a concurrent-admin race — stays visible and deletable instead of becoming an invisible orphan); the upload runs in `try/finally` so a partial failure can't leave stale state that re-uploads succeeded files as duplicates; a single failed signed-URL no longer hides the tariff images that loaded; and the client rejects non-PNG/JPEG/WEBP with a clear message (iPhone HEIC) instead of a raw backend error.
+- **Lara draft scoping (CX-07).** The New-Job-Order Lara draft is consumed exactly once and only when arriving via `?laraDraft=1`, so it can't re-apply after the user edits or leak into an unrelated later visit on a shared tab.
+- **Walkthrough tours aligned to the current UI (CX-08).** The JO filing tour maps the vessel card to its real wizard step (spotlight lands); the customer vessel tour no longer claims "full history"; the admin vessel tour + operations manual (EN+TL) drop the deleted Snapshot/Viber sharing and CSV Template/Import and point at the Google Sheet sync.
+- **Vessel filter (CX-09).** The admin "current calls" filter now excludes cancelled vessels (matching the customer view) across the table, cards, and calendar.
+
+Verification: `npm run lint`, `npm run check:i18n`, `npm run build` all green.
+
 ## v2.0.12 — 2026-07-02 (security batch: crown-jewel 2FA step-up · owner-email lock · trusted-device revoke)
 
 Closes the three security findings from the independent review of the 2026-07-01 hardening batch (`docs/audits/2026-07-02-codex-0701-batch-review.md`, CX-01/02/03). Migration `0237` applied + verified on production; Jarvis-verified SAFE-TO-APPLY.

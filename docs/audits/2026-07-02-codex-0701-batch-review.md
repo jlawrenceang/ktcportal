@@ -15,7 +15,24 @@
 > a poka-yoke (`require_fresh_aal2` added to the `check-security-invariants` INTERNAL list).
 > Gates green (lint/build/i18n/security-invariants); **Jarvis-verified SAFE-TO-APPLY** (PASS
 > on all four criteria). **Pending: apply `0237` to production** (owner-gated). Remaining
-> open batches: tariff (CX-04/05/06/12), walkthrough/UX (CX-07/08/09), low (CX-10/11/13).
+> open batches: walkthrough/UX (CX-07/08/09), low (CX-10/11/13).
+
+> **Tariff data-trap batch (CX-04/05/06 + CX-12 tariff type) — RESOLVED 2026-07-02.** Frontend-only
+> (`src/admin/Settings.tsx`, `src/pages/Calculator.tsx`): admin now lists ALL tariff objects (no invisible
+> orphan beyond 5 — delete stays reachable, CX-04); upload is `try/finally` so a partial failure can't leave
+> stale state / duplicate re-uploads (CX-05); a single failed signed-URL no longer hides the images that
+> loaded (CX-06); the client rejects non-PNG/JPEG/WEBP with a clear message — iPhone HEIC (CX-12 tariff part).
+> No migration (a storage-count trigger is disproportionate for a rare admin race). Gates green. Still open:
+> low/cleanup (CX-10/11/13) + CX-12's JobOrder doc-upload error masking.
+
+> **Walkthrough/UX batch (CX-07/08/09) — RESOLVED 2026-07-02.** Frontend-only. **CX-07:** the Lara draft
+> now consumes exactly once and only when arriving via `?laraDraft=1` (`JobOrder.tsx`) — no re-clobber after
+> the user edits, no cross-visit leak on a shared tab. **CX-08:** the JO tour maps the vessel card to
+> wizStep 0 (its real home) so the spotlight lands; the customer vessel tour no longer claims "full history";
+> the admin vessel tour + operations manual (EN+TL) drop the deleted Snapshot/Viber + CSV Template/Import and
+> point at the Google Sheet sync. **CX-09:** the admin "current calls" filter now excludes cancelled vessels.
+> Gates green. Remaining: low/cleanup only — CX-10 (email enum + rate-limit), CX-11 (entry-number `C-`
+> consistency), CX-12 (JobOrder doc-upload error masking), CX-13 (cosmetic residue).
 
 ### Automated Layer-1 gates
 | Gate | Result |

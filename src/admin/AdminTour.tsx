@@ -147,10 +147,10 @@ export const releaseAdminSteps: TourStep[] = [
 export const vesselSteps: TourStep[] = [
   {
     icon: <ShipIcon size={SZ} />, title: 'Vessel schedule',
-    body: 'The calls customers file against. Add one with the form, or bulk-update from your sheet with ⬇ Template then ⬆ Import (matched by vessel-visit, so re-importing updates rather than duplicates).',
+    body: 'The calls customers file against. Add one with the form, or Sync from the connected Google Sheet to bulk-update (matched by vessel-visit, so a sync updates rather than duplicates).',
   },
   {
-    icon: <CameraIcon size={SZ} />, title: 'Last free day & sharing',
-    body: 'Last Free Day computes itself (finish discharging + the line\'s free-days), and past calls drop off automatically. Tap Snapshot to share the active vessels straight to your Viber group, and switch to the Calendar view for arrivals by month.',
+    icon: <CameraIcon size={SZ} />, title: 'Last free day & calendar',
+    body: 'Last Free Day computes itself (finish discharging + the line\'s free-days), and past calls drop off automatically. Switch to the Calendar view to see arrivals by month.',
   },
 ]

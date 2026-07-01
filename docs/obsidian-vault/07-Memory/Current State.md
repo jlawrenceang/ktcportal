@@ -8,6 +8,19 @@ last_updated: 2026-07-02
 
 # 📌 Current State (Runtime-Aligned)
 
+## 2026-07-02 — Review remediation shipped: tariff data-traps + walkthrough/UX (v2.0.13)
+
+**`APP_VERSION` = `v2.0.13`; frontend-only, no migration.** Closes the two MEDIUM remediation batches from the 2026-07-01 review (`docs/audits/2026-07-02-codex-0701-batch-review.md`).
+
+- **Tariff (CX-04/05/06/12)** — admin lists all tariff objects (no invisible orphan beyond the 5-cap; delete reachable); upload is `try/finally` (no stale state / duplicate re-uploads); one failed signed-URL no longer hides the loaded images; client rejects non-PNG/JPEG/WEBP with a clear message.
+- **Lara draft (CX-07)** — consumed once + only via `?laraDraft=1` (no re-clobber / no cross-visit leak).
+- **Tours (CX-08)** — JO tour vessel-step spotlight fixed; customer vessel tour "full history" claim corrected; admin vessel tour + operations manual drop deleted Snapshot/CSV, point at Google Sheet sync.
+- **Vessel filter (CX-09)** — admin "current calls" excludes cancelled vessels.
+
+**Remaining review findings** — low/cleanup only: CX-10 (email enum + rate-limit), CX-11 (entry-number C- consistency), CX-12 (JobOrder doc-upload error masking), CX-13 (cosmetic residue). See the audit doc.
+
+**Next** — the low/cleanup batch (optional), or resume the go-live path (ST08 all-roles/all-lanes walkthrough, Android Part 15).
+
 ## 2026-07-02 — Security batch shipped: crown-jewel 2FA step-up + owner-email lock + trusted-device revoke (v2.0.12, migration 0237)
 
 **`APP_VERSION` = `v2.0.12`; migration `0237` applied + verified on prod.** Closes the three security findings (CX-01/02/03) from the independent review of Codex's 2026-07-01 hardening batch (`docs/audits/2026-07-02-codex-0701-batch-review.md`). Jarvis-verified SAFE-TO-APPLY; all gates green.
@@ -223,7 +236,7 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` through **`0236_trusted_mfa_sessions`** are applied to production; the July 1 trusted-MFA migration was mirrored to sandbox. RLS + role-permission matrix (`has_permission`) + `session_alive()` remain load-bearing across helpers; owner failsafe/root-owner grants, customer approval, payment gates, and server-side CAPTCHA must not be weakened. Email (Resend) is live; SMS and native cloud push are dormant until their secrets/functions are explicitly armed.
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` through **`0237_security_stepup_owner_email_lock_trusted_revoke`** are applied to production (the `0237` security batch applied + verified 2026-07-02). RLS + role-permission matrix (`has_permission`) + `session_alive()` remain load-bearing across helpers; owner failsafe/root-owner grants, customer approval, payment gates, and server-side CAPTCHA must not be weakened. Email (Resend) is live; SMS and native cloud push are dormant until their secrets/functions are explicitly armed.
 
 ## In progress / not yet
 

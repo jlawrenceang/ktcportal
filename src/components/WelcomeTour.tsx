@@ -81,7 +81,7 @@ export const vesselsCustomerSteps: TourStep[] = [
   },
   {
     icon: <CalendarIcon size={SZ} />, title: 'Table or calendar', target: '[data-tour="vessels-view"]',
-    body: 'Switch between the table and the month calendar view. Tick "Show past/cancelled" to see the full history.',
+    body: 'Switch between the table and the month calendar view. Tick "Show past/cancelled" to also see recent past and cancelled calls.',
   },
 ]
 

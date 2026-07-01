@@ -26,7 +26,10 @@ export default function JobOrder() {
   // and so it resets to the first step when the demo finishes.
   const [wizStep, setWizStep] = useState(0)
   const tourSteps = useMemo(
-    () => jobOrderSteps.map((s, idx) => ({ ...s, onEnter: () => setWizStep(Math.min(idx, 1)) })),
+    // The wizard has 2 steps but 3 tour cards: cards 0 (consignee) + 1 (vessel) both
+    // live in wizStep 0; card 2 (containers) is wizStep 1. Map accordingly so each
+    // card's spotlight target is actually on screen when it opens.
+    () => jobOrderSteps.map((s, idx) => ({ ...s, onEnter: () => setWizStep(idx < 2 ? 0 : 1) })),
     [],
   )
   usePageTour('job-order', tourSteps, () => setWizStep(0))
@@ -60,24 +63,33 @@ export default function JobOrder() {
       .then(({ data }) => setVessels((data ?? []) as VesselOpt[]))
   }, [])
 
+  // Lara hands off a prefilled draft ONLY when it navigates here with ?laraDraft=1
+  // (nav.newJO.draft). Consume it exactly once — otherwise a stale draft could
+  // re-apply after the user starts editing, or leak into an unrelated later visit
+  // on a shared tab. Vessel matching waits for the schedule to load (second effect).
+  const laraDraftRef = useRef<{ entry?: string; vessel?: string } | null>(null)
+  const laraConsumedRef = useRef(false)
   useEffect(() => {
+    if (laraConsumedRef.current) return
+    if (new URLSearchParams(window.location.search).get('laraDraft') !== '1') return
+    laraConsumedRef.current = true
     let raw: string | null = null
     try { raw = sessionStorage.getItem('ktc_lara_job_order_draft') } catch { /* ignore */ }
+    try { sessionStorage.removeItem('ktc_lara_job_order_draft') } catch { /* ignore */ }
     if (!raw) return
     try {
       const draft = JSON.parse(raw) as { entry?: string; vessel?: string }
+      laraDraftRef.current = draft
       if (draft.entry) setEntryNumber(formatEntryNumberInput(draft.entry))
-      if (draft.vessel && vessels.length) {
-        const needle = draft.vessel.toUpperCase()
-        const hit = vessels.find((v) =>
-          `${v.vessel_name} ${v.voyage_number} ${v.vessel_visit}`.toUpperCase().includes(needle),
-        )
-        if (hit) setVesselVisit(hit.vessel_visit)
-      }
-      if (!draft.vessel || vessels.length) sessionStorage.removeItem('ktc_lara_job_order_draft')
-    } catch {
-      try { sessionStorage.removeItem('ktc_lara_job_order_draft') } catch { /* ignore */ }
-    }
+    } catch { /* ignore a malformed draft */ }
+  }, [])
+  useEffect(() => {
+    const draft = laraDraftRef.current
+    if (!draft?.vessel || !vessels.length) return
+    const needle = draft.vessel.toUpperCase()
+    const hit = vessels.find((v) => `${v.vessel_name} ${v.voyage_number} ${v.vessel_visit}`.toUpperCase().includes(needle))
+    if (hit) setVesselVisit(hit.vessel_visit)
+    laraDraftRef.current = { ...draft, vessel: undefined }  // match once — never re-clobber
   }, [vessels])
 
   // Per-step validation (used to gate Next on mobile; the full re-check still

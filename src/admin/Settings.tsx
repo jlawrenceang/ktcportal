@@ -297,7 +297,9 @@ export default function Settings() {
       sortBy: { column: 'created_at', order: 'desc' },
     })
     if (error) { setTariffMsg(error.message); return }
-    setTariffFiles(((data ?? []) as TariffFile[]).filter((f) => !f.name.startsWith('.')).slice(0, 5))
+    // Show ALL tariff objects (not just the newest 5) so a file beyond the cap — e.g. from a
+    // concurrent-admin race — stays visible and deletable instead of becoming an invisible orphan.
+    setTariffFiles(((data ?? []) as TariffFile[]).filter((f) => !f.name.startsWith('.')))
   }
 
   useEffect(() => { void loadTariffFiles() }, [])
@@ -305,23 +307,30 @@ export default function Settings() {
   async function uploadTariffs() {
     if (tariffUpload.length === 0) { setTariffMsg(t('Choose one or more tariff images first.')); return }
     if (tariffFiles.length + tariffUpload.length > 5) { setTariffMsg(t('Keep the published tariff to 5 images or fewer.')); return }
+    // Bucket 0234 accepts only these; align the client so an iPhone HEIC (or any other type) fails
+    // with a clear message instead of a raw backend error.
+    const ALLOWED = ['image/png', 'image/jpeg', 'image/webp']
     setTariffBusy(true); setTariffMsg(null)
-    for (let i = 0; i < tariffUpload.length; i++) {
-      const raw = tariffUpload[i]
-      if (!raw.type.startsWith('image/')) { setTariffBusy(false); setTariffMsg(t('Tariff uploads must be image files.')); return }
-      const prepared = await prepareUpload(raw)
-      if ('error' in prepared) { setTariffBusy(false); setTariffMsg(t(prepared.error)); return }
-      if (!prepared.file.type.startsWith('image/')) { setTariffBusy(false); setTariffMsg(t('Tariff uploads must be image files.')); return }
-      const safeName = prepared.file.name.replace(/[^A-Za-z0-9._-]/g, '_')
-      const path = `${Date.now()}-${i}-${safeName}`
-      const { error } = await supabase.storage.from('tariff-images').upload(path, prepared.file, { upsert: false, contentType: prepared.file.type })
-      if (error) { setTariffBusy(false); setTariffMsg(error.message); return }
+    let failMsg: string | null = null
+    try {
+      for (let i = 0; i < tariffUpload.length; i++) {
+        const prepared = await prepareUpload(tariffUpload[i])
+        if ('error' in prepared) { failMsg = t(prepared.error); break }
+        if (!ALLOWED.includes(prepared.file.type)) { failMsg = t('Tariff images must be PNG, JPEG, or WEBP.'); break }
+        const safeName = prepared.file.name.replace(/[^A-Za-z0-9._-]/g, '_')
+        const path = `${Date.now()}-${i}-${safeName}`
+        const { error } = await supabase.storage.from('tariff-images').upload(path, prepared.file, { upsert: false, contentType: prepared.file.type })
+        if (error) { failMsg = error.message; break }
+      }
+    } finally {
+      // Always resync the list + clear the pending batch, so a partial failure can't leave stale
+      // state that re-uploads the already-succeeded files as duplicates.
+      setTariffBusy(false)
+      setTariffUpload([])
+      if (tariffRef.current) tariffRef.current.value = ''
+      await loadTariffFiles()
     }
-    setTariffBusy(false)
-    setTariffUpload([])
-    if (tariffRef.current) tariffRef.current.value = ''
-    setTariffMsg(t('✓ Published tariff images updated.'))
-    await loadTariffFiles()
+    setTariffMsg(failMsg ?? t('✓ Published tariff images updated.'))
   }
 
   async function deleteTariff(name: string) {
