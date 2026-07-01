@@ -56,3 +56,13 @@ export async function resumeTrustedMfaSession() {
   }
   return true
 }
+
+// Kill switch for a lost/stolen trusted device: revokes ALL of this user's trusted
+// devices server-side and drops their trusted sessions, then clears the local token.
+// Safe no-op (returns 0) for an account with no trusted devices.
+export async function revokeTrustedMfaDevices() {
+  const { data, error } = await supabase.rpc('revoke_trusted_mfa_devices')
+  clearTrustedMfaToken()
+  if (error) throw error
+  return (data as number | null) ?? 0
+}

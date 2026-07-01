@@ -2,11 +2,23 @@
 title: Current State
 tags: [memory, current]
 type: memory
-last_updated: 2026-07-01
+last_updated: 2026-07-02
 ---
 
 
 # 📌 Current State (Runtime-Aligned)
+
+## 2026-07-02 — Security batch shipped: crown-jewel 2FA step-up + owner-email lock + trusted-device revoke (v2.0.12, migration 0237)
+
+**`APP_VERSION` = `v2.0.12`; migration `0237` applied + verified on prod.** Closes the three security findings (CX-01/02/03) from the independent review of Codex's 2026-07-01 hardening batch (`docs/audits/2026-07-02-codex-0701-batch-review.md`). Jarvis-verified SAFE-TO-APPLY; all gates green.
+
+- **CX-01 crown-jewel step-up** — `reset_staff_password` / `promote_new_staff` / `set_owner_access` now require a *fresh* live 2FA code via `require_fresh_aal2()` (= `aal_satisfied()` minus the trusted-session branch), restoring the `0198` protection that `0236`'s trusted-device feature had relaxed. A no-MFA owner still passes (failsafe intact); everyday admin keeps trusted-device convenience.
+- **CX-02 owner-email lock** — the customer email-change flow rejects any change to/from an owner/root-owner email, protecting the `0184` failsafe.
+- **CX-03 trusted-device revoke** — `revoke_trusted_mfa_devices()` kill switch + sign-out clears the local token + password-change revoke + a `/admin/security` "Forget trusted devices" control.
+- **i18n** — 56 English-only strings from the 07-01 batch (+6 new) now have Tagalog; `check:i18n --strict` green.
+- **Review status** — remaining findings are open batches for later: tariff data-traps (CX-04/05/06/12), walkthrough/UX (CX-07/08/09), low/cleanup (CX-10/11/13). See the audit doc.
+
+**Next** — work the remaining review batches (tariff / walkthrough-UX), then resume the go-live path (ST08 all-roles/all-lanes walkthrough, Android Part 15).
 
 ## 2026-07-01 - Go-live walkthrough hardening checkpoints shipped (v2.0.11+, migrations 0233-0236)
 

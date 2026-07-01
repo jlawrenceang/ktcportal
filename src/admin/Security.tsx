@@ -5,6 +5,7 @@ import { useBroker } from '../lib/useBroker'
 import { hasAdminAccess } from '../lib/types'
 import { useT } from '../lib/i18n'
 import { ShieldIcon } from '../components/icons'
+import { revokeTrustedMfaDevices } from '../lib/mfaTrust'
 
 // /admin/security — two-factor authentication self-service for staff + owner.
 // Enroll: QR (or manual secret) → 6-digit verify. Once verified, the backend
@@ -86,6 +87,18 @@ export default function Security() {
     await loadFactors()
   }
 
+  async function forgetTrustedDevices() {
+    setBusy(true); setError(null); setNotice(null)
+    try {
+      await revokeTrustedMfaDevices()
+      setNotice(t('✓ Trusted devices cleared. Every browser will ask for a code next sign-in.'))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('Could not clear trusted devices.'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   // Rollout decision 2026-06-12: 2FA is for admin + owner accounts for now
   // (cashier/checker tablets stay password-only until the floor workflow is
   // settled). Enforcement (0049) keys off enrollment, so unenrolled roles
@@ -162,6 +175,15 @@ export default function Security() {
             <span className="ktc-label" style={{ fontSize: 12, lineHeight: 1.6 }}>
               {t('Lost your authenticator? The owner can remove the factor from the server so you can sign in and re-enroll.')}
             </span>
+            <div style={{ borderTop: '1px solid var(--glass-brd)', paddingTop: 12, display: 'grid', gap: 8 }}>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{t('Trusted browsers')}</h3>
+              <span className="ktc-label" style={{ fontSize: 12, lineHeight: 1.6 }}>
+                {t('Signs out "trust this device" on every browser — each will ask for a 2FA code next sign-in.')}
+              </span>
+              <button type="button" className="ktc-link" style={{ fontSize: 13, justifySelf: 'start', opacity: 0.85 }} disabled={busy} onClick={() => void forgetTrustedDevices()}>
+                {busy ? t('Clearing…') : t('Forget trusted devices')}
+              </button>
+            </div>
           </div>
         ) : (
           <div style={{ marginTop: 20 }}>

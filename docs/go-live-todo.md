@@ -24,18 +24,26 @@ that only the owner can complete. Keep this current — tick items as they're do
       and the three blockers fixed — but counsel review is the gold standard before
       public launch.
 
-## 2. Security — **re-enable before the staff dry-run** (down for testing)
+## 2. Security — 2FA/MFA is LIVE + enforced app-wide; remaining = per-account staff enrollment
+
+> **Corrected 2026-07-02 (runtime-verified):** the old "(down for testing) / re-enable MFA"
+> framing was **stale**. The whole-app MFA gate (`MfaGate` in `src/App.tsx`) wraps every route
+> and is server-enforced at `aal2` (`useMfaGate.ts`) — there is **no off-switch** in the code.
+> What actually remains is enrolling each staff/admin account.
+
 - [x] **Turnstile re-enabled + server-enforcement verified 2026-06-26** — a no-token
       login is rejected `captcha_failed`; site key (`0x4AAAAAA…`) live in Vercel
       Production. *Final check pending: do one real login on the live site to confirm
       the Supabase secret pairs with the Vercel site key (same Cloudflare widget).*
-- [ ] **Re-enable MFA** and enroll the owner + staff (`/admin/security`).
-- [ ] **Rotate the owner password** (`jlawrenceang@gmail.com`).
-- [ ] **MFA recovery / break-glass (audit T2-01, deferred here 2026-06-29).** Build
-      with the MFA re-enablement so it's testable end-to-end: recovery codes at
-      enrolment, an owner-only "clear a staff 2FA factor" action, and a documented
-      owner break-glass (lost authenticator) path. Touches the owner failsafe →
-      write a short spec + Jarvis review before building. (Phase-4 batch 4d.)
+- [ ] **Enroll each staff/admin account in 2FA** at `/admin/security`. The MFA gate is
+      already live and enforced and the owner is enrolled; the remaining action is
+      per-account staff enrollment (currently opt-in — see `AccountStaff.tsx` `TODO(T2-02)`
+      if you want first-login enrollment mandated for every floor role).
+- [ ] **Rotate the owner password** (`jlawrenceang@gmail.com`). *Current State notes this
+      was done during the v1.7.4/1.7.5 MFA pass (2026-06-29) — confirm and tick if so.*
+- [ ] **MFA recovery / break-glass (audit T2-01).** *Appears already BUILT — recovery codes
+      at enrolment + an owner-only "Reset 2FA" (clear-factor) action shipped in migrations
+      `0205`/`0207`. Verify end-to-end during the ST08 MFA rows, then tick.* (Phase-4 batch 4d.)
 
 ## 3. Google OAuth
 - [x] **Finish the Supabase URL config** (Site URL + redirect allow-list) and

@@ -1,5 +1,18 @@
 # Changelog
 
+## v2.0.12 — 2026-07-02 (security batch: crown-jewel 2FA step-up · owner-email lock · trusted-device revoke)
+
+Closes the three security findings from the independent review of the 2026-07-01 hardening batch (`docs/audits/2026-07-02-codex-0701-batch-review.md`, CX-01/02/03). Migration `0237` applied + verified on production; Jarvis-verified SAFE-TO-APPLY.
+
+- **Crown-jewel 2FA step-up (`0237`, CX-01).** `reset_staff_password`, `promote_new_staff`, and `set_owner_access` now require a *fresh* live 2FA code — a new `require_fresh_aal2()` (the `aal_satisfied()` logic minus the trusted-session branch) rejects a trusted-device aal1 session for these three irreversible ops, restoring the `0198` protection that `0236`'s "trust this device" had relaxed. A no-MFA owner still passes (failsafe intact); everyday admin keeps the trusted-device convenience.
+- **Owner-email lock (`0237`, CX-02).** `request_`/`confirm_customer_email_change` reject any change to or from an owner / root-owner email, so the `jlawrenceang@gmail.com` failsafe (`0184`) can't be changed away.
+- **Trusted-device revoke (`0237`, CX-03).** New `revoke_trusted_mfa_devices()` kill switch (revokes devices + drops trusted sessions); sign-out clears the local trust token, a password change revokes best-effort, and `/admin/security` gains a "Forget trusted devices" control.
+- **i18n coverage restored.** Added Tagalog for 56 strings shipped English-only in the 2026-07-01 batch (tariff images, notification show/hide, trusted-MFA copy, pending-account messages, JO filing hints) plus 6 for the new revoke control — `check:i18n --strict` green again.
+- **Poka-yoke.** `require_fresh_aal2` added to the `check-security-invariants` INTERNAL list so a future migration can't silently re-expose it.
+- **Docs.** Corrected the stale "MFA down for testing" line in `docs/go-live-todo.md` (MFA is live + enforced; remaining = per-account staff enrollment).
+
+Verification: `npm run lint`, `npm run check:i18n`, `node scripts/check-security-invariants.mjs`, `npm run build` all green; `0237` applied via `_apply_one.mjs` and verified on prod (function guards + ACLs + `_migrations`); Jarvis PASS on all four criteria.
+
 ## v2.0.11+ - 2026-07-01 (go-live walkthrough hardening checkpoints)
 
 Runtime footer still reports `v2.0.11`; this entry tracks post-v2.0.11 deployment provenance: commits `9ee653d` and `830bd2a`, latest production deployment `ktc-joborderform-6bbtfhqfl`, and migrations through `0236`.

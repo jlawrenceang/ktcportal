@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { stampActivity } from './useIdleLogout'
 import { broadcastSessionClaimed } from './sessionChannel'
+import { clearTrustedMfaToken } from './mfaTrust'
 
 // Single-session claim state machine (see ProtectedRoute + SessionConflictModal):
 //  idle      — nothing checked yet for the current session
@@ -191,6 +192,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null }
   }
   const signOut = async () => {
+    // "Trust this device" forgets on explicit sign-out (remember-me hygiene); the
+    // server device row still expires in 24h, and revoke_trusted_mfa_devices() can
+    // kill it on every browser (CX-03).
+    clearTrustedMfaToken()
     await supabase.auth.signOut()
   }
 

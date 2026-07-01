@@ -21,7 +21,7 @@ if (!dbUrl) { console.error('Need DATABASE_URL in .env.local'); process.exit(2) 
 const INTERNAL = [
   'notify_staff', 'assign_serving_numbers', 'log_security_event', 'log_jo_event',
   'push_user_ids_for_permission', 'push_on_notification', 'push_on_staff_notification',
-  'session_alive', 'aal_satisfied', 'check_ops_alerts', 'reconcile_outbound',
+  'session_alive', 'aal_satisfied', 'require_fresh_aal2', 'check_ops_alerts', 'reconcile_outbound',
   'run_boc_mirror', 'send_portal_email', 'expire_unverified_brokers', 'purge_expired_ids',
   'audit_valid_id_deletion', 'log_customer_status_change',
 ]

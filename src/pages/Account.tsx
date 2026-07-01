@@ -12,6 +12,7 @@ import { usePageTour } from '../components/TourProvider'
 import { accountSteps } from '../components/WelcomeTour'
 import { useT } from '../lib/i18n'
 import PushToggle from '../components/PushToggle'
+import { revokeTrustedMfaDevices } from '../lib/mfaTrust'
 
 type Msg = { tone: NoticeTone; text: string } | null
 
@@ -167,6 +168,9 @@ export default function Account() {
     if (error) { setPwMsg({ tone: 'error', text: error.message }); return }
     setNewPw('')
     setNewPw2('')
+    // A password change is a compromise signal — drop any "trusted device" so a
+    // stolen token can't ride the old trust (CX-03). Best-effort.
+    try { await revokeTrustedMfaDevices() } catch { /* ignore */ }
     setPwMsg({ tone: 'success', text: t('✓ Your password was updated.') })
   }
 
