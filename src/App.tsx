@@ -21,6 +21,7 @@ import { isNativeApp } from './lib/nativeDevice'
 import { Browser } from '@capacitor/browser'
 import Login from './pages/Login'
 import Confirmed from './pages/Confirmed'
+import EmailChangeConfirm from './pages/EmailChangeConfirm'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Agreement from './pages/Agreement'
@@ -152,7 +153,7 @@ function PublicBackdrop() {
 // owns that) and the public /verify QR page. Edit ROLE_PHOTO to re-assign images.
 const APP_BG_PUBLIC = new Set([
   '/', '/login', '/register', '/confirmed', '/forgot-password', '/reset-password',
-  '/agreement', '/irr', '/terms', '/privacy',
+  '/email-change-confirm', '/agreement', '/irr', '/terms', '/privacy',
 ])
 const ROLE_PHOTO: Record<string, number> = {
   customer: 1, owner: 3, admin: 16, operations: 11, cashier: 8, checker: 20, csr: 5,
@@ -181,7 +182,7 @@ function AppBackdrop() {
 // agreement, and the public slip-verification QR target (/verify/:id).
 const MFA_BYPASS = new Set([
   '/login', '/register', '/confirmed', '/forgot-password', '/reset-password',
-  '/agreement', '/irr', '/terms', '/privacy',
+  '/email-change-confirm', '/agreement', '/irr', '/terms', '/privacy',
 ])
 
 // ONE gate for the WHOLE app. A logged-in session with an enrolled TOTP factor
@@ -298,6 +299,7 @@ export default function App() {
             <Route path="/register" element={<Login />} />
           </Route>
           <Route path="/confirmed" element={<Confirmed />} />
+          <Route path="/email-change-confirm" element={<EmailChangeConfirm />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           {/* Public — slip QR target: anyone can verify a Job Order is genuine + completed (no login) */}

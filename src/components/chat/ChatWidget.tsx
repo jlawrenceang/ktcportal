@@ -3,7 +3,7 @@
 // same trick BottomNav uses. Mounted in the customer Shell ONLY. Deterministic:
 // every bubble + button comes from the node tree (nodes.ts) via useChat.
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useT } from '../../lib/i18n'
@@ -14,6 +14,7 @@ import LaraAvatar from '../LaraAvatar'
 
 // Clear the floating bottom tab-bar (sits at bottom:16px, ~64px tall).
 const FAB_BOTTOM = 'calc(88px + env(safe-area-inset-bottom, 0px))'
+type LauncherPos = { side: 'left' | 'right'; top: number | null }
 
 function msgText(m: ChatMsg, t: ReturnType<typeof useT>['t']): string {
   return m.literal ? m.text : t(m.text, m.vars)
@@ -27,8 +28,11 @@ export default function ChatWidget() {
   const composerRef = useRef<HTMLInputElement>(null)
   const launcherRef = useRef<HTMLButtonElement>(null)
   const wasOpenRef = useRef(false)
+  const dragRef = useRef<{ startX: number; startY: number; moved: boolean } | null>(null)
+  const suppressClickRef = useRef(false)
   const [draft, setDraft] = useState('')
   const [pulse, setPulse] = useState(false)
+  const [launcherPos, setLauncherPos] = useState<LauncherPos>({ side: 'right', top: null })
   // Hide the launcher while a text field is focused so the FAB never sits over
   // the input the user is typing in (visual-roast: FAB covered the email field).
   const [fieldFocused, setFieldFocused] = useState(false)
@@ -81,9 +85,46 @@ export default function ChatWidget() {
   const isInput = node?.kind === 'input'
 
   function launcherClick() {
+    if (suppressClickRef.current) return
     setPulse(false)
     try { sessionStorage.setItem('ktc_chat_seen', '1') } catch { /* ignore */ }
     open()
+  }
+
+  function clampLauncherTop(top: number) {
+    const min = 8
+    const max = Math.max(min, window.innerHeight - 64)
+    return Math.min(max, Math.max(min, top))
+  }
+
+  function onLauncherPointerDown(e: ReactPointerEvent<HTMLButtonElement>) {
+    if (e.button !== 0) return
+    dragRef.current = { startX: e.clientX, startY: e.clientY, moved: false }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  function onLauncherPointerMove(e: ReactPointerEvent<HTMLButtonElement>) {
+    const drag = dragRef.current
+    if (!drag) return
+    const moved = Math.abs(e.clientX - drag.startX) + Math.abs(e.clientY - drag.startY) > 6
+    if (!moved && !drag.moved) return
+    drag.moved = true
+    setLauncherPos((pos) => ({ ...pos, top: clampLauncherTop(e.clientY - 28) }))
+  }
+
+  function onLauncherPointerUp(e: ReactPointerEvent<HTMLButtonElement>) {
+    const drag = dragRef.current
+    dragRef.current = null
+    if (!drag) return
+    try { e.currentTarget.releasePointerCapture(e.pointerId) } catch { /* ignore */ }
+    if (drag.moved) {
+      suppressClickRef.current = true
+      window.setTimeout(() => { suppressClickRef.current = false }, 0)
+      setLauncherPos({
+        side: e.clientX < window.innerWidth / 2 ? 'left' : 'right',
+        top: clampLauncherTop(e.clientY - 28),
+      })
+    }
   }
 
   function navTo(route: string) { close(); navigate(route) }
@@ -112,14 +153,9 @@ export default function ChatWidget() {
 
   function Tiles({ opts }: { opts: ChatOption[] }) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <div style={{ display: 'grid', gap: 6 }}>
         {opts.map((o) => (
-          <button key={o.to + o.label} type="button" className="ktc-btn-secondary"
-            onClick={() => tapOption(o)} disabled={state.busy}
-            style={{ flexDirection: 'column', gap: 4, padding: '12px 8px', minHeight: 64, textAlign: 'center', fontSize: 12 }}>
-            <span aria-hidden style={{ fontSize: 20, lineHeight: 1 }}>{o.glyph}</span>
-            <span style={{ lineHeight: 1.2 }}>{t(o.label)}</span>
-          </button>
+          <Opt key={o.to + o.label} opt={o} />
         ))}
       </div>
     )
@@ -183,14 +219,24 @@ export default function ChatWidget() {
     ? t('Type the details for KTC…')
     : t('Type your question…')
 
+  const launcherPlacement: CSSProperties = {
+    [launcherPos.side]: 16,
+    ...(launcherPos.top == null ? { bottom: FAB_BOTTOM } : { top: launcherPos.top }),
+  }
+  const panelPlacement: CSSProperties = {
+    [launcherPos.side]: 16,
+    bottom: FAB_BOTTOM,
+  }
+
   return createPortal(
     <>
       {/* Launcher — hidden while the panel is open (the panel has its own close)
           or while a text field is focused (so it never covers the input). */}
       {!state.open && !fieldFocused && (
         <button ref={launcherRef} type="button" data-tour="lara-launcher" aria-label={t('Open KTC assistant (Lara)')} onClick={launcherClick}
+          onPointerDown={onLauncherPointerDown} onPointerMove={onLauncherPointerMove} onPointerUp={onLauncherPointerUp} onPointerCancel={onLauncherPointerUp}
           style={{
-            position: 'fixed', right: 16, bottom: FAB_BOTTOM, zIndex: 60,
+            position: 'fixed', zIndex: 60, touchAction: 'none', ...launcherPlacement,
             width: 56, height: 56, borderRadius: 999, border: '1px solid var(--glass-brd)', cursor: 'pointer',
             background: 'linear-gradient(135deg, var(--acc), var(--acc-2))', color: '#fff',
             boxShadow: 'var(--shadow-lg), 0 10px 26px -8px rgb(var(--acc-rgb) / 0.5)',
@@ -211,7 +257,7 @@ export default function ChatWidget() {
         <div className="ktc-glass" role="dialog" aria-label={t('KTC assistant — Lara')} data-lara-panel
           onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); close() } }}
           style={{
-            position: 'fixed', right: 16, bottom: FAB_BOTTOM, zIndex: 60,
+            position: 'fixed', zIndex: 60, ...panelPlacement,
             width: 'min(380px, calc(100vw - 24px))',
             height: 'min(560px, calc(100dvh - 120px))',
             display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden',
@@ -227,6 +273,8 @@ export default function ChatWidget() {
               <span className="ktc-label" style={{ fontSize: 11 }}>{t('KTC Assistant')}</span>
             </span>
             <span style={{ flex: 1 }} />
+            <button type="button" aria-label={t('Minimize')} onClick={close}
+              style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))' }}>−</button>
             <button type="button" aria-label={t('Close')} onClick={close}
               style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))' }}>✕</button>
           </div>

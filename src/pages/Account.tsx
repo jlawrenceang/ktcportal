@@ -142,10 +142,10 @@ export default function Account() {
     if (next.toLowerCase() === email.toLowerCase()) { setEmailMsg({ tone: 'info', text: t('That’s already your email.') }); return }
     setSavingEmail(true)
     setEmailMsg(null)
-    const { error } = await supabase.auth.updateUser(
-      { email: next },
-      { emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/confirmed` : undefined },
-    )
+    const { error } = await supabase.rpc('request_customer_email_change', {
+      p_new_email: next,
+      p_redirect_base: typeof window !== 'undefined' ? window.location.origin : undefined,
+    })
     setSavingEmail(false)
     if (error) { setEmailMsg({ tone: 'error', text: error.message }); return }
     setNewEmail('')

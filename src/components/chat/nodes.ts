@@ -84,7 +84,7 @@ export const NODES: NodeRegistry = {
 
   'file.how': {
     kind: 'message', ticketCategory: 'job_order',
-    body: 'To file a Job Order, open New Job Order: 1) pick the consignee (type a few letters; not listed? tap Request new consignee and file anyway), 2) enter your Entry Number (your C-… number), 3) pick the Vessel & Voyage, 4) add containers — one row each, choose its service (X-Ray, DEA, OOG); use Bulk paste for a long list. Review, then Confirm. Verified accounts get a JO number on submit. KTC aims to complete special services within 24 hours so you avoid storage charges.',
+    body: 'To file a Job Order, open New Job Order: 1) pick an approved consignee from KTC’s master list (type a few letters; if it is not listed, request a new consignee and wait for approval), 2) enter your Entry Number (your C-number), 3) pick the Vessel & Voyage, 4) add containers, one row each, and choose its service. Use Bulk paste for a long list. Review, then Confirm. Verified accounts get a JO number on submit. KTC aims to complete special services within 24 hours so you avoid storage charges.',
     then: [
       { label: 'Open New Job Order', to: 'nav.newJO' },
       { label: 'What do I need to file?', to: 'file.requirements' },

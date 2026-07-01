@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Shell from '../components/Shell'
 import Notice from '../components/Notice'
 import Modal from '../components/Modal'
@@ -16,7 +17,22 @@ import { requestsSteps } from '../components/WelcomeTour'
 // NOTE: vessel requests are NOT a customer path — the vessel schedule is ops-only.
 // If a vessel isn't listed, the customer calls KTC customer service to have ops
 // add it (see the JO filing help line).
-type CReq = { id: string; code: string; name: string; status: string; address: string | null; tin: string | null; note: string | null; customer_name: string | null; address2: string | null; tel: string | null; mobile: string | null; email: string | null }
+type CReq = {
+  id: string
+  code: string
+  name: string
+  status: string
+  address: string | null
+  tin: string | null
+  note: string | null
+  customer_name: string | null
+  address2: string | null
+  tel: string | null
+  mobile: string | null
+  email: string | null
+  requested_at: string | null
+  decided_at: string | null
+}
 
 const STYLE: Record<string, { bg: string; fg: string }> = {
   pending: { bg: 'var(--c-h40-90-94)', fg: 'var(--c-h35-80-38)' },
@@ -41,7 +57,7 @@ export default function MyRequests() {
     if (!broker?.id) return
     const { data: c, error } = await supabase
       .from('consignees')
-      .select('id, code, name, status, address, tin, note, customer_name, address2, tel, mobile, email')
+      .select('id, code, name, status, address, tin, note, customer_name, address2, tel, mobile, email, requested_at, decided_at')
       .eq('requested_by', broker.id)
       .order('requested_at', { ascending: false })
     if (error) { setLoadError(error.message); setLoading(false); return }
@@ -51,7 +67,8 @@ export default function MyRequests() {
   }
   useEffect(() => { void load() /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [broker?.id])
 
-  const label = (s: string) => ({ pending: t('Pending approval'), needs_info: t('Needs info'), approved: t('Approved'), rejected: t('Not approved') }[s] ?? s)
+  const label = (s: string) => ({ pending: t('Under review'), needs_info: t('Needs more information'), approved: t('Approved'), rejected: t('Rejected') }[s] ?? s)
+  const fmtDate = (iso?: string | null) => iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : t('Not recorded')
   const badge = (s: string) => {
     const st = STYLE[s] ?? STYLE.pending
     return <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 999, background: st.bg, color: st.fg, whiteSpace: 'nowrap' }}>{label(s)}</span>
@@ -75,14 +92,23 @@ export default function MyRequests() {
         {loadError ? (
           <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{loadError}</Notice>
         ) : cons.length === 0 ? (
-          <div className="ktc-label" style={{ fontSize: 13 }}>{t('None yet.')}</div>
+          <div style={{ display: 'grid', gap: 10 }}>
+            <div className="ktc-label" style={{ fontSize: 13 }}>{t('None yet.')}</div>
+            <Link to="/job-order" className="ktc-btn-secondary" style={{ width: 'fit-content', padding: '8px 14px', textDecoration: 'none', fontSize: 12.5 }}>
+              {t('Request a consignee from New Job Order')}
+            </Link>
+          </div>
         ) : (
           <div style={{ display: 'grid', gap: 8 }}>
             {cons.map((c) => (
               <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '8px 0', borderBottom: '1px solid hsl(var(--line-soft))' }}>
-                <span style={{ flex: 1, minWidth: 160, fontSize: 14 }}>
+                <span style={{ flex: 1, minWidth: 190, fontSize: 14 }}>
                   <b>{c.code}</b> – {c.name}
                   {(c.status === 'needs_info' || c.status === 'rejected') && c.note && <div className="ktc-label" style={{ fontSize: 11.5, marginTop: 2, fontStyle: 'italic' }}>“{c.note}”</div>}
+                  <div className="ktc-label" style={{ fontSize: 11.5, marginTop: 3 }}>
+                    {t('Date submitted')}: {fmtDate(c.requested_at)}
+                    {c.decided_at && <> · {t('Last updated')}: {fmtDate(c.decided_at)}</>}
+                  </div>
                 </span>
                 {badge(c.status)}
                 {(c.status === 'needs_info' || c.status === 'rejected') && <button type="button" className="ktc-btn ktc-btn--sm" onClick={() => setEditC(c)} style={{ width: 'auto', padding: '6px 12px', fontSize: 12.5 }}>{t('Edit & resubmit')}</button>}

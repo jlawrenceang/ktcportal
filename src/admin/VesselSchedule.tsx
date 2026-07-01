@@ -5,7 +5,7 @@ import { usePageTour } from '../components/TourProvider'
 import { vesselSteps } from './AdminTour'
 import { MonthCalendar, Badge, fmt, fmtDT, type VesselRow } from '../components/VesselCalendar'
 import { useT } from '../lib/i18n'
-import { CameraIcon, RefreshIcon } from '../components/icons'
+import { RefreshIcon } from '../components/icons'
 
 // ── Vessel schedule (operations) ──────────────────────────────────────────
 // Reads vessel_schedule_v: last_free_day + is_current are computed server-side
@@ -44,6 +44,58 @@ function friendly(err: unknown): string {
   return e?.message ?? 'Something went wrong.'
 }
 
+function vesselStatusBadge(r: VesselRow, t: (s: string) => string) {
+  if (r.cancelled) return <Badge bg="var(--c-h0-70-95)" fg="var(--c-h0-65-45)">{t('cancelled')}</Badge>
+  if (r.is_current) return <Badge bg="var(--c-h150-50-93)" fg="var(--c-h150-60-30)">{t('current')}</Badge>
+  return <Badge bg="var(--c-h220-16-92)" fg="var(--c-h220-10-45)">{t('past')}</Badge>
+}
+
+function AdminVesselCards({
+  rows,
+  onEdit,
+  onToggleCancel,
+}: {
+  rows: VesselRow[]
+  onEdit: (row: VesselRow) => void
+  onToggleCancel: (row: VesselRow) => void
+}) {
+  const { t } = useT()
+  if (rows.length === 0) {
+    return (
+      <div className="ktc-glass ktc-glass--flat" style={{ padding: 18, textAlign: 'center', color: 'hsl(var(--ink-2))' }}>
+        {t('No calls. Add one above or sync from the Google Sheet.')}
+      </div>
+    )
+  }
+  return (
+    <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+      {rows.map((r) => (
+        <div key={r.id} className="ktc-glass ktc-glass--flat" style={{ padding: 14, opacity: r.cancelled ? 0.55 : 1, display: 'grid', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 14.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.vessel_name}</div>
+              <div className="ktc-label" style={{ fontSize: 12, marginTop: 2 }}>
+                <span className="ktc-mono">{r.voyage_number}</span> · {r.shipping_line ?? '—'}
+              </div>
+            </div>
+            {vesselStatusBadge(r, t)}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', fontSize: 12.5 }}>
+            <div><span className="ktc-label">{t('Arrival')}</span><br />{fmtDT(r.actual_arrival, r.arrival_time)}</div>
+            <div><span className="ktc-label">{t('Last Disch.')}</span><br />{fmtDT(r.finish_discharging, r.discharge_time)}</div>
+            <div><span className="ktc-label">{t('Last Free Day')}</span><br /><b>{r.last_free_day ? fmt(r.last_free_day) : t('set line')}</b></div>
+            <div><span className="ktc-label">{t('Berth')}</span><br />{r.berth ?? '—'}</div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, borderTop: '1px solid var(--glass-brd)', paddingTop: 10 }}>
+            <button className="ktc-link" type="button" onClick={() => onEdit(r)}>{t('Edit')}</button>
+            <button className="ktc-link" type="button" onClick={() => onToggleCancel(r)}>{r.cancelled ? t('Restore') : t('Cancel')}</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function VesselSchedule() {
   const { t } = useT()
   usePageTour('vessels', vesselSteps)
@@ -51,7 +103,7 @@ export default function VesselSchedule() {
   const [lines, setLines] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [showAll, setShowAll] = useState(false)
-  const [view, setView] = useState<'table' | 'calendar'>('table')
+  const [view, setView] = useState<'cards' | 'table' | 'calendar'>('table')
   const [form, setForm] = useState<Record<Col, string>>(blankForm())
   const [editing, setEditing] = useState<string | null>(null) // row id being edited
   const [saving, setSaving] = useState(false)
@@ -138,68 +190,6 @@ export default function VesselSchedule() {
     if (error) setErr(friendly(error)); else void load()
   }
 
-  // Snapshot of the active vessels as a branded PNG — for Viber group updates.
-  function buildSnapshot(): HTMLCanvasElement {
-    const active = rows.filter((r) => r.is_current && !r.cancelled)
-      .sort((a, b) => (a.actual_arrival ?? '').localeCompare(b.actual_arrival ?? ''))
-    const trunc = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
-    const cols: [string, number][] = [['LINE', 20], ['VESSEL', 140], ['VOYAGE', 360], ['ARRIVAL', 450], ['LAST FREE DAY', 575], ['BERTH', 770]]
-    const W = 840, headerH = 64, rowH = 30
-    const H = headerH + 44 + active.length * rowH + 30
-    const scale = 2
-    const cv = document.createElement('canvas')
-    cv.width = W * scale; cv.height = H * scale
-    const ctx = cv.getContext('2d')!
-    ctx.scale(scale, scale)
-    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H)
-    ctx.fillStyle = '#F26A21'; ctx.fillRect(0, 0, W, headerH)
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 22px sans-serif'
-    ctx.fillText(t('KTC — Active Vessels'), 20, 30)
-    ctx.font = '13px sans-serif'
-    const today = new Date().toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
-    ctx.fillText(t('As of {date} · {count} vessel(s)', { date: today, count: active.length }), 20, 50)
-    let yTop = headerH + 24
-    ctx.fillStyle = '#888888'; ctx.font = 'bold 11px sans-serif'
-    cols.forEach(([label, x]) => ctx.fillText(t(label), x, yTop))
-    yTop += 12
-    active.forEach((r, i) => {
-      if (i % 2 === 1) { ctx.fillStyle = '#f4f5f7'; ctx.fillRect(0, yTop, W, rowH) }
-      const base = yTop + 20
-      ctx.font = '13px sans-serif'; ctx.fillStyle = '#1a1a1a'
-      ctx.fillText(trunc(r.shipping_line ?? '—', 16), 20, base)
-      ctx.fillText(trunc(r.vessel_name, 26), 140, base)
-      ctx.fillText(r.voyage_number, 360, base)
-      ctx.fillText(fmt(r.actual_arrival), 450, base)
-      ctx.font = 'bold 13px sans-serif'; ctx.fillStyle = '#D6321E'
-      ctx.fillText(r.last_free_day ? fmt(r.last_free_day) : '—', 575, base)
-      ctx.font = '13px sans-serif'; ctx.fillStyle = '#1a1a1a'
-      ctx.fillText(r.berth ?? '—', 770, base)
-      yTop += rowH
-    })
-    return cv
-  }
-
-  async function snapshot() {
-    setErr(null); setMsg(null)
-    const blob = await new Promise<Blob | null>((res) => buildSnapshot().toBlob(res, 'image/png'))
-    if (!blob) { setErr(t('Could not generate the snapshot.')); return }
-    const file = new File([blob], 'ktc-active-vessels.png', { type: 'image/png' })
-    const nav = navigator as Navigator & {
-      canShare?: (d: { files: File[] }) => boolean
-      share?: (d: { files?: File[]; title?: string; text?: string }) => Promise<void>
-    }
-    if (nav.canShare?.({ files: [file] }) && nav.share) {
-      try { await nav.share({ files: [file], title: t('KTC Active Vessels') }) } catch { /* user cancelled */ }
-      return
-    }
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = file.name
-    a.click()
-    URL.revokeObjectURL(a.href)
-    setMsg(t('Snapshot downloaded — attach it in your Viber group.'))
-  }
-
   return (
     <AdminShell>
       <h1 className="ktc-title">{t('Vessel Schedule')}</h1>
@@ -258,21 +248,22 @@ export default function VesselSchedule() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
         <strong style={{ fontSize: 14 }}>{showAll ? t('{count} total call(s)', { count: visible.length }) : t('{count} current call(s)', { count: visible.length })}</strong>
-        <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" onClick={() => void snapshot()} title={t('Share a snapshot of active vessels to your Viber group')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><CameraIcon size={15} /> {t('Snapshot')}</button>
         <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" disabled={syncing} onClick={() => void syncNow()} title={t('Pull the latest edits from the Google Sheet now and refresh the Last Free Day mirror')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{syncing ? t('Syncing…') : <><RefreshIcon size={15} /> {t('Sync sheet')}</>}</button>
         <div style={{ display: 'inline-flex', gap: 4 }}>
+          <button className={`ktc-btn ktc-btn--sm ${view === 'cards' ? '' : 'ktc-btn-ghost'}`} type="button" aria-pressed={view === 'cards'} onClick={() => setView('cards')}>{t('Cards')}</button>
           <button className={`ktc-btn ktc-btn--sm ${view === 'table' ? '' : 'ktc-btn-ghost'}`} type="button" aria-pressed={view === 'table'} onClick={() => setView('table')}>{t('Table')}</button>
           <button className={`ktc-btn ktc-btn--sm ${view === 'calendar' ? '' : 'ktc-btn-ghost'}`} type="button" aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}>{t('Calendar')}</button>
         </div>
         <span style={{ flex: 1 }} />
-        {view === 'table' && (
-          <label className="ktc-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> {t('Show past/cancelled')}
-          </label>
-        )}
+        <label className="ktc-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> {t('Show past/cancelled')}
+        </label>
       </div>
 
-      {loading ? <p className="ktc-label">{t('Loading…')}</p> : view === 'calendar' ? <MonthCalendar rows={rows.filter((r) => !r.cancelled)} /> : (
+      {loading ? <p className="ktc-label">{t('Loading…')}</p>
+        : view === 'calendar' ? <MonthCalendar rows={visible} />
+        : view === 'cards' ? <AdminVesselCards rows={visible} onEdit={startEdit} onToggleCancel={(r) => void toggleCancel(r)} />
+        : (
         <div className="ktc-glass ktc-glass--flat" style={{ padding: 0, overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
@@ -297,9 +288,7 @@ export default function VesselSchedule() {
                   <td style={{ padding: '8px 10px' }}>{r.berth ?? '—'}</td>
                   <td style={{ padding: '8px 10px', textAlign: 'center' }}>{r.week ?? '—'}</td>
                   <td style={{ padding: '8px 10px' }}>
-                    {r.cancelled ? <Badge bg="var(--c-h0-70-95)" fg="var(--c-h0-65-45)">{t('cancelled')}</Badge>
-                      : r.is_current ? <Badge bg="var(--c-h150-50-93)" fg="var(--c-h150-60-30)">{t('current')}</Badge>
-                      : <Badge bg="var(--c-h220-16-92)" fg="var(--c-h220-10-45)">{t('past')}</Badge>}
+                    {vesselStatusBadge(r, t)}
                   </td>
                   <td style={{ padding: '8px 10px', whiteSpace: 'nowrap', textAlign: 'right' }}>
                     <button className="ktc-link" onClick={() => startEdit(r)}>{t('Edit')}</button>{' · '}

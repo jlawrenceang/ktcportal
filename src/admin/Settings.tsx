@@ -1,10 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import AdminShell from './AdminShell'
 import SystemHealth from './SystemHealth'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import { hasAdminAccess, type Broker } from '../lib/types'
-import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
+import { passwordIssue, PASSWORD_HINT, prepareUpload } from '../lib/validation'
 import { useT } from '../lib/i18n'
 import LangToggle from '../components/LangToggle'
 import TestPushCard from './TestPushCard'
@@ -128,6 +128,12 @@ export default function Settings() {
   const [payBusy, setPayBusy] = useState(false)
   const [payMsg, setPayMsg] = useState<string | null>(null)
   const [qrFile, setQrFile] = useState<File | null>(null)
+  type TariffFile = { name: string; created_at?: string | null; updated_at?: string | null }
+  const [tariffFiles, setTariffFiles] = useState<TariffFile[]>([])
+  const [tariffUpload, setTariffUpload] = useState<File[]>([])
+  const [tariffBusy, setTariffBusy] = useState(false)
+  const [tariffMsg, setTariffMsg] = useState<string | null>(null)
+  const tariffRef = useRef<HTMLInputElement>(null)
 
   // Free storage days per shipping line — drives the vessel schedule's computed
   // Last Free Day (admin-only, migration 0058).
@@ -283,6 +289,48 @@ export default function Settings() {
     setPayBusy(false)
     setQrFile(null)
     setPayMsg(error ? error.message : t('✓ Payment details saved.'))
+  }
+
+  async function loadTariffFiles() {
+    const { data, error } = await supabase.storage.from('tariff-images').list('', {
+      limit: 20,
+      sortBy: { column: 'created_at', order: 'desc' },
+    })
+    if (error) { setTariffMsg(error.message); return }
+    setTariffFiles(((data ?? []) as TariffFile[]).filter((f) => !f.name.startsWith('.')).slice(0, 5))
+  }
+
+  useEffect(() => { void loadTariffFiles() }, [])
+
+  async function uploadTariffs() {
+    if (tariffUpload.length === 0) { setTariffMsg(t('Choose one or more tariff images first.')); return }
+    if (tariffFiles.length + tariffUpload.length > 5) { setTariffMsg(t('Keep the published tariff to 5 images or fewer.')); return }
+    setTariffBusy(true); setTariffMsg(null)
+    for (let i = 0; i < tariffUpload.length; i++) {
+      const raw = tariffUpload[i]
+      if (!raw.type.startsWith('image/')) { setTariffBusy(false); setTariffMsg(t('Tariff uploads must be image files.')); return }
+      const prepared = await prepareUpload(raw)
+      if ('error' in prepared) { setTariffBusy(false); setTariffMsg(t(prepared.error)); return }
+      if (!prepared.file.type.startsWith('image/')) { setTariffBusy(false); setTariffMsg(t('Tariff uploads must be image files.')); return }
+      const safeName = prepared.file.name.replace(/[^A-Za-z0-9._-]/g, '_')
+      const path = `${Date.now()}-${i}-${safeName}`
+      const { error } = await supabase.storage.from('tariff-images').upload(path, prepared.file, { upsert: false, contentType: prepared.file.type })
+      if (error) { setTariffBusy(false); setTariffMsg(error.message); return }
+    }
+    setTariffBusy(false)
+    setTariffUpload([])
+    if (tariffRef.current) tariffRef.current.value = ''
+    setTariffMsg(t('✓ Published tariff images updated.'))
+    await loadTariffFiles()
+  }
+
+  async function deleteTariff(name: string) {
+    setTariffBusy(true); setTariffMsg(null)
+    const { error } = await supabase.storage.from('tariff-images').remove([name])
+    setTariffBusy(false)
+    if (error) { setTariffMsg(error.message); return }
+    setTariffMsg(t('Tariff image removed.'))
+    await loadTariffFiles()
   }
 
   // Roles & gates (owner-only editor; backend enforced via has_permission()).
@@ -1130,6 +1178,47 @@ export default function Settings() {
             {termBusy ? t('Saving…') : t('Save terminal rates')}
           </button>
           {termMsg && <span className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600 }}>{termMsg}</span>}
+        </div>
+      </div>
+
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'pricing' ? undefined : 'none' }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Published tariff images')}</h2>
+        <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
+          {t('Upload up to 5 readable tariff images. Customers open these from the Rate Calculator with “View Published Tariff”. Images are limited to 4 MB each.')}
+        </p>
+        <div style={{ display: 'grid', gap: 10, maxWidth: 640 }}>
+          {tariffFiles.length > 0 ? (
+            <div style={{ display: 'grid', gap: 8 }}>
+              {tariffFiles.map((f, i) => (
+                <div key={f.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                  <span className="ktc-label" style={{ width: 24, textAlign: 'center', fontWeight: 700 }}>{i + 1}</span>
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                  <button type="button" className="ktc-link" style={{ fontSize: 12, color: 'var(--acc-2)' }} disabled={tariffBusy} onClick={() => void deleteTariff(f.name)}>
+                    {t('Remove')}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="ktc-label" style={{ margin: 0, fontSize: 13 }}>{t('No published tariff images yet.')}</p>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <input
+              ref={tariffRef}
+              className="ktc-input"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              disabled={tariffBusy || tariffFiles.length >= 5}
+              onChange={(e) => setTariffUpload(Array.from(e.target.files ?? []).slice(0, Math.max(0, 5 - tariffFiles.length)))}
+              style={{ flex: '1 1 260px', padding: '10px 13px' }}
+            />
+            <button type="button" className="ktc-btn ktc-btn--sm" disabled={tariffBusy || tariffUpload.length === 0 || tariffFiles.length >= 5} onClick={() => void uploadTariffs()}>
+              {tariffBusy ? t('Saving…') : t('Upload')}
+            </button>
+          </div>
+          {tariffFiles.length >= 5 && <span className="ktc-label" style={{ fontSize: 12 }}>{t('Maximum of 5 tariff images reached. Remove one before uploading another.')}</span>}
+          {tariffMsg && <span className="ktc-label" style={{ fontSize: 13, color: tariffMsg.includes('✓') ? 'var(--acc-2)' : undefined, fontWeight: 600 }}>{tariffMsg}</span>}
         </div>
       </div>
 

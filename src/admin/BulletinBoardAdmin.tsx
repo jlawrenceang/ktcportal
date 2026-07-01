@@ -21,6 +21,8 @@ type Bulletin = {
   sort_order: number
   publish_at: string
   expires_at: string | null
+  archived_at: string | null
+  archived_by: string | null
   created_at: string
   attachment_path: string | null
   attachment_name: string | null
@@ -64,7 +66,7 @@ export default function BulletinBoardAdmin() {
 
   async function load() {
     const { data } = await supabase.from('bulletin_posts')
-      .select('id, title, body, is_published, pinned, sort_order, publish_at, expires_at, created_at, attachment_path, attachment_name')
+      .select('id, title, body, is_published, pinned, sort_order, publish_at, expires_at, archived_at, archived_by, created_at, attachment_path, attachment_name')
       .order('pinned', { ascending: false }).order('sort_order', { ascending: true }).order('created_at', { ascending: false })
     setPosts((data ?? []) as Bulletin[])
   }
@@ -156,11 +158,12 @@ export default function BulletinBoardAdmin() {
   // upsert would fail the insert path — write the changed rows with .update()
   // instead. Lists are short, so renumbering by position is cheap + robust.
   async function reorder(idx: number, dir: -1 | 1) {
+    const active = posts.filter((p) => !p.archived_at)
     const j = idx + dir
-    if (j < 0 || j >= posts.length) return
-    const next = [...posts]
+    if (j < 0 || j >= active.length) return
+    const next = [...active]
     ;[next[idx], next[j]] = [next[j], next[idx]]
-    setPosts(next) // optimistic
+    setPosts([...next, ...posts.filter((p) => p.archived_at)]) // optimistic
     const updatedAt = new Date().toISOString()
     for (let i = 0; i < next.length; i++) {
       if (next[i].sort_order !== i) {
@@ -168,6 +171,25 @@ export default function BulletinBoardAdmin() {
         if (e) { setError(e.message); break }
       }
     }
+    await load()
+  }
+
+  async function archivePost(b: Bulletin) {
+    const { error: e } = await supabase.from('bulletin_posts')
+      .update({ archived_at: new Date().toISOString(), archived_by: broker?.user_id ?? null, updated_at: new Date().toISOString() })
+      .eq('id', b.id)
+    if (e) { setError(e.message); return }
+    if (editing?.id === b.id) resetComposer()
+    setMsg(t('Archived.'))
+    await load()
+  }
+
+  async function restorePost(b: Bulletin) {
+    const { error: e } = await supabase.from('bulletin_posts')
+      .update({ archived_at: null, archived_by: null, updated_at: new Date().toISOString() })
+      .eq('id', b.id)
+    if (e) { setError(e.message); return }
+    setMsg(t('Restored to active posts.'))
     await load()
   }
 
@@ -194,6 +216,8 @@ export default function BulletinBoardAdmin() {
   }
 
   const now = Date.now()
+  const activePosts = posts.filter((b) => !b.archived_at)
+  const archivedPosts = posts.filter((b) => b.archived_at)
 
   return (
     <AdminShell>
@@ -278,9 +302,9 @@ export default function BulletinBoardAdmin() {
         </div>
 
         {/* Existing posts */}
-        {posts.length > 0 && (
+        {activePosts.length > 0 && (
           <div style={{ display: 'grid', gap: 8, marginTop: 18, maxWidth: 600 }}>
-            {posts.map((b, i) => {
+            {activePosts.map((b, i) => {
               const scheduled = new Date(b.publish_at).getTime() > now
               const expired = b.expires_at != null && new Date(b.expires_at).getTime() <= now
               return (
@@ -290,8 +314,8 @@ export default function BulletinBoardAdmin() {
                   <button type="button" className="ktc-link" disabled={i === 0} title={t('Move up')} aria-label={t('Move up')}
                     style={{ fontSize: 11, lineHeight: 1, padding: 0, opacity: i === 0 ? 0.3 : 1, cursor: i === 0 ? 'default' : 'pointer' }}
                     onClick={() => void reorder(i, -1)}>▲</button>
-                  <button type="button" className="ktc-link" disabled={i === posts.length - 1} title={t('Move down')} aria-label={t('Move down')}
-                    style={{ fontSize: 11, lineHeight: 1, padding: 0, opacity: i === posts.length - 1 ? 0.3 : 1, cursor: i === posts.length - 1 ? 'default' : 'pointer' }}
+                  <button type="button" className="ktc-link" disabled={i === activePosts.length - 1} title={t('Move down')} aria-label={t('Move down')}
+                    style={{ fontSize: 11, lineHeight: 1, padding: 0, opacity: i === activePosts.length - 1 ? 0.3 : 1, cursor: i === activePosts.length - 1 ? 'default' : 'pointer' }}
                     onClick={() => void reorder(i, 1)}>▼</button>
                 </span>
                 <span style={{ flex: '1 1 auto', minWidth: 0 }}>
@@ -311,10 +335,38 @@ export default function BulletinBoardAdmin() {
                 <button type="button" className="ktc-link" style={{ fontSize: 12 }} onClick={() => startEdit(b)}>{t('Edit')}</button>
                 <button type="button" className="ktc-link" style={{ fontSize: 12 }} onClick={() => void patchPost(b, { pinned: !b.pinned })}>{b.pinned ? t('Unpin') : t('Pin')}</button>
                 <button type="button" className="ktc-link" style={{ fontSize: 12 }} onClick={() => void patchPost(b, { is_published: !b.is_published })}>{b.is_published ? t('Hide') : t('Publish')}</button>
+                <button type="button" className="ktc-link" style={{ fontSize: 12 }} onClick={() => void archivePost(b)}>{t('Archive')}</button>
                 <button type="button" className="ktc-link" style={{ fontSize: 12, color: 'var(--acc-2)' }} onClick={() => void delPost(b)}>{t('Delete')}</button>
               </div>
               )
             })}
+          </div>
+        )}
+
+        {archivedPosts.length > 0 && (
+          <div style={{ marginTop: 22, maxWidth: 600 }}>
+            <h2 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700 }}>{t('Archive')}</h2>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {archivedPosts.map((b) => (
+                <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'var(--c-w30)', border: '1px solid var(--glass-brd)', opacity: 0.82 }}>
+                  <span style={{ flex: '1 1 auto', minWidth: 0 }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.title}</span>
+                    <span className="ktc-label" style={{ fontSize: 11.5, display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      {t('Archived')} · {b.archived_at ? new Date(b.archived_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                      {b.attachment_path && (
+                        <button type="button" className="ktc-link" style={{ fontSize: 11.5, display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                          onClick={() => void openFromStorage('bulletin-files', b.attachment_path, b.attachment_name || t('Attachment'))}>
+                          <PaperclipIcon size={13} /> {t('View file')}
+                        </button>
+                      )}
+                    </span>
+                  </span>
+                  <button type="button" className="ktc-link" style={{ fontSize: 12 }} onClick={() => startEdit(b)}>{t('Edit')}</button>
+                  <button type="button" className="ktc-link" style={{ fontSize: 12 }} onClick={() => void restorePost(b)}>{t('Restore')}</button>
+                  <button type="button" className="ktc-link" style={{ fontSize: 12, color: 'var(--acc-2)' }} onClick={() => void delPost(b)}>{t('Delete')}</button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

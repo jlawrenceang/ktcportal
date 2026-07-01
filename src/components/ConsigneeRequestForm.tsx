@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { prepareUpload } from '../lib/validation'
@@ -126,6 +127,7 @@ export default function ConsigneeRequestForm() {
               {t('Submitted: {code} – {name}. It’s now pending KTC approval — you can file with it once it’s approved.', { code: created.code, name: created.name })}
             </div>
             <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Link className="ktc-btn" to="/requests" onClick={() => setOpen(false)} style={{ width: 'auto', padding: '9px 16px', textDecoration: 'none' }}>{t('Track in My Requests')}</Link>
               <a className="ktc-btn-secondary" href={filledCisUrl} target="_blank" rel="noopener" style={{ width: 'auto', padding: '9px 16px', textDecoration: 'none' }}>{t('Print filled CIS')}</a>
               <a className="ktc-link" href={cisPrintUrl({ mode: 'new' })} target="_blank" rel="noopener" style={{ fontSize: 13 }}>{t('Print blank CIS')}</a>
             </div>

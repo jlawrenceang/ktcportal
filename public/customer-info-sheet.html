@@ -43,6 +43,7 @@
          text-transform: uppercase; color: #111; }
   .fill { width: 100%; border: 0; outline: 0; background: transparent; font: inherit;
           font-size: 11px; padding: 4px 0 0; color: #111; }
+  .print-fill { display: none; font-size: 11px; padding: 4px 0 0; min-height: 16px; color: #111; white-space: pre-wrap; word-break: break-word; }
   .colhead { text-align: center; font-size: 9px; font-weight: 800; text-transform: uppercase;
              padding: 4px 4px; }
   .rowcell { padding: 0; }
@@ -75,6 +76,8 @@
     html, body { background: #fff; }
     .no-print { display: none !important; }
     .sheet { width: auto; min-height: auto; margin: 0; padding: 0; box-shadow: none; }
+    .fill, .rowcell input, .sig .write { display: none !important; }
+    .print-fill { display: block !important; }
     @page { size: letter portrait; margin: 0.5in; }
   }
 </style>
@@ -184,14 +187,31 @@
     }
   })();
 
-  // Reflect what the user types into the DOM so the FILLED form reliably renders
-  // in Print / Save-as-PDF (some print engines ignore live input values otherwise).
+  function ensurePrintMirror(input) {
+    var next = input.nextElementSibling;
+    if (!next || !next.classList || !next.classList.contains('print-fill')) {
+      next = document.createElement('div');
+      next.className = 'print-fill';
+      input.insertAdjacentElement('afterend', next);
+    }
+    next.textContent = input.type === 'checkbox' ? (input.checked ? '✓' : '') : input.value;
+  }
+  function syncPrintMirrors() {
+    var inputs = document.querySelectorAll('input');
+    for (var i = 0; i < inputs.length; i++) ensurePrintMirror(inputs[i]);
+  }
+  syncPrintMirrors();
+
+  // Reflect what the user types into the DOM and into print-only text mirrors so
+  // the FILLED form reliably renders in Print / Save-as-PDF.
   document.addEventListener('input', function (e) {
     var el = e.target;
     if (el.tagName !== 'INPUT') return;
     if (el.type === 'checkbox') { if (el.checked) el.setAttribute('checked', 'checked'); else el.removeAttribute('checked'); }
     else el.setAttribute('value', el.value);
+    ensurePrintMirror(el);
   });
+  window.addEventListener('beforeprint', syncPrintMirrors);
 </script>
 
 </body>

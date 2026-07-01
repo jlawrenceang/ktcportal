@@ -10,6 +10,7 @@ import { calculatorSteps } from '../components/WelcomeTour'
 import { useT } from '../lib/i18n'
 import { SHIPPING_LINES, normLine, tradeLabel, tradeAction, type Origin, type Trade } from '../lib/shippingLines'
 import OriginPill from '../components/OriginPill'
+import Modal from '../components/Modal'
 
 // Rate calculator — a guided estimate. Flow (redesigned 2026-06-22):
 //   1. Shipment details — shipping line, vessel & voyage, trade route (derived),
@@ -30,6 +31,7 @@ type Cell = { size: Size; fill: Fill; kind: Kind; qty: number }
 type Rule = { shipping_line: string; service: string; trade: string | null; action: string; value: number }
 type Svc = { service: string; rate: number | null; unit: string; vatable: boolean }
 type StorageTier = { trade: string; size: string; day_from: number; day_to: number | null; rate: number | null }
+type TariffImage = { name: string; url: string }
 
 const REEFER_KEY = '__reefer__'
 const emptyCell = (): Cell => ({ size: '20', fill: 'full', kind: 'dry', qty: 1 })
@@ -85,6 +87,10 @@ export default function Calculator() {
   const [vessels, setVessels] = useState<VesselOpt[]>([])
   const [rules, setRules] = useState<Rule[]>([])
   const [storageTiers, setStorageTiers] = useState<StorageTier[]>([])
+  const [tariffOpen, setTariffOpen] = useState(false)
+  const [tariffLoading, setTariffLoading] = useState(false)
+  const [tariffError, setTariffError] = useState<string | null>(null)
+  const [tariffImages, setTariffImages] = useState<TariffImage[]>([])
 
   // Inputs
   const [line, setLine] = useState('')
@@ -291,6 +297,26 @@ export default function Calculator() {
     requestAnimationFrame(() => estimateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
 
+  async function openTariff() {
+    setTariffOpen(true)
+    setTariffLoading(true)
+    setTariffError(null)
+    const { data, error } = await supabase.storage.from('tariff-images').list('', {
+      limit: 5,
+      sortBy: { column: 'created_at', order: 'desc' },
+    })
+    if (error) { setTariffImages([]); setTariffError(error.message); setTariffLoading(false); return }
+    const files = ((data ?? []) as { name: string }[]).filter((f) => !f.name.startsWith('.')).slice(0, 5)
+    const signed: TariffImage[] = []
+    for (const file of files) {
+      const { data: sig, error: signErr } = await supabase.storage.from('tariff-images').createSignedUrl(file.name, 300)
+      if (signErr || !sig?.signedUrl) { setTariffError(signErr?.message ?? t('Could not open one of the tariff images.')); continue }
+      signed.push({ name: file.name, url: sig.signedUrl })
+    }
+    setTariffImages(signed)
+    setTariffLoading(false)
+  }
+
   // ---- cell + ancillary editing ----
   function setCell(i: number, patch: Partial<Cell>) { setCells((cs) => cs.map((c, idx) => (idx === i ? { ...c, ...patch } : c))) }
   function addCell() { setCells((cs) => [...cs, { size: '20', fill: 'full', kind: 'dry', qty: 1 }]) }
@@ -365,9 +391,19 @@ export default function Calculator() {
         <p className="ktc-sub" style={{ maxWidth: 560, fontSize: 12.5 }}>
           {t('Build your estimate, then tap Generate. This is a guide — the official amount is confirmed on the Service Invoice at the KTC office.')}
         </p>
+        <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void openTariff()} style={{ marginTop: 10 }}>
+          {t('View Published Tariff')}
+        </button>
       </div>
 
-      <div className="ktc-calc-layout">
+      <div
+        className="ktc-calc-layout"
+        onContextMenu={(e) => e.preventDefault()}
+        onCopy={(e) => e.preventDefault()}
+      >
+        <div className="ktc-confidential-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, gridColumn: '1 / -1', marginBottom: -2 }}>
+          {t('Confidential — rate details are for viewing only. Export only the final estimate when needed.')}
+        </div>
         <div className="ktc-glass" style={{ padding: 0 }} data-tour="calc-inputs">
           {/* 1 — Shipment details (line + vessel + route + shipment + pickup) */}
           <div className="ktc-calc-section">
@@ -554,6 +590,34 @@ export default function Calculator() {
           )}
         </div>
       </div>
+
+      <Modal open={tariffOpen} onClose={() => setTariffOpen(false)} title={t('Published Tariff')} maxWidth={760}>
+        {tariffLoading ? (
+          <div style={{ display: 'grid', gap: 10 }} aria-label={t('Loading tariff images')}>
+            {[160, 220].map((h, i) => <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 10 }} />)}
+          </div>
+        ) : tariffError ? (
+          <div style={{ display: 'grid', gap: 10 }}>
+            <p className="ktc-error" style={{ margin: 0 }}>{tariffError}</p>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void openTariff()}>{t('Retry')}</button>
+          </div>
+        ) : tariffImages.length === 0 ? (
+          <p className="ktc-label" style={{ margin: 0 }}>{t('No published tariff images are available yet.')}</p>
+        ) : (
+          <div style={{ display: 'grid', gap: 14 }}>
+            {tariffImages.map((img, i) => (
+              <figure key={img.name} style={{ margin: 0, display: 'grid', gap: 6 }}>
+                <img
+                  src={img.url}
+                  alt={t('Published tariff image {n}', { n: i + 1 })}
+                  style={{ width: '100%', maxHeight: '72vh', objectFit: 'contain', background: '#fff', borderRadius: 10, border: '1px solid var(--glass-brd)' }}
+                />
+                <figcaption className="ktc-label" style={{ fontSize: 11.5 }}>{t('Image {n} of {total}', { n: i + 1, total: tariffImages.length })}</figcaption>
+              </figure>
+            ))}
+          </div>
+        )}
+      </Modal>
 
       {/* Print-only estimate slip (hidden on screen) — captured by Print / Save as PDF. */}
       <style>{CALC_PRINT_CSS}</style>

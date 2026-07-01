@@ -33,6 +33,7 @@ export default function BulletinBoard() {
     const now = new Date().toISOString()
     void supabase.from('bulletin_posts').select('id, title, body, pinned, created_at, attachment_path, attachment_name')
       .eq('is_published', true)
+      .is('archived_at', null)
       .lte('publish_at', now)
       .or(`expires_at.is.null,expires_at.gt.${now}`)
       .order('pinned', { ascending: false })

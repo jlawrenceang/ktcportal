@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Shell from '../components/Shell'
 import Notice from '../components/Notice'
+import ProtectedDoc from '../components/ProtectedDoc'
 import { supabase } from '../lib/supabase'
 import { MonthCalendar, Badge, fmt, type VesselRow } from '../components/VesselCalendar'
 import { usePageTour } from '../components/TourProvider'
@@ -146,46 +147,49 @@ export default function Vessels() {
       {loading ? <p className="ktc-label">{t('Loading…')}</p>
         : loadError ? (
           <Notice tone="error" title={t("Couldn't load — tap Retry")} action={<button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => void load()}>{t('Retry')}</button>}>{loadError}</Notice>
-        )
-        : view === 'calendar' ? <MonthCalendar rows={rows.filter((r) => !r.cancelled)} />
-        : view === 'cards' ? (
-          visible.length === 0
-            ? <div className="ktc-glass ktc-glass--flat" style={{ padding: 18, textAlign: 'center', color: 'hsl(var(--ink-2))' }}>{emptyMsg}</div>
-            : <VesselCards rows={visible} />
         ) : (
-          <div className="ktc-glass ktc-glass--flat" style={{ padding: 8 }}>
-            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: 8 }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 680 }}>
-                <thead>
-                  <tr style={{ textAlign: 'left', color: 'hsl(var(--ink-2))' }}>
-                    {['Visit', 'Vessel', 'Voyage', 'Line', 'Arrival', 'Finish Disch.', 'Last Free Day', 'Berth', ''].map((h, i) => (
-                      <th key={i} style={{ padding: '9px 10px', borderBottom: '1px solid var(--glass-brd)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h ? t(h) : ''}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {visible.map((r) => (
-                    <tr key={r.id} style={{ opacity: r.cancelled ? 0.5 : 1 }}>
-                      <td style={{ padding: '8px 10px', fontWeight: 600, whiteSpace: 'nowrap' }}>{r.vessel_visit}</td>
-                      <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{r.vessel_name}</td>
-                      <td style={{ padding: '8px 10px' }}>{r.voyage_number}</td>
-                      <td style={{ padding: '8px 10px' }}>{r.shipping_line ?? '—'}</td>
-                      <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{fmt(r.actual_arrival)}</td>
-                      <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{fmt(r.finish_discharging)}</td>
-                      <td style={{ padding: '8px 10px', whiteSpace: 'nowrap', fontWeight: 600 }}>
-                        {r.last_free_day ? fmt(r.last_free_day) : <span style={{ color: 'hsl(var(--ink-2))', fontWeight: 400 }}>—</span>}
-                      </td>
-                      <td style={{ padding: '8px 10px' }}>{r.berth ?? '—'}</td>
-                      <td style={{ padding: '8px 10px' }}>{statusBadge(r, t)}</td>
-                    </tr>
-                  ))}
-                  {visible.length === 0 && (
-                    <tr><td colSpan={9} style={{ padding: 18, textAlign: 'center', color: 'hsl(var(--ink-2))' }}>{emptyMsg}</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <ProtectedDoc>
+            {view === 'calendar' ? <MonthCalendar rows={visible} />
+              : view === 'cards' ? (
+                visible.length === 0
+                  ? <div className="ktc-glass ktc-glass--flat" style={{ padding: 18, textAlign: 'center', color: 'hsl(var(--ink-2))' }}>{emptyMsg}</div>
+                  : <VesselCards rows={visible} />
+              ) : (
+                <div className="ktc-glass ktc-glass--flat" style={{ padding: 8 }}>
+                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: 8 }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 680 }}>
+                      <thead>
+                        <tr style={{ textAlign: 'left', color: 'hsl(var(--ink-2))' }}>
+                          {['Visit', 'Vessel', 'Voyage', 'Line', 'Arrival', 'Finish Disch.', 'Last Free Day', 'Berth', ''].map((h, i) => (
+                            <th key={i} style={{ padding: '9px 10px', borderBottom: '1px solid var(--glass-brd)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h ? t(h) : ''}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visible.map((r) => (
+                          <tr key={r.id} style={{ opacity: r.cancelled ? 0.5 : 1 }}>
+                            <td style={{ padding: '8px 10px', fontWeight: 600, whiteSpace: 'nowrap' }}>{r.vessel_visit}</td>
+                            <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{r.vessel_name}</td>
+                            <td style={{ padding: '8px 10px' }}>{r.voyage_number}</td>
+                            <td style={{ padding: '8px 10px' }}>{r.shipping_line ?? '—'}</td>
+                            <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{fmt(r.actual_arrival)}</td>
+                            <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{fmt(r.finish_discharging)}</td>
+                            <td style={{ padding: '8px 10px', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                              {r.last_free_day ? fmt(r.last_free_day) : <span style={{ color: 'hsl(var(--ink-2))', fontWeight: 400 }}>—</span>}
+                            </td>
+                            <td style={{ padding: '8px 10px' }}>{r.berth ?? '—'}</td>
+                            <td style={{ padding: '8px 10px' }}>{statusBadge(r, t)}</td>
+                          </tr>
+                        ))}
+                        {visible.length === 0 && (
+                          <tr><td colSpan={9} style={{ padding: 18, textAlign: 'center', color: 'hsl(var(--ink-2))' }}>{emptyMsg}</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+          </ProtectedDoc>
         )}
     </Shell>
   )
