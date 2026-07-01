@@ -10,8 +10,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import SessionSupersededOverlay from './components/SessionSupersededOverlay'
 import ServerBusyBanner from './components/ServerBusyBanner'
 import MfaChallenge from './components/MfaChallenge'
-import { supabase } from './lib/supabase'
 import RouteLoader from './components/RouteLoader'
+import { useMfaGate } from './lib/useMfaGate'
 import HeroSlideshow from './components/HeroSlideshow'
 import PublicShell from './components/PublicShell'
 import AuthRail from './components/AuthRail'
@@ -109,28 +109,49 @@ function RootGate() {
   return <Protected><RoleLanding /></Protected>
 }
 
-// Replays a gentle fade on each navigation. height:100% keeps the viewport-height
-// chain intact (the public Landing/Login center via minHeight:100%, and RouteLoader
-// fills the viewport) — without it, the inserted wrapper collapses to content height.
-// Opacity-only animation (see .ktc-route) — NO transform, so a page's fixed/sticky
-// chrome resolves against the viewport. We restart the animation by REFLOW, not a
-// React key: a key would remount the whole routed subtree and discard in-page state
-// on param-only navigation (e.g. /job-order/1/pay → /job-order/2/pay).
+// Stable height wrapper only. Route transition animation is handled by
+// RouteTransitionOverlay so routed content does not blink or remount.
 function RouteFade({ children }: { children: ReactNode }) {
-  const { pathname } = useLocation()
-  const ref = useRef<HTMLDivElement>(null)
+  return <div className="ktc-route" style={{ height: '100%' }}>{children}</div>
+}
+
+function RouteTransitionOverlay() {
+  const { pathname, search } = useLocation()
+  const previous = useRef<string | null>(null)
+  const [phase, setPhase] = useState<'hidden' | 'showing' | 'leaving'>('hidden')
+
   useEffect(() => {
-    // The shared public pages ("/", "/login", "/register") fade their own right column
-    // (PublicShell's .ktc-public-swap) — skip the app-level fade so the persistent card
-    // chrome doesn't re-fade on navigation between them.
-    if (pathname === '/' || pathname === '/login' || pathname === '/register') return
-    const el = ref.current
-    if (!el) return
-    el.classList.remove('ktc-route')
-    void el.offsetWidth // force reflow so the fade animation can replay
-    el.classList.add('ktc-route')
-  }, [pathname])
-  return <div ref={ref} className="ktc-route" style={{ height: '100%' }}>{children}</div>
+    const key = `${pathname}${search}`
+    if (previous.current === null) {
+      previous.current = key
+      return
+    }
+    if (previous.current === key) return
+    previous.current = key
+    setPhase('showing')
+    const leave = window.setTimeout(() => setPhase('leaving'), 1100)
+    const hide = window.setTimeout(() => setPhase('hidden'), 1300)
+    return () => {
+      window.clearTimeout(leave)
+      window.clearTimeout(hide)
+    }
+  }, [pathname, search])
+
+  if (phase === 'hidden') return null
+  return (
+    <div className={`ktc-route-transition ktc-route-transition--${phase}`} aria-hidden="true">
+      <RouteLoader />
+    </div>
+  )
+}
+
+function SuspenseFallback() {
+  const [show, setShow] = useState(false)
+  useEffect(() => {
+    const id = window.setTimeout(() => setShow(true), 220)
+    return () => window.clearTimeout(id)
+  }, [])
+  return show ? <RouteLoader /> : null
 }
 
 // Persistent terminal-photo backdrop for the public auth flow. Rendered ONCE at the
@@ -195,23 +216,15 @@ const MFA_BYPASS = new Set([
 function MfaGate({ children }: { children: ReactNode }) {
   const { session } = useAuth()
   const { pathname } = useLocation()
-  const [aal, setAal] = useState<{ current: string; next: string } | null>(null)
-  useEffect(() => {
-    if (!session) { setAal(null); return }
-    let active = true
-    void supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data }) => {
-      if (active) setAal({ current: data?.currentLevel ?? 'aal1', next: data?.nextLevel ?? 'aal1' })
-    })
-    return () => { active = false }
-  }, [session])
+  const mfa = useMfaGate(session)
 
   // Logged-out, or on a public/pre-auth path → never gate (login + public flow).
   if (!session || MFA_BYPASS.has(pathname) || pathname.startsWith('/verify/')) return <>{children}</>
   // Session present but the level isn't known yet → hold so the app can't flash first.
-  if (!aal) return <RouteLoader />
+  if (mfa.loading) return <RouteLoader />
   // MFA enrolled but not yet satisfied → render ONLY the challenge, nothing else.
-  if (aal.next === 'aal2' && aal.current !== 'aal2') {
-    return <MfaChallenge onVerified={() => setAal({ current: 'aal2', next: 'aal2' })} />
+  if (mfa.needsChallenge) {
+    return <MfaChallenge onVerified={mfa.markVerified} />
   }
   return <>{children}</>
 }
@@ -285,7 +298,8 @@ export default function App() {
         <SessionSupersededOverlay />
         <PublicBackdrop />
         <AppBackdrop />
-        <Suspense fallback={<RouteLoader />}>
+        <RouteTransitionOverlay />
+        <Suspense fallback={<SuspenseFallback />}>
         <RouteFade>
         <Routes>
           {/* Shared public shell: the landing ("/"), sign-in ("/login"), and create-account

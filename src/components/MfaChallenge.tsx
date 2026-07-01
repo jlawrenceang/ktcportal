@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { useT } from '../lib/i18n'
+import { trustCurrentMfaDevice } from '../lib/mfaTrust'
 import MfaRecoveryRedeem from './MfaRecoveryRedeem'
 
 // Shown after password sign-in when the account has a verified TOTP factor
@@ -15,6 +16,7 @@ export default function MfaChallenge({ onVerified }: { onVerified: () => void })
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [trustDevice, setTrustDevice] = useState(true)
 
   async function verifyCode() {
     if (busy || code.trim().length < 6) return
@@ -49,6 +51,9 @@ export default function MfaChallenge({ onVerified }: { onVerified: () => void })
     // gate once onVerified flips this account to aal2 — claim_session is
     // aal2-gated server-side, so a password alone still can't evict the
     // real session.
+    if (trustDevice) {
+      await trustCurrentMfaDevice().catch(() => undefined)
+    }
     setBusy(false)
     onVerified()
   }
@@ -81,6 +86,20 @@ export default function MfaChallenge({ onVerified }: { onVerified: () => void })
             autoFocus
             style={{ fontSize: 22, letterSpacing: '0.3em', textAlign: 'center', padding: '13px 16px' }}
           />
+          <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.45, color: 'hsl(var(--ink-2))' }}>
+            <input
+              type="checkbox"
+              checked={trustDevice}
+              onChange={(e) => setTrustDevice(e.target.checked)}
+              style={{ marginTop: 2 }}
+            />
+            <span>
+              {t('Trust this device for today')}
+              <span style={{ display: 'block', fontSize: 12, opacity: 0.78 }}>
+                {t('You will not be asked for another code on this browser until the trust window expires.')}
+              </span>
+            </span>
+          </label>
           {error && <div role="alert" style={{ color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
           <button className="ktc-btn" type="submit" disabled={busy || code.trim().length < 6}>
             {busy ? t('Checking…') : t('Verify')}

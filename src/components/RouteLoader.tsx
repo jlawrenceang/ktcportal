@@ -9,6 +9,7 @@ export default function RouteLoader() {
   return (
     <div className="ktc-loader" role="status" aria-live="polite">
       <div className="ktc-loader-logo" aria-hidden="true"><span className="ktc-loader-logo-fill" /></div>
+      <div className="ktc-loader-bar" aria-hidden="true"><span /></div>
       <span className="ktc-loader-text ktc-label">{t('Loading…')}</span>
     </div>
   )

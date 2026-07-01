@@ -7,6 +7,8 @@ import SessionConflictModal from './SessionConflictModal'
 import FinishRegistration from './FinishRegistration'
 import ReConsent from './ReConsent'
 import { AGREEMENT_VERSION } from '../content/legal'
+import { useMfaGate } from '../lib/useMfaGate'
+import RouteLoader from './RouteLoader'
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const { session, loading, sessionClaim, runSessionClaim } = useAuth()
@@ -14,15 +16,7 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   // MFA gate: an account with a verified TOTP factor must pass the challenge
   // (aal2) before the portal renders. Backend-enforced too — is_admin() /
   // has_permission() return false at aal1 for enrolled accounts.
-  const [aal, setAal] = useState<{ current: string; next: string } | null>(null)
-  useEffect(() => {
-    if (!session) { setAal(null); return }
-    let active = true
-    void supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data }) => {
-      if (active) setAal({ current: data?.currentLevel ?? 'aal1', next: data?.nextLevel ?? 'aal1' })
-    })
-    return () => { active = false }
-  }, [session])
+  const mfa = useMfaGate(session)
 
   // Single-session gate: once the session is fully authenticated (past the
   // email + MFA gates), run the claim check exactly once. It either claims
@@ -30,7 +24,7 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const sessionUser = session?.user
   const isStaffEarly = !!sessionUser?.email?.endsWith('@ktc-staff.local')
   const emailOk = !!(sessionUser?.email_confirmed_at || sessionUser?.confirmed_at)
-  const aalReady = !!aal && !(aal.next === 'aal2' && aal.current !== 'aal2')
+  const aalReady = !mfa.loading && !mfa.needsChallenge
   const fullyAuthed = !!session && (isStaffEarly || emailOk) && aalReady
   useEffect(() => {
     if (fullyAuthed) runSessionClaim()
@@ -69,23 +63,15 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   }, [session])
 
   if (loading) {
-    return (
-      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-        <span className="ktc-label">Loading…</span>
-      </div>
-    )
+    return <RouteLoader />
   }
   if (!session) return <Navigate to="/login" replace />
 
-  if (!aal) {
-    return (
-      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-        <span className="ktc-label">Loading…</span>
-      </div>
-    )
+  if (mfa.loading) {
+    return <RouteLoader />
   }
-  if (aal.next === 'aal2' && aal.current !== 'aal2') {
-    return <MfaChallenge onVerified={() => setAal({ current: 'aal2', next: 'aal2' })} />
+  if (mfa.needsChallenge) {
+    return <MfaChallenge onVerified={mfa.markVerified} />
   }
 
   // Single-session gate: another device is live → ask before evicting.
@@ -93,20 +79,12 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   // 'idle' / 'checking' → the claim check is in flight; hold the portal back a
   // beat so it can't flash before a possible conflict prompt.
   if (sessionClaim !== 'resolved') {
-    return (
-      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-        <span className="ktc-label">Loading…</span>
-      </div>
-    )
+    return <RouteLoader />
   }
 
   // Google sign-ups: hold for the consent check, then collect agreement + contact.
   if (isOauthUser && oauthReg === 'unknown') {
-    return (
-      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-        <span className="ktc-label">Loading…</span>
-      </div>
-    )
+    return <RouteLoader />
   }
   if (isOauthUser && oauthReg === 'needed') {
     return <FinishRegistration onDone={() => { setOauthReg('done'); setConsent('ok') }} />
@@ -114,11 +92,7 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
 
   // Re-consent gate (customers only): hold until known, block on an agreement-version mismatch.
   if (consent === 'unknown') {
-    return (
-      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-        <span className="ktc-label">Loading…</span>
-      </div>
-    )
+    return <RouteLoader />
   }
   if (consent === 'needed') return <ReConsent onDone={() => setConsent('ok')} />
 

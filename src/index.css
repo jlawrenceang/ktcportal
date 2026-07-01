@@ -972,7 +972,7 @@
     background: rgba(15, 18, 30, 0.42);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
-    animation: ktc-fade-in var(--dur-fast) ease;
+    animation: ktc-menu-backdrop-in 0.18s ease-out both;
   }
   .ktc-menusheet {
     width: 100%;
@@ -987,10 +987,18 @@
     background: var(--c-solid);
     border: 1px solid var(--glass-brd);
     box-shadow: var(--shadow-lg), var(--edge);
-    animation: ktc-rise var(--dur) var(--ease-spring);
+    transform: translateZ(0);
+    will-change: opacity, transform;
+    animation: ktc-menu-sheet-in 0.2s ease-out both;
   }
   .ktc-menusheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .ktc-menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .ktc-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: minmax(82px, auto);
+    gap: 8px;
+    contain: layout paint;
+  }
   .ktc-menu-tile {
     position: relative;
     display: flex;
@@ -1011,6 +1019,7 @@
   }
   .ktc-menu-tile:hover { background: rgb(var(--acc-rgb) / 0.10); }
   /* The 2-up Orders popup keeps shorter tiles (square would be oversized). */
+  .ktc-menu-grid--orders { grid-auto-rows: minmax(92px, auto); }
   .ktc-menu-grid--orders .ktc-menu-tile { aspect-ratio: auto; min-height: 92px; padding: 16px 8px; }
   .ktc-menu-tile-icon {
     width: 36px; height: 36px;
@@ -1020,6 +1029,14 @@
     color: var(--acc);
   }
   .ktc-menu-tile-label { font-size: 12px; font-weight: 600; text-align: center; line-height: 1.3; }
+  @keyframes ktc-menu-backdrop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes ktc-menu-sheet-in {
+    from { opacity: 0; transform: translate3d(0, 10px, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
   /* "Needs attention" count pill on a Menu grid tile (top-right corner). */
   .ktc-menu-tile-badge {
     position: absolute;
@@ -1353,21 +1370,40 @@
     50% { opacity: 1; transform: scale(1.035); }
   }
 
-  /* ---- Page transition — a gentle fade-in on each route change ----
-     Restarted per navigation by RouteFade in App.tsx (via reflow, not a React
-     key) so a fresh enter animation fires. OPACITY ONLY — a transform here would make the page's fixed /
-     sticky chrome (bottom tab bar, modals) resolve against this wrapper instead
-     of the viewport. The "slide" comes from each page's own .ktc-rise /
-     .ktc-stagger content reveal, which this fade ties together. */
-  .ktc-route { animation: ktc-route-in var(--dur) var(--ease-spring) both; }
-  @keyframes ktc-route-in {
+  /* ---- Page transition overlay ---- */
+  .ktc-route { min-height: 100%; }
+  .ktc-route-transition {
+    position: fixed;
+    inset: 0;
+    z-index: 2147482500;
+    display: grid;
+    place-items: center;
+    pointer-events: auto;
+    background:
+      radial-gradient(circle at 50% 42%, rgb(var(--acc-rgb) / 0.12), transparent 34%),
+      color-mix(in srgb, var(--c-bg) 86%, transparent);
+    -webkit-backdrop-filter: blur(10px) saturate(1.08);
+    backdrop-filter: blur(10px) saturate(1.08);
+  }
+  .ktc-route-transition .ktc-loader {
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+  }
+  .ktc-route-transition--showing { animation: ktc-route-transition-in 0.18s ease-out both; }
+  .ktc-route-transition--leaving { animation: ktc-route-transition-out 0.2s ease-in both; }
+  @keyframes ktc-route-transition-in {
     from { opacity: 0; }
     to { opacity: 1; }
+  }
+  @keyframes ktc-route-transition-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .ktc-loader-logo-fill { animation: none; transform: scaleY(0.55); }
-    .ktc-route { animation: none; }
+    .ktc-route-transition { animation: none; }
   }
 }
 
