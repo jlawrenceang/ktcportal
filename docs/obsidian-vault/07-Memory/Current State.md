@@ -8,6 +8,12 @@ last_updated: 2026-07-02
 
 # 📌 Current State (Runtime-Aligned)
 
+## 2026-07-02 — Pre-go-live battery: release double-collection seam FIXED (v2.0.15, migration 0239)
+
+**`APP_VERSION` = `v2.0.15`; migration `0239` applied + verified on prod + sandbox.** The pre-go-live app-test battery's billing-integrity pass found the release/pull-out lane could **double-collect** — the shadow `charge_type='release'` dual-write (0215) was independently collectable via the cashier Payment Order path alongside the authoritative release desk. Fixed with a BEFORE-UPDATE guard trigger on `charges` (`0239`) blocking release-charge settlement via the charge path + a frontend hide; release stays settled only at the release desk. Jarvis-verified SAFE; **prod reconciliation clean (0 non-pristine release charges — no historical double-collection).** JO money spine independently verified SOUND. Full record: `docs/audits/2026-07-02-prelaunch-battery.md`.
+
+**Battery status:** e2e read-only 184/184 ✅ · Jarvis/security ✅ · domain/billing-integrity ✅ · UX+a11y **80/100** (punch-list OPEN) · load PASS (read path 0 err @ 50 concurrent). Sandbox brought current + seeded with 7 test accounts (`KtcSandbox2026!`). **Remaining:** authenticated e2e/roast (now unblocked), sandbox break-test, ST08 side-by-side.
+
 ## 2026-07-02 — Review LOW batch shipped: email rate-limit/anti-enum + entry-number + upload UX (v2.0.14, migration 0238)
 
 **`APP_VERSION` = `v2.0.14`; migration `0238` applied + verified on prod.** Closes the LOW findings (CX-10/11/12/13) from the 2026-07-01 review — the whole review catalog is now resolved except a few explicitly-deferred cosmetic items.
@@ -248,7 +254,7 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` through **`0238_email_change_ratelimit_antienum`** are applied to production (the `0237`/`0238` security + review-remediation batches applied + verified 2026-07-02). RLS + role-permission matrix (`has_permission`) + `session_alive()` remain load-bearing across helpers; owner failsafe/root-owner grants, customer approval, payment gates, and server-side CAPTCHA must not be weakened. Email (Resend) is live; SMS and native cloud push are dormant until their secrets/functions are explicitly armed.
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` through **`0239_block_release_charge_double_collection`** are applied to production (the `0237`–`0239` security + review-remediation + battery-fix batches applied + verified 2026-07-02). RLS + role-permission matrix (`has_permission`) + `session_alive()` remain load-bearing across helpers; owner failsafe/root-owner grants, customer approval, payment gates, and server-side CAPTCHA must not be weakened. Email (Resend) is live; SMS and native cloud push are dormant until their secrets/functions are explicitly armed.
 
 ## In progress / not yet
 

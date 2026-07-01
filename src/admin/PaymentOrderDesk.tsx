@@ -160,6 +160,10 @@ export default function PaymentOrderDesk({ app = false }: { app?: boolean }) {
         .select(CHARGE_SELECT)
         .eq('bill_status', 'billed')
         .is('payment_order_id', null)
+        // Release charges are settled ONLY at the release desk (release_orders path) — they
+        // dual-write here toward the future cutover but must NOT be collected via the charge
+        // desk, or the same release money is collectable twice (0239 enforces this server-side).
+        .neq('charge_type', 'release')
         .not('payment_status', 'in', '(confirmed,reversed)')
         .order('created_at', { ascending: true }),
       supabase

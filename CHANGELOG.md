@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.0.15 — 2026-07-02 (release double-collection fix — pre-go-live battery)
+
+The pre-go-live app-test battery (billing-integrity dimension) found the release/pull-out lane could collect the same money twice. Migration `0239` applied + verified on prod (+ sandbox); Jarvis-verified SAFE-TO-APPLY; prod confirmed clean (0 rows to reconcile). Full battery record: `docs/audits/2026-07-02-prelaunch-battery.md`.
+
+- **Release double-settlement seam closed (`0239`).** The release lane's authoritative settlement is the release desk (`release_orders`), but `seed_release_billing` (0215) also dual-writes a shadow `charge_type='release'` row toward the eventual cutover — and those were independently invoiceable/collectable in the cashier's Payment Order queue, so a paid release left a phantom charge a cashier could collect again (a second OR). A BEFORE-UPDATE guard trigger on `charges` now blocks a release charge from being bundled into a Payment Order, advanced to submitted/confirmed, or invoice-finalized via the charge path (client-proof poka-yoke); the release desk stays the single settlement path. The frontend also hides release charges from the cashier queue. Reversal/cancel and the release re-billing dual-write are unaffected. The JO money spine was independently verified SOUND (8 invariants).
+- **Load harness added.** `scripts/loadtest-sandbox.mjs` — reusable, sandbox-guarded read-load tool (signs in as seeded accounts, hammers RLS-scoped reads, reports latency percentiles + throughput).
+
+Verification: `npm run lint`, `check:i18n`, `check-security-invariants`, `build` green; `0239` applied via `_apply_one.mjs` + verified (trigger present, fn revoked from authenticated) on prod + sandbox; prod reconciliation query returned 0 non-pristine release charges.
+
 ## v2.0.14 — 2026-07-02 (review LOW batch: email rate-limit/anti-enum + entry-number + upload UX)
 
 Closes the LOW findings from the 2026-07-01 review (CX-10/11/12/13; `docs/audits/2026-07-02-codex-0701-batch-review.md`). Migration `0238` applied + verified on prod; Jarvis-verified SAFE-TO-APPLY.
