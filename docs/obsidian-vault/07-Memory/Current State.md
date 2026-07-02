@@ -8,6 +8,10 @@ last_updated: 2026-07-02
 
 # 📌 Current State (Runtime-Aligned)
 
+## 2026-07-02 — Sandbox break-test: 5 of 7 fixes applied (migration 0240)
+
+**Migration `0240` applied + verified on prod + sandbox.** An ultracode adversarial sandbox break-test (`docs/audits/2026-07-02-sandbox-breaktest.md`) found 7 confirmed exploitable issues (1 HIGH, 4 MEDIUM, 2 LOW). Fixed in `0240` (Jarvis-verified SAFE): **BT-01** (release-docs bucket now enforces 5 MB + image/PDF server-side — was client-only), **BT-02** (create_payment_order idempotent/all-or-raise bundling — closes the concurrent-cashier "collected PO over zero charges" race), **BT-04** (consignee-request length caps + 25-pending cap), **BT-06** (no charge on a completed JO), **BT-07** (release consignee existence check). **Still open — 2 careful follow-ups:** BT-03 (consignee PII read — route broker display through a safe code/name path before narrowing the RLS) + BT-05 (consent-version re-check — single-source to avoid a lockout on the next agreement bump). Then re-run the break-test + ship.
+
 ## 2026-07-02 — Accessibility punch-list shipped (v2.0.16)
 
 **`APP_VERSION` = `v2.0.16`; frontend-only, no migration.** Fixed 4 of 5 battery UX+a11y items: `<main>` landmark app-wide (customer/admin/staff shells + `MarkdownDoc` + `ForgotPassword`; `PublicShell` already had one), `--ink-2` contrast, `ForgotPassword`→accessible `<Notice>`, mobile tab-label ellipsis, docs i18n. **Deferred:** the two admin-Consignees `window.confirm()`→`Modal` (robustness, not a WCAG failure — native confirm is accessible; concern is Android-WebView flakiness). **Re-scored (v2.0.17, axe 4.10 WCAG 2.1 A/AA): `landmark-one-main` = 0, `color-contrast` = 0** → WCAG-AA baseline met (80 → ≥90); residual = one LOW `scrollable-region-focusable` on /register + the deferred `window.confirm`. See `docs/audits/2026-07-02-prelaunch-battery.md`.
@@ -258,7 +262,7 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` through **`0239_block_release_charge_double_collection`** are applied to production (the `0237`–`0239` security + review-remediation + battery-fix batches applied + verified 2026-07-02). RLS + role-permission matrix (`has_permission`) + `session_alive()` remain load-bearing across helpers; owner failsafe/root-owner grants, customer approval, payment gates, and server-side CAPTCHA must not be weakened. Email (Resend) is live; SMS and native cloud push are dormant until their secrets/functions are explicitly armed.
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` through **`0240_breaktest_remediation_batch`** are applied to production (the `0237`–`0240` security + review-remediation + battery + break-test batches applied + verified 2026-07-02). RLS + role-permission matrix (`has_permission`) + `session_alive()` remain load-bearing across helpers; owner failsafe/root-owner grants, customer approval, payment gates, and server-side CAPTCHA must not be weakened. Email (Resend) is live; SMS and native cloud push are dormant until their secrets/functions are explicitly armed.
 
 ## In progress / not yet
 
