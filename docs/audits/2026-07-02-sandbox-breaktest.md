@@ -4,6 +4,12 @@
 
 **Verdict:** no theft/critical, but **1 HIGH + 4 MEDIUM + 2 LOW** — a real remediation batch. Consumes via `/remediate`.
 
+> **Resolution (2026-07-02):** all 7 fixed.
+> - **BT-01, BT-02, BT-04, BT-06, BT-07** → migration `0240` — applied + verified on **prod + sandbox**, Jarvis-clean (v2.0.17 batch).
+> - **BT-03** (consignee PII scrape) → migration `0241`: a code/name-only `consignees_public` definer view for the 4 broker display embeds + the broker branch of the consignees read policy narrowed to `requested_by = me` (JO/release relationship branches dropped). Sandbox-verified — scrape closed (broker reads 0 arbitrary consignees), broker display renders via the view, staff reads (admin + checker) unaffected.
+> - **BT-05** (frontend-only consent gate) → migration `0242`: `has_recorded_consent()` now compares `terms_version` to a single-source `app_config('agreement_version')` (fail-open if the row is missing — never a lockout). Sandbox-verified — 0 current customers would be forced to re-consent.
+> - BT-03/BT-05 status: built, Jarvis-reviewed, sandbox-applied + verified. **Prod apply (0241/0242) + frontend ship (v2.0.18) + break-test re-run pending** — see the session wrap for the exact deploy order (view lands before the RLS narrow to avoid a broker-display gap).
+
 ## Findings (ranked)
 
 ### BT-01 · HIGH · `release-docs` storage bucket has NO server-side size/MIME limit

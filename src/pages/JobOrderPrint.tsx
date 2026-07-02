@@ -58,7 +58,7 @@ export default function JobOrderPrint() {
     setLoadError(null)
     supabase
       .from('job_orders')
-      .select('id, jo_number, entry_number, vessel_name, voyage_number, status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)')
+      .select('id, jo_number, entry_number, vessel_name, voyage_number, status, created_at, customer:customers(full_name, customer_code), consignee:consignees_public(code, name), lines:job_order_lines(container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)')
       .eq('id', id)
       .maybeSingle()
       .then(({ data, error }) => {

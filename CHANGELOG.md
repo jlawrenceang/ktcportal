@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.0.18 — 2026-07-02 (break-test BT-03 + BT-05 — the two product-call fixes)
+
+Closes the last two findings from the 2026-07-02 sandbox break-test (`docs/audits/2026-07-02-sandbox-breaktest.md`) — the ones flagged as needing a product/design call. The other five (BT-01/02/04/06/07) shipped in the v2.0.17 window via `0240`. Both migrations Jarvis-reviewed and verified on sandbox before prod.
+
+- **BT-03 — consignee PII-scrape closed (`0241`).** `0218` let an approved broker full-read a consignee's row (TIN, tel, mobile, email, doc paths) merely by filing a throwaway job order against it (the JO relationship satisfied the anti-scrape RLS). Fix: a code/name-only `consignees_public` definer view (no PII) now backs the four broker order-display embeds (`MyJobOrders`, `Releases`, Lara's `TRACK_COLS`/`LIST_COLS`), and the broker branch of the consignees read policy is narrowed to `requested_by = current_broker_id()` — the JO/release relationship branches are dropped, so filing no longer unlocks PII. Staff reads (their own RLS on the base table) and a broker's own consignee requests (`MyRequests`) are unchanged.
+- **BT-05 — consent version enforced server-side (`0242`).** `has_recorded_consent()` (`0162`) only checked `terms_version is not null`, so the "re-accept the updated agreement" wall was frontend-only and bypassable via a direct RPC the moment the agreement is bumped. It now compares `terms_version` to a single-source `app_config('agreement_version')` (seeded `v4`, matching `legal.ts`), and **fails open** if that row is ever missing — degrading to the original non-null check, never a customer lockout. Pairing note (poka-yoke): a future agreement bump must update both `legal.ts` and the `app_config` row in one release.
+
+Deploy order: the frontend (view-backed embeds, all five including the print slip `JobOrderPrint`) ships first, then `0241`/`0242` apply to prod, so the `consignees_public` view is in place as the RLS narrows (brief cosmetic consignee-column gap possible during the deploy tail, self-healing). Verification: `npm run build` green; both migrations applied + verified on sandbox — scrape closed (broker reads 0 arbitrary consignees, policy has no JO/release branch), display intact via the view, staff (admin + checker) unaffected, 0 customers forced to re-consent; Jarvis-clean on both (it caught the missed print-slip embed pre-ship); prod apply owner-authorized, applied with this release.
+
 ## v2.0.17 — 2026-07-02 (accessibility contrast — re-scored)
 
 Completes the v2.0.16 a11y punch-list after an axe re-scan surfaced 4 residual color-contrast failures.

@@ -60,11 +60,11 @@ const STATUS_LABEL: Record<string, string> = {
 const TRACK_COLS =
   'jo_number, status, rps_status, ' +
   'completed_at, vessel_name, voyage_number, ' +
-  'consignee:consignees(name), charges:charges(bill_status, payment_status)'
+  'consignee:consignees_public(name), charges:charges(bill_status, payment_status)'
 
 const LIST_COLS =
   'jo_number, entry_number, status, rps_status, ' +
-  'created_at, consignee:consignees(name), charges:charges(bill_status, payment_status)'
+  'created_at, consignee:consignees_public(name), charges:charges(bill_status, payment_status)'
 
 export const trackOrder: ActionFn = async (vars, { t }) => {
   const jo = normalizeJo(vars.jo ?? '')

@@ -24,7 +24,7 @@ import { RELEASE_STATUS_LABEL, type ReleaseOrder, type ReleaseStatus, type Relea
 // DEFINER RPC (file_release_order / resubmit_release_doc / submit_release_payment).
 
 const SELECT_COLS =
-  'id, release_number, bl_number, status, amount, charges_note, bill_doc_path, payment_status, payment_proof_path, payment_note, or_number, service_invoice_no, staff_note, created_at, consignee:consignees(code, name), supplements:release_supplements(id, label, amount, payment_status, payment_proof_path, payment_note, created_at)'
+  'id, release_number, bl_number, status, amount, charges_note, bill_doc_path, payment_status, payment_proof_path, payment_note, or_number, service_invoice_no, staff_note, created_at, consignee:consignees_public(code, name), supplements:release_supplements(id, label, amount, payment_status, payment_proof_path, payment_note, created_at)'
 
 // Per-status semantic tone for the .ktc-chip status pill (mirrors MyJobOrders).
 const STATUS_TONE: Record<ReleaseStatus, string> = {
